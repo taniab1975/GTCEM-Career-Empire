@@ -1,0 +1,88 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Manage Students</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="./auth.css">
+</head>
+<body>
+  <main class="auth-shell">
+    <div class="auth-topbar">
+      <div class="brand"><div class="brand-mark">CE</div><div>Manage Students</div></div>
+      <div class="top-links">
+        <a class="ghost-link" href="./index.html">Auth Home</a>
+        <a class="ghost-link" href="./add-students.html">Add Students</a>
+        <a class="ghost-link" href="../dashboards/teacher.html">Teacher Dashboard</a>
+      </div>
+    </div>
+
+    <section class="workflow-strip">
+      <div class="workflow-title">Teacher tools</div>
+      <div class="workflow-links">
+        <a class="workflow-link" href="./teacher-login.html">Teacher Login</a>
+        <a class="workflow-link" href="./create-class.html">Create Class</a>
+        <a class="workflow-link" href="./add-students.html">Add Students</a>
+        <a class="workflow-link active" href="./manage-students.html">Manage Students</a>
+        <a class="workflow-link" href="../dashboards/teacher.html">Teacher Dashboard</a>
+      </div>
+      <div class="context-strip">
+        <div class="context-card">
+          <div class="context-label">Teacher</div>
+          <div id="teacher-name-preview" class="context-value">No teacher saved yet</div>
+        </div>
+        <div class="context-card">
+          <div class="context-label">School</div>
+          <div id="teacher-school-preview" class="context-value">School not set yet</div>
+        </div>
+        <div class="context-card">
+          <div class="context-label">Current Class</div>
+          <div id="class-preview" class="context-value">No class created yet</div>
+        </div>
+        <div class="context-card">
+          <div class="context-label">Class Code</div>
+          <div id="class-code-preview" class="context-value">Pending</div>
+        </div>
+      </div>
+    </section>
+
+    <section class="auth-layout">
+      <article class="form-card">
+        <span class="eyebrow">Teacher Student Manager</span>
+        <h1>Review student accounts and reset passwords when needed.</h1>
+        <p class="lead">This page shows the current class roster and lets you generate a fresh temporary password for any student.</p>
+
+        <div class="code-box" style="margin-bottom: 18px;">
+          <p><strong>Current class:</strong> <span id="manage-class-name">Loading...</span></p>
+          <p><strong>Class code:</strong> <span id="manage-class-code">Loading...</span></p>
+        </div>
+
+        <div id="manage-students-feedback" class="feedback"></div>
+        <div id="manage-students-list" class="generated-list"></div>
+      </article>
+
+      <div class="stack">
+        <article class="info-card">
+          <h2>Password reset</h2>
+          <p class="muted">For security, existing passwords are not shown. Resetting creates a brand new temporary password that you can share with the student.</p>
+        </article>
+        <article class="info-card">
+          <h2>Current reset result</h2>
+          <div id="reset-password-result" class="code-box">
+            <p class="small-note">Reset a student password to see the new temporary credential here.</p>
+          </div>
+        </article>
+      </div>
+    </section>
+  </main>
+
+  <script src="../config/supabase-config.js"></script>
+  <script src="../data/schools-list.js"></script>
+  <script src="../src/services/supabase-browser.js"></script>
+  <script src="./auth.js"></script>
+  <script src="../src/services/feedback-widget.js"></script>
+</body>
+</html>

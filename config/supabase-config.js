@@ -1,0 +1,4 @@
+window.CAREER_EMPIRE_SUPABASE_CONFIG = {
+  url: "https://phtjhfrtkbkeufynwych.supabase.co",
+  anonKey: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBodGpoZnJ0a2JrZXVmeW53eWNoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQxOTI3MDEsImV4cCI6MjA4OTc2ODcwMX0.GTQv_D7FUi2Zxlgi9lRMFjB2l2LWHPnrS2aE7QKl138"
+};

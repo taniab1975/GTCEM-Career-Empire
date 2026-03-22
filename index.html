@@ -108,6 +108,16 @@
     .job-emerging { border-left-color: #22c55e; }
     .job-declining { border-left-color: #ef4444; }
 
+    .skill-spotlight { margin-top: 16px; padding: 16px; border-radius: 14px; border: 1px solid rgba(107, 210, 255, 0.25); background: rgba(8, 20, 36, 0.6); }
+    .skill-spotlight-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 12px; margin-top: 14px; }
+    .skill-spotlight-card { display: flex; gap: 12px; align-items: flex-start; padding: 12px; border-radius: 12px; border: 1px solid rgba(255, 255, 255, 0.08); background: rgba(255, 255, 255, 0.04); }
+    .skill-spotlight-card img { width: 48px; height: 48px; object-fit: contain; border-radius: 14px; background: rgba(255, 255, 255, 0.06); padding: 6px; flex-shrink: 0; }
+    .skill-spotlight-card p { margin: 0; }
+    .milestone-header { display: flex; gap: 14px; align-items: center; margin-bottom: 10px; }
+    .milestone-header img { width: 52px; height: 52px; object-fit: contain; border-radius: 16px; background: rgba(255, 255, 255, 0.1); padding: 8px; border: 1px solid rgba(255, 255, 255, 0.18); flex-shrink: 0; }
+    .leaderboard-skill { display: inline-flex; align-items: center; gap: 8px; margin-top: 8px; font-size: 12px; color: #cbd5e1; }
+    .leaderboard-skill img { width: 28px; height: 28px; object-fit: contain; border-radius: 10px; background: rgba(255, 255, 255, 0.06); padding: 4px; border: 1px solid rgba(255, 255, 255, 0.12); }
+
     body { box-sizing: border-box; }
   </style>
 </head>
@@ -119,6 +129,8 @@
         <button onclick="switchTab('leaderboard')" class="tab-btn px-4 py-2 rounded text-sm font-semibold" id="tab-leaderboard">🏆 Leaderboard</button>
         <button onclick="switchTab('community')" class="tab-btn px-4 py-2 rounded text-sm font-semibold" id="tab-community">🏛️ Community</button>
         <button onclick="switchTab('global')" class="tab-btn px-4 py-2 rounded text-sm font-semibold" id="tab-global">🌍 Global</button>
+        <button onclick="openStudentDashboard()" class="tab-btn px-4 py-2 rounded text-sm font-semibold">🧑‍🎓 Student Hub</button>
+        <button onclick="openTeacherDashboard()" class="tab-btn px-4 py-2 rounded text-sm font-semibold">👨‍🏫 Teacher Hub</button>
         <button onclick="resetGame()" class="ml-auto px-4 py-2 rounded text-sm font-semibold bg-red-900 hover:bg-red-800 text-red-100">🔄 Reset</button>
       </div>
     </div>
@@ -172,21 +184,28 @@
           <div class="px-4 sm:px-8 py-8">
             <div class="max-w-md mx-auto w-full">
               <div class="card-glow p-8 rounded-xl">
-                <h3 class="text-2xl font-bold mb-6 text-center">Ready to Begin?</h3>
+                <h3 id="launch-card-title" class="text-2xl font-bold mb-3 text-center">Ready to Begin?</h3>
+                <p id="launch-card-copy" class="text-sm text-gray-300 text-center mb-6">Enter your details to launch the Megatrends module.</p>
+                <div id="auth-continue-summary" class="hidden mb-6 p-4 rounded-lg bg-blue-950 bg-opacity-50 border border-blue-500 text-center">
+                  <p class="text-xs uppercase tracking-wide text-blue-300 mb-2">Logged in student</p>
+                  <p id="auth-continue-name" class="text-xl font-bold text-white"></p>
+                  <p id="auth-continue-meta" class="text-sm text-blue-100 mt-1"></p>
+                </div>
                 <div class="space-y-4">
-                  <div>
+                  <div id="player-name-group">
                     <label for="player-name" class="block text-sm font-semibold mb-2">Your Name</label>
                     <input type="text" id="player-name" placeholder="Enter your name" class="w-full px-4 py-2 rounded-lg bg-white bg-opacity-10 border border-blue-400 text-white placeholder-gray-400 focus:outline-none focus:border-blue-300" autocomplete="off">
                   </div>
-                  <div>
+                  <div id="school-name-group">
                     <label for="school-name" class="block text-sm font-semibold mb-2">School Name (Optional)</label>
                     <input type="text" id="school-name" placeholder="e.g., Lincoln High School" class="w-full px-4 py-2 rounded-lg bg-white bg-opacity-10 border border-blue-400 text-white placeholder-gray-400 focus:outline-none focus:border-blue-300" autocomplete="off">
                   </div>
-                  <div>
+                  <div id="class-code-group">
                     <label for="class-code" class="block text-sm font-semibold mb-2">Class Code (Optional)</label>
                     <input type="text" id="class-code" placeholder="Ask your teacher for this" class="w-full px-4 py-2 rounded-lg bg-white bg-opacity-10 border border-blue-400 text-white placeholder-gray-400 focus:outline-none focus:border-blue-300" autocomplete="off">
                   </div>
                   <button id="launch-btn" class="btn-primary text-white font-bold py-3 px-6 rounded-lg w-full">🎬 Launch</button>
+                  <button type="button" onclick="openStudentDashboard()" class="w-full px-4 py-2 rounded-lg bg-slate-700 hover:bg-slate-600 text-white text-sm font-semibold">🧑‍🎓 Open Student Dashboard</button>
                   <button type="button" onclick="openTeacherModal()" class="w-full px-4 py-2 rounded-lg bg-red-900 hover:bg-red-800 text-red-100 text-sm font-semibold">👨‍🏫 Teacher</button>
                 </div>
               </div>
@@ -446,12 +465,52 @@
           <button onclick="resetTeacherClass()" class="w-full px-4 py-3 rounded-lg bg-red-900 hover:bg-red-800 text-red-100 font-semibold text-sm">🔄 Reset This Class Only</button>
           <p class="text-xs text-gray-400 mt-3">This will clear all student data for YOUR class code only. Other teachers' classes are unaffected.</p>
         </div>
+        <button onclick="openTeacherDashboard()" class="w-full px-4 py-2 rounded-lg bg-blue-700 hover:bg-blue-600 text-white font-semibold">Open Full Teacher Dashboard</button>
         <button onclick="closeTeacherModal()" class="w-full px-4 py-2 rounded-lg bg-gray-700 hover:bg-gray-600 text-white font-semibold">Close Dashboard</button>
       </div>
     </div>
   </div>
 
   <script>
+    const PLAYER_SESSION_KEY = 'career-empire-session';
+    const TEACHER_SESSION_KEY = 'career-empire-teacher-session';
+    const AUTH_DEMO_STATE_KEY = 'career-empire-auth-demo';
+    const EMPLOYABILITY_LOGO_BY_ID = {
+      communication: './Assets/employability-logos/main/communication.png',
+      'digital-literacy': './Assets/employability-logos/main/digital-literacy.png',
+      teamwork: './Assets/employability-logos/main/teamwork.png',
+      'time-management': './Assets/employability-logos/main/time-management.png',
+      'critical-thinking': './Assets/employability-logos/main/critical-thinking.png',
+      'problem-solving': './Assets/employability-logos/main/problem-solving.png'
+    };
+    const EMPLOYABILITY_SKILL_SPOTLIGHTS = {
+      tech: [
+        { id: 'digital-literacy', title: 'Digital Literacy', detail: 'You adapted to new tools and used technology as part of your career growth.' },
+        { id: 'problem-solving', title: 'Problem-Solving', detail: 'You worked through change and chose a path to handle a new workplace challenge.' }
+      ],
+      climate: [
+        { id: 'critical-thinking', title: 'Critical Thinking', detail: 'You weighed sustainability choices and judged which path had the best long-term impact.' },
+        { id: 'time-management', title: 'Time Management', detail: 'You balanced career growth with extra responsibility, study, or project pressure.' }
+      ],
+      demo: [
+        { id: 'communication', title: 'Communication', detail: 'You used respectful communication to work across different backgrounds and perspectives.' },
+        { id: 'teamwork', title: 'Teamwork', detail: 'You built collaboration and helped create a stronger, more inclusive team.' }
+      ],
+      economic: [
+        { id: 'communication', title: 'Communication', detail: 'You communicated across contexts and built readiness for wider professional opportunities.' },
+        { id: 'critical-thinking', title: 'Critical Thinking', detail: 'You evaluated global options and chose how to respond to international change.' }
+      ],
+      fallback: [
+        { id: 'problem-solving', title: 'Problem-Solving', detail: 'You made a decision under pressure and adapted your next career move.' }
+      ]
+    };
+    const MASTERY_TO_SKILL_ID = {
+      Tech: 'digital-literacy',
+      Climate: 'critical-thinking',
+      Demo: 'teamwork',
+      Economic: 'communication'
+    };
+
     function createLocalDataSdk() {
       const storageKey = 'career-empire-players';
       const listeners = [];
@@ -500,6 +559,125 @@
 
     window.elementSdk = window.elementSdk || createLocalElementSdk();
     window.dataSdk = window.dataSdk || createLocalDataSdk();
+
+    async function getSupabaseClientOrNull() {
+      if (!window.CareerEmpireSupabase || typeof window.CareerEmpireSupabase.getClient !== 'function') {
+        return null;
+      }
+      try {
+        return await window.CareerEmpireSupabase.getClient();
+      } catch (error) {
+        console.error(error);
+        return null;
+      }
+    }
+
+    function readJsonStorage(key, fallback) {
+      try {
+        return JSON.parse(localStorage.getItem(key) || JSON.stringify(fallback));
+      } catch (_) {
+        return fallback;
+      }
+    }
+
+    function getAuthPrototypeState() {
+      return readJsonStorage(AUTH_DEMO_STATE_KEY, {});
+    }
+
+    function mapRemotePlayerProfile(row) {
+      const student = row.students || {};
+      const classRecord = student.classes || {};
+      const schoolRecord = student.schools || {};
+      return {
+        id: row.student_id,
+        player_name: student.display_name || student.username || 'Unknown',
+        school_name: schoolRecord.name || '',
+        class_code: classRecord.class_code || '',
+        career_title: row.career_title || 'Intern',
+        annual_salary: row.annual_salary || 0,
+        cumulative_net_worth: row.cumulative_net_worth || 0,
+        career_level: row.career_level || 1,
+        job_security: row.job_security || 0,
+        work_life_balance: row.work_life_balance || 0,
+        community_vote: row.last_community_vote || 'none',
+        years_played: row.years_played || 0,
+        tech_mastery: row.tech_mastery || 0,
+        climate_mastery: row.climate_mastery || 0,
+        demo_mastery: row.demo_mastery || 0,
+        economic_mastery: row.economic_mastery || 0,
+        timestamp: row.updated_at || new Date().toISOString()
+      };
+    }
+
+    async function loadRemotePlayers() {
+      const supabase = await getSupabaseClientOrNull();
+      if (!supabase) return;
+      const { data, error } = await supabase
+        .from('player_profiles')
+        .select(`
+          student_id,
+          career_title,
+          annual_salary,
+          cumulative_net_worth,
+          career_level,
+          job_security,
+          work_life_balance,
+          years_played,
+          tech_mastery,
+          climate_mastery,
+          demo_mastery,
+          economic_mastery,
+          last_community_vote,
+          updated_at,
+          students!inner(
+            display_name,
+            username,
+            classes(class_code, name),
+            schools(name)
+          )
+        `);
+
+      if (error) {
+        console.error('Failed to load remote players:', error);
+        return;
+      }
+
+      allPlayers = (data || []).map(mapRemotePlayerProfile);
+      updateLeaderboard();
+      updateCommunityFund();
+      updateGlobalIndex();
+    }
+
+    async function getLoggedInStudentIdentity() {
+      const authState = getAuthPrototypeState();
+      const studentLogin = authState.studentLogin;
+      if (!studentLogin?.id) return null;
+
+      const fallbackStudent = {
+        id: studentLogin.id,
+        display_name: studentLogin.displayName || studentLogin.username || 'Student',
+        username: studentLogin.username || '',
+        school_id: studentLogin.schoolId || null,
+        class_id: studentLogin.classId || null,
+        classes: studentLogin.classCode ? { class_code: studentLogin.classCode } : null,
+        schools: studentLogin.schoolName ? { name: studentLogin.schoolName } : null
+      };
+
+      const supabase = await getSupabaseClientOrNull();
+      if (!supabase) return fallbackStudent;
+
+      const { data, error } = await supabase
+        .from('students')
+        .select('id, display_name, username, school_id, class_id, classes(class_code), schools(name)')
+        .eq('id', studentLogin.id)
+        .maybeSingle();
+
+      if (error) {
+        console.error(error);
+        return fallbackStudent;
+      }
+      return data || fallbackStudent;
+    }
 
     const TEACHER_SESSION_CODE = 'ECC-CAREERS-2026';
     let gameState = {
@@ -583,6 +761,9 @@
         window.lucide.createIcons();
       }
       attachLaunchButton();
+      syncActivePlayerSession('init');
+      prefillFromLoggedInStudent();
+      loadRemotePlayers();
     }
 
     initSDK();
@@ -592,11 +773,125 @@
       gameState.schoolName = document.getElementById('school-name').value.trim();
       gameState.classCode = document.getElementById('class-code').value.trim().toUpperCase();
       if (!gameState.playerName) return;
+      syncActivePlayerSession('start_game');
       document.getElementById('intro-screen').classList.add('hidden');
       document.getElementById('nav-bar').classList.remove('hidden');
       document.getElementById('gameplay-tab').classList.remove('hidden');
       updateStats();
       showScenario();
+    }
+
+    function renderIntroLaunchState(student = null) {
+      const titleEl = document.getElementById('launch-card-title');
+      const copyEl = document.getElementById('launch-card-copy');
+      const summaryEl = document.getElementById('auth-continue-summary');
+      const summaryNameEl = document.getElementById('auth-continue-name');
+      const summaryMetaEl = document.getElementById('auth-continue-meta');
+      const playerGroup = document.getElementById('player-name-group');
+      const schoolGroup = document.getElementById('school-name-group');
+      const classGroup = document.getElementById('class-code-group');
+      const launchBtn = document.getElementById('launch-btn');
+      const schoolSetupInfo = document.getElementById('school-setup-info');
+
+      if (!titleEl || !copyEl || !summaryEl || !playerGroup || !schoolGroup || !classGroup || !launchBtn) return;
+
+      if (student) {
+        titleEl.textContent = 'Continue Your Journey';
+        copyEl.textContent = 'You are already signed in, so you can jump straight into Megatrends.';
+        summaryEl.classList.remove('hidden');
+        summaryNameEl.textContent = student.display_name || student.username || 'Student';
+        summaryMetaEl.textContent = [
+          student.schools?.name || 'School not set',
+          (student.classes?.class_code || '').toUpperCase()
+        ].filter(Boolean).join(' • ');
+        playerGroup.classList.add('hidden');
+        schoolGroup.classList.add('hidden');
+        classGroup.classList.add('hidden');
+        launchBtn.textContent = `🎮 Continue as ${student.display_name || student.username || 'Student'}`;
+        if (schoolSetupInfo) schoolSetupInfo.classList.add('hidden');
+      } else {
+        titleEl.textContent = 'Ready to Begin?';
+        copyEl.textContent = 'Enter your details to launch the Megatrends module.';
+        summaryEl.classList.add('hidden');
+        playerGroup.classList.remove('hidden');
+        schoolGroup.classList.remove('hidden');
+        classGroup.classList.remove('hidden');
+        launchBtn.textContent = '🎬 Launch';
+        if (schoolSetupInfo) schoolSetupInfo.classList.remove('hidden');
+      }
+    }
+
+    async function prefillFromLoggedInStudent() {
+      const student = await getLoggedInStudentIdentity();
+      renderIntroLaunchState(student);
+      if (!student) return;
+      const playerNameInput = document.getElementById('player-name');
+      const schoolNameInput = document.getElementById('school-name');
+      const classCodeInput = document.getElementById('class-code');
+      if (playerNameInput && !playerNameInput.value) playerNameInput.value = student.display_name || student.username || '';
+      if (schoolNameInput && !schoolNameInput.value) schoolNameInput.value = student.schools?.name || '';
+      if (classCodeInput && !classCodeInput.value) classCodeInput.value = (student.classes?.class_code || '').toUpperCase();
+    }
+
+    function getEmployabilitySkillSpotlights(choice) {
+      if (!choice?.masteryBoost) return EMPLOYABILITY_SKILL_SPOTLIGHTS.fallback;
+      return EMPLOYABILITY_SKILL_SPOTLIGHTS[choice.masteryBoost] || EMPLOYABILITY_SKILL_SPOTLIGHTS.fallback;
+    }
+
+    function renderEmployabilitySkillSpotlight(choice) {
+      const skills = getEmployabilitySkillSpotlights(choice);
+      return `
+        <div class="skill-spotlight">
+          <p class="text-sm font-semibold text-cyan-300 uppercase tracking-wide">Employability skills you used</p>
+          <div class="skill-spotlight-grid">
+            ${skills.map(skill => `
+              <div class="skill-spotlight-card">
+                <img src="${EMPLOYABILITY_LOGO_BY_ID[skill.id] || ''}" alt="${skill.title} logo">
+                <div>
+                  <p class="text-base font-bold text-white mb-1">${skill.title}</p>
+                  <p class="text-sm text-gray-300">${skill.detail}</p>
+                </div>
+              </div>
+            `).join('')}
+          </div>
+        </div>
+      `;
+    }
+
+    function getMilestoneSkillMeta(masteryName) {
+      const skillId = MASTERY_TO_SKILL_ID[masteryName];
+      if (!skillId) return null;
+      const spotlights = Object.values(EMPLOYABILITY_SKILL_SPOTLIGHTS).flat();
+      const skill = spotlights.find(entry => entry.id === skillId);
+      return skill ? {
+        ...skill,
+        logoPath: EMPLOYABILITY_LOGO_BY_ID[skillId] || ''
+      } : null;
+    }
+
+    function getStrongestEmployabilitySkillForPlayer(player) {
+      const progressMap = {
+        communication: Math.round(((Number(player.demo_mastery || 0)) + (Number(player.economic_mastery || 0))) / 2),
+        'digital-literacy': Number(player.tech_mastery || 0),
+        teamwork: Number(player.demo_mastery || 0),
+        'time-management': Math.round(((Number(player.work_life_balance || 0)) + (Number(player.climate_mastery || 0))) / 2),
+        'critical-thinking': Math.round(((Number(player.tech_mastery || 0)) + (Number(player.climate_mastery || 0)) + (Number(player.demo_mastery || 0)) + (Number(player.economic_mastery || 0))) / 4),
+        'problem-solving': Math.round(((Number(player.tech_mastery || 0)) + (Number(player.climate_mastery || 0)) + (Number(player.economic_mastery || 0))) / 3)
+      };
+      const strongestId = Object.entries(progressMap).reduce((best, entry) => entry[1] > best[1] ? entry : best, ['communication', 0])[0];
+      const labelMap = {
+        communication: 'Communication',
+        'digital-literacy': 'Digital Literacy',
+        teamwork: 'Teamwork',
+        'time-management': 'Time Management',
+        'critical-thinking': 'Critical Thinking',
+        'problem-solving': 'Problem-Solving'
+      };
+      return {
+        id: strongestId,
+        title: labelMap[strongestId] || 'Communication',
+        logoPath: EMPLOYABILITY_LOGO_BY_ID[strongestId] || ''
+      };
     }
 
     function displayScenario(scenario) {
@@ -690,6 +985,7 @@
       document.getElementById('feedback-section').innerHTML = `
         <div class="card-glow p-6 rounded-xl border-l-4 border-blue-400">
           <p id="feedback-text" class="text-lg text-gray-200 mb-4">${feedbackMessage}</p>
+          ${renderEmployabilitySkillSpotlight(choice)}
         </div>
       `;
       showCommunityVotePrompt();
@@ -1431,6 +1727,7 @@
       document.getElementById('economic-mastery-text').textContent = Math.min(100, gameState.economicMastery) + '%';
       document.getElementById('security-bar').style.borderColor = securityPercent < 30 ? '#ef4444' : 'rgba(59, 130, 246, 0.2)';
       document.getElementById('balance-bar').style.borderColor = balancePercent < 30 ? '#ef4444' : 'rgba(59, 130, 246, 0.2)';
+      syncActivePlayerSession('stats_update');
     }
 
     function checkMasteryMilestones() {
@@ -1445,19 +1742,29 @@
         const milestone100 = `milestone_${m.name}_100`;
         if (m.value >= 50 && !localStorage.getItem(milestone50)) {
           localStorage.setItem(milestone50, 'true');
-          showMilestoneNotification(`${m.emoji} ${m.name} Mastery: Advanced!`, `You've reached 50% mastery in ${m.name}. You're becoming an expert!`);
+          showMilestoneNotification(`${m.emoji} ${m.name} Mastery: Advanced!`, `You've reached 50% mastery in ${m.name}. You're becoming an expert!`, m.name);
         }
         if (m.value >= 100 && !localStorage.getItem(milestone100)) {
           localStorage.setItem(milestone100, 'true');
-          showMilestoneNotification(`${m.emoji} ${m.name} Mastery: MASTER!`, `🏆 You've achieved 100% mastery! You're a ${m.name} expert!`);
+          showMilestoneNotification(`${m.emoji} ${m.name} Mastery: MASTER!`, `🏆 You've achieved 100% mastery! You're a ${m.name} expert!`, m.name);
         }
       });
     }
 
-    function showMilestoneNotification(title, message) {
+    function showMilestoneNotification(title, message, masteryName = '') {
+      const milestoneSkill = getMilestoneSkillMeta(masteryName);
       const notification = document.createElement('div');
       notification.style.cssText = 'position: fixed; top: 20px; right: 20px; background: linear-gradient(135deg, #22c55e 0%, #16a34a 100%); border: 2px solid #4ade80; border-radius: 12px; padding: 20px; max-width: 300px; z-index: 10000; box-shadow: 0 0 40px rgba(34, 197, 94, 0.4); animation: slideUp 0.4s ease-out;';
-      notification.innerHTML = `<p style="font-size: 18px; font-weight: bold; color: white; margin: 0 0 8px 0;">${title}</p><p style="font-size: 14px; color: #dcfce7; margin: 0;">${message}</p>`;
+      notification.innerHTML = `
+        <div class="milestone-header">
+          ${milestoneSkill?.logoPath ? `<img src="${milestoneSkill.logoPath}" alt="${milestoneSkill.title} logo">` : ''}
+          <div>
+            <p style="font-size: 18px; font-weight: bold; color: white; margin: 0 0 6px 0;">${title}</p>
+            ${milestoneSkill?.title ? `<p style="font-size: 12px; color: #dcfce7; margin: 0;">Skill link: ${milestoneSkill.title}</p>` : ''}
+          </div>
+        </div>
+        <p style="font-size: 14px; color: #dcfce7; margin: 0;">${message}</p>
+      `;
       document.body.appendChild(notification);
       setTimeout(() => {
         notification.style.animation = 'fadeOut 0.4s ease-in forwards';
@@ -1497,6 +1804,9 @@
       };
       const result = await window.dataSdk.create(payload);
       if (!result.isOk) console.error('Failed to save progress:', result.error);
+      syncActivePlayerSession(checkpoint);
+      await syncProgressToSupabase(checkpoint, payload);
+      await loadRemotePlayers();
     }
 
     function switchTab(tab) {
@@ -1514,16 +1824,24 @@
       }
       const sorted = [...allPlayers].sort((a, b) => b.cumulative_net_worth - a.cumulative_net_worth).slice(0, 10);
       list.innerHTML = sorted.map((p, i) => `
+        ${(() => {
+          const strongestSkill = getStrongestEmployabilitySkillForPlayer(p);
+          return `
         <div class="card-glow p-4 rounded-lg flex justify-between items-center">
           <div>
             <p class="font-bold text-lg">#${i + 1} ${p.player_name}</p>
             <p class="text-sm text-gray-400">${p.career_title} • Level ${p.career_level}</p>
+            <div class="leaderboard-skill">
+              <img src="${strongestSkill.logoPath}" alt="${strongestSkill.title} logo">
+              <span>Strongest skill: ${strongestSkill.title}</span>
+            </div>
           </div>
           <div class="text-right">
             <p class="text-xl font-bold text-yellow-300">$${p.cumulative_net_worth.toLocaleString()}</p>
             <p class="text-xs text-gray-400">${p.years_played} years</p>
           </div>
         </div>
+      `; })()}
       `).join('');
     }
 
@@ -1546,6 +1864,7 @@
 
     function castCommunityVote(cause) {
       gameState.lastCommunityVote = cause;
+      saveProgress('community_vote');
     }
 
     function updateGlobalIndex() {
@@ -1605,8 +1924,11 @@
       document.getElementById('player-name').value = '';
       document.getElementById('school-name').value = '';
       document.getElementById('class-code').value = '';
+      renderIntroLaunchState(null);
+      prefillFromLoggedInStudent();
       document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
       document.getElementById('tab-gameplay').classList.add('active');
+      localStorage.removeItem(PLAYER_SESSION_KEY);
     }
 
     function openTeacherModal() {
@@ -1629,6 +1951,7 @@
         document.getElementById('teacher-login-form').classList.add('hidden');
         document.getElementById('teacher-dashboard').classList.remove('hidden');
         document.getElementById('display-class-code').textContent = currentTeacherCode;
+        syncTeacherSession();
         refreshTeacherDashboard();
       } else {
         alert('❌ Wrong code');
@@ -1656,6 +1979,7 @@
       document.getElementById('student-count').textContent = studentCount;
       document.getElementById('class-avg-mastery').textContent = avgMastery + '%';
       document.getElementById('class-avg-security').textContent = avgSecurity + '%';
+      syncTeacherSession();
     }
 
     async function resetTeacherClass() {
@@ -1682,6 +2006,157 @@
         if (e.key === 'Enter') startGame();
       });
     }
+
+    function buildEmployabilitySnapshotFromState() {
+      const overallMastery = Math.round((gameState.techMastery + gameState.climateMastery + gameState.demoMastery + gameState.economicMastery) / 4);
+      return {
+        communication: Math.round((gameState.demoMastery + gameState.economicMastery) / 2),
+        'digital-literacy': Math.round(gameState.techMastery),
+        teamwork: Math.round(gameState.demoMastery),
+        'time-management': Math.round((gameState.workLifeBalance + gameState.climateMastery) / 2),
+        'critical-thinking': overallMastery,
+        'problem-solving': Math.round((gameState.techMastery + gameState.climateMastery + gameState.economicMastery) / 3)
+      };
+    }
+
+    function syncActivePlayerSession(source = 'manual') {
+      const overallMastery = Math.round((gameState.techMastery + gameState.climateMastery + gameState.demoMastery + gameState.economicMastery) / 4);
+      const session = {
+        playerName: gameState.playerName,
+        schoolName: gameState.schoolName,
+        classCode: gameState.classCode,
+        careerTitle: gameState.careerTitle,
+        annualSalary: gameState.annualSalary,
+        cumulativeNetWorth: gameState.cumulativeNetWorth,
+        yearsPlayed: gameState.yearsPlayed,
+        careerLevel: gameState.careerLevel,
+        jobSecurity: gameState.jobSecurity,
+        workLifeBalance: gameState.workLifeBalance,
+        techMastery: gameState.techMastery,
+        climateMastery: gameState.climateMastery,
+        demoMastery: gameState.demoMastery,
+        economicMastery: gameState.economicMastery,
+        overallMastery,
+        employabilityProgress: buildEmployabilitySnapshotFromState(),
+        checkpoint: source,
+        updatedAt: new Date().toISOString()
+      };
+      localStorage.setItem(PLAYER_SESSION_KEY, JSON.stringify(session));
+    }
+
+    function syncTeacherSession() {
+      const teacherSession = {
+        classCode: currentTeacherCode,
+        updatedAt: new Date().toISOString()
+      };
+      localStorage.setItem(TEACHER_SESSION_KEY, JSON.stringify(teacherSession));
+    }
+
+    function openStudentDashboard() {
+      syncActivePlayerSession('open_student_dashboard');
+      window.open('./dashboards/student.html', '_blank');
+    }
+
+    function openTeacherDashboard() {
+      syncTeacherSession();
+      window.open('./dashboards/teacher.html', '_blank');
+    }
+
+    async function syncProgressToSupabase(checkpoint, payload) {
+      const supabase = await getSupabaseClientOrNull();
+      const authState = getAuthPrototypeState();
+      const studentLogin = authState.studentLogin;
+      if (!supabase || !studentLogin?.id) return;
+
+      const overallMastery = Math.round((gameState.techMastery + gameState.climateMastery + gameState.demoMastery + gameState.economicMastery) / 4);
+
+      const { error: profileError } = await supabase
+        .from('player_profiles')
+        .upsert({
+          student_id: studentLogin.id,
+          career_title: gameState.careerTitle,
+          annual_salary: gameState.annualSalary,
+          cumulative_net_worth: gameState.cumulativeNetWorth,
+          savings: Math.floor(gameState.cumulativeNetWorth * 0.25),
+          tax_paid: Math.floor(gameState.cumulativeNetWorth * 0.1),
+          career_level: gameState.careerLevel,
+          career_success: overallMastery,
+          job_security: gameState.jobSecurity,
+          work_life_balance: gameState.workLifeBalance,
+          wellbeing: gameState.workLifeBalance,
+          social_status: Math.round((gameState.workLifeBalance + gameState.jobSecurity) / 2),
+          resilience: Math.round((gameState.workLifeBalance + overallMastery) / 2),
+          years_played: gameState.yearsPlayed,
+          tech_mastery: gameState.techMastery,
+          climate_mastery: gameState.climateMastery,
+          demo_mastery: gameState.demoMastery,
+          economic_mastery: gameState.economicMastery,
+          last_community_vote: gameState.lastCommunityVote || null,
+          updated_at: new Date().toISOString()
+        }, { onConflict: 'student_id' });
+
+      if (profileError) {
+        console.error('Failed to sync player profile:', profileError);
+      }
+
+      const { error: moduleError } = await supabase
+        .from('student_module_progress')
+        .upsert({
+          student_id: studentLogin.id,
+          module_id: 'megatrends',
+          completion_percent: Math.min(100, gameState.yearsPlayed * 20),
+          mastery_percent: overallMastery,
+          attempts: gameState.yearsPlayed,
+          unlocked: true,
+          completed: gameState.yearsPlayed > 0,
+          last_played_at: new Date().toISOString(),
+          updated_at: new Date().toISOString()
+        }, { onConflict: 'student_id,module_id' });
+
+      if (moduleError) {
+        console.error('Failed to sync module progress:', moduleError);
+      }
+
+      if (checkpoint === 'reflection_complete' && gameState.reflectionFromLastScenario) {
+        const student = await getLoggedInStudentIdentity();
+        const { error: evidenceError } = await supabase
+          .from('assessment_evidence')
+          .insert({
+            student_id: studentLogin.id,
+            class_id: student?.class_id || null,
+            module_id: 'megatrends',
+            evidence_type: 'typed-sentence',
+            prompt: 'Type the exact sentence that explains how the megatrend affects work.',
+            response_text: gameState.reflectionFromLastScenario,
+            auto_score: 100
+          });
+
+        if (evidenceError) {
+          console.error('Failed to save assessment evidence:', evidenceError);
+        }
+      }
+
+      if (checkpoint === 'community_vote' && gameState.lastCommunityVote) {
+        const student = await getLoggedInStudentIdentity();
+        if (student?.class_id) {
+          const { error: voteError } = await supabase
+            .from('community_votes')
+            .insert({
+              student_id: studentLogin.id,
+              class_id: student.class_id,
+              module_id: 'megatrends',
+              vote_key: gameState.lastCommunityVote
+            });
+
+          if (voteError) {
+            console.error('Failed to save community vote:', voteError);
+          }
+        }
+      }
+    }
   </script>
+  <script src="./config/supabase-config.js"></script>
+  <script src="./src/services/supabase-browser.js"></script>
+  <script src="./src/services/feedback-widget.js"></script>
 </body>
 </html>

@@ -1,0 +1,84 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Teacher Sign Up</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="./auth.css">
+</head>
+<body>
+  <main class="auth-shell">
+    <div class="auth-topbar">
+      <div class="brand"><div class="brand-mark">CE</div><div>Teacher Sign Up</div></div>
+      <div class="top-links">
+        <a class="ghost-link" href="./index.html">Auth Home</a>
+        <a class="ghost-link" href="./teacher-login.html">Teacher Login</a>
+      </div>
+    </div>
+
+    <section class="auth-layout">
+      <article class="form-card">
+        <span class="eyebrow">Restricted Registration</span>
+        <h1>Register as a teacher using an approved school email.</h1>
+        <p class="lead">Only staff with an email ending in `cewa.edu.au` or `education.wa.edu.au` can create teacher accounts.</p>
+
+        <form id="teacher-signup-form">
+          <div class="field">
+            <label for="teacher-name">Full name</label>
+            <input id="teacher-name" type="text" placeholder="e.g. Tania Byrnes" required>
+          </div>
+          <div class="field">
+            <label for="teacher-email">School email</label>
+            <input id="teacher-email" type="email" placeholder="you@cewa.edu.au" required>
+            <div id="teacher-email-feedback" class="feedback"></div>
+            <div id="teacher-email-help" class="helper">Use a staff email ending in `@cewa.edu.au` or `@education.wa.edu.au`.</div>
+          </div>
+          <div class="field">
+            <label for="teacher-school">School name</label>
+            <input id="teacher-school" type="text" placeholder="Start typing your school name" autocomplete="off" required>
+            <div id="teacher-school-results" class="search-results"></div>
+            <div id="teacher-school-feedback" class="feedback"></div>
+            <div class="helper">Start typing the first few letters of your school name to filter the approved school list.</div>
+          </div>
+          <div class="field">
+            <label for="teacher-password">Password</label>
+            <input id="teacher-password" type="password" placeholder="Create a secure password" required>
+            <div class="helper">Final implementation should use a proper backend and password hashing.</div>
+          </div>
+          <div class="button-row">
+            <button class="button-primary" type="submit">Create Teacher Account</button>
+            <a class="button button-secondary" href="./create-class.html">Next: Create Class</a>
+          </div>
+        </form>
+        <div class="code-box" style="margin-top: 18px;">
+          <p><strong>Not on an approved email domain?</strong></p>
+          <p class="muted">If you're a teacher and your email address doesn't end in `@cewa.edu.au` or `@education.wa.edu.au`, please email <a href="mailto:tania.byrnes@cewa.edu.au" style="color: var(--accent);">tania.byrnes@cewa.edu.au</a> to add your email to the list of eligible registrations.</p>
+        </div>
+      </article>
+
+      <div class="stack">
+        <article class="info-card">
+          <h2>Allowed domains</h2>
+          <div class="list-box">
+            <p><strong>Allowed:</strong> `cewa.edu.au`, `education.wa.edu.au`</p>
+            <p><strong>Blocked:</strong> personal email providers and student-style addresses</p>
+          </div>
+        </article>
+        <article class="info-card">
+          <h2>Why this matters</h2>
+          <p class="muted">It keeps teacher access restricted to verified school staff and protects class management features.</p>
+        </article>
+      </div>
+    </section>
+  </main>
+
+  <script src="../config/supabase-config.js"></script>
+  <script src="../data/schools-list.js"></script>
+  <script src="../src/services/supabase-browser.js"></script>
+  <script src="./auth.js"></script>
+  <script src="../src/services/feedback-widget.js"></script>
+</body>
+</html>

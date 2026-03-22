@@ -1,0 +1,104 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Career Empire Student Dashboard</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="./dashboard.css">
+</head>
+<body>
+  <main class="page-shell">
+    <section class="hero">
+      <article class="hero-card">
+        <span class="eyebrow">Student Dashboard</span>
+        <h1 id="student-hero-title">Build your future, not just your score.</h1>
+        <p id="student-hero-subtitle" class="subtitle">
+          This shell is the shared player home for all curriculum modules. It connects module mastery, employability skills,
+          class impact, and personal career progression into one long-term game profile.
+        </p>
+        <div id="student-badge-stack" class="badge-stack">
+          <span class="badge">Loading player profile...</span>
+        </div>
+      </article>
+      <div class="hero-side">
+        <article class="panel">
+          <div class="section-title">
+            <h2>Current Focus</h2>
+            <p class="status-watch">Needs attention</p>
+          </div>
+          <p id="student-focus-text">Time Management is your weakest employability area right now. Lifelong Learning should become the next recommended module.</p>
+          <div class="pill-row">
+            <span class="pill">Recommended next module</span>
+            <span class="pill">Teacher-visible growth area</span>
+          </div>
+        </article>
+        <article class="panel">
+          <div class="section-title">
+            <h2>Class Impact</h2>
+            <p class="status-good">Contributing</p>
+          </div>
+          <p>Your play is feeding class taxes, leaderboard movement, and the Global Index. This is where modules become one connected ecosystem.</p>
+        </article>
+      </div>
+    </section>
+
+    <section class="metrics-grid">
+      <article class="metric">
+        <div class="metric-label">Overall Module Completion</div>
+        <div id="student-overall-completion" class="metric-value">0%</div>
+        <div id="student-overall-completion-note" class="metric-note">Across the full Year 12 game ecosystem</div>
+      </article>
+      <article class="metric">
+        <div class="metric-label">Employability Score</div>
+        <div id="student-employability-score" class="metric-value">0%</div>
+        <div class="metric-note">Combined skill growth across all categories</div>
+      </article>
+      <article class="metric">
+        <div class="metric-label">Community Tax Paid</div>
+        <div id="student-tax-paid" class="metric-value">$0</div>
+        <div class="metric-note">Contributing to your class fund and projects</div>
+      </article>
+      <article class="metric">
+        <div class="metric-label">Assets Owned</div>
+        <div id="student-assets-owned" class="metric-value">0</div>
+        <div class="metric-note">Cars, furniture, housing, and upgrades</div>
+      </article>
+    </section>
+
+    <section class="two-column">
+      <article class="panel">
+        <div class="section-title">
+          <h2>Module Map</h2>
+          <p>One connected curriculum journey</p>
+        </div>
+        <div id="student-module-grid" class="module-grid"></div>
+      </article>
+
+      <article class="panel">
+        <div class="section-title">
+          <h2>Recent Progress</h2>
+          <p>Learning + gameplay outcomes</p>
+        </div>
+        <div id="student-timeline" class="list"></div>
+        <p class="footer-note">This section should later pull from actual play history, evidence tasks, and teacher feedback.</p>
+      </article>
+    </section>
+
+    <section class="panel">
+      <div class="section-title">
+        <h2>Employability Skills</h2>
+        <p>Tracked across all modules</p>
+      </div>
+      <div id="student-skill-grid" class="skill-grid"></div>
+    </section>
+  </main>
+
+  <script src="../config/supabase-config.js"></script>
+  <script src="../src/services/supabase-browser.js"></script>
+  <script src="./dashboard.js"></script>
+  <script src="../src/services/feedback-widget.js"></script>
+</body>
+</html>

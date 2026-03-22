@@ -32,6 +32,13 @@ jobs:
         run: |
           mkdir -p _site
           cp index.html _site/index.html
+          cp -R auth _site/auth
+          cp -R dashboards _site/dashboards
+          cp -R modules _site/modules
+          cp -R src _site/src
+          cp -R data _site/data
+          cp -R Assets _site/Assets
+          cp -R config _site/config
 
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
