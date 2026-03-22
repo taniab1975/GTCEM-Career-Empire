@@ -1,0 +1,1687 @@
+<!doctype html>
+<html lang="en" class="h-full">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Career Empire</title>
+  <script src="https://cdn.tailwindcss.com/3.4.17"></script>
+  <script src="https://cdn.jsdelivr.net/npm/lucide@0.263.0/dist/umd/lucide.min.js"></script>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;700;800&display=swap');
+
+    * { font-family: 'Outfit', sans-serif; }
+    html, body { margin: 0; padding: 0; height: 100%; }
+    body { background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%); }
+
+    @keyframes slideUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+    @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+    @keyframes fadeOut { from { opacity: 1; } to { opacity: 0; } }
+    @keyframes confettiFall { to { transform: translateY(100vh) rotate(360deg); opacity: 0; } }
+    @keyframes levelUpPulse { 0% { transform: scale(1); } 50% { transform: scale(1.2); } 100% { transform: scale(1); } }
+    @keyframes floatUp { 0% { opacity: 1; transform: translateY(0) scale(1); } 100% { opacity: 0; transform: translateY(-60px) scale(1.5); } }
+
+    .card-glow { background: rgba(30, 41, 59, 0.6); border: 1px solid rgba(59, 130, 246, 0.2); backdrop-filter: blur(10px); transition: all 0.3s ease; }
+    .card-glow:hover { border-color: rgba(59, 130, 246, 0.4); box-shadow: 0 0 30px rgba(59, 130, 246, 0.2); }
+
+    .btn-primary {
+      background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      cursor: pointer;
+      transition: all 0.3s ease;
+      box-shadow: 0 0 20px rgba(59, 130, 246, 0.3);
+    }
+    .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 0 30px rgba(59, 130, 246, 0.5); }
+
+    .btn-choice {
+      background: rgba(30, 41, 59, 0.5);
+      border: 2px solid rgba(59, 130, 246, 0.2);
+      cursor: pointer;
+      transition: all 0.3s ease;
+      text-align: left;
+    }
+    .btn-choice:hover { background: rgba(59, 130, 246, 0.15); border-color: rgba(59, 130, 246, 0.5); box-shadow: 0 0 20px rgba(59, 130, 246, 0.2); transform: translateX(8px); }
+    .btn-choice.selected { background: rgba(59, 130, 246, 0.3); border-color: rgba(59, 130, 246, 0.8); }
+
+    .tab-btn { background: rgba(255,255,255,0.1); color: #93c5fd; cursor: pointer; transition: all 0.3s ease; }
+    .tab-btn.active { background: #3b82f6; color: white; }
+    .tab-btn:hover { background: rgba(59, 130, 246, 0.3); }
+
+    .confetti { position: fixed; pointer-events: none; animation: confettiFall 3s ease-in forwards; z-index: 9999; }
+    .level-up-badge { animation: levelUpPulse 0.6s ease-out; }
+
+    .stat-bar {
+      width: 100%;
+      height: 8px;
+      background: rgba(0, 0, 0, 0.3);
+      border-radius: 4px;
+      overflow: hidden;
+      border: 1px solid rgba(59, 130, 246, 0.2);
+    }
+    .stat-fill { height: 100%; background: linear-gradient(90deg, #3b82f6 0%, #60a5fa 100%); border-radius: 4px; transition: width 0.4s ease; }
+
+    .megatrend-badge {
+      display: inline-block;
+      padding: 6px 16px;
+      border-radius: 50px;
+      font-size: 12px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      border: 1px solid rgba(255, 255, 255, 0.2);
+    }
+
+    .tech-badge { background: rgba(167, 139, 250, 0.2); color: #c4b5fd; border-color: rgba(167, 139, 250, 0.4); }
+    .climate-badge { background: rgba(134, 239, 172, 0.2); color: #a7f3d0; border-color: rgba(134, 239, 172, 0.4); }
+    .demo-badge { background: rgba(147, 197, 253, 0.2); color: #93c5fd; border-color: rgba(147, 197, 253, 0.4); }
+    .economic-badge { background: rgba(252, 211, 77, 0.2); color: #fde68a; border-color: rgba(252, 211, 77, 0.4); }
+
+    #game-canvas { border: 3px solid #3b82f6; border-radius: 8px; background: #000; display: block; margin: 0 auto; max-width: 100%; }
+
+    .mastery-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+      gap: 4px;
+    }
+    .mastery-mini-bar {
+      height: 12px;
+      background: rgba(0, 0, 0, 0.3);
+      border-radius: 6px;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      overflow: hidden;
+    }
+    .mastery-mini-fill {
+      height: 100%;
+      border-radius: 6px;
+      transition: width 0.4s ease;
+    }
+    .mastery-mini-fill.tech { background: linear-gradient(90deg, #a78bfa 0%, #7c3aed 100%); }
+    .mastery-mini-fill.climate { background: linear-gradient(90deg, #86efac 0%, #22c55e 100%); }
+    .mastery-mini-fill.demo { background: linear-gradient(90deg, #93c5fd 0%, #3b82f6 100%); }
+    .mastery-mini-fill.economic { background: linear-gradient(90deg, #fde68a 0%, #fbbf24 100%); }
+
+    .quiz-option { background: rgba(30, 41, 59, 0.5); border: 2px solid rgba(59, 130, 246, 0.2); cursor: pointer; transition: all 0.3s ease; padding: 12px; border-radius: 8px; }
+    .quiz-option:hover { background: rgba(59, 130, 246, 0.15); border-color: rgba(59, 130, 246, 0.5); }
+    .quiz-option.correct { background: rgba(34, 197, 94, 0.2); border-color: #22c55e; }
+    .quiz-option.incorrect { background: rgba(239, 68, 68, 0.2); border-color: #ef4444; }
+
+    .job-card { background: rgba(30, 41, 59, 0.6); border-left: 4px solid #3b82f6; padding: 12px; border-radius: 6px; margin-bottom: 8px; }
+    .job-emerging { border-left-color: #22c55e; }
+    .job-declining { border-left-color: #ef4444; }
+
+    body { box-sizing: border-box; }
+  </style>
+</head>
+<body class="h-full text-white">
+  <div id="app" class="h-full w-full flex flex-col">
+    <div id="nav-bar" class="bg-gradient-to-r from-blue-900 to-blue-800 p-4 border-b border-blue-700 hidden w-full flex-shrink-0">
+      <div class="max-w-6xl mx-auto flex gap-4">
+        <button onclick="switchTab('gameplay')" class="tab-btn active px-4 py-2 rounded text-sm font-semibold" id="tab-gameplay">🎮 Gameplay</button>
+        <button onclick="switchTab('leaderboard')" class="tab-btn px-4 py-2 rounded text-sm font-semibold" id="tab-leaderboard">🏆 Leaderboard</button>
+        <button onclick="switchTab('community')" class="tab-btn px-4 py-2 rounded text-sm font-semibold" id="tab-community">🏛️ Community</button>
+        <button onclick="switchTab('global')" class="tab-btn px-4 py-2 rounded text-sm font-semibold" id="tab-global">🌍 Global</button>
+        <button onclick="resetGame()" class="ml-auto px-4 py-2 rounded text-sm font-semibold bg-red-900 hover:bg-red-800 text-red-100">🔄 Reset</button>
+      </div>
+    </div>
+
+    <div id="intro-screen" class="flex-1 w-full bg-gradient-to-b from-slate-950 to-slate-900 overflow-x-hidden overflow-y-auto">
+      <div class="px-4 sm:px-8 py-8 sm:py-12 w-full">
+        <div class="max-w-4xl mx-auto space-y-8">
+          <div class="card-glow p-8 rounded-xl text-center">
+            <h2 class="text-4xl font-bold mb-4 text-blue-300">🚀 Career Empire</h2>
+            <p class="text-lg text-gray-200">Navigate four megatrends. Build your career. Shape your future.</p>
+          </div>
+
+          <div>
+            <h3 class="text-2xl font-bold mb-6 text-center">The Four Megatrends</h3>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div class="card-glow p-6 rounded-xl border-l-4 border-purple-400">
+                <h4 class="text-xl font-bold text-purple-300 mb-2">🤖 Impactful Technology</h4>
+                <p class="text-sm text-gray-300">AI, automation, and digitization reshape every industry.</p>
+              </div>
+              <div class="card-glow p-6 rounded-xl border-l-4 border-green-400">
+                <h4 class="text-xl font-bold text-green-300 mb-2">🌍 Climate Change</h4>
+                <p class="text-sm text-gray-300">Green jobs and sustainability are essential.</p>
+              </div>
+              <div class="card-glow p-6 rounded-xl border-l-4 border-blue-400">
+                <h4 class="text-xl font-bold text-blue-300 mb-2">🌈 Demographic Shifts</h4>
+                <p class="text-sm text-gray-300">Diverse teams unlock innovation and success.</p>
+              </div>
+              <div class="card-glow p-6 rounded-xl border-l-4 border-yellow-400">
+                <h4 class="text-xl font-bold text-yellow-300 mb-2">💰 Economic Power Shifts</h4>
+                <p class="text-sm text-gray-300">Global markets are shifting. Think internationally.</p>
+              </div>
+            </div>
+          </div>
+
+          <div class="card-glow p-8 rounded-xl max-w-2xl mx-auto w-full mb-8">
+            <h3 class="text-lg font-bold mb-4 text-blue-300">💡 What You'll Learn</h3>
+            <ul class="text-sm text-gray-200 space-y-2">
+              <li><strong>Megatrends</strong> – Long-lasting, transformational shifts that reshape work &amp; society</li>
+              <li><strong>Career Impact</strong> – How jobs emerge, decline, and evolve with megatrends</li>
+              <li><strong>Future Skills</strong> – What employers actually need from workers tomorrow</li>
+              <li><strong>Work Environments</strong> – How workplace culture, structure, and type evolve</li>
+              <li><strong>Resilience</strong> – Navigating life shocks while building your career</li>
+            </ul>
+            <a href="https://cewaedu.sharepoint.com/:v:/s/8102EmmanuelCatholicCollegeSuccess/PublicShare/IQDtCfDyI_GQQqQ0HAZxQkgNASpTCYnAk7Y0HoNI7if8yTY?e=epiaBD&amp;t=0s" target="_blank" rel="noopener noreferrer" class="inline-block mt-4 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-sm font-semibold transition-all">▶️ Watch Introduction Video</a>
+          </div>
+
+          <div id="school-setup-info" class="card-glow p-6 rounded-xl max-w-2xl mx-auto w-full mb-8 bg-blue-900 bg-opacity-20 border-l-4 border-blue-400">
+            <p class="text-sm text-blue-200"><strong>📚 Class Connection:</strong> If your teacher provided a class code, enter it below to connect your progress with your classmates. Your class will see aggregate mastery on the Global Index. Teachers can manage their class separately.</p>
+          </div>
+
+          <div class="px-4 sm:px-8 py-8">
+            <div class="max-w-md mx-auto w-full">
+              <div class="card-glow p-8 rounded-xl">
+                <h3 class="text-2xl font-bold mb-6 text-center">Ready to Begin?</h3>
+                <div class="space-y-4">
+                  <div>
+                    <label for="player-name" class="block text-sm font-semibold mb-2">Your Name</label>
+                    <input type="text" id="player-name" placeholder="Enter your name" class="w-full px-4 py-2 rounded-lg bg-white bg-opacity-10 border border-blue-400 text-white placeholder-gray-400 focus:outline-none focus:border-blue-300" autocomplete="off">
+                  </div>
+                  <div>
+                    <label for="school-name" class="block text-sm font-semibold mb-2">School Name (Optional)</label>
+                    <input type="text" id="school-name" placeholder="e.g., Lincoln High School" class="w-full px-4 py-2 rounded-lg bg-white bg-opacity-10 border border-blue-400 text-white placeholder-gray-400 focus:outline-none focus:border-blue-300" autocomplete="off">
+                  </div>
+                  <div>
+                    <label for="class-code" class="block text-sm font-semibold mb-2">Class Code (Optional)</label>
+                    <input type="text" id="class-code" placeholder="Ask your teacher for this" class="w-full px-4 py-2 rounded-lg bg-white bg-opacity-10 border border-blue-400 text-white placeholder-gray-400 focus:outline-none focus:border-blue-300" autocomplete="off">
+                  </div>
+                  <button id="launch-btn" class="btn-primary text-white font-bold py-3 px-6 rounded-lg w-full">🎬 Launch</button>
+                  <button type="button" onclick="openTeacherModal()" class="w-full px-4 py-2 rounded-lg bg-red-900 hover:bg-red-800 text-red-100 text-sm font-semibold">👨‍🏫 Teacher</button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div id="gameplay-tab" class="flex-1 hidden w-full flex flex-col overflow-hidden bg-slate-900">
+      <div class="bg-gradient-to-r from-blue-900 to-blue-800 p-4 border-b border-blue-700 flex-shrink-0">
+        <div class="max-w-6xl mx-auto flex justify-between items-center">
+          <div>
+            <h2 id="player-title" class="text-2xl font-bold">Career Journey</h2>
+            <p id="player-role" class="text-sm text-blue-100">Loading...</p>
+          </div>
+          <div class="flex gap-8 text-right">
+            <div>
+              <p class="text-xs text-blue-100 uppercase mb-1">Net Worth</p>
+              <p id="net-worth" class="text-lg font-bold text-yellow-300">$0</p>
+            </div>
+            <div>
+              <p class="text-xs text-blue-100 uppercase mb-1">Salary</p>
+              <p id="salary" class="text-lg font-bold text-green-300">$25k</p>
+            </div>
+            <div>
+              <p class="text-xs text-blue-100 uppercase mb-1">Level</p>
+              <p id="level" class="text-lg font-bold text-purple-300">1</p>
+            </div>
+            <div>
+              <p class="text-xs text-blue-100 uppercase mb-1">Years</p>
+              <p id="years" class="text-lg font-bold text-cyan-300">0</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="bg-slate-800 px-8 py-4 border-b border-blue-700 flex-shrink-0 space-y-3">
+        <div>
+          <div class="flex justify-between mb-1">
+            <p class="text-xs font-semibold text-gray-300">Job Security</p>
+            <p id="security-text" class="text-xs text-blue-300">75%</p>
+          </div>
+          <div class="stat-bar">
+            <div id="security-bar" class="stat-fill" style="width: 75%"></div>
+          </div>
+        </div>
+        <div>
+          <div class="flex justify-between mb-1">
+            <p class="text-xs font-semibold text-gray-300">Work-Life Balance</p>
+            <p id="balance-text" class="text-xs text-blue-300">60%</p>
+          </div>
+          <div class="stat-bar">
+            <div id="balance-bar" class="stat-fill" style="width: 60%"></div>
+          </div>
+        </div>
+        <div>
+          <div class="flex justify-between mb-1">
+            <p class="text-xs font-semibold text-gray-300">Megatrend Mastery</p>
+            <p id="mastery-text" class="text-xs text-blue-300">0%</p>
+          </div>
+          <div class="stat-bar">
+            <div id="mastery-bar" class="stat-fill" style="width: 0%"></div>
+          </div>
+        </div>
+        <div class="pt-2">
+          <p class="text-xs font-semibold text-gray-300 mb-2">Mastery by Megatrend</p>
+          <div class="mastery-grid">
+            <div>
+              <p class="text-xs text-purple-300 mb-1">Tech 🤖</p>
+              <div class="mastery-mini-bar"><div id="tech-mastery-fill" class="mastery-mini-fill tech" style="width: 0%"></div></div>
+              <p class="text-xs text-gray-400 mt-1" id="tech-mastery-text">0%</p>
+            </div>
+            <div>
+              <p class="text-xs text-green-300 mb-1">Climate 🌍</p>
+              <div class="mastery-mini-bar"><div id="climate-mastery-fill" class="mastery-mini-fill climate" style="width: 0%"></div></div>
+              <p class="text-xs text-gray-400 mt-1" id="climate-mastery-text">0%</p>
+            </div>
+            <div>
+              <p class="text-xs text-blue-300 mb-1">Demo 🌈</p>
+              <div class="mastery-mini-bar"><div id="demo-mastery-fill" class="mastery-mini-fill demo" style="width: 0%"></div></div>
+              <p class="text-xs text-gray-400 mt-1" id="demo-mastery-text">0%</p>
+            </div>
+            <div>
+              <p class="text-xs text-yellow-300 mb-1">Economic 💰</p>
+              <div class="mastery-mini-bar"><div id="economic-mastery-fill" class="mastery-mini-fill economic" style="width: 0%"></div></div>
+              <p class="text-xs text-gray-400 mt-1" id="economic-mastery-text">0%</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="flex-1 overflow-auto w-full">
+        <div class="p-8 w-full">
+          <div class="max-w-4xl mx-auto">
+            <div id="scenario-container"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div id="leaderboard-tab" class="flex-1 hidden w-full overflow-auto">
+      <div class="p-8">
+        <div class="max-w-4xl mx-auto">
+          <h2 class="text-3xl font-bold mb-6">🏆 Leaderboard</h2>
+          <div id="leaderboard-list" class="space-y-3">
+            <p class="text-gray-400">No players yet...</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div id="community-tab" class="flex-1 hidden w-full overflow-auto">
+      <div class="p-8">
+        <div class="max-w-4xl mx-auto">
+          <h2 class="text-3xl font-bold mb-6">🏛️ Community Impact Vote</h2>
+          <p class="text-gray-300 mb-8">Where is your class directing collective energy this month?</p>
+          <div class="space-y-4">
+            <div class="card-glow p-6 rounded-xl cursor-pointer hover:border-green-400 transition-all" onclick="castCommunityVote('climate')">
+              <div class="flex items-center justify-between mb-3">
+                <h3 class="text-xl font-bold text-green-300">🌱 Climate &amp; Sustainability</h3>
+                <div class="text-right">
+                  <p class="text-2xl font-bold text-green-400"><span id="vote-climate">0</span>%</p>
+                  <p class="text-xs text-gray-400"><span id="count-climate">0</span> votes</p>
+                </div>
+              </div>
+              <p class="text-sm text-gray-300 mb-3">Supporting renewable energy, environmental protection &amp; sustainable careers</p>
+              <div class="stat-bar h-3"><div id="bar-climate" class="stat-fill" style="width: 0%; background: linear-gradient(90deg, #86efac 0%, #22c55e 100%);"></div></div>
+            </div>
+            <div class="card-glow p-6 rounded-xl cursor-pointer hover:border-purple-400 transition-all" onclick="castCommunityVote('tech')">
+              <div class="flex items-center justify-between mb-3">
+                <h3 class="text-xl font-bold text-purple-300">🚀 Tech Education &amp; Inclusion</h3>
+                <div class="text-right">
+                  <p class="text-2xl font-bold text-purple-400"><span id="vote-tech">0</span>%</p>
+                  <p class="text-xs text-gray-400"><span id="count-tech">0</span> votes</p>
+                </div>
+              </div>
+              <p class="text-sm text-gray-300 mb-3">Making AI, coding &amp; digital skills accessible to underrepresented communities</p>
+              <div class="stat-bar h-3"><div id="bar-tech" class="stat-fill" style="width: 0%; background: linear-gradient(90deg, #a78bfa 0%, #7c3aed 100%);"></div></div>
+            </div>
+            <div class="card-glow p-6 rounded-xl cursor-pointer hover:border-blue-400 transition-all" onclick="castCommunityVote('diversity')">
+              <div class="flex items-center justify-between mb-3">
+                <h3 class="text-xl font-bold text-blue-300">🌈 Diversity &amp; Economic Equity</h3>
+                <div class="text-right">
+                  <p class="text-2xl font-bold text-blue-400"><span id="vote-diversity">0</span>%</p>
+                  <p class="text-xs text-gray-400"><span id="count-diversity">0</span> votes</p>
+                </div>
+              </div>
+              <p class="text-sm text-gray-300 mb-3">Closing wage gaps, mentoring underrepresented professionals &amp; creating leadership pipelines</p>
+              <div class="stat-bar h-3"><div id="bar-diversity" class="stat-fill" style="width: 0%; background: linear-gradient(90deg, #93c5fd 0%, #3b82f6 100%);"></div></div>
+            </div>
+            <div class="card-glow p-6 rounded-xl cursor-pointer hover:border-yellow-400 transition-all" onclick="castCommunityVote('global')">
+              <div class="flex items-center justify-between mb-3">
+                <h3 class="text-xl font-bold text-yellow-300">💰 Global Opportunity Access</h3>
+                <div class="text-right">
+                  <p class="text-2xl font-bold text-yellow-400"><span id="vote-global">0</span>%</p>
+                  <p class="text-xs text-gray-400"><span id="count-global">0</span> votes</p>
+                </div>
+              </div>
+              <p class="text-sm text-gray-300 mb-3">Expanding job opportunities globally, supporting emerging markets &amp; cross-border talent exchange</p>
+              <div class="stat-bar h-3"><div id="bar-global" class="stat-fill" style="width: 0%; background: linear-gradient(90deg, #fde68a 0%, #fbbf24 100%);"></div></div>
+            </div>
+          </div>
+          <div class="card-glow p-6 rounded-xl mt-8 bg-blue-900 bg-opacity-20 border-l-4 border-blue-400">
+            <p class="text-sm text-blue-200"><strong>💡 How it works:</strong> Each scenario you complete, you cast one vote for the cause you believe in. The class collectively decides which initiative gets funded each month. Your votes matter!</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div id="global-tab" class="flex-1 hidden w-full overflow-auto">
+      <div class="p-8">
+        <div class="max-w-4xl mx-auto">
+          <h2 class="text-3xl font-bold mb-6">🌍 Class Mastery Index</h2>
+          <div class="card-glow p-6 rounded-xl mb-8 bg-blue-900 bg-opacity-20 border-l-4 border-blue-400">
+            <p class="text-lg font-bold text-blue-300 mb-2">📊 Your Class's Collective Readiness</p>
+            <p class="text-4xl font-bold text-blue-100 mb-2"><span id="overall-readiness">0</span>% Ready</p>
+            <p class="text-sm text-blue-200">Your class is <span id="readiness-label">just starting</span> on the path to mastering the megatrends.</p>
+          </div>
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div class="card-glow p-6 rounded-xl border-l-4 border-purple-400">
+              <div class="flex justify-between mb-3"><div><p class="text-sm text-gray-400 uppercase mb-1">🤖 Tech Mastery</p><p class="text-2xl font-bold text-purple-300"><span id="global-tech">0</span>%</p></div><p class="text-3xl">🤖</p></div>
+              <div class="stat-bar"><div id="global-tech-bar" class="stat-fill" style="width: 0%; background: linear-gradient(90deg, #a78bfa 0%, #7c3aed 100%);"></div></div>
+            </div>
+            <div class="card-glow p-6 rounded-xl border-l-4 border-green-400">
+              <div class="flex justify-between mb-3"><div><p class="text-sm text-gray-400 uppercase mb-1">🌍 Climate Mastery</p><p class="text-2xl font-bold text-green-300"><span id="global-climate">0</span>%</p></div><p class="text-3xl">🌍</p></div>
+              <div class="stat-bar"><div id="global-climate-bar" class="stat-fill" style="width: 0%; background: linear-gradient(90deg, #86efac 0%, #22c55e 100%);"></div></div>
+            </div>
+            <div class="card-glow p-6 rounded-xl border-l-4 border-blue-400">
+              <div class="flex justify-between mb-3"><div><p class="text-sm text-gray-400 uppercase mb-1">🌈 Diversity Mastery</p><p class="text-2xl font-bold text-blue-300"><span id="global-demo">0</span>%</p></div><p class="text-3xl">🌈</p></div>
+              <div class="stat-bar"><div id="global-demo-bar" class="stat-fill" style="width: 0%; background: linear-gradient(90deg, #93c5fd 0%, #3b82f6 100%);"></div></div>
+            </div>
+            <div class="card-glow p-6 rounded-xl border-l-4 border-yellow-400">
+              <div class="flex justify-between mb-3"><div><p class="text-sm text-gray-400 uppercase mb-1">💰 Economic Mastery</p><p class="text-2xl font-bold text-yellow-300"><span id="global-economic">0</span>%</p></div><p class="text-3xl">💰</p></div>
+              <div class="stat-bar"><div id="global-economic-bar" class="stat-fill" style="width: 0%; background: linear-gradient(90deg, #fde68a 0%, #fbbf24 100%);"></div></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div id="concept-modal" class="hidden fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center z-50 p-4">
+    <div class="bg-slate-900 rounded-xl p-8 max-w-7xl w-full border border-purple-500 max-h-screen overflow-auto">
+      <h2 class="text-2xl font-bold text-purple-300 mb-2">🔐 Concept Lock-In Challenge</h2>
+      <p class="text-sm text-gray-300 mb-6">Answer correctly to unlock your career choice!</p>
+      <div id="concept-content" class="space-y-6"></div>
+    </div>
+  </div>
+
+  <div id="job-impact-modal" class="hidden fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center z-50 p-4">
+    <div class="bg-slate-900 rounded-xl p-8 max-w-2xl w-full border border-green-500 max-h-screen overflow-auto">
+      <h2 class="text-2xl font-bold text-green-300 mb-6">💼 Jobs Shaped by This Megatrend</h2>
+      <div id="job-impact-content" class="space-y-6"></div>
+    </div>
+  </div>
+
+  <div id="game-modal" class="hidden fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center z-50 p-4">
+    <div class="bg-slate-900 rounded-xl p-8 max-w-2xl w-full border border-blue-500 max-h-screen overflow-auto">
+      <div class="flex items-center justify-between mb-4">
+        <h2 class="text-2xl font-bold text-blue-300">🎮 Quick Challenge</h2>
+        <span id="modal-megatrend" class="text-lg font-bold px-4 py-2 rounded-lg bg-opacity-20 border"></span>
+      </div>
+      <canvas id="game-canvas" width="600" height="400" class="mx-auto mb-6"></canvas>
+      <button onclick="closeMiniGame()" class="btn-primary text-white font-bold py-2 px-6 rounded-lg w-full">Continue</button>
+    </div>
+  </div>
+
+  <div id="teacher-modal" class="hidden fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center z-50 p-4">
+    <div class="bg-slate-900 rounded-xl p-8 max-w-2xl w-full border border-red-500 max-h-screen overflow-auto">
+      <h2 class="text-2xl font-bold text-red-300 mb-6">👨‍🏫 Teacher Dashboard</h2>
+      <div id="teacher-login-form" class="space-y-4">
+        <input type="password" id="teacher-pass" placeholder="Enter teacher code" class="w-full px-4 py-2 rounded-lg bg-white bg-opacity-10 border border-white border-opacity-20 text-white mb-4 focus:outline-none">
+        <div class="flex gap-3">
+          <button onclick="verifyTeacher()" class="flex-1 btn-primary text-white font-bold py-2 rounded-lg">Unlock</button>
+          <button onclick="closeTeacherModal()" class="flex-1 px-4 py-2 rounded-lg bg-gray-700 hover:bg-gray-600 text-white font-semibold">Cancel</button>
+        </div>
+      </div>
+      <div id="teacher-dashboard" class="hidden space-y-6">
+        <div class="card-glow p-6 rounded-xl border-l-4 border-green-400">
+          <p class="text-lg font-bold text-green-300 mb-4">📚 Your Class Code</p>
+          <div class="bg-black bg-opacity-40 p-4 rounded-lg border border-green-400">
+            <p id="display-class-code" class="text-2xl font-bold text-green-200 text-center">GENERATING...</p>
+            <p class="text-xs text-gray-400 text-center mt-2">Share this with students • Each class gets a unique code</p>
+          </div>
+        </div>
+        <div class="card-glow p-6 rounded-xl border-l-4 border-blue-400">
+          <p class="text-lg font-bold text-blue-300 mb-4">📊 Class Analytics</p>
+          <div class="space-y-3">
+            <div class="flex justify-between items-center"><p class="text-gray-300">Students in class:</p><p id="student-count" class="text-2xl font-bold text-blue-300">0</p></div>
+            <div class="flex justify-between items-center"><p class="text-gray-300">Average class mastery:</p><p id="class-avg-mastery" class="text-2xl font-bold text-purple-300">0%</p></div>
+            <div class="flex justify-between items-center"><p class="text-gray-300">Average job security:</p><p id="class-avg-security" class="text-2xl font-bold text-green-300">0%</p></div>
+          </div>
+        </div>
+        <div class="card-glow p-6 rounded-xl border-l-4 border-yellow-400">
+          <p class="text-lg font-bold text-yellow-300 mb-4">⚙️ Teacher Controls</p>
+          <button onclick="resetTeacherClass()" class="w-full px-4 py-3 rounded-lg bg-red-900 hover:bg-red-800 text-red-100 font-semibold text-sm">🔄 Reset This Class Only</button>
+          <p class="text-xs text-gray-400 mt-3">This will clear all student data for YOUR class code only. Other teachers' classes are unaffected.</p>
+        </div>
+        <button onclick="closeTeacherModal()" class="w-full px-4 py-2 rounded-lg bg-gray-700 hover:bg-gray-600 text-white font-semibold">Close Dashboard</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    function createLocalDataSdk() {
+      const storageKey = 'career-empire-players';
+      const listeners = [];
+
+      const read = () => {
+        try {
+          return JSON.parse(localStorage.getItem(storageKey) || '[]');
+        } catch (_) {
+          return [];
+        }
+      };
+
+      const write = (data) => {
+        localStorage.setItem(storageKey, JSON.stringify(data));
+        listeners.forEach(listener => listener([...data]));
+      };
+
+      return {
+        async init({ onDataChanged }) {
+          if (typeof onDataChanged === 'function') {
+            listeners.push(onDataChanged);
+            onDataChanged(read());
+          }
+        },
+        async create(payload) {
+          const current = read();
+          current.push({ id: crypto.randomUUID ? crypto.randomUUID() : String(Date.now() + Math.random()), ...payload });
+          write(current);
+          return { isOk: true, value: payload };
+        },
+        async delete(record) {
+          const current = read().filter(item => item.id !== record.id);
+          write(current);
+          return { isOk: true };
+        }
+      };
+    }
+
+    function createLocalElementSdk() {
+      return {
+        async init() {
+          return { isOk: true };
+        }
+      };
+    }
+
+    window.elementSdk = window.elementSdk || createLocalElementSdk();
+    window.dataSdk = window.dataSdk || createLocalDataSdk();
+
+    const TEACHER_SESSION_CODE = 'ECC-CAREERS-2026';
+    let gameState = {
+      playerName: '',
+      schoolName: '',
+      classCode: '',
+      careerTitle: 'Intern',
+      annualSalary: 25000,
+      cumulativeNetWorth: 0,
+      yearsPlayed: 0,
+      careerLevel: 1,
+      jobSecurity: 75,
+      workLifeBalance: 60,
+      techMastery: 0,
+      climateMastery: 0,
+      demoMastery: 0,
+      economicMastery: 0,
+      lastCommunityVote: null
+    };
+    let currentTeacherCode = null;
+    let lastCheckpointKey = null;
+    let allPlayers = [];
+    let currentScenario = null;
+    let currentShock = null;
+    let selectedChoiceIdx = null;
+    let miniGameAbortController = null;
+    let miniKeysPressed = {};
+
+    const lifeShocks = [
+      { title: '👶 Family Responsibilities', description: 'You become responsible for caring for a family member. Your time and money are now stretched.', choices: [ { text: 'Reduce work hours to part-time', salary_mult: 0.6, balance_gain: 30, security_loss: -20, message: '⏰ Family first' }, { text: 'Stay full-time, hire help (expensive)', salary_mult: 1.0, balance_gain: 10, security_loss: -5, message: '💼 Juggling' }, { text: 'Look for remote work flexibility', salary_mult: 0.85, balance_gain: 20, security_loss: -10, message: '🌐 Hybrid life' } ] },
+      { title: '🏥 Health Crisis', description: 'You face a health challenge. Medical bills pile up and recovery takes time.', choices: [ { text: 'Take medical leave, drain savings', salary_mult: 0.5, balance_gain: 40, security_loss: -30, message: '🏥 Healing' }, { text: 'Push through work, slow recovery', salary_mult: 0.95, balance_gain: -15, security_loss: -15, message: '😫 Tough it out' }, { text: 'Use company health benefits wisely', salary_mult: 0.8, balance_gain: 15, security_loss: -5, message: '💪 Strategic' } ] },
+      { title: '🏠 Unexpected Relocation', description: 'A job offer in another city—or family needs you elsewhere. Moving costs are real.', choices: [ { text: 'Take the higher-paying job abroad', salary_mult: 1.4, balance_gain: -25, security_loss: 10, message: '✈️ Adventure' }, { text: 'Stay local, miss the opportunity', salary_mult: 1.0, balance_gain: 10, security_loss: -5, message: '🏡 Roots' }, { text: 'Negotiate remote from new city', salary_mult: 1.15, balance_gain: 5, security_loss: 0, message: '🌍 Flexible' } ] },
+      { title: '🎓 Scholarship/Education Opportunity', description: 'A prestigious degree program accepts you. But it requires time and money investment now.', choices: [ { text: 'Full-time MBA, pause career', salary_mult: 0.3, balance_gain: -20, security_loss: -10, message: '📚 Invest in self' }, { text: 'Part-time course while working', salary_mult: 0.85, balance_gain: -30, security_loss: 0, message: '⚖️ Balance' }, { text: 'Skip it, focus on experience', salary_mult: 1.0, balance_gain: 15, security_loss: 5, message: '💼 Practical' } ] },
+      { title: '💔 Burnout Warning', description: 'You hit a wall. Years of grinding are catching up. Your body is telling you to slow down.', choices: [ { text: 'Take a sabbatical (3 months unpaid)', salary_mult: 0.8, balance_gain: 50, security_loss: -15, message: '🌴 Reset' }, { text: 'Power through, ignore the warning', salary_mult: 1.05, balance_gain: -40, security_loss: -20, message: '⚡ Risky' }, { text: 'Switch to a calmer job role', salary_mult: 0.75, balance_gain: 35, security_loss: -5, message: '😌 Pivot' } ] },
+      { title: '🚀 Dream Job Offer (Risky Startup)', description: 'A friend\'s startup offers you equity and a huge title. It could make you rich—or fail in a year.', choices: [ { text: 'Jump in, all-in bet', salary_mult: 1.2, balance_gain: -35, security_loss: -40, message: '🎲 All-in' }, { text: 'Join as advisor, keep your job', salary_mult: 1.05, balance_gain: -10, security_loss: -5, message: '🤝 Hedged' }, { text: 'Politely decline, stay safe', salary_mult: 1.0, balance_gain: 10, security_loss: 0, message: '✋ Steady' } ] }
+    ];
+
+    const scenarios = [ { megatrend: 'Impactful Technology', title: 'Your Boss Asks You to Learn New Software', description: 'Your workplace is switching to new AI tools. You must learn it fast.', conceptQuiz: { question: 'What does "Impactful Technology" mean for jobs?', correctAnswer: 'AI and automation are changing which jobs exist, making new skills essential', wrongAnswers: ['Technology will never change jobs', 'Only creative jobs matter'], conceptBrief: '🤖 AI & automation are reshaping work. Jobs that require human judgment, creativity & emotional intelligence are growing, while routine tasks are automated. Workers who embrace tech thrive.' }, emergingJobs: ['AI Trainer', 'Machine Learning Engineer', 'Automation Specialist'], decliningJobs: ['Data Entry Clerk', 'Basic Assembly Worker'], choices: [ { text: 'Take the AI training course', salary: 35000, level: 2, message: '🚀 You chose growth!', pros: 'Master in-demand skills', cons: 'Requires 40 hours of study', security_impact: 15, balance_impact: -20, masteryBoost: 'tech' }, { text: 'Stay in your current role', salary: 29000, level: 1.5, message: '💼 Safe choice!', pros: 'No extra work', cons: 'Risk becoming obsolete', security_impact: -10, balance_impact: 5, masteryBoost: null }, { text: 'Go freelance', salary: 24000, level: 1, message: '🎯 Risky but rewarding!', pros: 'Complete independence', cons: 'No job security or benefits', security_impact: -30, balance_impact: 15, masteryBoost: null } ] }, { megatrend: 'Climate Change', title: 'Your Company Launches a Green Initiative', description: 'New sustainable job opportunities are opening up.', conceptQuiz: { question: 'What job sectors are growing because of climate change?', correctAnswer: 'Green energy, renewable tech, environmental management & sustainable agriculture', wrongAnswers: ['Coal and oil industries', 'Only government jobs matter'], conceptBrief: '🌍 Climate change is creating massive opportunities in renewable energy, environmental consulting, green construction & sustainable agriculture. Companies are racing to hire climate experts.' }, emergingJobs: ['Renewable Energy Engineer', 'Sustainability Consultant', 'Green Building Designer'], decliningJobs: ['Coal Plant Operator', 'Traditional Energy Worker'], choices: [ { text: 'Lead the green project', salary: 42000, level: 2.5, message: '🌍 Bold move!', pros: 'Lead cutting-edge initiative', cons: 'High pressure responsibility', security_impact: 10, balance_impact: -25, masteryBoost: 'climate' }, { text: 'Take evening sustainability classes', salary: 28000, level: 1.5, message: '⏸️ Gradual approach!', pros: 'Learn at your pace', cons: 'Slow career progress', security_impact: 5, balance_impact: -10, masteryBoost: 'climate' }, { text: 'Help a green startup on the side', salary: 48000, level: 2, message: '⚡ Double income!', pros: 'Dual income streams', cons: 'Burnout risk from overwork', security_impact: 8, balance_impact: -40, masteryBoost: 'climate' } ] }, { megatrend: 'Demographic Shifts', title: 'Diverse Team Members Join Your Company', description: 'How will you handle working with people from different backgrounds?', conceptQuiz: { question: 'Why do companies benefit from diverse teams?', correctAnswer: 'Different perspectives drive innovation and companies reach more global markets better', wrongAnswers: ['Diversity only looks good on paper', 'Homogeneous teams are more efficient'], conceptBrief: '🌈 Diverse teams are more innovative & creative. Companies with diverse leadership outperform competitors. Plus, global markets demand culturally competent teams. This is a business advantage, not just ethics.' }, emergingJobs: ['DEI Consultant', 'Cultural Coach', 'Inclusion Manager'], decliningJobs: ['Homogeneous-focused roles'], choices: [ { text: 'Lead diversity initiatives', salary: 37000, level: 2, message: '🌈 Leadership!', pros: 'Build inclusive culture', cons: 'Extra meetings and work', security_impact: 12, balance_impact: -15, masteryBoost: 'demo' }, { text: 'Take diversity training', salary: 30000, level: 1.5, message: '✓ Learning!', pros: 'Improve understanding', cons: 'Limited career impact', security_impact: 3, balance_impact: -5, masteryBoost: 'demo' }, { text: 'Just be genuine with coworkers', salary: 28000, level: 1, message: '🤝 Authentic!', pros: 'Stay authentic', cons: 'Miss advancement opportunities', security_impact: 2, balance_impact: 10, masteryBoost: null } ] }, { megatrend: 'Economic Power Shifts', title: 'International Project Opportunity', description: 'Your company has a global project. Will you join?', conceptQuiz: { question: 'How does "Economic Power Shift" affect jobs?', correctAnswer: 'Jobs are moving globally; companies hire talent worldwide. International skills matter more now', wrongAnswers: ['All jobs stay local forever', 'Only wealthy countries create jobs'], conceptBrief: '💰 Global markets are shifting. Asia & Africa are growing economic powers. Workers with international experience, language skills & global perspective earn more & have better job security.' }, emergingJobs: ['International Business Developer', 'Global Supply Chain Manager', 'Cross-cultural Strategist'], decliningJobs: ['Local-only specialists'], choices: [ { text: 'Travel for 4 weeks to lead it', salary: 35000, level: 2.5, message: '✈️ Global experience!', pros: 'Gain international expertise', cons: 'Time away from family', security_impact: 18, balance_impact: -30, masteryBoost: 'economic' }, { text: 'Help remotely from home', salary: 30000, level: 2, message: '🌐 Remote collab!', pros: 'Work-life balance maintained', cons: 'Miss face-to-face networking', security_impact: 8, balance_impact: 10, masteryBoost: 'economic' }, { text: 'Stay local and comfortable', salary: 26000, level: 1, message: '😔 Staying small!', pros: 'Keep stable routine', cons: 'Fall behind globally', security_impact: 5, balance_impact: 20, masteryBoost: null } ] } ];
+
+    const LOCK_IN_AREA_BY_MEGATREND = {
+      'Impactful Technology': 'emerging jobs',
+      'Climate Change': 'work environments',
+      'Demographic Shifts': 'types of employment',
+      'Economic Power Shifts': 'work environments'
+    };
+
+    const TARGET_SENTENCE_BY_MEGATREND = {
+      'Impactful Technology': 'Impactful Technology is affecting emerging jobs, by creating new roles that require digital skills, AI literacy, and human judgement.',
+      'Climate Change': 'Climate Change is affecting work environments, by making sustainability a core expectation and changing everyday workplace practices.',
+      'Demographic Shifts': 'Demographic Shifts is affecting types of employment, by increasing flexible work, part-time roles, and job sharing to suit different life stages.',
+      'Economic Power Shifts': 'Economic Power Shifts is affecting work environments, by increasing global collaboration, competition, and cross-cultural teamwork.'
+    };
+
+    const MEGATREND_RECAP = [
+      { name: 'Impactful Technology', emoji: '🤖', desc: 'AI & automation reshape skills', color: 'purple' },
+      { name: 'Climate Change', emoji: '🌍', desc: 'Sustainability changes work & jobs', color: 'green' },
+      { name: 'Demographic Shifts', emoji: '🌈', desc: 'Diversity & life stages reshape work', color: 'blue' },
+      { name: 'Economic Power Shifts', emoji: '💰', desc: 'Global markets reshape opportunity', color: 'yellow' }
+    ];
+
+    const ALL_WORK_ASPECTS = ['work environments', 'types of employment', 'emerging jobs', 'declining jobs'];
+
+    async function initSDK() {
+      await window.elementSdk.init({
+        defaultConfig: { title: 'Career Empire' },
+        onConfigChange: async () => {},
+        mapToCapabilities: () => ({ recolorables: [], borderables: [], fontEditable: undefined, fontSizeable: undefined }),
+        mapToEditPanelValues: (config) => new Map([['title', config.title]])
+      });
+
+      await window.dataSdk.init({
+        onDataChanged(data) {
+          allPlayers = data;
+          updateLeaderboard();
+          updateCommunityFund();
+          updateGlobalIndex();
+        }
+      });
+
+      if (window.lucide && typeof window.lucide.createIcons === 'function') {
+        window.lucide.createIcons();
+      }
+      attachLaunchButton();
+    }
+
+    initSDK();
+
+    function startGame() {
+      gameState.playerName = document.getElementById('player-name').value.trim();
+      gameState.schoolName = document.getElementById('school-name').value.trim();
+      gameState.classCode = document.getElementById('class-code').value.trim().toUpperCase();
+      if (!gameState.playerName) return;
+      document.getElementById('intro-screen').classList.add('hidden');
+      document.getElementById('nav-bar').classList.remove('hidden');
+      document.getElementById('gameplay-tab').classList.remove('hidden');
+      updateStats();
+      showScenario();
+    }
+
+    function displayScenario(scenario) {
+      const container = document.getElementById('scenario-container');
+      let badgeClass = 'tech-badge';
+      let bgClass = 'bg-purple-900 bg-opacity-30 border-l-4 border-purple-400';
+      if (scenario.megatrend === 'Climate Change') {
+        badgeClass = 'climate-badge';
+        bgClass = 'bg-green-900 bg-opacity-30 border-l-4 border-green-400';
+      } else if (scenario.megatrend === 'Demographic Shifts') {
+        badgeClass = 'demo-badge';
+        bgClass = 'bg-blue-900 bg-opacity-30 border-l-4 border-blue-400';
+      } else if (scenario.megatrend === 'Economic Power Shifts') {
+        badgeClass = 'economic-badge';
+        bgClass = 'bg-yellow-900 bg-opacity-30 border-l-4 border-yellow-400';
+      }
+
+      let html = `
+        <div class="card-glow p-8 rounded-xl ${bgClass} mb-8">
+          <span class="megatrend-badge ${badgeClass}">${scenario.megatrend}</span>
+          <h2 class="text-3xl font-bold mt-4 mb-3">${scenario.title}</h2>
+          <p class="text-base text-gray-200">${scenario.description}</p>
+        </div>
+        <div id="choices-section" class="space-y-4">
+      `;
+      scenario.choices.forEach((choice, idx) => {
+        const prosConsHTML = choice.pros ? `
+          <div class="mt-3 text-sm space-y-2 bg-black bg-opacity-30 p-3 rounded">
+            <p class="text-green-300">✓ ${choice.pros}</p>
+            <p class="text-red-300">✗ ${choice.cons}</p>
+            <div class="text-xs text-gray-400 mt-2 pt-2 border-t border-gray-600 space-y-1">
+              ${choice.security_impact !== undefined ? `<p>Security: ${choice.security_impact > 0 ? '+' : ''}${choice.security_impact}%</p>` : ''}
+              ${choice.balance_impact !== undefined ? `<p>Balance: ${choice.balance_impact > 0 ? '+' : ''}${choice.balance_impact}%</p>` : ''}
+            </div>
+          </div>
+        ` : '';
+        html += `
+          <div class="btn-choice p-4 rounded-lg cursor-pointer transition-all" onclick="selectChoice(${idx})">
+            <p class="text-white font-semibold">${choice.text}</p>
+            ${prosConsHTML}
+          </div>
+        `;
+      });
+      html += `
+        </div>
+        <div id="submit-section" class="mt-8 hidden">
+          <button onclick="submitChoice()" class="btn-primary text-white font-bold py-3 px-6 rounded-lg w-full">✓ Submit Your Choice</button>
+        </div>
+        <div id="feedback-section" class="mt-8 hidden">
+          <div class="card-glow p-6 rounded-xl border-l-4 border-blue-400">
+            <p id="feedback-text" class="text-lg text-gray-200 mb-4"></p>
+            <button onclick="showConceptChallenge()" class="btn-primary text-white font-bold py-2 px-6 rounded-lg w-full">Learn the Concept</button>
+          </div>
+        </div>
+      `;
+      container.innerHTML = html;
+      selectedChoiceIdx = null;
+    }
+
+    function selectChoice(idx) {
+      selectedChoiceIdx = idx;
+      document.querySelectorAll('#choices-section > div').forEach((el, i) => {
+        if (i === idx) el.classList.add('selected');
+        else el.classList.remove('selected');
+      });
+      document.getElementById('submit-section').classList.remove('hidden');
+    }
+
+    function submitChoice() {
+      if (selectedChoiceIdx === null) return;
+      const choice = currentScenario.choices[selectedChoiceIdx];
+      gameState.careerTitle = 'Professional';
+      gameState.annualSalary = choice.salary;
+      gameState.careerLevel = choice.level;
+      gameState.cumulativeNetWorth += choice.salary;
+      gameState.yearsPlayed++;
+      if (choice.security_impact !== undefined) gameState.jobSecurity = Math.max(0, Math.min(100, gameState.jobSecurity + choice.security_impact));
+      if (choice.balance_impact !== undefined) gameState.workLifeBalance = Math.max(0, Math.min(100, gameState.workLifeBalance + choice.balance_impact));
+      if (choice.masteryBoost) {
+        if (choice.masteryBoost === 'tech') gameState.techMastery += 15;
+        else if (choice.masteryBoost === 'climate') gameState.climateMastery += 15;
+        else if (choice.masteryBoost === 'demo') gameState.demoMastery += 15;
+        else if (choice.masteryBoost === 'economic') gameState.economicMastery += 15;
+      }
+      updateStats();
+      saveProgress('scenario_choice');
+      const feedbackMessage = `${choice.message}<br><br>You just explored <strong>"${currentScenario.megatrend}"</strong>. Cast your community vote below, then complete the concept challenge to learn deeply!`;
+      document.getElementById('choices-section').classList.add('hidden');
+      document.getElementById('submit-section').classList.add('hidden');
+      document.getElementById('feedback-section').classList.remove('hidden');
+      document.getElementById('feedback-section').innerHTML = `
+        <div class="card-glow p-6 rounded-xl border-l-4 border-blue-400">
+          <p id="feedback-text" class="text-lg text-gray-200 mb-4">${feedbackMessage}</p>
+        </div>
+      `;
+      showCommunityVotePrompt();
+    }
+
+    function showCommunityVotePrompt() {
+      const causes = [
+        { id: 'climate', label: '🌱 Climate & Sustainability' },
+        { id: 'tech', label: '🚀 Tech Education & Inclusion' },
+        { id: 'diversity', label: '🌈 Diversity & Economic Equity' },
+        { id: 'global', label: '💰 Global Opportunity Access' }
+      ];
+      const communityTax = Math.floor(gameState.annualSalary * 0.1);
+      const earnedThisYear = gameState.annualSalary;
+      const feedbackSection = document.getElementById('feedback-section');
+      const voteHTML = `
+        <div class="mt-6 pt-6 border-t border-blue-600">
+          <div class="mb-4 p-4 bg-blue-900 bg-opacity-40 rounded-lg border border-blue-500">
+            <p class="text-sm text-blue-200 mb-2">💰 <strong>Community Fund Contribution</strong></p>
+            <p class="text-xs text-gray-300">You earned <strong>$${earnedThisYear.toLocaleString()}</strong> this year. <strong>$${communityTax.toLocaleString()}</strong> (10%) goes to the community fund.</p>
+          </div>
+          <p class="text-sm font-semibold text-blue-300 mb-4">🗳️ Which cause do you want to support?</p>
+          <div class="space-y-2" id="vote-buttons-container">
+            ${causes.map(cause => `
+              <button onclick="castCommunityVote('${cause.id}'); updateVoteUI();" class="w-full text-left px-4 py-2 rounded-lg bg-slate-700 hover:bg-slate-600 text-gray-200 text-sm font-semibold transition-all" id="vote-btn-${cause.id}">
+                ${cause.label}
+              </button>
+            `).join('')}
+          </div>
+        </div>
+        <button onclick="showConceptChallenge()" class="btn-primary text-white font-bold py-2 px-6 rounded-lg w-full mt-6">Learn the Concept</button>
+      `;
+      feedbackSection.innerHTML += voteHTML;
+    }
+
+    function updateVoteUI() {
+      const container = document.getElementById('vote-buttons-container');
+      if (container) {
+        container.innerHTML = '<p class="text-sm font-semibold text-green-300">✓ Vote recorded! This cause will receive your support.</p>';
+      }
+    }
+
+    function showConceptChallenge() {
+      const modal = document.getElementById('concept-modal');
+      const content = document.getElementById('concept-content');
+      const quiz = currentScenario.conceptQuiz;
+      const answers = [quiz.correctAnswer, ...quiz.wrongAnswers].sort(() => Math.random() - 0.5);
+
+      content.innerHTML = `
+        <div class="card-glow p-6 rounded-lg bg-blue-900 bg-opacity-30 border-l-4 border-blue-400">
+          <p class="text-sm font-semibold text-blue-300 uppercase mb-2">📊 ${currentScenario.megatrend} — Key idea</p>
+          <p class="text-gray-200 text-base leading-relaxed">${quiz.conceptBrief}</p>
+        </div>
+        <div class="card-glow p-6 rounded-lg">
+          <p class="text-lg font-semibold text-purple-200 mb-4">${quiz.question}</p>
+          <div id="quiz-options" class="space-y-3">
+            ${answers.map(a => `
+              <button type="button" class="quiz-option w-full text-left" data-correct="${a === quiz.correctAnswer ? 'true' : 'false'}">
+                <p class="text-white">${a}</p>
+              </button>
+            `).join('')}
+          </div>
+          <p class="text-xs text-gray-400 mt-4">Tip: You must get this correct to unlock the typing challenge.</p>
+        </div>
+      `;
+
+      modal.classList.remove('hidden');
+      content.querySelectorAll('#quiz-options .quiz-option').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+          e.preventDefault();
+          answerQuiz(btn.getAttribute('data-correct') === 'true', btn);
+        });
+      });
+    }
+
+    function answerQuiz(isCorrect, element) {
+      const options = document.querySelectorAll('#quiz-options .quiz-option');
+      if (isCorrect) {
+        options.forEach(opt => opt.disabled = true);
+        element.classList.add('correct');
+        setTimeout(() => showLockInScreen(), 400);
+      } else {
+        element.classList.add('incorrect');
+        element.disabled = true;
+      }
+    }
+
+    function showLockInScreen() {
+      const content = document.getElementById('concept-content');
+      const megatrend = currentScenario.megatrend;
+      const correctAspect = LOCK_IN_AREA_BY_MEGATREND[megatrend] || 'work environments';
+      const targetSentence = TARGET_SENTENCE_BY_MEGATREND[megatrend] || `${megatrend} is affecting ${correctAspect}, by changing how work happens.`;
+
+      const recapHtml = MEGATREND_RECAP.map(t => {
+        const isHighlighted = t.name === megatrend;
+        return `
+          <div class="p-4 rounded-lg ${isHighlighted ? 'ring-2 ring-green-400 bg-green-900 bg-opacity-20' : 'bg-slate-800 bg-opacity-50'} border border-gray-600 text-center">
+            <p class="text-2xl mb-2">${t.emoji}</p>
+            <p class="font-semibold text-sm ${isHighlighted ? 'text-green-300' : 'text-gray-300'}">${t.name}</p>
+            <p class="text-xs text-gray-400 mt-1">${t.desc}</p>
+          </div>
+        `;
+      }).join('');
+
+      const aspectHtml2x2 = `
+        <div class="grid grid-cols-2 gap-4">
+          ${ALL_WORK_ASPECTS.map(area => `
+            <div class="p-4 rounded-lg ${area === correctAspect ? 'ring-2 ring-green-400 bg-green-900 bg-opacity-30 border-green-400' : 'bg-slate-800 bg-opacity-50 border-gray-600'} border">
+              <p class="${area === correctAspect ? 'text-green-300 font-bold' : 'text-gray-300'} text-base">${area === correctAspect ? '✓' : '•'} ${area}</p>
+            </div>
+          `).join('')}
+        </div>
+      `;
+
+      content.innerHTML = `
+        <div class="card-glow p-8 rounded-xl bg-blue-900 bg-opacity-30 border-l-4 border-blue-400">
+          <h3 class="text-xl font-bold mb-6 text-blue-300">📚 Megatrend recap</h3>
+          <div class="grid grid-cols-1 md:grid-cols-4 gap-4">${recapHtml}</div>
+        </div>
+        <div class="card-glow p-8 rounded-xl">
+          <h3 class="text-xl font-bold mb-6 text-purple-300">❓ Which aspect of work is changing?</h3>
+          ${aspectHtml2x2}
+        </div>
+        <div class="card-glow p-8 rounded-xl border-l-4 border-green-400">
+          <p class="text-lg font-semibold text-green-300 mb-4">📝 Type this EXACT sentence (case-sensitive) to unlock:</p>
+          <div class="bg-black bg-opacity-40 p-5 rounded-lg border border-green-400">
+            <p class="text-xs text-green-200 font-semibold uppercase mb-2">Target sentence</p>
+            <p id="target-sentence" class="text-green-200 text-sm sm:text-base font-semibold leading-relaxed whitespace-normal break-words"></p>
+            <div class="mt-5">
+              <label class="block text-sm text-gray-300 mb-2 font-semibold">Student typing area</label>
+              <input type="text" id="reflection-complete" class="w-full px-4 py-3 rounded-lg bg-white bg-opacity-10 border border-green-400 text-white placeholder-gray-400 focus:outline-none focus:border-green-300 text-sm sm:text-base" placeholder="Start typing the sentence exactly..." autocomplete="off" spellcheck="false" maxlength="250">
+              <div class="mt-3 flex items-center justify-between">
+                <div id="validation-feedback" class="text-lg font-bold min-h-[24px]"></div>
+                <div class="text-xs text-gray-400">Progress: <span id="type-progress">0</span>/<span id="type-total">0</span></div>
+              </div>
+              <p class="text-xs text-gray-400 mt-2">✅ Correct characters are accepted. ❌ Wrong characters are blocked.</p>
+            </div>
+          </div>
+          <button id="unlock-btn" type="button" onclick="submitReflectionAndPlayArcade()" class="btn-primary text-white font-bold py-3 px-6 rounded-lg w-full mt-6 opacity-50 cursor-not-allowed" disabled>🎮 Unlock Arcade Game</button>
+          <p id="lockin-error" class="text-red-400 text-xs mt-2 hidden">Sentence must match exactly (including capitals and punctuation).</p>
+        </div>
+      `;
+
+      const targetEl = document.getElementById('target-sentence');
+      const inputEl = document.getElementById('reflection-complete');
+      const feedbackEl = document.getElementById('validation-feedback');
+      const unlockBtn = document.getElementById('unlock-btn');
+      const progressEl = document.getElementById('type-progress');
+      const totalEl = document.getElementById('type-total');
+      const errEl = document.getElementById('lockin-error');
+
+      targetEl.textContent = targetSentence;
+      totalEl.textContent = targetSentence.length;
+      inputEl.addEventListener('paste', (e) => e.preventDefault());
+
+      const allowedControlKeys = new Set(['Backspace', 'Delete', 'ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown', 'Home', 'End', 'Tab']);
+      inputEl.addEventListener('keydown', (e) => {
+        if (allowedControlKeys.has(e.key) || e.ctrlKey || e.metaKey) return;
+        if (e.key.length !== 1) return;
+        const current = inputEl.value;
+        const nextIndex = current.length;
+        if (nextIndex >= targetSentence.length) {
+          e.preventDefault();
+          return;
+        }
+        const expectedChar = targetSentence[nextIndex];
+        if (e.key !== expectedChar) {
+          e.preventDefault();
+          feedbackEl.textContent = '❌';
+          feedbackEl.style.color = '#ef4444';
+          inputEl.style.borderColor = '#ef4444';
+          errEl.classList.remove('hidden');
+          inputEl.style.transform = 'translateX(2px)';
+          setTimeout(() => (inputEl.style.transform = 'translateX(-2px)'), 60);
+          setTimeout(() => (inputEl.style.transform = 'translateX(0px)'), 120);
+        } else {
+          feedbackEl.textContent = '✅';
+          feedbackEl.style.color = '#4ade80';
+          inputEl.style.borderColor = '#4ade80';
+          errEl.classList.add('hidden');
+        }
+      });
+
+      inputEl.addEventListener('input', () => {
+        const current = inputEl.value;
+        progressEl.textContent = current.length;
+        const isComplete = current === targetSentence;
+        if (isComplete) {
+          feedbackEl.textContent = '✅ Sentence complete — unlocked!';
+          feedbackEl.style.color = '#4ade80';
+          unlockBtn.disabled = false;
+          unlockBtn.classList.remove('opacity-50', 'cursor-not-allowed');
+          errEl.classList.add('hidden');
+        } else {
+          unlockBtn.disabled = true;
+          unlockBtn.classList.add('opacity-50', 'cursor-not-allowed');
+        }
+      });
+
+      setTimeout(() => inputEl.focus(), 120);
+      window.__LOCKIN_TARGET_SENTENCE__ = targetSentence;
+    }
+
+    function submitReflectionAndPlayArcade() {
+      const inputEl = document.getElementById('reflection-complete');
+      const errEl = document.getElementById('lockin-error');
+      const typed = (inputEl ? inputEl.value : '').trimEnd();
+      const target = window.__LOCKIN_TARGET_SENTENCE__ || '';
+      if (typed !== target) {
+        if (errEl) errEl.classList.remove('hidden');
+        return;
+      }
+      gameState.reflectionFromLastScenario = typed;
+      saveProgress('reflection_complete');
+      document.getElementById('concept-modal').classList.add('hidden');
+      showConceptRecap();
+    }
+
+    function showConceptRecap() {
+      const modal = document.getElementById('concept-modal');
+      const content = document.getElementById('concept-content');
+      const megatrend = currentScenario.megatrend;
+      const recap = MEGATREND_RECAP.find(t => t.name === megatrend);
+      content.innerHTML = `
+        <div class="card-glow p-8 rounded-xl text-center border-l-4 border-green-400 mb-8">
+          <p class="text-6xl mb-4">${recap.emoji}</p>
+          <h3 class="text-2xl font-bold text-green-300 mb-4">Concept Locked In! 🔐</h3>
+          <p class="text-xl text-gray-200 mb-6">${recap.name}</p>
+          <p class="text-base text-gray-300 mb-8 leading-relaxed font-semibold">"${gameState.reflectionFromLastScenario}"</p>
+          <p class="text-sm text-gray-400 mb-6">Your learning is saved.</p>
+        </div>
+        <div class="card-glow p-8 rounded-xl border-l-4 border-blue-400">
+          <div class="text-center mb-8">
+            <p class="text-2xl font-bold text-blue-300 mb-4">🎮</p>
+            <h3 class="text-2xl font-bold text-blue-200 mb-6">Time for a Break!</h3>
+            <p class="text-lg text-gray-200 mb-8">You've earned it. Work-life balance matters.</p>
+            <p class="text-base text-gray-300 leading-relaxed mb-8">Let's play a quick arcade game to unwind. Test your reflexes while celebrating what you've learned about <strong>${recap.name}</strong>.</p>
+          </div>
+          <button onclick="playArcadeNow()" class="btn-primary text-white font-bold py-3 px-8 rounded-lg w-full text-lg">🎮 Let's Play</button>
+        </div>
+      `;
+      modal.classList.remove('hidden');
+    }
+
+    function playArcadeNow() {
+      document.getElementById('concept-modal').classList.add('hidden');
+      showMiniGame();
+    }
+
+    function startMiniGameInputs() {
+      if (miniGameAbortController) miniGameAbortController.abort();
+      miniGameAbortController = new AbortController();
+      miniKeysPressed = {};
+      document.addEventListener('keydown', (e) => {
+        if (['ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown', ' '].includes(e.key)) e.preventDefault();
+        miniKeysPressed[e.key] = true;
+      }, { signal: miniGameAbortController.signal });
+      document.addEventListener('keyup', (e) => {
+        miniKeysPressed[e.key] = false;
+      }, { signal: miniGameAbortController.signal });
+    }
+
+    function stopMiniGameInputs() {
+      if (miniGameAbortController) {
+        miniGameAbortController.abort();
+        miniGameAbortController = null;
+      }
+      miniKeysPressed = {};
+    }
+
+    function showMiniGame() {
+      const modal = document.getElementById('game-modal');
+      modal.classList.remove('hidden');
+      startMiniGameInputs();
+      const megatrendBadge = document.getElementById('modal-megatrend');
+      megatrendBadge.textContent = currentScenario.megatrend;
+      if (currentScenario.megatrend === 'Impactful Technology') {
+        megatrendBadge.style.backgroundColor = 'rgba(167, 139, 250, 0.2)';
+        megatrendBadge.style.color = '#c4b5fd';
+        megatrendBadge.style.borderColor = 'rgba(167, 139, 250, 0.4)';
+      } else if (currentScenario.megatrend === 'Climate Change') {
+        megatrendBadge.style.backgroundColor = 'rgba(134, 239, 172, 0.2)';
+        megatrendBadge.style.color = '#a7f3d0';
+        megatrendBadge.style.borderColor = 'rgba(134, 239, 172, 0.4)';
+      } else if (currentScenario.megatrend === 'Demographic Shifts') {
+        megatrendBadge.style.backgroundColor = 'rgba(147, 197, 253, 0.2)';
+        megatrendBadge.style.color = '#93c5fd';
+        megatrendBadge.style.borderColor = 'rgba(147, 197, 253, 0.4)';
+      } else if (currentScenario.megatrend === 'Economic Power Shifts') {
+        megatrendBadge.style.backgroundColor = 'rgba(252, 211, 77, 0.2)';
+        megatrendBadge.style.color = '#fde68a';
+        megatrendBadge.style.borderColor = 'rgba(252, 211, 77, 0.4)';
+      }
+      megatrendBadge.style.borderWidth = '1px';
+      megatrendBadge.style.borderStyle = 'solid';
+      const games = ['spaceInvaders', 'pacman', 'snake'];
+      const selectedGame = games[Math.floor(Math.random() * games.length)];
+      const canvas = document.getElementById('game-canvas');
+      const ctx = canvas.getContext('2d');
+      const miniState = { time: 45, score: 0, bonusHits: 0 };
+      const gameLoopId = setInterval(() => {
+        miniState.time--;
+        if (miniState.time <= 0) {
+          clearInterval(gameLoopId);
+          stopMiniGameInputs();
+          endMiniGame(miniState.score, miniState.bonusHits);
+        }
+      }, 1000);
+      if (selectedGame === 'spaceInvaders') runSpaceInvaders(canvas, ctx, miniState, currentScenario.megatrend);
+      else if (selectedGame === 'pacman') runPacman(canvas, ctx, miniState, currentScenario.megatrend);
+      else runSnake(canvas, ctx, miniState, currentScenario.megatrend);
+    }
+
+    function runSpaceInvaders(canvas, ctx, gameState, megatrendFocus) {
+      const width = canvas.width;
+      const height = canvas.height;
+      let playerX = width / 2 - 15;
+      const playerWidth = 30;
+      const playerHeight = 20;
+      let enemies = [];
+      let bullets = [];
+      let enemyDirection = 1;
+      let frameCount = 0;
+      const megatrendMap = {
+        'Impactful Technology': { emoji: '🤖', color: '#7c3aed' },
+        'Climate Change': { emoji: '🌍', color: '#22c55e' },
+        'Demographic Shifts': { emoji: '🌈', color: '#3b82f6' },
+        'Economic Power Shifts': { emoji: '💰', color: '#fbbf24' }
+      };
+      const megatrendData = megatrendMap[megatrendFocus] || megatrendMap['Impactful Technology'];
+      let lastShotAt = 0;
+      function initEnemies() {
+        enemies = [];
+        for (let row = 0; row < 3; row++) {
+          for (let col = 0; col < 8; col++) {
+            enemies.push({ x: 40 + col * 45, y: 30 + row * 40, width: 35, height: 30, isBonus: Math.random() > 0.8 });
+          }
+        }
+      }
+      initEnemies();
+      function animate() {
+        ctx.fillStyle = '#000';
+        ctx.fillRect(0, 0, width, height);
+        frameCount++;
+        if (miniKeysPressed['ArrowLeft']) playerX = Math.max(0, playerX - 8);
+        if (miniKeysPressed['ArrowRight']) playerX = Math.min(width - playerWidth, playerX + 8);
+        if (miniKeysPressed[' '] && performance.now() - lastShotAt > 200) {
+          bullets.push({ x: playerX + playerWidth / 2 - 2.5, y: height - 50 });
+          lastShotAt = performance.now();
+        }
+        bullets = bullets.filter(b => { b.y -= 10; return b.y > 0; });
+        if (frameCount % 30 === 0) {
+          let changeDirection = false;
+          enemies.forEach(e => {
+            e.x += enemyDirection * 15;
+            if (e.x <= 10 || e.x + e.width >= width - 10) changeDirection = true;
+          });
+          if (changeDirection) {
+            enemyDirection *= -1;
+            enemies.forEach(e => { e.y += 30; });
+          }
+        }
+        for (let bIdx = bullets.length - 1; bIdx >= 0; bIdx--) {
+          for (let eIdx = enemies.length - 1; eIdx >= 0; eIdx--) {
+            const b = bullets[bIdx];
+            const e = enemies[eIdx];
+            if (b && e && b.x < e.x + e.width && b.x > e.x && b.y < e.y + e.height && b.y > e.y) {
+              gameState.score += e.isBonus ? 50 : 10;
+              if (e.isBonus) gameState.bonusHits++;
+              enemies.splice(eIdx, 1);
+              bullets.splice(bIdx, 1);
+              break;
+            }
+          }
+        }
+        enemies.forEach(e => { if (e.y > height - 100) gameState.time = 0; });
+        if (enemies.length === 0) {
+          initEnemies();
+          enemyDirection = 1;
+          frameCount = 0;
+        }
+        enemies.forEach(e => {
+          ctx.fillStyle = megatrendData.color;
+          ctx.fillRect(e.x, e.y, e.width, e.height);
+          if (e.isBonus) {
+            ctx.strokeStyle = '#ffff00';
+            ctx.lineWidth = 2;
+            ctx.strokeRect(e.x, e.y, e.width, e.height);
+          }
+          ctx.font = 'bold 20px Arial';
+          ctx.textAlign = 'center';
+          ctx.textBaseline = 'middle';
+          ctx.fillText(megatrendData.emoji, e.x + e.width / 2, e.y + e.height / 2);
+        });
+        bullets.forEach(b => { ctx.fillStyle = '#00ffff'; ctx.fillRect(b.x, b.y, 5, 10); });
+        ctx.fillStyle = '#00ff00';
+        ctx.fillRect(playerX, height - 40, playerWidth, playerHeight);
+        ctx.beginPath();
+        ctx.moveTo(playerX + playerWidth / 2, height - 45);
+        ctx.lineTo(playerX, height - 35);
+        ctx.lineTo(playerX + playerWidth, height - 35);
+        ctx.closePath();
+        ctx.fill();
+        ctx.textAlign = 'left';
+        ctx.textBaseline = 'alphabetic';
+        ctx.fillStyle = '#fff';
+        ctx.font = 'bold 20px Arial';
+        ctx.fillText('SPACE INVADERS', width / 2 - 85, 30);
+        ctx.font = '16px Arial';
+        ctx.fillText(`Score: ${gameState.score}`, 10, height - 20);
+        ctx.fillText(`Bonus: ${gameState.bonusHits}`, 10, height - 40);
+        if (gameState.time <= 10) ctx.fillStyle = gameState.time <= 5 ? '#ff0000' : '#ffaa00';
+        ctx.font = 'bold 20px Arial';
+        ctx.fillText(`${Math.max(0, gameState.time)}s`, width - 80, height - 20);
+        if (gameState.time > 0) requestAnimationFrame(animate);
+      }
+      animate();
+    }
+
+    function runPacman(canvas, ctx, gameState, megatrendFocus) {
+      const width = canvas.width;
+      const cellSize = 40;
+      const cols = 15;
+      const rows = 10;
+      let pacX = 2;
+      let pacY = 2;
+      let nextDirX = 0, nextDirY = 0;
+      let dirX = 0, dirY = 0;
+      let pellets = [];
+      let frameCount = 0;
+      const megatrendMap = {
+        'Impactful Technology': { emoji: '🤖', color: '#7c3aed' },
+        'Climate Change': { emoji: '🌍', color: '#22c55e' },
+        'Demographic Shifts': { emoji: '🌈', color: '#3b82f6' },
+        'Economic Power Shifts': { emoji: '💰', color: '#fbbf24' }
+      };
+      const megatrendData = megatrendMap[megatrendFocus] || megatrendMap['Impactful Technology'];
+      const maze = [
+        [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],
+        [1,0,0,0,0,0,1,0,0,0,0,0,0,0,1],
+        [1,0,1,1,0,1,1,0,1,1,0,1,1,0,1],
+        [1,0,1,0,0,0,0,0,0,0,0,0,1,0,1],
+        [1,0,0,0,1,1,0,1,1,0,1,1,0,0,1],
+        [1,1,1,0,0,0,0,0,0,0,0,0,0,1,1],
+        [1,0,0,0,1,1,0,1,1,0,1,1,0,0,1],
+        [1,0,1,0,0,0,0,0,0,0,0,0,1,0,1],
+        [1,0,1,1,0,1,1,0,1,1,0,1,1,0,1],
+        [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1]
+      ];
+      function isWall(x, y) {
+        if (x < 0 || x >= cols || y < 0 || y >= rows) return true;
+        return maze[y][x] === 1;
+      }
+      for (let y = 0; y < rows; y++) {
+        for (let x = 0; x < cols; x++) {
+          if (!isWall(x, y)) pellets.push({ x, y, emoji: megatrendData.emoji, isBonus: Math.random() > 0.85 });
+        }
+      }
+      function animate() {
+        ctx.fillStyle = '#000';
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+        frameCount++;
+        if (miniKeysPressed['ArrowLeft']) { nextDirX = -1; nextDirY = 0; }
+        if (miniKeysPressed['ArrowRight']) { nextDirX = 1; nextDirY = 0; }
+        if (miniKeysPressed['ArrowUp']) { nextDirX = 0; nextDirY = -1; }
+        if (miniKeysPressed['ArrowDown']) { nextDirX = 0; nextDirY = 1; }
+        if (frameCount % 10 === 0) {
+          if ((nextDirX !== 0 || nextDirY !== 0) && !isWall(pacX + nextDirX, pacY + nextDirY)) { dirX = nextDirX; dirY = nextDirY; }
+          if (!isWall(pacX + dirX, pacY + dirY)) { pacX += dirX; pacY += dirY; }
+        }
+        for (let y = 0; y < rows; y++) {
+          for (let x = 0; x < cols; x++) {
+            if (maze[y][x] === 1) {
+              ctx.fillStyle = '#1e3a8a';
+              ctx.fillRect(x * cellSize, y * cellSize, cellSize, cellSize);
+              ctx.strokeStyle = '#3b82f6';
+              ctx.strokeRect(x * cellSize, y * cellSize, cellSize, cellSize);
+            }
+          }
+        }
+        pellets.forEach(p => {
+          ctx.fillStyle = megatrendData.color;
+          ctx.fillRect(p.x * cellSize, p.y * cellSize, cellSize, cellSize);
+          if (p.isBonus) {
+            ctx.strokeStyle = '#ffff00';
+            ctx.lineWidth = 3;
+            ctx.strokeRect(p.x * cellSize, p.y * cellSize, cellSize, cellSize);
+          }
+          ctx.font = 'bold 28px Arial';
+          ctx.textAlign = 'center';
+          ctx.textBaseline = 'middle';
+          ctx.fillText(p.emoji, p.x * cellSize + cellSize / 2, p.y * cellSize + cellSize / 2);
+        });
+        pellets = pellets.filter(p => {
+          if (p.x === pacX && p.y === pacY) {
+            gameState.score += p.isBonus ? 50 : 10;
+            if (p.isBonus) gameState.bonusHits++;
+            return false;
+          }
+          return true;
+        });
+        ctx.fillStyle = '#ffff00';
+        const centerX = pacX * cellSize + cellSize / 2;
+        const centerY = pacY * cellSize + cellSize / 2;
+        const radius = 14;
+        let mouthAngle = 0;
+        if (dirX === 1) mouthAngle = 0;
+        else if (dirX === -1) mouthAngle = Math.PI;
+        else if (dirY === -1) mouthAngle = Math.PI * 1.5;
+        else if (dirY === 1) mouthAngle = Math.PI * 0.5;
+        ctx.beginPath();
+        ctx.arc(centerX, centerY, radius, mouthAngle + 0.2, mouthAngle + 1.8 * Math.PI);
+        ctx.lineTo(centerX, centerY);
+        ctx.fill();
+        ctx.textAlign = 'left';
+        ctx.textBaseline = 'alphabetic';
+        ctx.fillStyle = '#fff';
+        ctx.font = 'bold 24px Arial';
+        ctx.fillText('PAC-MAN', 20, 380);
+        ctx.font = '18px Arial';
+        ctx.fillText(`Score: ${gameState.score}`, 20, 360);
+        ctx.fillText(`Pellets: ${pellets.length}`, 250, 360);
+        if (gameState.time <= 10) ctx.fillStyle = gameState.time <= 5 ? '#ff0000' : '#ffaa00';
+        ctx.font = 'bold 24px Arial';
+        ctx.fillText(`${Math.max(0, gameState.time)}s`, 500, 360);
+        if (gameState.time > 0) requestAnimationFrame(animate);
+      }
+      animate();
+    }
+
+    function runSnake(canvas, ctx, gameState, megatrendFocus) {
+      const width = canvas.width;
+      const height = canvas.height;
+      const cellSize = 40;
+      let snake = [{ x: 10, y: 5 }];
+      let foods = [];
+      let dirX = 1, dirY = 0;
+      let nextDirX = 1, nextDirY = 0;
+      let frameCount = 0;
+      const megatrendMap = {
+        'Impactful Technology': { emoji: '🤖', color: '#7c3aed' },
+        'Climate Change': { emoji: '🌍', color: '#22c55e' },
+        'Demographic Shifts': { emoji: '🌈', color: '#3b82f6' },
+        'Economic Power Shifts': { emoji: '💰', color: '#fbbf24' }
+      };
+      const megatrendData = megatrendMap[megatrendFocus] || megatrendMap['Impactful Technology'];
+      function spawnFood() {
+        for (let i = foods.length; i < 3; i++) {
+          let x, y, canSpawn;
+          do {
+            x = Math.floor(Math.random() * (width / cellSize));
+            y = Math.floor(Math.random() * (height / cellSize));
+            canSpawn = !snake.some(seg => seg.x === x && seg.y === y);
+          } while (!canSpawn);
+          foods.push({ x, y, emoji: megatrendData.emoji, isBonus: Math.random() > 0.7 });
+        }
+      }
+      spawnFood();
+      function animate() {
+        ctx.fillStyle = '#000';
+        ctx.fillRect(0, 0, width, height);
+        frameCount++;
+        if (miniKeysPressed['ArrowLeft'] && dirX === 0) { nextDirX = -1; nextDirY = 0; }
+        if (miniKeysPressed['ArrowRight'] && dirX === 0) { nextDirX = 1; nextDirY = 0; }
+        if (miniKeysPressed['ArrowUp'] && dirY === 0) { nextDirX = 0; nextDirY = -1; }
+        if (miniKeysPressed['ArrowDown'] && dirY === 0) { nextDirX = 0; nextDirY = 1; }
+        if (frameCount % 8 === 0) {
+          dirX = nextDirX;
+          dirY = nextDirY;
+          const head = { x: (snake[0].x + dirX + width / cellSize) % (width / cellSize), y: (snake[0].y + dirY + height / cellSize) % (height / cellSize) };
+          snake.unshift(head);
+          let ateFood = false;
+          foods = foods.filter(f => {
+            if (head.x === f.x && head.y === f.y) {
+              ateFood = true;
+              gameState.score += f.isBonus ? 50 : 10;
+              if (f.isBonus) gameState.bonusHits++;
+              return false;
+            }
+            return true;
+          });
+          if (!ateFood) snake.pop();
+          if (foods.length < 3) spawnFood();
+        }
+        ctx.fillStyle = '#00ff00';
+        snake.forEach(segment => ctx.fillRect(segment.x * cellSize + 2, segment.y * cellSize + 2, cellSize - 4, cellSize - 4));
+        foods.forEach(f => {
+          if (f.isBonus) {
+            ctx.fillStyle = '#ffff00';
+            ctx.fillRect(f.x * cellSize + 6, f.y * cellSize + 6, cellSize - 12, cellSize - 12);
+            ctx.strokeStyle = '#ff8800';
+            ctx.lineWidth = 2;
+            ctx.strokeRect(f.x * cellSize + 6, f.y * cellSize + 6, cellSize - 12, cellSize - 12);
+          } else {
+            ctx.fillStyle = megatrendData.color;
+            ctx.fillRect(f.x * cellSize + 8, f.y * cellSize + 8, cellSize - 16, cellSize - 16);
+          }
+          ctx.font = 'bold 24px Arial';
+          ctx.textAlign = 'center';
+          ctx.textBaseline = 'middle';
+          ctx.fillText(f.emoji, f.x * cellSize + cellSize / 2, f.y * cellSize + cellSize / 2);
+        });
+        ctx.textAlign = 'left';
+        ctx.textBaseline = 'alphabetic';
+        ctx.fillStyle = '#fff';
+        ctx.font = 'bold 20px Arial';
+        ctx.fillText('SNAKE', width / 2 - 40, 30);
+        ctx.font = '16px Arial';
+        ctx.fillText(`Score: ${gameState.score}`, 10, 60);
+        ctx.fillText(`Length: ${snake.length}`, 10, 85);
+        if (gameState.time <= 10) ctx.fillStyle = gameState.time <= 5 ? '#ff0000' : '#ffaa00';
+        ctx.font = 'bold 20px Arial';
+        ctx.fillText(`${Math.max(0, gameState.time)}s`, width / 2 - 15, height - 10);
+        if (gameState.time > 0) requestAnimationFrame(animate);
+      }
+      animate();
+    }
+
+    function endMiniGame(score, bonusHits) {
+      const masteryGain = Math.floor(score / 10) + bonusHits * 5;
+      if (currentScenario.megatrend === 'Impactful Technology') gameState.techMastery = Math.min(100, gameState.techMastery + masteryGain);
+      else if (currentScenario.megatrend === 'Climate Change') gameState.climateMastery = Math.min(100, gameState.climateMastery + masteryGain);
+      else if (currentScenario.megatrend === 'Demographic Shifts') gameState.demoMastery = Math.min(100, gameState.demoMastery + masteryGain);
+      else if (currentScenario.megatrend === 'Economic Power Shifts') gameState.economicMastery = Math.min(100, gameState.economicMastery + masteryGain);
+      const salaryBoost = Math.floor(score * 10);
+      gameState.annualSalary += salaryBoost;
+      gameState.jobSecurity = Math.min(100, gameState.jobSecurity + 5);
+      updateStats();
+      const feedbackText = document.getElementById('feedback-text');
+      if (feedbackText) feedbackText.innerHTML = `🎮 Final Score: ${score} | Bonus Hits: ${bonusHits}<br><strong>Rewards unlocked:</strong> +${masteryGain}% mastery • +$${salaryBoost} annual salary • +5% job security 🚀`;
+      document.querySelector('#game-modal button').textContent = 'Continue to Next Scenario';
+      saveProgress('mini_game_end');
+    }
+
+    function closeMiniGame() {
+      stopMiniGameInputs();
+      document.getElementById('game-modal').classList.add('hidden');
+      showScenario();
+    }
+
+    function showScenario() {
+      const isFirstScenario = gameState.yearsPlayed === 0;
+      if (!isFirstScenario && Math.random() < 0.25) showLifeShock();
+      else {
+        currentScenario = scenarios[Math.floor(Math.random() * scenarios.length)];
+        displayScenario(currentScenario);
+      }
+    }
+
+    function showLifeShock() {
+      const shock = lifeShocks[Math.floor(Math.random() * lifeShocks.length)];
+      const container = document.getElementById('scenario-container');
+      let html = `
+        <div class="card-glow p-8 rounded-xl bg-red-900 bg-opacity-30 border-l-4 border-red-400 mb-8">
+          <p class="text-sm font-semibold text-red-300 uppercase mb-2">⚡ Life Event</p>
+          <h2 class="text-3xl font-bold mb-3">${shock.title}</h2>
+          <p class="text-base text-gray-200">${shock.description}</p>
+        </div>
+        <div id="choices-section" class="space-y-4">
+      `;
+      shock.choices.forEach((choice, idx) => {
+        html += `
+          <div class="btn-choice p-4 rounded-lg cursor-pointer transition-all" onclick="selectLifeShockChoice(${idx})">
+            <p class="text-white font-semibold">${choice.text}</p>
+            <div class="mt-3 text-sm space-y-2 bg-black bg-opacity-30 p-3 rounded">
+              <p class="text-blue-300">Message: ${choice.message}</p>
+            </div>
+          </div>
+        `;
+      });
+      html += `
+        </div>
+        <div id="submit-section" class="mt-8 hidden">
+          <button onclick="submitLifeShockChoice()" class="btn-primary text-white font-bold py-3 px-6 rounded-lg w-full">✓ Make Your Choice</button>
+        </div>
+      `;
+      container.innerHTML = html;
+      currentShock = shock;
+      selectedChoiceIdx = null;
+    }
+
+    function selectLifeShockChoice(idx) {
+      selectedChoiceIdx = idx;
+      document.querySelectorAll('#choices-section > div').forEach((el, i) => {
+        if (i === idx) el.classList.add('selected');
+        else el.classList.remove('selected');
+      });
+      document.getElementById('submit-section').classList.remove('hidden');
+    }
+
+    function submitLifeShockChoice() {
+      if (selectedChoiceIdx === null) return;
+      const choice = currentShock.choices[selectedChoiceIdx];
+      gameState.annualSalary = Math.floor(gameState.annualSalary * choice.salary_mult);
+      gameState.cumulativeNetWorth += Math.floor(gameState.annualSalary * 0.5);
+      gameState.yearsPlayed++;
+      gameState.workLifeBalance = Math.max(0, Math.min(100, gameState.workLifeBalance + choice.balance_gain));
+      gameState.jobSecurity = Math.max(0, Math.min(100, gameState.jobSecurity + choice.security_loss));
+      updateStats();
+      saveProgress('life_shock');
+      document.getElementById('scenario-container').innerHTML = `
+        <div class="card-glow p-8 rounded-xl border-l-4 border-yellow-400 mb-8">
+          <p class="text-lg font-semibold text-yellow-300 mb-4">${choice.message}</p>
+          <p class="text-gray-200 mb-6">Life happens. You adapted. Your salary is now $${gameState.annualSalary.toLocaleString()}, and your work-life balance is ${gameState.workLifeBalance}%.</p>
+          <button onclick="continueAfterLifeShock()" class="btn-primary text-white font-bold py-3 px-6 rounded-lg w-full">Continue Your Journey</button>
+        </div>
+      `;
+    }
+
+    function continueAfterLifeShock() {
+      currentScenario = scenarios[Math.floor(Math.random() * scenarios.length)];
+      displayScenario(currentScenario);
+    }
+
+    function updateStats() {
+      document.getElementById('player-title').textContent = `${gameState.playerName}'s Career`;
+      document.getElementById('player-role').textContent = gameState.careerTitle;
+      document.getElementById('net-worth').textContent = `$${gameState.cumulativeNetWorth.toLocaleString()}`;
+      document.getElementById('salary').textContent = `$${gameState.annualSalary.toLocaleString()}`;
+      document.getElementById('level').textContent = gameState.careerLevel;
+      document.getElementById('years').textContent = gameState.yearsPlayed;
+      const securityPercent = Math.max(0, Math.min(100, gameState.jobSecurity));
+      const balancePercent = Math.max(0, Math.min(100, gameState.workLifeBalance));
+      const masteryPercent = Math.min(100, (gameState.techMastery + gameState.climateMastery + gameState.demoMastery + gameState.economicMastery) / 4);
+      document.getElementById('security-bar').style.width = securityPercent + '%';
+      document.getElementById('security-text').textContent = securityPercent + '%';
+      document.getElementById('balance-bar').style.width = balancePercent + '%';
+      document.getElementById('balance-text').textContent = balancePercent + '%';
+      document.getElementById('mastery-bar').style.width = masteryPercent + '%';
+      document.getElementById('mastery-text').textContent = Math.floor(masteryPercent) + '%';
+      checkMasteryMilestones();
+      document.getElementById('tech-mastery-fill').style.width = Math.min(100, gameState.techMastery) + '%';
+      document.getElementById('tech-mastery-text').textContent = Math.min(100, gameState.techMastery) + '%';
+      document.getElementById('climate-mastery-fill').style.width = Math.min(100, gameState.climateMastery) + '%';
+      document.getElementById('climate-mastery-text').textContent = Math.min(100, gameState.climateMastery) + '%';
+      document.getElementById('demo-mastery-fill').style.width = Math.min(100, gameState.demoMastery) + '%';
+      document.getElementById('demo-mastery-text').textContent = Math.min(100, gameState.demoMastery) + '%';
+      document.getElementById('economic-mastery-fill').style.width = Math.min(100, gameState.economicMastery) + '%';
+      document.getElementById('economic-mastery-text').textContent = Math.min(100, gameState.economicMastery) + '%';
+      document.getElementById('security-bar').style.borderColor = securityPercent < 30 ? '#ef4444' : 'rgba(59, 130, 246, 0.2)';
+      document.getElementById('balance-bar').style.borderColor = balancePercent < 30 ? '#ef4444' : 'rgba(59, 130, 246, 0.2)';
+    }
+
+    function checkMasteryMilestones() {
+      const masteries = [
+        { name: 'Tech', emoji: '🤖', value: gameState.techMastery },
+        { name: 'Climate', emoji: '🌍', value: gameState.climateMastery },
+        { name: 'Demo', emoji: '🌈', value: gameState.demoMastery },
+        { name: 'Economic', emoji: '💰', value: gameState.economicMastery }
+      ];
+      masteries.forEach(m => {
+        const milestone50 = `milestone_${m.name}_50`;
+        const milestone100 = `milestone_${m.name}_100`;
+        if (m.value >= 50 && !localStorage.getItem(milestone50)) {
+          localStorage.setItem(milestone50, 'true');
+          showMilestoneNotification(`${m.emoji} ${m.name} Mastery: Advanced!`, `You've reached 50% mastery in ${m.name}. You're becoming an expert!`);
+        }
+        if (m.value >= 100 && !localStorage.getItem(milestone100)) {
+          localStorage.setItem(milestone100, 'true');
+          showMilestoneNotification(`${m.emoji} ${m.name} Mastery: MASTER!`, `🏆 You've achieved 100% mastery! You're a ${m.name} expert!`);
+        }
+      });
+    }
+
+    function showMilestoneNotification(title, message) {
+      const notification = document.createElement('div');
+      notification.style.cssText = 'position: fixed; top: 20px; right: 20px; background: linear-gradient(135deg, #22c55e 0%, #16a34a 100%); border: 2px solid #4ade80; border-radius: 12px; padding: 20px; max-width: 300px; z-index: 10000; box-shadow: 0 0 40px rgba(34, 197, 94, 0.4); animation: slideUp 0.4s ease-out;';
+      notification.innerHTML = `<p style="font-size: 18px; font-weight: bold; color: white; margin: 0 0 8px 0;">${title}</p><p style="font-size: 14px; color: #dcfce7; margin: 0;">${message}</p>`;
+      document.body.appendChild(notification);
+      setTimeout(() => {
+        notification.style.animation = 'fadeOut 0.4s ease-in forwards';
+        setTimeout(() => notification.remove(), 400);
+      }, 3000);
+    }
+
+    async function saveProgress(checkpoint = 'manual') {
+      const checkpointKey = `${gameState.playerName}|${checkpoint}|year:${gameState.yearsPlayed}|salary:${gameState.annualSalary}|net:${gameState.cumulativeNetWorth}`;
+      if (checkpointKey === lastCheckpointKey) return;
+      lastCheckpointKey = checkpointKey;
+      const payload = {
+        player_name: gameState.playerName,
+        school_name: gameState.schoolName,
+        class_code: gameState.classCode,
+        career_title: gameState.careerTitle,
+        annual_salary: gameState.annualSalary,
+        cumulative_net_worth: gameState.cumulativeNetWorth,
+        skills: 'Communication',
+        work_environment: 'Office',
+        employment_type: 'Full-time',
+        megatrend_exposure: 'All',
+        choices_made: 'Multiple',
+        career_level: gameState.careerLevel,
+        job_security: gameState.jobSecurity,
+        work_life_balance: gameState.workLifeBalance,
+        community_vote: gameState.lastCommunityVote || 'none',
+        years_played: gameState.yearsPlayed,
+        life_shocks_experienced: 'None',
+        tech_mastery: gameState.techMastery,
+        climate_mastery: gameState.climateMastery,
+        demo_mastery: gameState.demoMastery,
+        economic_mastery: gameState.economicMastery,
+        learning_reflections: 'Reflecting',
+        checkpoint,
+        timestamp: new Date().toISOString()
+      };
+      const result = await window.dataSdk.create(payload);
+      if (!result.isOk) console.error('Failed to save progress:', result.error);
+    }
+
+    function switchTab(tab) {
+      document.querySelectorAll('[id$="-tab"]').forEach(el => el.classList.add('hidden'));
+      document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+      document.getElementById(tab + '-tab').classList.remove('hidden');
+      document.getElementById('tab-' + tab).classList.add('active');
+    }
+
+    function updateLeaderboard() {
+      const list = document.getElementById('leaderboard-list');
+      if (!allPlayers.length) {
+        list.innerHTML = '<p class="text-gray-400">No players yet. Start a game to join the leaderboard!</p>';
+        return;
+      }
+      const sorted = [...allPlayers].sort((a, b) => b.cumulative_net_worth - a.cumulative_net_worth).slice(0, 10);
+      list.innerHTML = sorted.map((p, i) => `
+        <div class="card-glow p-4 rounded-lg flex justify-between items-center">
+          <div>
+            <p class="font-bold text-lg">#${i + 1} ${p.player_name}</p>
+            <p class="text-sm text-gray-400">${p.career_title} • Level ${p.career_level}</p>
+          </div>
+          <div class="text-right">
+            <p class="text-xl font-bold text-yellow-300">$${p.cumulative_net_worth.toLocaleString()}</p>
+            <p class="text-xs text-gray-400">${p.years_played} years</p>
+          </div>
+        </div>
+      `).join('');
+    }
+
+    function updateCommunityFund() {
+      const votes = { climate: 0, tech: 0, diversity: 0, global: 0 };
+      let totalVotes = 0;
+      allPlayers.forEach(p => {
+        if (p.community_vote && votes[p.community_vote] !== undefined) {
+          votes[p.community_vote]++;
+          totalVotes++;
+        }
+      });
+      ['climate', 'tech', 'diversity', 'global'].forEach(key => {
+        const pct = totalVotes === 0 ? 0 : Math.round((votes[key] / totalVotes) * 100);
+        document.getElementById(`vote-${key}`).textContent = pct;
+        document.getElementById(`count-${key}`).textContent = votes[key];
+        document.getElementById(`bar-${key}`).style.width = pct + '%';
+      });
+    }
+
+    function castCommunityVote(cause) {
+      gameState.lastCommunityVote = cause;
+    }
+
+    function updateGlobalIndex() {
+      if (allPlayers.length === 0) {
+        document.getElementById('overall-readiness').textContent = '0';
+        document.getElementById('readiness-label').textContent = 'just starting';
+        ['global-tech', 'global-climate', 'global-demo', 'global-economic'].forEach(id => document.getElementById(id).textContent = '0');
+        ['global-tech-bar', 'global-climate-bar', 'global-demo-bar', 'global-economic-bar'].forEach(id => document.getElementById(id).style.width = '0%');
+        return;
+      }
+      const techAvg = Math.floor(allPlayers.reduce((sum, p) => sum + (p.tech_mastery || 0), 0) / allPlayers.length);
+      const climateAvg = Math.floor(allPlayers.reduce((sum, p) => sum + (p.climate_mastery || 0), 0) / allPlayers.length);
+      const demoAvg = Math.floor(allPlayers.reduce((sum, p) => sum + (p.demo_mastery || 0), 0) / allPlayers.length);
+      const economicAvg = Math.floor(allPlayers.reduce((sum, p) => sum + (p.economic_mastery || 0), 0) / allPlayers.length);
+      const overall = Math.floor((techAvg + climateAvg + demoAvg + economicAvg) / 4);
+      document.getElementById('overall-readiness').textContent = overall;
+      let label = 'just starting';
+      if (overall >= 75) label = 'a MASTER of megatrends';
+      else if (overall >= 60) label = 'well-prepared for the future';
+      else if (overall >= 40) label = 'developing understanding';
+      else if (overall >= 20) label = 'beginning to learn';
+      document.getElementById('readiness-label').textContent = label;
+      document.getElementById('global-tech').textContent = techAvg;
+      document.getElementById('global-climate').textContent = climateAvg;
+      document.getElementById('global-demo').textContent = demoAvg;
+      document.getElementById('global-economic').textContent = economicAvg;
+      document.getElementById('global-tech-bar').style.width = techAvg + '%';
+      document.getElementById('global-climate-bar').style.width = climateAvg + '%';
+      document.getElementById('global-demo-bar').style.width = demoAvg + '%';
+      document.getElementById('global-economic-bar').style.width = economicAvg + '%';
+    }
+
+    function resetGame() {
+      gameState = {
+        playerName: '',
+        schoolName: '',
+        classCode: '',
+        careerTitle: 'Intern',
+        annualSalary: 25000,
+        cumulativeNetWorth: 0,
+        yearsPlayed: 0,
+        careerLevel: 1,
+        jobSecurity: 75,
+        workLifeBalance: 60,
+        techMastery: 0,
+        climateMastery: 0,
+        demoMastery: 0,
+        economicMastery: 0,
+        lastCommunityVote: null
+      };
+      document.getElementById('gameplay-tab').classList.add('hidden');
+      document.getElementById('leaderboard-tab').classList.add('hidden');
+      document.getElementById('community-tab').classList.add('hidden');
+      document.getElementById('global-tab').classList.add('hidden');
+      document.getElementById('nav-bar').classList.add('hidden');
+      document.getElementById('intro-screen').classList.remove('hidden');
+      document.getElementById('player-name').value = '';
+      document.getElementById('school-name').value = '';
+      document.getElementById('class-code').value = '';
+      document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+      document.getElementById('tab-gameplay').classList.add('active');
+    }
+
+    function openTeacherModal() {
+      document.getElementById('teacher-modal').classList.remove('hidden');
+      document.getElementById('teacher-pass').focus();
+    }
+
+    function closeTeacherModal() {
+      document.getElementById('teacher-modal').classList.add('hidden');
+      document.getElementById('teacher-pass').value = '';
+      document.getElementById('teacher-login-form').classList.remove('hidden');
+      document.getElementById('teacher-dashboard').classList.add('hidden');
+      currentTeacherCode = null;
+    }
+
+    function verifyTeacher() {
+      const entered = document.getElementById('teacher-pass').value.trim();
+      if (entered === TEACHER_SESSION_CODE) {
+        currentTeacherCode = generateTeacherCode();
+        document.getElementById('teacher-login-form').classList.add('hidden');
+        document.getElementById('teacher-dashboard').classList.remove('hidden');
+        document.getElementById('display-class-code').textContent = currentTeacherCode;
+        refreshTeacherDashboard();
+      } else {
+        alert('❌ Wrong code');
+      }
+    }
+
+    function generateTeacherCode() {
+      const timestamp = Date.now().toString(36).toUpperCase().slice(-4);
+      const random = Math.random().toString(36).substring(2, 6).toUpperCase();
+      return `${timestamp}${random}`;
+    }
+
+    function refreshTeacherDashboard() {
+      const classStudents = allPlayers.filter(p => p.class_code === currentTeacherCode);
+      const studentCount = classStudents.length;
+      let totalMastery = 0;
+      let totalSecurity = 0;
+      classStudents.forEach(s => {
+        const mastery = (s.tech_mastery + s.climate_mastery + s.demo_mastery + s.economic_mastery) / 4;
+        totalMastery += mastery;
+        totalSecurity += s.job_security;
+      });
+      const avgMastery = studentCount === 0 ? 0 : Math.floor(totalMastery / studentCount);
+      const avgSecurity = studentCount === 0 ? 0 : Math.floor(totalSecurity / studentCount);
+      document.getElementById('student-count').textContent = studentCount;
+      document.getElementById('class-avg-mastery').textContent = avgMastery + '%';
+      document.getElementById('class-avg-security').textContent = avgSecurity + '%';
+    }
+
+    async function resetTeacherClass() {
+      if (!currentTeacherCode) return;
+      if (!confirm('⚠️ Are you sure? This will delete all student data for your class code. This cannot be undone.')) return;
+      const classStudents = allPlayers.filter(p => p.class_code === currentTeacherCode);
+      for (const student of classStudents) {
+        const result = await window.dataSdk.delete(student);
+        if (!result.isOk) console.error('Failed to delete student:', result.error);
+      }
+      alert(`✅ Deleted ${classStudents.length} student records from your class.`);
+      refreshTeacherDashboard();
+    }
+
+    function attachLaunchButton() {
+      const launchBtn = document.getElementById('launch-btn');
+      if (launchBtn) {
+        launchBtn.addEventListener('click', function(e) {
+          e.preventDefault();
+          startGame();
+        });
+      }
+      document.getElementById('player-name').addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') startGame();
+      });
+    }
+  </script>
+</body>
+</html>
