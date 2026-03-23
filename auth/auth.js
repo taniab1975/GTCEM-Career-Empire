@@ -569,7 +569,8 @@ function initStudentLogin() {
       });
 
       feedback.className = "feedback good";
-      feedback.textContent = `Welcome, ${student.display_name}. Your student login is now connected to the real database.`;
+      feedback.textContent = `Welcome, ${student.display_name}. Redirecting you to your student hub.`;
+      redirectAfterDelay("../dashboards/student.html");
     } catch (error) {
       feedback.className = "feedback bad";
       feedback.textContent = error.message || "Student login failed.";

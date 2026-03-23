@@ -1,0 +1,98 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Career Empire Global Shop</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../dashboards/dashboard.css">
+</head>
+<body>
+  <main class="page-shell">
+    <nav class="dashboard-nav">
+      <a class="dashboard-nav-link" href="../index.html">Platform Home</a>
+      <a class="dashboard-nav-link" href="../dashboards/student.html">Student Hub</a>
+      <a class="dashboard-nav-link" href="../index.html">Megatrends</a>
+      <a class="dashboard-nav-link" href="../modules/lifelong-learning/index.html">Lifelong Learning</a>
+      <a class="dashboard-nav-link active" href="./index.html">Global Shop</a>
+    </nav>
+
+    <section class="hero">
+      <article class="hero-card">
+        <span class="eyebrow">Global Shop</span>
+        <h1 id="shop-hero-title">Spend your gains on the life you are building.</h1>
+        <p id="shop-hero-subtitle" class="subtitle">
+          This is the shared shop for Career Empire. Assets bought here are meant to matter across modules, not just inside one game.
+        </p>
+        <div id="shop-badge-stack" class="badge-stack">
+          <span class="badge">Loading student account...</span>
+        </div>
+      </article>
+      <div class="hero-side">
+        <article class="panel">
+          <div class="section-title">
+            <h2>How It Works</h2>
+            <p class="status-good">Shared progress</p>
+          </div>
+          <p>Buy assets once and keep them as part of your wider Career Empire build. Over time these can affect multiple modules, not just one.</p>
+        </article>
+        <article class="panel">
+          <div class="section-title">
+            <h2>Current Build</h2>
+            <p class="status-watch">Growing</p>
+          </div>
+          <p id="shop-build-note">The first wave of upgrades supports study, tools, transport, wellbeing, and home stability.</p>
+        </article>
+      </div>
+    </section>
+
+    <section class="metrics-grid">
+      <article class="metric">
+        <div class="metric-label">Spendable Wealth</div>
+        <div id="shop-spendable" class="metric-value">$0</div>
+        <div class="metric-note">Current budget for upgrades</div>
+      </article>
+      <article class="metric">
+        <div class="metric-label">Assets Owned</div>
+        <div id="shop-assets-owned" class="metric-value">0</div>
+        <div class="metric-note">Persistent across the platform</div>
+      </article>
+      <article class="metric">
+        <div class="metric-label">Salary</div>
+        <div id="shop-salary" class="metric-value">$0</div>
+        <div class="metric-note">Current player profile salary</div>
+      </article>
+      <article class="metric">
+        <div class="metric-label">Net Worth</div>
+        <div id="shop-net-worth" class="metric-value">$0</div>
+        <div class="metric-note">Live profile snapshot</div>
+      </article>
+    </section>
+
+    <section class="two-column">
+      <article class="panel">
+        <div class="section-title">
+          <h2>Available Upgrades</h2>
+          <p>Buy once, keep across modules</p>
+        </div>
+        <div id="shop-grid" class="module-grid"></div>
+      </article>
+
+      <article class="panel">
+        <div class="section-title">
+          <h2>Owned Inventory</h2>
+          <p>Your current life build</p>
+        </div>
+        <div id="owned-shop-items" class="list"></div>
+      </article>
+    </section>
+  </main>
+
+  <script src="../config/supabase-config.js"></script>
+  <script src="../src/services/supabase-browser.js"></script>
+  <script src="./shop.js"></script>
+  <script src="../src/services/feedback-widget.js"></script>
+</body>
+</html>

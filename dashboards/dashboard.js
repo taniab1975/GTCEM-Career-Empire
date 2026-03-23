@@ -267,6 +267,24 @@ function renderStudentTimeline(items) {
   `).join("");
 }
 
+function renderStudentShopPreview(items) {
+  const container = document.getElementById("student-shop-preview");
+  if (!container) return;
+  container.innerHTML = items.map(item => `
+    <article class="module-card ${item.spotlight ? "spotlight" : ""}">
+      <div class="kicker">${item.state}</div>
+      <h3>${item.title}</h3>
+      <p>${item.summary}</p>
+      <div class="pill-row">
+        ${item.tags.map(tag => `<span class="pill">${tag}</span>`).join("")}
+      </div>
+      <div class="module-actions">
+        <a class="module-link" href="${item.launchPath}">${item.launchLabel}</a>
+      </div>
+    </article>
+  `).join("");
+}
+
 function renderTeacherInterventions(items) {
   const container = document.getElementById("teacher-interventions");
   if (!container) return;
@@ -541,6 +559,19 @@ async function renderStudentLiveData(players, skillsData) {
       launchPath: "../modules/lifelong-learning/index.html",
       launchLabel: "Open Lifelong Learning",
       tags: ["Planning", "Growth", "Reflection"]
+    }
+  ]);
+  renderStudentShopPreview([
+    {
+      title: "Global Shop",
+      state: assetsOwned ? `${assetsOwned} owned` : "Ready to build",
+      summary: assetsOwned
+        ? "Your shared inventory is live. Open the shop to buy more upgrades that carry across the platform."
+        : "Buy study, tool, transport, and lifestyle upgrades that connect to the wider Career Empire build.",
+      spotlight: true,
+      launchPath: "../shop/index.html",
+      launchLabel: "Open Global Shop",
+      tags: ["Shared inventory", "Cross-module", "Life build"]
     }
   ]);
   renderStudentTimeline(history.slice(0, 3).map(entry => ({
