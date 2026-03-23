@@ -118,11 +118,100 @@
     .leaderboard-skill { display: inline-flex; align-items: center; gap: 8px; margin-top: 8px; font-size: 12px; color: #cbd5e1; }
     .leaderboard-skill img { width: 28px; height: 28px; object-fit: contain; border-radius: 10px; background: rgba(255, 255, 255, 0.06); padding: 4px; border: 1px solid rgba(255, 255, 255, 0.12); }
 
+    .platform-home-shell { min-height: 100vh; background:
+      radial-gradient(circle at top left, rgba(59, 130, 246, 0.18), transparent 28%),
+      radial-gradient(circle at bottom right, rgba(34, 197, 94, 0.12), transparent 24%),
+      linear-gradient(145deg, #020817, #0f172a 45%, #13233f 100%); }
+    .platform-home-grid { display: grid; grid-template-columns: 1.2fr 0.8fr; gap: 24px; }
+    .platform-tile-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; margin-top: 18px; }
+    .platform-tile { padding: 20px; border-radius: 18px; background: rgba(15, 23, 42, 0.62); border: 1px solid rgba(96, 165, 250, 0.18); }
+    .platform-pill-row { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 16px; }
+    .platform-pill { padding: 8px 12px; border-radius: 999px; border: 1px solid rgba(255,255,255,0.12); background: rgba(255,255,255,0.05); font-size: 12px; color: #cbd5e1; }
+    .platform-action-row { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 18px; }
+    .platform-ghost { display: inline-flex; align-items: center; justify-content: center; padding: 12px 18px; border-radius: 14px; border: 1px solid rgba(255,255,255,0.14); background: rgba(255,255,255,0.05); color: #e2e8f0; text-decoration: none; font-weight: 700; }
+    .platform-side-card { padding: 22px; border-radius: 20px; background: rgba(15, 23, 42, 0.7); border: 1px solid rgba(96, 165, 250, 0.18); }
+    .platform-side-card + .platform-side-card { margin-top: 18px; }
+    .platform-status { color: #93c5fd; font-size: 14px; }
+    .platform-kicker { display: inline-flex; padding: 6px 12px; border-radius: 999px; font-size: 12px; letter-spacing: 0.08em; text-transform: uppercase; color: #7dd3fc; border: 1px solid rgba(125, 211, 252, 0.2); background: rgba(14, 165, 233, 0.08); }
+    .platform-hidden { display: none !important; }
+
     body { box-sizing: border-box; }
+
+    @media (max-width: 900px) {
+      .platform-home-grid, .platform-tile-grid { grid-template-columns: 1fr; }
+    }
   </style>
 </head>
 <body class="h-full text-white">
-  <div id="app" class="h-full w-full flex flex-col">
+  <div id="platform-home" class="platform-home-shell">
+    <div class="px-4 sm:px-8 py-8 sm:py-12">
+      <div class="max-w-6xl mx-auto platform-home-grid">
+        <div class="space-y-6">
+          <div class="card-glow p-8 rounded-xl">
+            <span class="platform-kicker">Career Empire</span>
+            <h1 class="text-4xl sm:text-6xl font-bold mt-4 mb-4">One front door for teachers, students, modules, and the whole game ecosystem.</h1>
+            <p class="text-lg text-slate-200 leading-relaxed">Career Empire turns Careers and Employability into a connected game world where students build skills, income, assets, and future pathways while teachers track real progress and evidence.</p>
+            <div class="platform-pill-row">
+              <span class="platform-pill">Teacher accounts and classes</span>
+              <span class="platform-pill">Student dashboards</span>
+              <span class="platform-pill">Megatrends live</span>
+              <span class="platform-pill">Lifelong Learning live</span>
+              <span class="platform-pill">Employability skills tracking</span>
+            </div>
+            <div class="platform-action-row">
+              <a class="btn-primary text-white font-bold py-3 px-6 rounded-lg" href="./auth/student-login.html">Student Login</a>
+              <a class="btn-primary text-white font-bold py-3 px-6 rounded-lg" href="./auth/teacher-login.html">Teacher Login</a>
+              <button type="button" class="platform-ghost" onclick="openMegatrendsHome()">Open Megatrends</button>
+              <a class="platform-ghost" href="./modules/lifelong-learning/index.html">Open Lifelong Learning</a>
+            </div>
+          </div>
+
+          <div class="platform-tile-grid">
+            <div class="platform-tile">
+              <h3 class="text-xl font-bold text-blue-200 mb-2">Students</h3>
+              <p class="text-slate-300">Log in, build your career, earn income, buy upgrades, level up employability skills, and shape your class impact.</p>
+            </div>
+            <div class="platform-tile">
+              <h3 class="text-xl font-bold text-green-200 mb-2">Teachers</h3>
+              <p class="text-slate-300">Create classes, issue student usernames, manage passwords, monitor evidence, and target learning support.</p>
+            </div>
+            <div class="platform-tile">
+              <h3 class="text-xl font-bold text-purple-200 mb-2">Modules</h3>
+              <p class="text-slate-300">Megatrends and Lifelong Learning are already playable as part of the same long-term student journey.</p>
+            </div>
+            <div class="platform-tile">
+              <h3 class="text-xl font-bold text-yellow-200 mb-2">Shared Progress</h3>
+              <p class="text-slate-300">Dashboards, leaderboards, class contribution, assets, and feedback all connect across the platform.</p>
+            </div>
+          </div>
+        </div>
+
+        <div>
+          <div class="platform-side-card">
+            <p class="platform-status font-semibold mb-3">Current session</p>
+            <div id="platform-session-summary" class="text-slate-200 space-y-2">
+              <p>No active student or teacher session detected yet.</p>
+            </div>
+            <div class="platform-action-row">
+              <a class="platform-ghost" href="./dashboards/student.html">Student Dashboard</a>
+              <a class="platform-ghost" href="./dashboards/teacher.html">Teacher Dashboard</a>
+            </div>
+          </div>
+
+          <div class="platform-side-card">
+            <p class="platform-status font-semibold mb-3">Quick launch</p>
+            <div class="space-y-3 text-slate-300">
+              <p><strong class="text-white">Teacher setup:</strong> register, create a class, add students, manage passwords.</p>
+              <p><strong class="text-white">Student flow:</strong> log in, play Megatrends or Lifelong Learning, then check dashboards and leaderboards.</p>
+              <p><strong class="text-white">Feedback:</strong> every screen includes a feedback button so bugs and suggestions come back to you.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div id="app" class="h-full w-full flex flex-col platform-hidden">
     <div id="nav-bar" class="bg-gradient-to-r from-blue-900 to-blue-800 p-4 border-b border-blue-700 hidden w-full flex-shrink-0">
       <div class="max-w-6xl mx-auto flex gap-4">
         <button onclick="switchTab('gameplay')" class="tab-btn active px-4 py-2 rounded text-sm font-semibold" id="tab-gameplay">🎮 Gameplay</button>
@@ -768,7 +857,63 @@
 
     initSDK();
 
+    function hidePlatformHome() {
+      document.getElementById('platform-home').classList.add('platform-hidden');
+      document.getElementById('app').classList.remove('platform-hidden');
+    }
+
+    function showPlatformHome() {
+      document.getElementById('platform-home').classList.remove('platform-hidden');
+      document.getElementById('app').classList.add('platform-hidden');
+    }
+
+    function renderPlatformSessionSummary() {
+      const authState = JSON.parse(localStorage.getItem('career-empire-auth-demo') || '{}');
+      const session = JSON.parse(localStorage.getItem('career-empire-session') || '{}');
+      const target = document.getElementById('platform-session-summary');
+      if (!target) return;
+
+      const studentLogin = authState.studentLogin;
+      const teacherLogin = authState.teacherLogin || authState.teacher;
+      const classroom = authState.classroom;
+
+      if (studentLogin?.username) {
+        target.innerHTML = `
+          <p><strong class="text-white">Student:</strong> ${studentLogin.displayName || studentLogin.username}</p>
+          <p><strong class="text-white">School:</strong> ${studentLogin.schoolName || 'School not set'}</p>
+          <p><strong class="text-white">Class:</strong> ${studentLogin.classCode || classroom?.classCode || 'Class not set'}</p>
+          <p><strong class="text-white">Current role:</strong> ${session.careerTitle || 'Career Builder'}</p>
+        `;
+        return;
+      }
+
+      if (teacherLogin?.email) {
+        target.innerHTML = `
+          <p><strong class="text-white">Teacher:</strong> ${teacherLogin.fullName || teacherLogin.email}</p>
+          <p><strong class="text-white">School:</strong> ${teacherLogin.schoolName || 'School not set'}</p>
+          <p><strong class="text-white">Class:</strong> ${classroom?.name || 'No class selected yet'}</p>
+          <p><strong class="text-white">Class code:</strong> ${classroom?.classCode || 'Pending'}</p>
+        `;
+        return;
+      }
+
+      target.innerHTML = '<p>No active student or teacher session detected yet.</p>';
+    }
+
+    function openMegatrendsHome() {
+      hidePlatformHome();
+      document.getElementById('intro-screen').classList.remove('hidden');
+      document.getElementById('nav-bar').classList.add('hidden');
+      document.getElementById('gameplay-tab').classList.add('hidden');
+      document.getElementById('leaderboard-tab').classList.add('hidden');
+      document.getElementById('community-tab').classList.add('hidden');
+      document.getElementById('global-tab').classList.add('hidden');
+      renderIntroLaunchState(null);
+      prefillFromLoggedInStudent();
+    }
+
     function startGame() {
+      hidePlatformHome();
       gameState.playerName = document.getElementById('player-name').value.trim();
       gameState.schoolName = document.getElementById('school-name').value.trim();
       gameState.classCode = document.getElementById('class-code').value.trim().toUpperCase();
@@ -1924,11 +2069,13 @@
       document.getElementById('player-name').value = '';
       document.getElementById('school-name').value = '';
       document.getElementById('class-code').value = '';
+      showPlatformHome();
       renderIntroLaunchState(null);
       prefillFromLoggedInStudent();
       document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
       document.getElementById('tab-gameplay').classList.add('active');
       localStorage.removeItem(PLAYER_SESSION_KEY);
+      renderPlatformSessionSummary();
     }
 
     function openTeacherModal() {
@@ -2006,6 +2153,8 @@
         if (e.key === 'Enter') startGame();
       });
     }
+
+    renderPlatformSessionSummary();
 
     function buildEmployabilitySnapshotFromState() {
       const overallMastery = Math.round((gameState.techMastery + gameState.climateMastery + gameState.demoMastery + gameState.economicMastery) / 4);
