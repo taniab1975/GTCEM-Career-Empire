@@ -426,6 +426,44 @@
       100% { transform: translateY(0px) rotate(0deg); }
     }
 
+    .megatrends-hero-card {
+      padding: 34px 28px;
+      border-radius: 22px;
+      text-align: center;
+      background: rgba(15, 23, 42, 0.74);
+      border: 1px solid rgba(96, 165, 250, 0.22);
+      box-shadow: 0 20px 40px rgba(2, 8, 23, 0.3);
+    }
+    .megatrends-video-card {
+      padding: 22px;
+      border-radius: 18px;
+      background: rgba(15, 23, 42, 0.7);
+      border: 1px solid rgba(96, 165, 250, 0.18);
+    }
+    .megatrends-video-card video {
+      width: 100%;
+      border-radius: 16px;
+      border: 1px solid rgba(96, 165, 250, 0.16);
+      background: #020617;
+      box-shadow: 0 16px 30px rgba(2, 8, 23, 0.28);
+    }
+    .megatrends-info-card {
+      padding: 24px 28px;
+      border-radius: 18px;
+      background: rgba(15, 23, 42, 0.7);
+      border: 1px solid rgba(96, 165, 250, 0.18);
+      box-shadow: 0 18px 34px rgba(2, 8, 23, 0.24);
+    }
+    .megatrends-entry-wrap {
+      max-width: 28rem;
+      margin: 0 auto;
+    }
+    .megatrends-entry-actions {
+      display: grid;
+      gap: 12px;
+      margin-top: 20px;
+    }
+
     body { box-sizing: border-box; }
 
     @media (max-width: 900px) {
@@ -591,9 +629,8 @@
         <button onclick="switchTab('gameplay')" class="tab-btn active px-4 py-2 rounded text-sm font-semibold" id="tab-gameplay">🎮 Gameplay</button>
         <button onclick="switchTab('leaderboard')" class="tab-btn px-4 py-2 rounded text-sm font-semibold" id="tab-leaderboard">🏆 Leaderboard</button>
         <button onclick="switchTab('community')" class="tab-btn px-4 py-2 rounded text-sm font-semibold" id="tab-community">🏛️ Community</button>
-        <button onclick="switchTab('global')" class="tab-btn px-4 py-2 rounded text-sm font-semibold" id="tab-global">🌍 Global</button>
-        <button onclick="openStudentDashboard()" class="tab-btn px-4 py-2 rounded text-sm font-semibold">🧑‍🎓 Student Hub</button>
-        <button onclick="openTeacherDashboard()" class="tab-btn px-4 py-2 rounded text-sm font-semibold">👨‍🏫 Teacher Hub</button>
+        <button onclick="switchTab('global')" class="tab-btn px-4 py-2 rounded text-sm font-semibold" id="tab-global">🌍 Global Index</button>
+        <button onclick="openGlobalShop()" class="tab-btn px-4 py-2 rounded text-sm font-semibold">🛍️ Shop</button>
         <button onclick="resetGame()" class="ml-auto px-4 py-2 rounded text-sm font-semibold bg-red-900 hover:bg-red-800 text-red-100">🔄 Reset</button>
       </div>
     </div>
@@ -601,9 +638,17 @@
     <div id="intro-screen" class="flex-1 w-full bg-gradient-to-b from-slate-950 to-slate-900 overflow-x-hidden overflow-y-auto">
       <div class="px-4 sm:px-8 py-8 sm:py-12 w-full">
         <div class="max-w-4xl mx-auto space-y-8">
-          <div class="card-glow p-8 rounded-xl text-center">
+          <div class="megatrends-hero-card">
             <h2 class="text-4xl font-bold mb-4 text-blue-300">🚀 Career Empire</h2>
             <p class="text-lg text-gray-200">Navigate four megatrends. Build your career. Shape your future.</p>
+          </div>
+
+          <div class="megatrends-video-card">
+            <p class="text-sm font-semibold text-blue-300 uppercase tracking-wide mb-4 text-center">Megatrends Overview Video</p>
+            <video controls playsinline preload="metadata">
+              <source src="./Assets/videos/megatrends-welcome.mp4" type="video/mp4">
+              Your browser does not support the video tag.
+            </video>
           </div>
 
           <div>
@@ -628,48 +673,49 @@
             </div>
           </div>
 
-          <div class="card-glow p-8 rounded-xl max-w-2xl mx-auto w-full mb-8">
+          <div class="megatrends-info-card max-w-2xl mx-auto w-full mb-8">
             <h3 class="text-lg font-bold mb-4 text-blue-300">💡 What You'll Learn</h3>
-            <ul class="text-sm text-gray-200 space-y-2">
-              <li><strong>Megatrends</strong> – Long-lasting, transformational shifts that reshape work &amp; society</li>
-              <li><strong>Career Impact</strong> – How jobs emerge, decline, and evolve with megatrends</li>
-              <li><strong>Future Skills</strong> – What employers actually need from workers tomorrow</li>
-              <li><strong>Work Environments</strong> – How workplace culture, structure, and type evolve</li>
-              <li><strong>Resilience</strong> – Navigating life shocks while building your career</li>
-            </ul>
-            <a href="https://cewaedu.sharepoint.com/:v:/s/8102EmmanuelCatholicCollegeSuccess/PublicShare/IQDtCfDyI_GQQqQ0HAZxQkgNASpTCYnAk7Y0HoNI7if8yTY?e=epiaBD&amp;t=0s" target="_blank" rel="noopener noreferrer" class="inline-block mt-4 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-sm font-semibold transition-all">▶️ Watch Introduction Video</a>
+            <div class="text-sm text-gray-200 space-y-4 leading-relaxed">
+              <p><strong>The nature of work</strong></p>
+              <div class="pl-4 space-y-1">
+                <p>• the concept of megatrends</p>
+                <p>• types of megatrends, including:</p>
+                <div class="pl-5 space-y-1 text-gray-300">
+                  <p>• economic power shifts</p>
+                  <p>• demographic shifts</p>
+                  <p>• impactful technology</p>
+                  <p>• climate change</p>
+                </div>
+                <p>• the impact of megatrends on the future of work, including:</p>
+                <div class="pl-5 space-y-1 text-gray-300">
+                  <p>• work environments</p>
+                  <p>• types of employment</p>
+                  <p>• emerging and declining jobs</p>
+                </div>
+              </div>
+              <p><strong>Related Vocabulary from SCSA Glossary of Terms</strong></p>
+              <div class="space-y-2 text-gray-300">
+                <p><strong class="text-white">Megatrend:</strong> A significant &amp; long-lasting development that has a transformational impact on the way we live, work and do business</p>
+                <p><strong class="text-white">Demographic Shift:</strong> The change in the size and nature of a population due to migration and changes in birth and death rates.</p>
+                <p><strong class="text-white">Economic Power Shift:</strong> The long-term global shift away from established advanced economies to emerging market countries.</p>
+                <p><strong class="text-white">Impactful technologies:</strong> The emergence of technologies that have the capacity to improve products, services and processes, but to also cause disruption and uncertainty for society and the economy.</p>
+              </div>
+            </div>
           </div>
 
-          <div id="school-setup-info" class="card-glow p-6 rounded-xl max-w-2xl mx-auto w-full mb-8 bg-blue-900 bg-opacity-20 border-l-4 border-blue-400">
-            <p class="text-sm text-blue-200"><strong>📚 Class Connection:</strong> If your teacher provided a class code, enter it below to connect your progress with your classmates. Your class will see aggregate mastery on the Global Index. Teachers can manage their class separately.</p>
-          </div>
-
-          <div class="px-4 sm:px-8 py-8">
-            <div class="max-w-md mx-auto w-full">
-              <div class="card-glow p-8 rounded-xl">
-                <h3 id="launch-card-title" class="text-2xl font-bold mb-3 text-center">Ready to Begin?</h3>
-                <p id="launch-card-copy" class="text-sm text-gray-300 text-center mb-6">Enter your details to launch the Megatrends module.</p>
-                <div id="auth-continue-summary" class="hidden mb-6 p-4 rounded-lg bg-blue-950 bg-opacity-50 border border-blue-500 text-center">
+          <div class="px-4 sm:px-8 py-6">
+            <div id="megatrends-entry-wrap" class="megatrends-entry-wrap">
+              <div class="megatrends-info-card text-center">
+                <h3 id="launch-card-title" class="text-2xl font-bold mb-3 text-center">Start Megatrends</h3>
+                <p id="launch-card-copy" class="text-sm text-gray-300 text-center mb-4">Watch the intro, then launch straight into the first scenario.</p>
+                <div id="auth-continue-summary" class="hidden mb-4 p-4 rounded-lg bg-blue-950 bg-opacity-50 border border-blue-500 text-center">
                   <p class="text-xs uppercase tracking-wide text-blue-300 mb-2">Logged in student</p>
                   <p id="auth-continue-name" class="text-xl font-bold text-white"></p>
                   <p id="auth-continue-meta" class="text-sm text-blue-100 mt-1"></p>
                 </div>
-                <div class="space-y-4">
-                  <div id="player-name-group">
-                    <label for="player-name" class="block text-sm font-semibold mb-2">Your Name</label>
-                    <input type="text" id="player-name" placeholder="Enter your name" class="w-full px-4 py-2 rounded-lg bg-white bg-opacity-10 border border-blue-400 text-white placeholder-gray-400 focus:outline-none focus:border-blue-300" autocomplete="off">
-                  </div>
-                  <div id="school-name-group">
-                    <label for="school-name" class="block text-sm font-semibold mb-2">School Name (Optional)</label>
-                    <input type="text" id="school-name" placeholder="e.g., Lincoln High School" class="w-full px-4 py-2 rounded-lg bg-white bg-opacity-10 border border-blue-400 text-white placeholder-gray-400 focus:outline-none focus:border-blue-300" autocomplete="off">
-                  </div>
-                  <div id="class-code-group">
-                    <label for="class-code" class="block text-sm font-semibold mb-2">Class Code (Optional)</label>
-                    <input type="text" id="class-code" placeholder="Ask your teacher for this" class="w-full px-4 py-2 rounded-lg bg-white bg-opacity-10 border border-blue-400 text-white placeholder-gray-400 focus:outline-none focus:border-blue-300" autocomplete="off">
-                  </div>
-                  <button id="launch-btn" class="btn-primary text-white font-bold py-3 px-6 rounded-lg w-full">🎬 Launch</button>
-                  <button type="button" onclick="openStudentDashboard()" class="w-full px-4 py-2 rounded-lg bg-slate-700 hover:bg-slate-600 text-white text-sm font-semibold">🧑‍🎓 Open Student Dashboard</button>
-                  <button type="button" onclick="openTeacherModal()" class="w-full px-4 py-2 rounded-lg bg-red-900 hover:bg-red-800 text-red-100 text-sm font-semibold">👨‍🏫 Teacher</button>
+                <div id="megatrends-entry-actions" class="megatrends-entry-actions">
+                  <button id="launch-btn" class="btn-primary text-white font-bold py-3 px-6 rounded-lg w-full">🚀 Login or Start Megatrends Now</button>
+                  <button id="megatrends-back-btn" type="button" onclick="goBackFromMegatrendsIntro()" class="w-full px-4 py-2 rounded-lg bg-slate-700 hover:bg-slate-600 text-white text-sm font-semibold">↩ Back</button>
                 </div>
               </div>
             </div>
@@ -1286,12 +1332,26 @@
       prefillFromLoggedInStudent();
     }
 
+    function openGlobalShop() {
+      syncActivePlayerSession('open_global_shop');
+      window.location.href = './shop/index.html';
+    }
+
+    function goBackFromMegatrendsIntro() {
+      const authState = getAuthPrototypeState();
+      if (authState?.studentLogin?.id) {
+        window.location.href = './dashboards/student.html';
+        return;
+      }
+      showPlatformHome();
+    }
+
     function startGame() {
       hidePlatformHome();
-      gameState.playerName = document.getElementById('player-name').value.trim();
-      gameState.schoolName = document.getElementById('school-name').value.trim();
-      gameState.classCode = document.getElementById('class-code').value.trim().toUpperCase();
-      if (!gameState.playerName) return;
+      if (!gameState.playerName) {
+        window.location.href = './auth/student-login.html';
+        return;
+      }
       syncActivePlayerSession('start_game');
       document.getElementById('intro-screen').classList.add('hidden');
       document.getElementById('nav-bar').classList.remove('hidden');
@@ -1301,42 +1361,33 @@
     }
 
     function renderIntroLaunchState(student = null) {
+      const wrapEl = document.getElementById('megatrends-entry-wrap');
       const titleEl = document.getElementById('launch-card-title');
       const copyEl = document.getElementById('launch-card-copy');
       const summaryEl = document.getElementById('auth-continue-summary');
       const summaryNameEl = document.getElementById('auth-continue-name');
       const summaryMetaEl = document.getElementById('auth-continue-meta');
-      const playerGroup = document.getElementById('player-name-group');
-      const schoolGroup = document.getElementById('school-name-group');
-      const classGroup = document.getElementById('class-code-group');
       const launchBtn = document.getElementById('launch-btn');
-      const schoolSetupInfo = document.getElementById('school-setup-info');
 
-      if (!titleEl || !copyEl || !summaryEl || !playerGroup || !schoolGroup || !classGroup || !launchBtn) return;
+      if (!wrapEl || !titleEl || !copyEl || !summaryEl || !launchBtn) return;
 
       if (student) {
-        titleEl.textContent = 'Continue Your Journey';
-        copyEl.textContent = 'You are already signed in, so you can jump straight into Megatrends.';
+        wrapEl.classList.remove('hidden');
+        titleEl.textContent = 'Start Megatrends';
+        copyEl.textContent = 'You are signed in and ready to launch straight into the Megatrends scenarios.';
         summaryEl.classList.remove('hidden');
         summaryNameEl.textContent = student.display_name || student.username || 'Student';
         summaryMetaEl.textContent = [
           student.schools?.name || 'School not set',
           (student.classes?.class_code || '').toUpperCase()
         ].filter(Boolean).join(' • ');
-        playerGroup.classList.add('hidden');
-        schoolGroup.classList.add('hidden');
-        classGroup.classList.add('hidden');
-        launchBtn.textContent = `🎮 Continue as ${student.display_name || student.username || 'Student'}`;
-        if (schoolSetupInfo) schoolSetupInfo.classList.add('hidden');
+        launchBtn.textContent = '🚀 Start Megatrends Now';
       } else {
-        titleEl.textContent = 'Ready to Begin?';
-        copyEl.textContent = 'Enter your details to launch the Megatrends module.';
+        wrapEl.classList.remove('hidden');
+        titleEl.textContent = 'Launch or Login';
+        copyEl.textContent = 'If you are already logged in, launch Megatrends now. If not, head to student login first.';
         summaryEl.classList.add('hidden');
-        playerGroup.classList.remove('hidden');
-        schoolGroup.classList.remove('hidden');
-        classGroup.classList.remove('hidden');
-        launchBtn.textContent = '🎬 Launch';
-        if (schoolSetupInfo) schoolSetupInfo.classList.remove('hidden');
+        launchBtn.textContent = '🧑‍🎓 Login or Launch Megatrends';
       }
     }
 
@@ -1344,12 +1395,9 @@
       const student = await getLoggedInStudentIdentity();
       renderIntroLaunchState(student);
       if (!student) return;
-      const playerNameInput = document.getElementById('player-name');
-      const schoolNameInput = document.getElementById('school-name');
-      const classCodeInput = document.getElementById('class-code');
-      if (playerNameInput && !playerNameInput.value) playerNameInput.value = student.display_name || student.username || '';
-      if (schoolNameInput && !schoolNameInput.value) schoolNameInput.value = student.schools?.name || '';
-      if (classCodeInput && !classCodeInput.value) classCodeInput.value = (student.classes?.class_code || '').toUpperCase();
+      gameState.playerName = student.display_name || student.username || '';
+      gameState.schoolName = student.schools?.name || '';
+      gameState.classCode = (student.classes?.class_code || '').toUpperCase();
     }
 
     function getEmployabilitySkillSpotlights(choice) {
@@ -2440,9 +2488,6 @@
       document.getElementById('global-tab').classList.add('hidden');
       document.getElementById('nav-bar').classList.add('hidden');
       document.getElementById('intro-screen').classList.remove('hidden');
-      document.getElementById('player-name').value = '';
-      document.getElementById('school-name').value = '';
-      document.getElementById('class-code').value = '';
       showPlatformHome();
       renderIntroLaunchState(null);
       prefillFromLoggedInStudent();
@@ -2523,12 +2568,10 @@
           startGame();
         });
       }
-      document.getElementById('player-name').addEventListener('keydown', (e) => {
-        if (e.key === 'Enter') startGame();
-      });
     }
 
     renderPlatformSessionSummary();
+    applyEntryRouteFromQuery();
 
     function buildEmployabilitySnapshotFromState() {
       const overallMastery = Math.round((gameState.techMastery + gameState.climateMastery + gameState.demoMastery + gameState.economicMastery) / 4);
@@ -2583,6 +2626,24 @@
     function openTeacherDashboard() {
       syncTeacherSession();
       window.open('./dashboards/teacher.html', '_blank');
+    }
+
+    function applyEntryRouteFromQuery() {
+      const params = new URLSearchParams(window.location.search);
+      const screen = params.get('screen');
+      const tab = params.get('tab');
+
+      if (screen === 'megatrends') {
+        openMegatrendsHome();
+        return;
+      }
+
+      if (tab && ['gameplay', 'leaderboard', 'community', 'global'].includes(tab)) {
+        hidePlatformHome();
+        document.getElementById('intro-screen').classList.add('hidden');
+        document.getElementById('nav-bar').classList.remove('hidden');
+        switchTab(tab);
+      }
     }
 
     async function syncProgressToSupabase(checkpoint, payload) {

@@ -542,7 +542,7 @@ async function renderStudentLiveData(players, skillsData) {
       spotlight: true,
       logoPath: skillsData.categories.find(category => category.id === "digital-literacy")?.logoPath,
       logoLabel: "Digital Literacy",
-      launchPath: "../index.html",
+      launchPath: "../index.html?screen=megatrends",
       launchLabel: "Open Megatrends",
       tags: ["Live data", "Career stats", "Class impact"]
     },
