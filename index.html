@@ -1229,6 +1229,7 @@
     let selectedChoiceIdx = null;
     let miniGameAbortController = null;
     let miniKeysPressed = {};
+    let miniGameRotationQueue = [];
 
     const lifeShocks = [
       { title: '👶 Family Responsibilities', description: 'You become responsible for caring for a family member. Your time and money are now stretched.', choices: [ { text: 'Reduce work hours to part-time', salary_mult: 0.6, balance_gain: 30, security_loss: -20, message: '⏰ Family first' }, { text: 'Stay full-time, hire help (expensive)', salary_mult: 1.0, balance_gain: 10, security_loss: -5, message: '💼 Juggling' }, { text: 'Look for remote work flexibility', salary_mult: 0.85, balance_gain: 20, security_loss: -10, message: '🌐 Hybrid life' } ] },
@@ -1865,6 +1866,23 @@
       return MINI_GAME_LEXICON[megatrendFocus] || MINI_GAME_LEXICON['Impactful Technology'];
     }
 
+    function shuffleArray(items) {
+      const copy = [...items];
+      for (let i = copy.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [copy[i], copy[j]] = [copy[j], copy[i]];
+      }
+      return copy;
+    }
+
+    function getNextMiniGameName() {
+      const games = ['spaceInvaders', 'pacman', 'snake'];
+      if (!miniGameRotationQueue.length) {
+        miniGameRotationQueue = shuffleArray(games);
+      }
+      return miniGameRotationQueue.shift();
+    }
+
     function drawVocabularyToken(ctx, token, x, y, width, height, color, isBonus = false) {
       ctx.fillStyle = color;
       ctx.fillRect(x, y, width, height);
@@ -1925,8 +1943,7 @@
       }
       megatrendBadge.style.borderWidth = '1px';
       megatrendBadge.style.borderStyle = 'solid';
-      const games = ['spaceInvaders', 'pacman', 'snake'];
-      const selectedGame = games[Math.floor(Math.random() * games.length)];
+      const selectedGame = getNextMiniGameName();
       const canvas = document.getElementById('game-canvas');
       const ctx = canvas.getContext('2d');
       const miniState = { time: 45, score: 0, bonusHits: 0 };
