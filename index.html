@@ -119,6 +119,90 @@
     .mini-game-instructions .controls { color: #bfdbfe; font-size: 13px; font-weight: 700; margin-bottom: 6px; }
     .mini-game-instructions .goal { color: #e5e7eb; font-size: 14px; line-height: 1.5; }
     .megatrends-large-modal { max-width: 78rem; }
+    .megatrends-gameplay-shell {
+      border-bottom: 1px solid rgba(59, 130, 246, 0.24);
+      background:
+        linear-gradient(180deg, rgba(30, 64, 175, 0.18), rgba(15, 23, 42, 0.96) 68%),
+        rgba(15, 23, 42, 0.98);
+    }
+    .megatrends-hud {
+      max-width: 1120px;
+      margin: 0 auto;
+      padding: 16px 20px 18px;
+      display: grid;
+      gap: 14px;
+    }
+    .megatrends-hud-top {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto;
+      gap: 18px;
+      align-items: center;
+    }
+    .megatrends-stat-chips {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(92px, 1fr));
+      gap: 10px;
+    }
+    .megatrends-stat-chip {
+      padding: 10px 12px;
+      border-radius: 14px;
+      background: rgba(15, 23, 42, 0.34);
+      border: 1px solid rgba(191, 219, 254, 0.12);
+      text-align: right;
+    }
+    .megatrends-stat-chip p {
+      margin: 0;
+    }
+    .megatrends-hud-bottom {
+      display: grid;
+      grid-template-columns: minmax(0, 1.1fr) minmax(0, 0.9fr);
+      gap: 18px;
+      align-items: start;
+    }
+    .megatrends-core-stats,
+    .megatrends-mastery-panel {
+      padding: 14px 16px;
+      border-radius: 18px;
+      border: 1px solid rgba(96, 165, 250, 0.14);
+      background: rgba(15, 23, 42, 0.42);
+    }
+    .megatrends-core-grid {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 14px;
+    }
+    .megatrends-core-label {
+      display: flex;
+      justify-content: space-between;
+      gap: 10px;
+      margin-bottom: 5px;
+      font-size: 11px;
+      font-weight: 700;
+      color: #cbd5e1;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+    }
+    .megatrends-mastery-panel .mastery-grid {
+      gap: 12px;
+    }
+    .megatrends-mastery-panel .mastery-mini-bar {
+      height: 10px;
+    }
+    .megatrends-scenario-stage {
+      padding: 22px 20px 40px;
+    }
+    .megatrends-scenario-stage .max-w-4xl {
+      max-width: 72rem;
+    }
+
+    @media (max-width: 1024px) {
+      .megatrends-hud-bottom {
+        grid-template-columns: 1fr;
+      }
+      .megatrends-stat-chips {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+    }
 
     .skill-spotlight { margin-top: 16px; padding: 16px; border-radius: 14px; border: 1px solid rgba(107, 210, 255, 0.25); background: rgba(8, 20, 36, 0.6); }
     .skill-spotlight-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 12px; margin-top: 14px; }
@@ -480,6 +564,22 @@
 
     @media (max-width: 900px) {
       .platform-home-grid, .platform-portal-grid, .platform-showcase, .platform-media-grid { grid-template-columns: 1fr; }
+      .megatrends-hud {
+        padding: 12px 14px 16px;
+      }
+      .megatrends-hud-top,
+      .megatrends-core-grid {
+        grid-template-columns: 1fr;
+      }
+      .megatrends-stat-chips {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+      .megatrends-stat-chip {
+        text-align: left;
+      }
+      .megatrends-scenario-stage {
+        padding: 16px 14px 28px;
+      }
       .platform-floating-wrap {
         min-height: auto;
         display: grid;
@@ -737,90 +837,94 @@
     </div>
 
     <div id="gameplay-tab" class="flex-1 hidden w-full flex flex-col overflow-hidden bg-slate-900">
-      <div class="bg-gradient-to-r from-blue-900 to-blue-800 p-4 border-b border-blue-700 flex-shrink-0">
-        <div class="max-w-6xl mx-auto flex justify-between items-center">
+      <div class="megatrends-gameplay-shell flex-shrink-0">
+        <div class="megatrends-hud">
+          <div class="megatrends-hud-top">
           <div>
             <h2 id="player-title" class="text-2xl font-bold">Career Journey</h2>
             <p id="player-role" class="text-sm text-blue-100">Loading...</p>
           </div>
-          <div class="flex gap-8 text-right">
-            <div>
-              <p class="text-xs text-blue-100 uppercase mb-1">Net Worth</p>
+            <div class="megatrends-stat-chips">
+              <div class="megatrends-stat-chip">
+                <p class="text-[11px] text-blue-100 uppercase mb-1">Net Worth</p>
               <p id="net-worth" class="text-lg font-bold text-yellow-300">$0</p>
-            </div>
-            <div>
-              <p class="text-xs text-blue-100 uppercase mb-1">Salary</p>
+              </div>
+              <div class="megatrends-stat-chip">
+                <p class="text-[11px] text-blue-100 uppercase mb-1">Salary</p>
               <p id="salary" class="text-lg font-bold text-green-300">$25k</p>
-            </div>
-            <div>
-              <p class="text-xs text-blue-100 uppercase mb-1">Level</p>
+              </div>
+              <div class="megatrends-stat-chip">
+                <p class="text-[11px] text-blue-100 uppercase mb-1">Level</p>
               <p id="level" class="text-lg font-bold text-purple-300">1</p>
-            </div>
-            <div>
-              <p class="text-xs text-blue-100 uppercase mb-1">Years</p>
+              </div>
+              <div class="megatrends-stat-chip">
+                <p class="text-[11px] text-blue-100 uppercase mb-1">Years</p>
               <p id="years" class="text-lg font-bold text-cyan-300">0</p>
+              </div>
             </div>
           </div>
-        </div>
-      </div>
-
-      <div class="bg-slate-800 px-8 py-4 border-b border-blue-700 flex-shrink-0 space-y-3">
-        <div>
-          <div class="flex justify-between mb-1">
-            <p class="text-xs font-semibold text-gray-300">Job Security</p>
-            <p id="security-text" class="text-xs text-blue-300">75%</p>
-          </div>
-          <div class="stat-bar">
-            <div id="security-bar" class="stat-fill" style="width: 75%"></div>
-          </div>
-        </div>
-        <div>
-          <div class="flex justify-between mb-1">
-            <p class="text-xs font-semibold text-gray-300">Work-Life Balance</p>
-            <p id="balance-text" class="text-xs text-blue-300">60%</p>
-          </div>
-          <div class="stat-bar">
-            <div id="balance-bar" class="stat-fill" style="width: 60%"></div>
-          </div>
-        </div>
-        <div>
-          <div class="flex justify-between mb-1">
-            <p class="text-xs font-semibold text-gray-300">Megatrend Mastery</p>
-            <p id="mastery-text" class="text-xs text-blue-300">0%</p>
-          </div>
-          <div class="stat-bar">
-            <div id="mastery-bar" class="stat-fill" style="width: 0%"></div>
-          </div>
-        </div>
-        <div class="pt-2">
-          <p class="text-xs font-semibold text-gray-300 mb-2">Mastery by Megatrend</p>
-          <div class="mastery-grid">
-            <div>
-              <p class="text-xs text-purple-300 mb-1">Tech 🤖</p>
-              <div class="mastery-mini-bar"><div id="tech-mastery-fill" class="mastery-mini-fill tech" style="width: 0%"></div></div>
-              <p class="text-xs text-gray-400 mt-1" id="tech-mastery-text">0%</p>
+          <div class="megatrends-hud-bottom">
+            <div class="megatrends-core-stats">
+              <div class="megatrends-core-grid">
+                <div>
+                  <div class="megatrends-core-label">
+                    <span>Job Security</span>
+                    <span id="security-text">75%</span>
+                  </div>
+                  <div class="stat-bar">
+                    <div id="security-bar" class="stat-fill" style="width: 75%"></div>
+                  </div>
+                </div>
+                <div>
+                  <div class="megatrends-core-label">
+                    <span>Work-Life Balance</span>
+                    <span id="balance-text">60%</span>
+                  </div>
+                  <div class="stat-bar">
+                    <div id="balance-bar" class="stat-fill" style="width: 60%"></div>
+                  </div>
+                </div>
+                <div>
+                  <div class="megatrends-core-label">
+                    <span>Megatrend Mastery</span>
+                    <span id="mastery-text">0%</span>
+                  </div>
+                  <div class="stat-bar">
+                    <div id="mastery-bar" class="stat-fill" style="width: 0%"></div>
+                  </div>
+                </div>
+              </div>
             </div>
-            <div>
-              <p class="text-xs text-green-300 mb-1">Climate 🌍</p>
-              <div class="mastery-mini-bar"><div id="climate-mastery-fill" class="mastery-mini-fill climate" style="width: 0%"></div></div>
-              <p class="text-xs text-gray-400 mt-1" id="climate-mastery-text">0%</p>
-            </div>
-            <div>
-              <p class="text-xs text-blue-300 mb-1">Demo 🌈</p>
-              <div class="mastery-mini-bar"><div id="demo-mastery-fill" class="mastery-mini-fill demo" style="width: 0%"></div></div>
-              <p class="text-xs text-gray-400 mt-1" id="demo-mastery-text">0%</p>
-            </div>
-            <div>
-              <p class="text-xs text-yellow-300 mb-1">Economic 💰</p>
-              <div class="mastery-mini-bar"><div id="economic-mastery-fill" class="mastery-mini-fill economic" style="width: 0%"></div></div>
-              <p class="text-xs text-gray-400 mt-1" id="economic-mastery-text">0%</p>
+            <div class="megatrends-mastery-panel">
+              <p class="text-xs font-semibold text-gray-300 mb-2 uppercase tracking-wide">Mastery by Megatrend</p>
+              <div class="mastery-grid">
+                <div>
+                  <p class="text-xs text-purple-300 mb-1">Tech 🤖</p>
+                  <div class="mastery-mini-bar"><div id="tech-mastery-fill" class="mastery-mini-fill tech" style="width: 0%"></div></div>
+                  <p class="text-xs text-gray-400 mt-1" id="tech-mastery-text">0%</p>
+                </div>
+                <div>
+                  <p class="text-xs text-green-300 mb-1">Climate 🌍</p>
+                  <div class="mastery-mini-bar"><div id="climate-mastery-fill" class="mastery-mini-fill climate" style="width: 0%"></div></div>
+                  <p class="text-xs text-gray-400 mt-1" id="climate-mastery-text">0%</p>
+                </div>
+                <div>
+                  <p class="text-xs text-blue-300 mb-1">Demo 🌈</p>
+                  <div class="mastery-mini-bar"><div id="demo-mastery-fill" class="mastery-mini-fill demo" style="width: 0%"></div></div>
+                  <p class="text-xs text-gray-400 mt-1" id="demo-mastery-text">0%</p>
+                </div>
+                <div>
+                  <p class="text-xs text-yellow-300 mb-1">Economic 💰</p>
+                  <div class="mastery-mini-bar"><div id="economic-mastery-fill" class="mastery-mini-fill economic" style="width: 0%"></div></div>
+                  <p class="text-xs text-gray-400 mt-1" id="economic-mastery-text">0%</p>
+                </div>
+              </div>
             </div>
           </div>
-        </div>
       </div>
 
       <div class="flex-1 overflow-auto w-full">
-        <div class="p-8 w-full">
+        <div class="megatrends-scenario-stage w-full">
           <div class="max-w-4xl mx-auto">
             <div id="scenario-container"></div>
           </div>
@@ -1614,9 +1718,30 @@
       }
     }
 
-    function showConceptChallenge() {
+    function resetConceptModalScroll() {
       const modal = document.getElementById('concept-modal');
       const panel = document.getElementById('concept-modal-panel');
+      const content = document.getElementById('concept-content');
+      if (modal) modal.scrollTop = 0;
+      if (panel) panel.scrollTop = 0;
+      if (content) content.scrollTop = 0;
+      window.scrollTo({ top: 0, behavior: 'auto' });
+      requestAnimationFrame(() => {
+        if (modal) modal.scrollTop = 0;
+        if (panel) panel.scrollTop = 0;
+        if (content) content.scrollTop = 0;
+      });
+      requestAnimationFrame(() => {
+        requestAnimationFrame(() => {
+          if (modal) modal.scrollTop = 0;
+          if (panel) panel.scrollTop = 0;
+          if (content) content.scrollTop = 0;
+        });
+      });
+    }
+
+    function showConceptChallenge() {
+      const modal = document.getElementById('concept-modal');
       const content = document.getElementById('concept-content');
       const quiz = currentScenario.conceptQuiz;
       const answers = [quiz.correctAnswer, ...quiz.wrongAnswers].sort(() => Math.random() - 0.5);
@@ -1640,7 +1765,7 @@
       `;
 
       modal.classList.remove('hidden');
-      if (panel) panel.scrollTop = 0;
+      setTimeout(resetConceptModalScroll, 0);
       content.querySelectorAll('#quiz-options .quiz-option').forEach(btn => {
         btn.addEventListener('click', (e) => {
           e.preventDefault();
@@ -1663,7 +1788,6 @@
 
     function showLockInScreen() {
       const content = document.getElementById('concept-content');
-      const panel = document.getElementById('concept-modal-panel');
       const megatrend = currentScenario.megatrend;
       const correctAspect = LOCK_IN_AREA_BY_MEGATREND[megatrend] || 'work environments';
       const targetSentence = TARGET_SENTENCE_BY_MEGATREND[megatrend] || `${megatrend} is affecting ${correctAspect}, by changing how work happens.`;
@@ -1704,8 +1828,8 @@
             <p class="text-xs text-green-200 font-semibold uppercase mb-2">Target sentence</p>
             <p id="target-sentence" class="text-green-200 text-sm sm:text-base font-semibold leading-relaxed whitespace-normal break-words"></p>
             <div class="mt-5">
-              <label class="block text-sm text-gray-300 mb-2 font-semibold">Student typing area</label>
-              <input type="text" id="reflection-complete" class="w-full px-4 py-3 rounded-lg bg-white bg-opacity-10 border border-green-400 text-white placeholder-gray-400 focus:outline-none focus:border-green-300 text-sm sm:text-base" placeholder="Start typing the sentence exactly..." autocomplete="new-password" autocapitalize="off" autocorrect="off" spellcheck="false" maxlength="250" name="megatrends-reflection-input">
+              <label class="block text-sm text-gray-300 mb-2 font-semibold">Practice sentence</label>
+              <textarea id="concept-typed-line" rows="3" class="w-full px-4 py-3 rounded-lg bg-white bg-opacity-10 border border-green-400 text-white placeholder-gray-400 focus:outline-none focus:border-green-300 text-sm sm:text-base resize-none" placeholder="Start typing the sentence exactly..." autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false" maxlength="250" name="megatrends-practice-line" data-form-type="other" data-lpignore="true" inputmode="text" enterkeyhint="done"></textarea>
               <div class="mt-3 flex items-center justify-between">
                 <div id="validation-feedback" class="text-lg font-bold min-h-[24px]"></div>
                 <div class="text-xs text-gray-400">Progress: <span id="type-progress">0</span>/<span id="type-total">0</span></div>
@@ -1719,7 +1843,7 @@
       `;
 
       const targetEl = document.getElementById('target-sentence');
-      const inputEl = document.getElementById('reflection-complete');
+      const inputEl = document.getElementById('concept-typed-line');
       const feedbackEl = document.getElementById('validation-feedback');
       const unlockBtn = document.getElementById('unlock-btn');
       const progressEl = document.getElementById('type-progress');
@@ -1775,12 +1899,12 @@
       });
 
       setTimeout(() => inputEl.focus(), 120);
-      if (panel) panel.scrollTop = 0;
+      setTimeout(resetConceptModalScroll, 0);
       window.__LOCKIN_TARGET_SENTENCE__ = targetSentence;
     }
 
     function submitReflectionAndPlayArcade() {
-      const inputEl = document.getElementById('reflection-complete');
+      const inputEl = document.getElementById('concept-typed-line');
       const errEl = document.getElementById('lockin-error');
       const typed = (inputEl ? inputEl.value : '').trimEnd();
       const target = window.__LOCKIN_TARGET_SENTENCE__ || '';
@@ -1796,7 +1920,6 @@
 
     function showConceptRecap() {
       const modal = document.getElementById('concept-modal');
-      const panel = document.getElementById('concept-modal-panel');
       const content = document.getElementById('concept-content');
       const megatrend = currentScenario.megatrend;
       const recap = MEGATREND_RECAP.find(t => t.name === megatrend);
@@ -1819,7 +1942,7 @@
         </div>
       `;
       modal.classList.remove('hidden');
-      if (panel) panel.scrollTop = 0;
+      setTimeout(resetConceptModalScroll, 0);
     }
 
     function playArcadeNow() {
