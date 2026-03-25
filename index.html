@@ -107,6 +107,17 @@
     .job-card { background: rgba(30, 41, 59, 0.6); border-left: 4px solid #3b82f6; padding: 12px; border-radius: 6px; margin-bottom: 8px; }
     .job-emerging { border-left-color: #22c55e; }
     .job-declining { border-left-color: #ef4444; }
+    .mini-game-instructions {
+      margin: 0 auto 16px;
+      max-width: 600px;
+      padding: 14px 16px;
+      border-radius: 12px;
+      border: 1px solid rgba(59, 130, 246, 0.25);
+      background: rgba(15, 23, 42, 0.72);
+    }
+    .mini-game-instructions p { margin: 0; }
+    .mini-game-instructions .controls { color: #bfdbfe; font-size: 13px; font-weight: 700; margin-bottom: 6px; }
+    .mini-game-instructions .goal { color: #e5e7eb; font-size: 14px; line-height: 1.5; }
 
     .skill-spotlight { margin-top: 16px; padding: 16px; border-radius: 14px; border: 1px solid rgba(107, 210, 255, 0.25); background: rgba(8, 20, 36, 0.6); }
     .skill-spotlight-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 12px; margin-top: 14px; }
@@ -937,6 +948,10 @@
       <div class="flex items-center justify-between mb-4">
         <h2 class="text-2xl font-bold text-blue-300">🎮 Quick Challenge</h2>
         <span id="modal-megatrend" class="text-lg font-bold px-4 py-2 rounded-lg bg-opacity-20 border"></span>
+      </div>
+      <div id="mini-game-instructions" class="mini-game-instructions">
+        <p class="controls">Controls loading...</p>
+        <p class="goal">Objective loading...</p>
       </div>
       <canvas id="game-canvas" width="600" height="400" class="mx-auto mb-6"></canvas>
       <button onclick="closeMiniGame()" class="btn-primary text-white font-bold py-2 px-6 rounded-lg w-full">Continue</button>
@@ -1823,6 +1838,68 @@
       miniKeysPressed = {};
     }
 
+    const MINI_GAME_LEXICON = {
+      'Impactful Technology': {
+        color: '#7c3aed',
+        terms: ['AI', 'Automation', 'Robotics', 'Digitisation', 'Big Data', 'Cloud'],
+        glossary: 'Impactful technologies'
+      },
+      'Climate Change': {
+        color: '#22c55e',
+        terms: ['Sustainability', 'Clean Energy', 'Emissions', 'Resource Use', 'Solar', 'Waste'],
+        glossary: 'Climate change'
+      },
+      'Demographic Shifts': {
+        color: '#3b82f6',
+        terms: ['Ageing', 'Migration', 'Diversity', 'Family', 'Culture', 'Relocation'],
+        glossary: 'Demographic Shift'
+      },
+      'Economic Power Shifts': {
+        color: '#fbbf24',
+        terms: ['Global', 'Exports', 'Asia-Pacific', 'Supply Chain', 'Outsourcing', 'Trade'],
+        glossary: 'Economic Power Shift'
+      }
+    };
+
+    function getMiniGameLexicon(megatrendFocus) {
+      return MINI_GAME_LEXICON[megatrendFocus] || MINI_GAME_LEXICON['Impactful Technology'];
+    }
+
+    function drawVocabularyToken(ctx, token, x, y, width, height, color, isBonus = false) {
+      ctx.fillStyle = color;
+      ctx.fillRect(x, y, width, height);
+      if (isBonus) {
+        ctx.strokeStyle = '#fde047';
+        ctx.lineWidth = 2;
+        ctx.strokeRect(x, y, width, height);
+      }
+      ctx.fillStyle = '#ffffff';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.font = `bold ${Math.max(10, Math.min(14, width / 6))}px Arial`;
+      ctx.fillText(token, x + width / 2, y + height / 2, width - 8);
+      ctx.textAlign = 'left';
+      ctx.textBaseline = 'alphabetic';
+    }
+
+    function setMiniGameInstructions(gameName, megatrendFocus) {
+      const lexicon = getMiniGameLexicon(megatrendFocus);
+      const controlsEl = document.querySelector('#mini-game-instructions .controls');
+      const goalEl = document.querySelector('#mini-game-instructions .goal');
+      if (!controlsEl || !goalEl) return;
+
+      if (gameName === 'spaceInvaders') {
+        controlsEl.textContent = 'Controls: Arrow keys to move • Space bar to shoot';
+        goalEl.textContent = `Shoot the ${lexicon.glossary.toLowerCase()} terms to reinforce the vocabulary from ${megatrendFocus}.`;
+      } else if (gameName === 'pacman') {
+        controlsEl.textContent = 'Controls: Use the arrow keys to move';
+        goalEl.textContent = `Munch the ${lexicon.glossary.toLowerCase()} vocabulary to lock in the language of ${megatrendFocus}.`;
+      } else {
+        controlsEl.textContent = 'Controls: Use the arrow keys to steer';
+        goalEl.textContent = `Collect the ${lexicon.glossary.toLowerCase()} words while avoiding wasted movement and keep growing your knowledge snake.`;
+      }
+    }
+
     function showMiniGame() {
       const modal = document.getElementById('game-modal');
       modal.classList.remove('hidden');
@@ -1861,6 +1938,7 @@
           endMiniGame(miniState.score, miniState.bonusHits);
         }
       }, 1000);
+      setMiniGameInstructions(selectedGame, currentScenario.megatrend);
       if (selectedGame === 'spaceInvaders') runSpaceInvaders(canvas, ctx, miniState, currentScenario.megatrend);
       else if (selectedGame === 'pacman') runPacman(canvas, ctx, miniState, currentScenario.megatrend);
       else runSnake(canvas, ctx, miniState, currentScenario.megatrend);
@@ -1876,19 +1954,21 @@
       let bullets = [];
       let enemyDirection = 1;
       let frameCount = 0;
-      const megatrendMap = {
-        'Impactful Technology': { emoji: '🤖', color: '#7c3aed' },
-        'Climate Change': { emoji: '🌍', color: '#22c55e' },
-        'Demographic Shifts': { emoji: '🌈', color: '#3b82f6' },
-        'Economic Power Shifts': { emoji: '💰', color: '#fbbf24' }
-      };
-      const megatrendData = megatrendMap[megatrendFocus] || megatrendMap['Impactful Technology'];
+      const megatrendData = getMiniGameLexicon(megatrendFocus);
       let lastShotAt = 0;
       function initEnemies() {
         enemies = [];
+        let tokenIndex = 0;
         for (let row = 0; row < 3; row++) {
           for (let col = 0; col < 8; col++) {
-            enemies.push({ x: 40 + col * 45, y: 30 + row * 40, width: 35, height: 30, isBonus: Math.random() > 0.8 });
+            enemies.push({
+              x: 32 + col * 68,
+              y: 40 + row * 54,
+              width: 58,
+              height: 34,
+              isBonus: Math.random() > 0.8,
+              token: megatrendData.terms[tokenIndex++ % megatrendData.terms.length]
+            });
           }
         }
       }
@@ -1935,17 +2015,7 @@
           frameCount = 0;
         }
         enemies.forEach(e => {
-          ctx.fillStyle = megatrendData.color;
-          ctx.fillRect(e.x, e.y, e.width, e.height);
-          if (e.isBonus) {
-            ctx.strokeStyle = '#ffff00';
-            ctx.lineWidth = 2;
-            ctx.strokeRect(e.x, e.y, e.width, e.height);
-          }
-          ctx.font = 'bold 20px Arial';
-          ctx.textAlign = 'center';
-          ctx.textBaseline = 'middle';
-          ctx.fillText(megatrendData.emoji, e.x + e.width / 2, e.y + e.height / 2);
+          drawVocabularyToken(ctx, e.token, e.x, e.y, e.width, e.height, megatrendData.color, e.isBonus);
         });
         bullets.forEach(b => { ctx.fillStyle = '#00ffff'; ctx.fillRect(b.x, b.y, 5, 10); });
         ctx.fillStyle = '#00ff00';
@@ -1960,10 +2030,13 @@
         ctx.textBaseline = 'alphabetic';
         ctx.fillStyle = '#fff';
         ctx.font = 'bold 20px Arial';
-        ctx.fillText('SPACE INVADERS', width / 2 - 85, 30);
+        ctx.fillText('SPACE INVADERS', width / 2 - 85, 24);
         ctx.font = '16px Arial';
         ctx.fillText(`Score: ${gameState.score}`, 10, height - 20);
         ctx.fillText(`Bonus: ${gameState.bonusHits}`, 10, height - 40);
+        ctx.fillStyle = '#cbd5e1';
+        ctx.font = '12px Arial';
+        ctx.fillText(`Shoot: ${megatrendData.terms.slice(0, 3).join(' • ')}`, 10, 42);
         if (gameState.time <= 10) ctx.fillStyle = gameState.time <= 5 ? '#ff0000' : '#ffaa00';
         ctx.font = 'bold 20px Arial';
         ctx.fillText(`${Math.max(0, gameState.time)}s`, width - 80, height - 20);
@@ -1983,13 +2056,7 @@
       let dirX = 0, dirY = 0;
       let pellets = [];
       let frameCount = 0;
-      const megatrendMap = {
-        'Impactful Technology': { emoji: '🤖', color: '#7c3aed' },
-        'Climate Change': { emoji: '🌍', color: '#22c55e' },
-        'Demographic Shifts': { emoji: '🌈', color: '#3b82f6' },
-        'Economic Power Shifts': { emoji: '💰', color: '#fbbf24' }
-      };
-      const megatrendData = megatrendMap[megatrendFocus] || megatrendMap['Impactful Technology'];
+      const megatrendData = getMiniGameLexicon(megatrendFocus);
       const maze = [
         [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],
         [1,0,0,0,0,0,1,0,0,0,0,0,0,0,1],
@@ -2006,9 +2073,17 @@
         if (x < 0 || x >= cols || y < 0 || y >= rows) return true;
         return maze[y][x] === 1;
       }
+      let tokenIndex = 0;
       for (let y = 0; y < rows; y++) {
         for (let x = 0; x < cols; x++) {
-          if (!isWall(x, y)) pellets.push({ x, y, emoji: megatrendData.emoji, isBonus: Math.random() > 0.85 });
+          if (!isWall(x, y)) {
+            pellets.push({
+              x,
+              y,
+              token: megatrendData.terms[tokenIndex++ % megatrendData.terms.length],
+              isBonus: Math.random() > 0.85
+            });
+          }
         }
       }
       function animate() {
@@ -2034,17 +2109,7 @@
           }
         }
         pellets.forEach(p => {
-          ctx.fillStyle = megatrendData.color;
-          ctx.fillRect(p.x * cellSize, p.y * cellSize, cellSize, cellSize);
-          if (p.isBonus) {
-            ctx.strokeStyle = '#ffff00';
-            ctx.lineWidth = 3;
-            ctx.strokeRect(p.x * cellSize, p.y * cellSize, cellSize, cellSize);
-          }
-          ctx.font = 'bold 28px Arial';
-          ctx.textAlign = 'center';
-          ctx.textBaseline = 'middle';
-          ctx.fillText(p.emoji, p.x * cellSize + cellSize / 2, p.y * cellSize + cellSize / 2);
+          drawVocabularyToken(ctx, p.token, p.x * cellSize + 2, p.y * cellSize + 6, cellSize - 4, cellSize - 12, megatrendData.color, p.isBonus);
         });
         pellets = pellets.filter(p => {
           if (p.x === pacX && p.y === pacY) {
@@ -2075,6 +2140,9 @@
         ctx.font = '18px Arial';
         ctx.fillText(`Score: ${gameState.score}`, 20, 360);
         ctx.fillText(`Pellets: ${pellets.length}`, 250, 360);
+        ctx.fillStyle = '#cbd5e1';
+        ctx.font = '12px Arial';
+        ctx.fillText(`Munch: ${megatrendData.terms.slice(0, 3).join(' • ')}`, 20, 22);
         if (gameState.time <= 10) ctx.fillStyle = gameState.time <= 5 ? '#ff0000' : '#ffaa00';
         ctx.font = 'bold 24px Arial';
         ctx.fillText(`${Math.max(0, gameState.time)}s`, 500, 360);
@@ -2092,13 +2160,8 @@
       let dirX = 1, dirY = 0;
       let nextDirX = 1, nextDirY = 0;
       let frameCount = 0;
-      const megatrendMap = {
-        'Impactful Technology': { emoji: '🤖', color: '#7c3aed' },
-        'Climate Change': { emoji: '🌍', color: '#22c55e' },
-        'Demographic Shifts': { emoji: '🌈', color: '#3b82f6' },
-        'Economic Power Shifts': { emoji: '💰', color: '#fbbf24' }
-      };
-      const megatrendData = megatrendMap[megatrendFocus] || megatrendMap['Impactful Technology'];
+      const megatrendData = getMiniGameLexicon(megatrendFocus);
+      let tokenIndex = 0;
       function spawnFood() {
         for (let i = foods.length; i < 3; i++) {
           let x, y, canSpawn;
@@ -2107,7 +2170,12 @@
             y = Math.floor(Math.random() * (height / cellSize));
             canSpawn = !snake.some(seg => seg.x === x && seg.y === y);
           } while (!canSpawn);
-          foods.push({ x, y, emoji: megatrendData.emoji, isBonus: Math.random() > 0.7 });
+          foods.push({
+            x,
+            y,
+            token: megatrendData.terms[tokenIndex++ % megatrendData.terms.length],
+            isBonus: Math.random() > 0.7
+          });
         }
       }
       spawnFood();
@@ -2140,20 +2208,7 @@
         ctx.fillStyle = '#00ff00';
         snake.forEach(segment => ctx.fillRect(segment.x * cellSize + 2, segment.y * cellSize + 2, cellSize - 4, cellSize - 4));
         foods.forEach(f => {
-          if (f.isBonus) {
-            ctx.fillStyle = '#ffff00';
-            ctx.fillRect(f.x * cellSize + 6, f.y * cellSize + 6, cellSize - 12, cellSize - 12);
-            ctx.strokeStyle = '#ff8800';
-            ctx.lineWidth = 2;
-            ctx.strokeRect(f.x * cellSize + 6, f.y * cellSize + 6, cellSize - 12, cellSize - 12);
-          } else {
-            ctx.fillStyle = megatrendData.color;
-            ctx.fillRect(f.x * cellSize + 8, f.y * cellSize + 8, cellSize - 16, cellSize - 16);
-          }
-          ctx.font = 'bold 24px Arial';
-          ctx.textAlign = 'center';
-          ctx.textBaseline = 'middle';
-          ctx.fillText(f.emoji, f.x * cellSize + cellSize / 2, f.y * cellSize + cellSize / 2);
+          drawVocabularyToken(ctx, f.token, f.x * cellSize + 4, f.y * cellSize + 8, cellSize - 8, cellSize - 16, megatrendData.color, f.isBonus);
         });
         ctx.textAlign = 'left';
         ctx.textBaseline = 'alphabetic';
@@ -2163,6 +2218,9 @@
         ctx.font = '16px Arial';
         ctx.fillText(`Score: ${gameState.score}`, 10, 60);
         ctx.fillText(`Length: ${snake.length}`, 10, 85);
+        ctx.fillStyle = '#cbd5e1';
+        ctx.font = '12px Arial';
+        ctx.fillText(`Collect: ${megatrendData.terms.slice(0, 3).join(' • ')}`, 10, 22);
         if (gameState.time <= 10) ctx.fillStyle = gameState.time <= 5 ? '#ff0000' : '#ffaa00';
         ctx.font = 'bold 20px Arial';
         ctx.fillText(`${Math.max(0, gameState.time)}s`, width / 2 - 15, height - 10);
