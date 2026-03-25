@@ -836,7 +836,7 @@
       </div>
     </div>
 
-    <div id="gameplay-tab" class="flex-1 hidden w-full flex flex-col overflow-hidden bg-slate-900">
+    <div id="gameplay-tab" class="flex-1 hidden w-full flex flex-col overflow-y-auto bg-slate-900">
       <div class="megatrends-gameplay-shell flex-shrink-0">
         <div class="megatrends-hud">
           <div class="megatrends-hud-top">
@@ -923,7 +923,7 @@
           </div>
       </div>
 
-      <div class="flex-1 overflow-auto w-full">
+      <div class="flex-1 w-full">
         <div class="megatrends-scenario-stage w-full">
           <div class="max-w-4xl mx-auto">
             <div id="scenario-container"></div>
@@ -1337,6 +1337,7 @@
     let miniGameRotationQueue = [];
     let remainingScenarioIndexes = [];
     let completedScenarioIndexes = [];
+    let lastScenarioChoice = null;
 
     const lifeShocks = [
       { title: '👶 Family Responsibilities', description: 'You become responsible for caring for a family member. Your time and money are now stretched.', choices: [ { text: 'Reduce work hours to part-time', salary_mult: 0.6, balance_gain: 30, security_loss: -20, message: '⏰ Family first' }, { text: 'Stay full-time, hire help (expensive)', salary_mult: 1.0, balance_gain: 10, security_loss: -5, message: '💼 Juggling' }, { text: 'Look for remote work flexibility', salary_mult: 0.85, balance_gain: 20, security_loss: -10, message: '🌐 Hybrid life' } ] },
@@ -1653,6 +1654,7 @@
     function submitChoice() {
       if (selectedChoiceIdx === null) return;
       const choice = currentScenario.choices[selectedChoiceIdx];
+      lastScenarioChoice = choice;
       gameState.careerTitle = 'Professional';
       gameState.annualSalary = choice.salary;
       gameState.careerLevel = choice.level;
@@ -1668,7 +1670,7 @@
       }
       updateStats();
       saveProgress('scenario_choice');
-      const feedbackMessage = `${choice.message}<br><br>You just explored <strong>"${currentScenario.megatrend}"</strong>. Cast your community vote below, then complete the concept challenge to learn deeply!`;
+      const feedbackMessage = `${choice.message}<br><br>You chose <strong>"${choice.text}"</strong> in response to this scenario. You just explored <strong>"${currentScenario.megatrend}"</strong>. Cast your community vote below, then complete the concept challenge to learn deeply!`;
       document.getElementById('choices-section').classList.add('hidden');
       document.getElementById('submit-section').classList.add('hidden');
       document.getElementById('feedback-section').classList.remove('hidden');
@@ -1791,6 +1793,9 @@
       const megatrend = currentScenario.megatrend;
       const correctAspect = LOCK_IN_AREA_BY_MEGATREND[megatrend] || 'work environments';
       const targetSentence = TARGET_SENTENCE_BY_MEGATREND[megatrend] || `${megatrend} is affecting ${correctAspect}, by changing how work happens.`;
+      const selectedChoiceText = lastScenarioChoice?.text || 'your scenario answer';
+      const selectedChoiceMessage = lastScenarioChoice?.message || '';
+      const ownWordsStarter = `My answer was in response to ${megatrend}, and it affected ${correctAspect} because `;
 
       const recapHtml = MEGATREND_RECAP.map(t => {
         const isHighlighted = t.name === megatrend;
@@ -1814,6 +1819,11 @@
       `;
 
       content.innerHTML = `
+        <div class="card-glow p-6 rounded-xl border-l-4 border-cyan-400">
+          <p class="text-xs uppercase tracking-wide text-cyan-300 font-semibold mb-2">Your scenario answer</p>
+          <p class="text-xl font-bold text-white mb-2">${selectedChoiceText}</p>
+          <p class="text-sm text-cyan-100">${selectedChoiceMessage}</p>
+        </div>
         <div class="card-glow p-8 rounded-xl bg-blue-900 bg-opacity-30 border-l-4 border-blue-400">
           <h3 class="text-xl font-bold mb-6 text-blue-300">📚 Megatrend recap</h3>
           <div class="grid grid-cols-1 md:grid-cols-4 gap-4">${recapHtml}</div>
@@ -1837,13 +1847,21 @@
               <p class="text-xs text-gray-400 mt-2">✅ Correct characters are accepted. ❌ Wrong characters are blocked.</p>
             </div>
           </div>
+          <div class="mt-6 bg-black bg-opacity-30 p-5 rounded-lg border border-cyan-400">
+            <p class="text-sm font-semibold text-cyan-300 mb-2">💭 Now explain it in your own words</p>
+            <p class="text-xs text-gray-400 mb-3">Use the scenario answer you chose and connect it to the megatrend vocabulary.</p>
+            <p class="text-sm text-cyan-100 mb-3">${ownWordsStarter}</p>
+            <textarea id="concept-own-words" rows="3" class="w-full px-4 py-3 rounded-lg bg-white bg-opacity-10 border border-cyan-400 text-white placeholder-gray-400 focus:outline-none focus:border-cyan-300 text-sm sm:text-base resize-none" placeholder="Finish the sentence in your own words..." autocomplete="off" autocapitalize="sentences" autocorrect="on" spellcheck="true" maxlength="260" name="megatrends-own-words" data-form-type="other" data-lpignore="true"></textarea>
+            <p class="text-xs text-gray-400 mt-2">Aim for one clear sentence using the megatrend and the aspect of work it affects.</p>
+          </div>
           <button id="unlock-btn" type="button" onclick="submitReflectionAndPlayArcade()" class="btn-primary text-white font-bold py-3 px-6 rounded-lg w-full mt-6 opacity-50 cursor-not-allowed" disabled>🎮 Unlock Arcade Game</button>
-          <p id="lockin-error" class="text-red-400 text-xs mt-2 hidden">Sentence must match exactly (including capitals and punctuation).</p>
+          <p id="lockin-error" class="text-red-400 text-xs mt-2 hidden">First copy the exact sentence, then complete your own response.</p>
         </div>
       `;
 
       const targetEl = document.getElementById('target-sentence');
       const inputEl = document.getElementById('concept-typed-line');
+      const ownWordsEl = document.getElementById('concept-own-words');
       const feedbackEl = document.getElementById('validation-feedback');
       const unlockBtn = document.getElementById('unlock-btn');
       const progressEl = document.getElementById('type-progress');
@@ -1853,6 +1871,26 @@
       targetEl.textContent = targetSentence;
       totalEl.textContent = targetSentence.length;
       inputEl.addEventListener('paste', (e) => e.preventDefault());
+
+      function updateLockInReadyState() {
+        const current = inputEl.value;
+        const isComplete = current === targetSentence;
+        const ownWords = (ownWordsEl.value || '').trim();
+        const ownWordsReady = ownWords.length >= 24;
+        progressEl.textContent = current.length;
+        if (isComplete) {
+          feedbackEl.textContent = ownWordsReady ? '✅ Sentence complete + your own response is ready!' : '✅ Sentence complete — now explain it in your own words.';
+          feedbackEl.style.color = '#4ade80';
+        }
+        if (isComplete && ownWordsReady) {
+          unlockBtn.disabled = false;
+          unlockBtn.classList.remove('opacity-50', 'cursor-not-allowed');
+          errEl.classList.add('hidden');
+        } else {
+          unlockBtn.disabled = true;
+          unlockBtn.classList.add('opacity-50', 'cursor-not-allowed');
+        }
+      }
 
       const allowedControlKeys = new Set(['Backspace', 'Delete', 'ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown', 'Home', 'End', 'Tab']);
       inputEl.addEventListener('keydown', (e) => {
@@ -1883,36 +1921,29 @@
       });
 
       inputEl.addEventListener('input', () => {
-        const current = inputEl.value;
-        progressEl.textContent = current.length;
-        const isComplete = current === targetSentence;
-        if (isComplete) {
-          feedbackEl.textContent = '✅ Sentence complete — unlocked!';
-          feedbackEl.style.color = '#4ade80';
-          unlockBtn.disabled = false;
-          unlockBtn.classList.remove('opacity-50', 'cursor-not-allowed');
-          errEl.classList.add('hidden');
-        } else {
-          unlockBtn.disabled = true;
-          unlockBtn.classList.add('opacity-50', 'cursor-not-allowed');
-        }
+        updateLockInReadyState();
       });
+      ownWordsEl.addEventListener('input', updateLockInReadyState);
 
       setTimeout(() => inputEl.focus(), 120);
       setTimeout(resetConceptModalScroll, 0);
       window.__LOCKIN_TARGET_SENTENCE__ = targetSentence;
+      window.__LOCKIN_OWN_WORDS_STARTER__ = ownWordsStarter;
     }
 
     function submitReflectionAndPlayArcade() {
       const inputEl = document.getElementById('concept-typed-line');
+      const ownWordsEl = document.getElementById('concept-own-words');
       const errEl = document.getElementById('lockin-error');
       const typed = (inputEl ? inputEl.value : '').trimEnd();
+      const ownWords = (ownWordsEl ? ownWordsEl.value : '').trim();
       const target = window.__LOCKIN_TARGET_SENTENCE__ || '';
-      if (typed !== target) {
+      if (typed !== target || ownWords.length < 24) {
         if (errEl) errEl.classList.remove('hidden');
         return;
       }
       gameState.reflectionFromLastScenario = typed;
+      gameState.ownWordsReflectionFromLastScenario = ownWords;
       saveProgress('reflection_complete');
       document.getElementById('concept-modal').classList.add('hidden');
       showConceptRecap();
@@ -1928,7 +1959,16 @@
           <p class="text-6xl mb-4">${recap.emoji}</p>
           <h3 class="text-2xl font-bold text-green-300 mb-4">Concept Locked In! 🔐</h3>
           <p class="text-xl text-gray-200 mb-6">${recap.name}</p>
-          <p class="text-base text-gray-300 mb-8 leading-relaxed font-semibold">"${gameState.reflectionFromLastScenario}"</p>
+          <div class="space-y-4 mb-8">
+            <div>
+              <p class="text-xs uppercase tracking-wide text-green-200 mb-2">Copied key sentence</p>
+              <p class="text-base text-gray-300 leading-relaxed font-semibold">"${gameState.reflectionFromLastScenario}"</p>
+            </div>
+            <div>
+              <p class="text-xs uppercase tracking-wide text-cyan-200 mb-2">Your own explanation</p>
+              <p class="text-base text-cyan-100 leading-relaxed">"${gameState.ownWordsReflectionFromLastScenario || ''}"</p>
+            </div>
+          </div>
           <p class="text-sm text-gray-400 mb-6">Your learning is saved.</p>
         </div>
         <div class="card-glow p-8 rounded-xl border-l-4 border-blue-400">
@@ -2061,8 +2101,8 @@
       ctx.fillStyle = '#ffffff';
       ctx.textAlign = 'center';
       ctx.textBaseline = 'middle';
-      ctx.font = `bold ${Math.max(10, Math.min(14, width / 6))}px Arial`;
-      ctx.fillText(token, x + width / 2, y + height / 2, width - 8);
+      ctx.font = `bold ${Math.max(12, Math.min(18, width / 5.2))}px Arial`;
+      ctx.fillText(token, x + width / 2, y + height / 2, width - 10);
       ctx.textAlign = 'left';
       ctx.textBaseline = 'alphabetic';
     }
@@ -2144,12 +2184,12 @@
         enemies = [];
         let tokenIndex = 0;
         for (let row = 0; row < 3; row++) {
-          for (let col = 0; col < 8; col++) {
+          for (let col = 0; col < 6; col++) {
             enemies.push({
-              x: 32 + col * 68,
-              y: 40 + row * 54,
-              width: 58,
-              height: 34,
+              x: 28 + col * 142,
+              y: 48 + row * 76,
+              width: 92,
+              height: 42,
               isBonus: Math.random() > 0.8,
               token: megatrendData.terms[tokenIndex++ % megatrendData.terms.length]
             });
@@ -2231,9 +2271,11 @@
 
     function runPacman(canvas, ctx, gameState, megatrendFocus) {
       const width = canvas.width;
-      const cellSize = 40;
+      const height = canvas.height;
+      const cellSize = 56;
       const cols = 15;
       const rows = 10;
+      const offsetX = Math.floor((width - cols * cellSize) / 2);
       let pacX = 2;
       let pacY = 2;
       let nextDirX = 0, nextDirY = 0;
@@ -2286,14 +2328,14 @@
           for (let x = 0; x < cols; x++) {
             if (maze[y][x] === 1) {
               ctx.fillStyle = '#1e3a8a';
-              ctx.fillRect(x * cellSize, y * cellSize, cellSize, cellSize);
+              ctx.fillRect(offsetX + x * cellSize, y * cellSize, cellSize, cellSize);
               ctx.strokeStyle = '#3b82f6';
-              ctx.strokeRect(x * cellSize, y * cellSize, cellSize, cellSize);
+              ctx.strokeRect(offsetX + x * cellSize, y * cellSize, cellSize, cellSize);
             }
           }
         }
         pellets.forEach(p => {
-          drawVocabularyToken(ctx, p.token, p.x * cellSize + 2, p.y * cellSize + 6, cellSize - 4, cellSize - 12, megatrendData.color, p.isBonus);
+          drawVocabularyToken(ctx, p.token, offsetX + p.x * cellSize + 4, p.y * cellSize + 10, cellSize - 8, cellSize - 20, megatrendData.color, p.isBonus);
         });
         pellets = pellets.filter(p => {
           if (p.x === pacX && p.y === pacY) {
@@ -2304,9 +2346,9 @@
           return true;
         });
         ctx.fillStyle = '#ffff00';
-        const centerX = pacX * cellSize + cellSize / 2;
+        const centerX = offsetX + pacX * cellSize + cellSize / 2;
         const centerY = pacY * cellSize + cellSize / 2;
-        const radius = 14;
+        const radius = 18;
         let mouthAngle = 0;
         if (dirX === 1) mouthAngle = 0;
         else if (dirX === -1) mouthAngle = Math.PI;
@@ -2320,16 +2362,16 @@
         ctx.textBaseline = 'alphabetic';
         ctx.fillStyle = '#fff';
         ctx.font = 'bold 24px Arial';
-        ctx.fillText('PAC-MAN', 20, 380);
+        ctx.fillText('PAC-MAN', 20, height - 90);
         ctx.font = '18px Arial';
-        ctx.fillText(`Score: ${gameState.score}`, 20, 360);
-        ctx.fillText(`Pellets: ${pellets.length}`, 250, 360);
+        ctx.fillText(`Score: ${gameState.score}`, 20, height - 112);
+        ctx.fillText(`Pellets: ${pellets.length}`, 250, height - 112);
         ctx.fillStyle = '#cbd5e1';
         ctx.font = '12px Arial';
         ctx.fillText(`Munch: ${megatrendData.terms.slice(0, 3).join(' • ')}`, 20, 22);
         if (gameState.time <= 10) ctx.fillStyle = gameState.time <= 5 ? '#ff0000' : '#ffaa00';
         ctx.font = 'bold 24px Arial';
-        ctx.fillText(`${Math.max(0, gameState.time)}s`, 500, 360);
+        ctx.fillText(`${Math.max(0, gameState.time)}s`, 500, height - 112);
         if (gameState.time > 0) requestAnimationFrame(animate);
       }
       animate();
@@ -2338,8 +2380,10 @@
     function runSnake(canvas, ctx, gameState, megatrendFocus) {
       const width = canvas.width;
       const height = canvas.height;
-      const cellSize = 40;
-      let snake = [{ x: 10, y: 5 }];
+      const cellSize = 56;
+      const cols = Math.floor(width / cellSize);
+      const rows = Math.floor(height / cellSize);
+      let snake = [{ x: Math.floor(cols / 2), y: Math.floor(rows / 2) }];
       let foods = [];
       let dirX = 1, dirY = 0;
       let nextDirX = 1, nextDirY = 0;
@@ -2374,7 +2418,7 @@
         if (frameCount % 8 === 0) {
           dirX = nextDirX;
           dirY = nextDirY;
-          const head = { x: (snake[0].x + dirX + width / cellSize) % (width / cellSize), y: (snake[0].y + dirY + height / cellSize) % (height / cellSize) };
+          const head = { x: (snake[0].x + dirX + cols) % cols, y: (snake[0].y + dirY + rows) % rows };
           snake.unshift(head);
           let ateFood = false;
           foods = foods.filter(f => {
@@ -2390,9 +2434,9 @@
           if (foods.length < 3) spawnFood();
         }
         ctx.fillStyle = '#00ff00';
-        snake.forEach(segment => ctx.fillRect(segment.x * cellSize + 2, segment.y * cellSize + 2, cellSize - 4, cellSize - 4));
+        snake.forEach(segment => ctx.fillRect(segment.x * cellSize + 3, segment.y * cellSize + 3, cellSize - 6, cellSize - 6));
         foods.forEach(f => {
-          drawVocabularyToken(ctx, f.token, f.x * cellSize + 4, f.y * cellSize + 8, cellSize - 8, cellSize - 16, megatrendData.color, f.isBonus);
+          drawVocabularyToken(ctx, f.token, f.x * cellSize + 4, f.y * cellSize + 10, cellSize - 8, cellSize - 20, megatrendData.color, f.isBonus);
         });
         ctx.textAlign = 'left';
         ctx.textBaseline = 'alphabetic';
