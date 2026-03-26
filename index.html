@@ -2682,10 +2682,27 @@
     }
 
     function switchTab(tab) {
+      hidePlatformHome();
+      document.getElementById('intro-screen').classList.add('hidden');
+      document.getElementById('nav-bar').classList.remove('hidden');
       document.querySelectorAll('[id$="-tab"]').forEach(el => el.classList.add('hidden'));
       document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
-      document.getElementById(tab + '-tab').classList.remove('hidden');
-      document.getElementById('tab-' + tab).classList.add('active');
+      const targetTab = document.getElementById(tab + '-tab');
+      const targetButton = document.getElementById('tab-' + tab);
+      if (!targetTab || !targetButton) return;
+      targetTab.classList.remove('hidden');
+      targetButton.classList.add('active');
+
+      if (tab === 'leaderboard') {
+        updateLeaderboard();
+      } else if (tab === 'community') {
+        updateCommunityFund();
+      } else if (tab === 'global') {
+        updateGlobalIndex();
+      }
+
+      targetTab.scrollTop = 0;
+      window.scrollTo({ top: 0, behavior: 'smooth' });
     }
 
     function updateLeaderboard() {

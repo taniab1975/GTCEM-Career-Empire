@@ -205,7 +205,8 @@ h1 {
 
 .module-grid,
 .skill-grid,
-.teacher-grid {
+.teacher-grid,
+.community-board {
   display: grid;
   gap: 16px;
 }
@@ -222,15 +223,79 @@ h1 {
   grid-template-columns: repeat(3, minmax(0, 1fr));
 }
 
+.community-board {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
 .module-card,
-.skill-card {
+.skill-card,
+.community-card {
   padding: 18px;
 }
 
 .module-card h3,
-.skill-card h3 {
+.skill-card h3,
+.community-card h3 {
   margin-bottom: 8px;
   font-size: 20px;
+}
+
+.community-card {
+  background: var(--panel);
+  border: 1px solid var(--line);
+  backdrop-filter: blur(18px);
+  border-radius: 24px;
+  box-shadow: var(--shadow);
+}
+
+.community-stat {
+  font-size: 28px;
+  font-weight: 800;
+  margin: 8px 0;
+}
+
+.vote-stack {
+  display: grid;
+  gap: 10px;
+  margin-top: 14px;
+}
+
+.vote-row {
+  display: grid;
+  grid-template-columns: minmax(120px, 1fr) minmax(0, 2fr) auto;
+  gap: 10px;
+  align-items: center;
+}
+
+.vote-label {
+  font-size: 13px;
+  color: var(--text);
+  font-weight: 700;
+}
+
+.mini-track {
+  height: 10px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.08);
+  overflow: hidden;
+}
+
+.mini-fill {
+  height: 100%;
+  border-radius: inherit;
+  background: linear-gradient(90deg, var(--accent), #7a9cff);
+}
+
+.mini-fill.green {
+  background: linear-gradient(90deg, #80ed99, #57cc99);
+}
+
+.mini-fill.gold {
+  background: linear-gradient(90deg, #ffd166, #ffb703);
+}
+
+.mini-fill.red {
+  background: linear-gradient(90deg, #ff7b72, #ff9770);
 }
 
 .module-actions {
@@ -405,7 +470,8 @@ h1 {
   .metrics-grid,
   .teacher-grid,
   .skill-grid,
-  .module-grid {
+  .module-grid,
+  .community-board {
     grid-template-columns: 1fr 1fr;
   }
 }
@@ -418,7 +484,8 @@ h1 {
   .metrics-grid,
   .teacher-grid,
   .skill-grid,
-  .module-grid {
+  .module-grid,
+  .community-board {
     grid-template-columns: 1fr;
   }
 

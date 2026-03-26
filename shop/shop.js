@@ -6,7 +6,17 @@ const GLOBAL_ASSET_CATALOG = [
   { code: "transport-pass", name: "Transport Pass", category: "mobility", cost: 700, icon: "🚌", benefit: "Helps placements, TAFE access, and work experience feel realistic and reachable." },
   { code: "wellbeing-pack", name: "Wellbeing Pack", category: "wellbeing", cost: 500, icon: "🌿", benefit: "Protects energy and balance while your pathway gets busier." },
   { code: "rental-upgrade", name: "Rental Upgrade", category: "housing", cost: 2200, icon: "🏠", benefit: "A more stable base that strengthens long-term pathway confidence." },
-  { code: "phone-upgrade", name: "Phone Upgrade", category: "tools", cost: 850, icon: "📱", benefit: "Makes communication, scheduling, and job-readiness easier to manage." }
+  { code: "iphone-upgrade", name: "iPhone Upgrade", category: "lifestyle", cost: 1500, icon: "📱", benefit: "Boosts confidence, social status, and everyday organisation." },
+  { code: "ps5-bundle", name: "PS5 Bundle", category: "gaming", cost: 1300, icon: "🎮", benefit: "A fun flex purchase that makes the life sim feel more like real teen downtime." },
+  { code: "festival-pass", name: "Summer Festival Pass", category: "experiences", cost: 580, icon: "🎟️", benefit: "Adds fun, memories, and social energy to the year you're building." },
+  { code: "gym-membership", name: "Gym Membership", category: "wellbeing", cost: 720, icon: "🏋️", benefit: "Builds routine, energy, and confidence alongside your career goals." },
+  { code: "sneaker-drop", name: "Limited Sneaker Drop", category: "style", cost: 460, icon: "👟", benefit: "A hype purchase that makes rewards feel personal and expressive." },
+  { code: "tesla-fund", name: "Tesla Model 3 Fund", category: "cars", cost: 8500, icon: "🚗", benefit: "A dream-car savings target that feels aspirational and status-building." },
+  { code: "ac-milan-membership", name: "AC Milan Membership", category: "fun", cost: 420, icon: "⚽", benefit: "A fun flex purchase that makes the life-build feel more personal." },
+  { code: "pet-dog", name: "Rescue Puppy", category: "pets", cost: 650, icon: "🐶", benefit: "Adds companionship and makes the life sim feel warmer and more human." },
+  { code: "cat-companion", name: "Cat Companion", category: "pets", cost: 520, icon: "🐱", benefit: "A calm little life upgrade that makes the world feel more lived in." },
+  { code: "life-insurance", name: "Starter Life Insurance", category: "security", cost: 1100, icon: "🛡️", benefit: "A grown-up security move that fits long-term planning and stability." },
+  { code: "home-deposit", name: "First Home Deposit", category: "property", cost: 5000, icon: "🏡", benefit: "A serious investment step toward future housing security and wealth building." }
 ];
 
 function readState() {
@@ -42,6 +52,13 @@ function escapeHtml(value) {
 
 function formatCurrency(value) {
   return `$${Number(value || 0).toLocaleString()}`;
+}
+
+function getAssetCounts(assets) {
+  return (assets || []).reduce((acc, asset) => {
+    acc[asset.asset_code] = (acc[asset.asset_code] || 0) + 1;
+    return acc;
+  }, {});
 }
 
 async function loadStudentShopContext() {
@@ -110,10 +127,22 @@ function renderOwnedInventory(context) {
     return;
   }
 
-  container.innerHTML = assets.map(asset => `
+  const assetCounts = getAssetCounts(assets);
+  const totalSpendByCode = assets.reduce((acc, asset) => {
+    acc[asset.asset_code] = (acc[asset.asset_code] || 0) + Number(asset.purchase_cost || 0);
+    return acc;
+  }, {});
+  const latestByCode = new Map();
+  assets.forEach(asset => {
+    if (!latestByCode.has(asset.asset_code)) {
+      latestByCode.set(asset.asset_code, asset);
+    }
+  });
+
+  container.innerHTML = [...latestByCode.values()].map(asset => `
     <div class="timeline-item">
       <strong>${escapeHtml(asset.asset_name)}</strong>
-      <p>${escapeHtml(asset.asset_category)} • ${formatCurrency(asset.purchase_cost)}</p>
+      <p>${escapeHtml(asset.asset_category)} • ${formatCurrency(asset.purchase_cost)}${assetCounts[asset.asset_code] > 1 ? ` • Qty ${assetCounts[asset.asset_code]} • Total spent ${formatCurrency(totalSpendByCode[asset.asset_code])}` : ""}</p>
     </div>
   `).join("");
 }
@@ -127,9 +156,6 @@ async function buyGlobalAsset(asset, context) {
     alert(`You need ${formatCurrency(asset.cost - currentWorth)} more to buy ${asset.name}.`);
     return;
   }
-
-  const alreadyOwned = (context.assets || []).some(item => item.asset_code === asset.code);
-  if (alreadyOwned) return;
 
   const { error: assetError } = await supabase
     .from("player_assets")
@@ -167,7 +193,7 @@ async function buyGlobalAsset(asset, context) {
 function renderShopGrid(context) {
   const container = document.getElementById("shop-grid");
   if (!container) return;
-  const owned = new Set((context?.assets || []).map(item => item.asset_code));
+  const ownedCounts = getAssetCounts(context?.assets || []);
   const currentWorth = Number(context?.profile?.cumulative_net_worth || 0);
 
   container.innerHTML = GLOBAL_ASSET_CATALOG.map(asset => `
@@ -182,11 +208,15 @@ function renderShopGrid(context) {
       <p>${escapeHtml(asset.benefit)}</p>
       <div class="section-title">
         <p>${formatCurrency(asset.cost)}</p>
-        <p>${owned.has(asset.code) ? "Owned" : currentWorth >= asset.cost ? "Affordable" : "Locked"}</p>
+        <p>${currentWorth >= asset.cost ? "Affordable" : "Locked"}</p>
+      </div>
+      <div class="pill-row">
+        <span class="pill">Owned: ${ownedCounts[asset.code] || 0}</span>
+        <span class="pill">${escapeHtml(asset.category)}</span>
       </div>
       <div class="module-actions">
-        <button class="module-link" type="button" data-buy-asset="${asset.code}" ${owned.has(asset.code) ? "disabled" : ""}>
-          ${owned.has(asset.code) ? "Already Owned" : "Buy Upgrade"}
+        <button class="module-link" type="button" data-buy-asset="${asset.code}" ${currentWorth < asset.cost ? "disabled" : ""}>
+          ${(ownedCounts[asset.code] || 0) > 0 ? "Buy Another" : "Buy Item"}
         </button>
       </div>
     </article>

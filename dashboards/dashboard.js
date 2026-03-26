@@ -285,6 +285,44 @@ function renderStudentShopPreview(items) {
   `).join("");
 }
 
+function renderStudentCommunityBoard(data) {
+  const container = document.getElementById("student-community-board");
+  if (!container) return;
+
+  const voteEntries = data.voteRows.map(row => {
+    const variant =
+      row.id === "climate" ? "green" :
+      row.id === "global" ? "gold" :
+      row.id === "diversity" ? "red" : "";
+    return `
+      <div class="vote-row">
+        <div class="vote-label">${row.label}</div>
+        <div class="mini-track"><div class="mini-fill ${variant}" style="width:${row.percent}%"></div></div>
+        <div class="vote-label">${row.percent}%</div>
+      </div>
+    `;
+  }).join("");
+
+  container.innerHTML = `
+    <article class="community-card">
+      <div class="kicker">Your Impact</div>
+      <h3>${data.currentVoteLabel}</h3>
+      <div class="community-stat">${data.taxPaid}</div>
+      <p>${data.summary}</p>
+      <div class="pill-row">
+        <span class="pill">Current vote: ${data.currentVoteLabel}</span>
+        <span class="pill">Class fund leader: ${data.leadingCause}</span>
+      </div>
+    </article>
+    <article class="community-card">
+      <div class="kicker">Class Standings</div>
+      <h3>Community Vote Split</h3>
+      <p>${data.voteIntro}</p>
+      <div class="vote-stack">${voteEntries}</div>
+    </article>
+  `;
+}
+
 function renderTeacherInterventions(items) {
   const container = document.getElementById("teacher-interventions");
   if (!container) return;
@@ -475,6 +513,7 @@ async function renderStudentLiveData(players, skillsData) {
   const authState = getAuthPrototypeState();
   const record = getCurrentPlayerRecord(players, session);
   const history = getPlayerHistory(players, session);
+  const latestPlayers = dedupeLatestPlayers(players);
   const progressMap = deriveEmployabilityProgress(record);
   const employabilityScore = average(Object.values(progressMap));
   const weakestSkillId = getWeakestSkill(progressMap)[0];
@@ -524,11 +563,47 @@ async function renderStudentLiveData(players, skillsData) {
   }
 
   setText("student-focus-text", weakestSkill ? `${weakestSkill.title} is your current focus area. The next module should target this skill more directly.` : "Launch a module to begin skill tracking.");
+  if (document.getElementById("student-focus-text") && !record) {
+    setText("student-focus-text", "EST Prep is ready next. Use it to train command verbs, glossary terms, and short-answer structure before the assessment.");
+  }
   setText("student-overall-completion", `${moduleCompletion}%`);
   setText("student-overall-completion-note", record ? `${record.years_played || 0} completed rounds currently recorded` : "No gameplay recorded yet");
   setText("student-employability-score", `${employabilityScore}%`);
   setText("student-tax-paid", formatCurrency(taxPaid));
   setText("student-assets-owned", String(assetsOwned));
+
+  const voteLabels = {
+    climate: "Climate and Sustainability",
+    tech: "Tech Education and Inclusion",
+    diversity: "Diversity and Economic Equity",
+    global: "Global Opportunity Access",
+    none: "No community vote yet"
+  };
+  const voteKeys = ["climate", "tech", "diversity", "global"];
+  const voteCounts = voteKeys.reduce((acc, key) => {
+    acc[key] = latestPlayers.filter(player => player.community_vote === key).length;
+    return acc;
+  }, {});
+  const totalVotes = voteKeys.reduce((sum, key) => sum + voteCounts[key], 0);
+  const leadingVote = voteKeys
+    .map(key => ({ key, count: voteCounts[key] }))
+    .sort((a, b) => b.count - a.count)[0];
+  renderStudentCommunityBoard({
+    currentVoteLabel: voteLabels[record?.community_vote || "none"] || "No community vote yet",
+    taxPaid: formatCurrency(taxPaid),
+    summary: record?.community_vote && record.community_vote !== "none"
+      ? `Ten percent of your gains are helping build your class community. Your current vote is feeding ${voteLabels[record.community_vote]}.`
+      : "Your gameplay can help decide where the class fund goes next. Cast a community vote inside modules to shape the outcome.",
+    leadingCause: leadingVote?.count ? voteLabels[leadingVote.key] : "No votes yet",
+    voteIntro: totalVotes
+      ? `${totalVotes} class vote${totalVotes === 1 ? "" : "s"} recorded so far.`
+      : "No class votes have been recorded yet.",
+    voteRows: voteKeys.map(key => ({
+      id: key,
+      label: voteLabels[key],
+      percent: totalVotes ? Math.round((voteCounts[key] / totalVotes) * 100) : 0
+    }))
+  });
 
   renderSkills(skillsData, "student-skill-grid", progressMap);
   renderStudentModules([
@@ -559,6 +634,20 @@ async function renderStudentLiveData(players, skillsData) {
       launchPath: "../modules/lifelong-learning/index.html",
       launchLabel: "Open Lifelong Learning",
       tags: ["Planning", "Growth", "Reflection"]
+    },
+    {
+      title: "EST Prep",
+      state: "Prototype live",
+      summary: "Train for the upcoming EST by decoding questions, locking in glossary terms, and building mark-worthy responses.",
+      progress: 0,
+      mastery: 0,
+      variant: "",
+      spotlight: false,
+      logoPath: skillsData.categories.find(category => category.id === "critical-thinking")?.logoPath,
+      logoLabel: "Critical Thinking",
+      launchPath: "../modules/est-prep/index.html",
+      launchLabel: "Open EST Prep",
+      tags: ["Exam readiness", "Command verbs", "Short answer"]
     }
   ]);
   renderStudentShopPreview([
