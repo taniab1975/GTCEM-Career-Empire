@@ -42,9 +42,34 @@
     .btn-choice:hover { background: rgba(59, 130, 246, 0.15); border-color: rgba(59, 130, 246, 0.5); box-shadow: 0 0 20px rgba(59, 130, 246, 0.2); transform: translateX(8px); }
     .btn-choice.selected { background: rgba(59, 130, 246, 0.3); border-color: rgba(59, 130, 246, 0.8); }
 
-    .tab-btn { background: rgba(255,255,255,0.1); color: #93c5fd; cursor: pointer; transition: all 0.3s ease; }
-    .tab-btn.active { background: #3b82f6; color: white; }
-    .tab-btn:hover { background: rgba(59, 130, 246, 0.3); }
+    .module-nav {
+      width: min(1240px, calc(100% - 32px));
+      margin: 0 auto;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+    }
+    .module-nav-link {
+      text-decoration: none;
+      padding: 10px 14px;
+      border-radius: 14px;
+      border: 1px solid rgba(148, 163, 184, 0.22);
+      color: #e2e8f0;
+      background: rgba(255, 255, 255, 0.04);
+      font-size: 14px;
+      font-weight: 600;
+      line-height: 1;
+      cursor: pointer;
+      transition: all 0.25s ease;
+    }
+    .module-nav-link:hover {
+      background: rgba(255, 255, 255, 0.08);
+      border-color: rgba(125, 211, 252, 0.28);
+    }
+    .module-nav-link.active {
+      background: linear-gradient(145deg, rgba(104, 210, 255, 0.18), rgba(255, 255, 255, 0.05));
+      border-color: rgba(125, 211, 252, 0.24);
+    }
 
     .confetti { position: fixed; pointer-events: none; animation: confettiFall 3s ease-in forwards; z-index: 9999; }
     .level-up-badge { animation: levelUpPulse 0.6s ease-out; }
@@ -737,13 +762,13 @@
 
   <div id="app" class="h-full w-full flex flex-col platform-hidden">
     <div id="nav-bar" class="bg-gradient-to-r from-blue-900 to-blue-800 p-4 border-b border-blue-700 hidden w-full flex-shrink-0">
-      <div class="max-w-6xl mx-auto flex gap-4">
-        <button onclick="switchTab('gameplay')" class="tab-btn active px-4 py-2 rounded text-sm font-semibold" id="tab-gameplay">🎮 Gameplay</button>
-        <button onclick="switchTab('leaderboard')" class="tab-btn px-4 py-2 rounded text-sm font-semibold" id="tab-leaderboard">🏆 Leaderboard</button>
-        <button onclick="switchTab('community')" class="tab-btn px-4 py-2 rounded text-sm font-semibold" id="tab-community">🏛️ Community</button>
-        <button onclick="switchTab('global')" class="tab-btn px-4 py-2 rounded text-sm font-semibold" id="tab-global">🌍 Global Index</button>
-        <button onclick="openGlobalShop()" class="tab-btn px-4 py-2 rounded text-sm font-semibold">🛍️ Shop</button>
-        <button onclick="resetGame()" class="ml-auto px-4 py-2 rounded text-sm font-semibold bg-red-900 hover:bg-red-800 text-red-100">🔄 Reset</button>
+      <div class="module-nav">
+        <a class="module-nav-link" href="./dashboards/student.html">Student Hub</a>
+        <button type="button" onclick="switchTab('leaderboard')" class="module-nav-link tab-btn" id="tab-leaderboard">Leaderboard</button>
+        <button type="button" onclick="switchTab('community')" class="module-nav-link tab-btn" id="tab-community">Community</button>
+        <button type="button" onclick="switchTab('global')" class="module-nav-link tab-btn" id="tab-global">Global Index</button>
+        <button type="button" onclick="openGlobalShop()" class="module-nav-link">Shop</button>
+        <button type="button" onclick="resetGame()" class="module-nav-link ml-auto">Reset</button>
       </div>
     </div>
 
@@ -2685,12 +2710,18 @@
       hidePlatformHome();
       document.getElementById('intro-screen').classList.add('hidden');
       document.getElementById('nav-bar').classList.remove('hidden');
-      document.querySelectorAll('[id$="-tab"]').forEach(el => el.classList.add('hidden'));
+      ['gameplay', 'leaderboard', 'community', 'global'].forEach(name => {
+        const panel = document.getElementById(name + '-tab');
+        if (!panel) return;
+        panel.classList.add('hidden');
+        panel.style.display = 'none';
+      });
       document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
       const targetTab = document.getElementById(tab + '-tab');
       const targetButton = document.getElementById('tab-' + tab);
       if (!targetTab || !targetButton) return;
       targetTab.classList.remove('hidden');
+      targetTab.style.display = tab === 'gameplay' ? 'flex' : 'block';
       targetButton.classList.add('active');
 
       if (tab === 'leaderboard') {
@@ -2786,6 +2817,10 @@
       document.getElementById('global-economic-bar').style.width = economicAvg + '%';
     }
 
+    window.switchTab = switchTab;
+    window.openGlobalShop = openGlobalShop;
+    window.resetGame = resetGame;
+
     function resetGame() {
       gameState = {
         playerName: '',
@@ -2820,7 +2855,6 @@
       renderIntroLaunchState(null);
       prefillFromLoggedInStudent();
       document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
-      document.getElementById('tab-gameplay').classList.add('active');
       localStorage.removeItem(PLAYER_SESSION_KEY);
       renderPlatformSessionSummary();
     }
