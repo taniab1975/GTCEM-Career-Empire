@@ -285,8 +285,8 @@ function renderStudentShopPreview(items) {
   `).join("");
 }
 
-function renderStudentCommunityBoard(data) {
-  const container = document.getElementById("student-community-board");
+function renderCommunityBoard(targetId, data) {
+  const container = document.getElementById(targetId);
   if (!container) return;
 
   const voteEntries = data.voteRows.map(row => {
@@ -321,6 +321,10 @@ function renderStudentCommunityBoard(data) {
       <div class="vote-stack">${voteEntries}</div>
     </article>
   `;
+}
+
+function renderStudentCommunityBoard(data) {
+  renderCommunityBoard("student-community-board", data);
 }
 
 function getCommunityVoteLabels() {
@@ -393,7 +397,7 @@ function renderSharedCommunityPage(players) {
     ? latestPlayers.find(player => player.id === authState.studentLogin.id)?.community_vote || "none"
     : "none";
 
-  renderStudentCommunityBoard({
+  renderCommunityBoard("community-page-board", {
     currentVoteLabel: voteLabels[currentVote] || voteLabels.none,
     taxPaid: formatCurrency(totalTax),
     summary: totalVotes
