@@ -764,10 +764,10 @@
     <div id="nav-bar" class="bg-gradient-to-r from-blue-900 to-blue-800 p-4 border-b border-blue-700 hidden w-full flex-shrink-0">
       <div class="module-nav">
         <a class="module-nav-link" href="./dashboards/student.html">Student Hub</a>
-        <button type="button" onclick="switchTab('leaderboard')" class="module-nav-link tab-btn" id="tab-leaderboard">Leaderboard</button>
-        <button type="button" onclick="switchTab('community')" class="module-nav-link tab-btn" id="tab-community">Community</button>
-        <button type="button" onclick="switchTab('global')" class="module-nav-link tab-btn" id="tab-global">Global Index</button>
-        <button type="button" onclick="openGlobalShop()" class="module-nav-link">Shop</button>
+        <a class="module-nav-link tab-btn" href="./dashboards/leaderboard.html" id="tab-leaderboard">Leaderboard</a>
+        <a class="module-nav-link tab-btn" href="./dashboards/community.html" id="tab-community">Community</a>
+        <a class="module-nav-link tab-btn" href="./dashboards/global.html" id="tab-global">Global Index</a>
+        <a class="module-nav-link" href="./shop/index.html">Shop</a>
         <button type="button" onclick="resetGame()" class="module-nav-link ml-auto">Reset</button>
       </div>
     </div>
@@ -2995,16 +2995,17 @@
       const screen = params.get('screen');
       const tab = params.get('tab');
 
-      if (screen === 'megatrends') {
-        openMegatrendsHome();
-        return;
-      }
-
       if (tab && ['gameplay', 'leaderboard', 'community', 'global'].includes(tab)) {
         hidePlatformHome();
         document.getElementById('intro-screen').classList.add('hidden');
         document.getElementById('nav-bar').classList.remove('hidden');
         switchTab(tab);
+        return;
+      }
+
+      if (screen === 'megatrends') {
+        openMegatrendsHome();
+        return;
       }
     }
 

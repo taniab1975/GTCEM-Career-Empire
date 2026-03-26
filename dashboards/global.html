@@ -1,0 +1,38 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Career Empire Global Index</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="./dashboard.css">
+</head>
+<body>
+  <main class="page-shell">
+    <nav class="dashboard-nav">
+      <a class="dashboard-nav-link" href="./student.html">Student Hub</a>
+      <a class="dashboard-nav-link" href="./leaderboard.html">Leaderboard</a>
+      <a class="dashboard-nav-link" href="./community.html">Community</a>
+      <a class="dashboard-nav-link active" href="./global.html">Global Index</a>
+      <a class="dashboard-nav-link" href="../shop/index.html">Shop</a>
+    </nav>
+
+    <section class="hero">
+      <article class="hero-card">
+        <span class="eyebrow">Global Index</span>
+        <h1>Measure how ready the ecosystem is for the future of work.</h1>
+        <p class="subtitle">This page rolls up mastery across the four megatrends so students and teachers can see the bigger picture.</p>
+      </article>
+    </section>
+
+    <section class="metrics-grid" id="global-page-metrics"></section>
+  </main>
+
+  <script src="../config/supabase-config.js"></script>
+  <script src="../src/services/supabase-browser.js"></script>
+  <script src="./dashboard.js"></script>
+  <script src="../src/services/feedback-widget.js"></script>
+</body>
+</html>

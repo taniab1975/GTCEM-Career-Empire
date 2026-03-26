@@ -323,6 +323,138 @@ function renderStudentCommunityBoard(data) {
   `;
 }
 
+function getCommunityVoteLabels() {
+  return {
+    climate: "Climate and Sustainability",
+    tech: "Tech Education and Inclusion",
+    diversity: "Diversity and Economic Equity",
+    global: "Global Opportunity Access",
+    none: "No community vote yet"
+  };
+}
+
+function getStrongestSkillCategory(skillsData, player) {
+  const progressMap = deriveEmployabilityProgress(player);
+  const strongestSkillId = getStrongestSkill(progressMap)[0];
+  return skillsData.categories.find(category => category.id === strongestSkillId) || skillsData.categories[0];
+}
+
+function renderSharedLeaderboard(players, skillsData) {
+  const container = document.getElementById("leaderboard-page-list");
+  if (!container) return;
+
+  const latestPlayers = dedupeLatestPlayers(players).sort((a, b) => Number(b.cumulative_net_worth || 0) - Number(a.cumulative_net_worth || 0));
+  if (!latestPlayers.length) {
+    container.innerHTML = '<div class="timeline-item"><strong>No leaderboard data yet</strong><p>Once students start playing, the leaderboard will begin filling automatically.</p></div>';
+    return;
+  }
+
+  container.innerHTML = latestPlayers.map((player, index) => {
+    const strongestSkill = getStrongestSkillCategory(skillsData, player);
+    return `
+      <article class="module-card ${index === 0 ? "spotlight" : ""}">
+        <div class="module-header">
+          ${strongestSkill?.logoPath ? `<img class="module-logo" src="${strongestSkill.logoPath}" alt="${escapeHtml(strongestSkill.title)} logo">` : ""}
+          <div>
+            <div class="kicker">Rank #${index + 1}</div>
+            <h3>${escapeHtml(player.player_name)}</h3>
+          </div>
+        </div>
+        <p>${escapeHtml(player.career_title || "Career Builder")} • ${escapeHtml(player.school_name || "School not set")} • Class ${escapeHtml(player.class_code || "Not set")}</p>
+        <div class="pill-row">
+          <span class="pill">Net worth: ${formatCurrency(player.cumulative_net_worth)}</span>
+          <span class="pill">Salary: ${formatCurrency(player.annual_salary)}</span>
+          <span class="pill">Years: ${player.years_played || 0}</span>
+          <span class="pill">Strongest skill: ${escapeHtml(strongestSkill?.title || "Not yet clear")}</span>
+        </div>
+      </article>
+    `;
+  }).join("");
+}
+
+function renderSharedCommunityPage(players) {
+  const board = document.getElementById("community-page-board");
+  if (!board) return;
+
+  const latestPlayers = dedupeLatestPlayers(players);
+  const voteLabels = getCommunityVoteLabels();
+  const voteKeys = ["climate", "tech", "diversity", "global"];
+  const voteCounts = voteKeys.reduce((acc, key) => {
+    acc[key] = latestPlayers.filter(player => player.community_vote === key).length;
+    return acc;
+  }, {});
+  const totalVotes = voteKeys.reduce((sum, key) => sum + voteCounts[key], 0);
+  const totalTax = latestPlayers.reduce((sum, player) => sum + Math.floor(Number(player.cumulative_net_worth || 0) * 0.1), 0);
+  const topVote = voteKeys
+    .map(key => ({ key, count: voteCounts[key] }))
+    .sort((a, b) => b.count - a.count)[0];
+  const authState = getAuthPrototypeState();
+  const currentVote = authState?.studentLogin?.id
+    ? latestPlayers.find(player => player.id === authState.studentLogin.id)?.community_vote || "none"
+    : "none";
+
+  renderStudentCommunityBoard({
+    currentVoteLabel: voteLabels[currentVote] || voteLabels.none,
+    taxPaid: formatCurrency(totalTax),
+    summary: totalVotes
+      ? `Students are directing their class fund through ${totalVotes} recorded community vote${totalVotes === 1 ? "" : "s"}.`
+      : "No community votes yet. As students complete modules and vote, the class fund direction will appear here.",
+    leadingCause: topVote?.count ? voteLabels[topVote.key] : "No votes yet",
+    voteIntro: totalVotes
+      ? `${totalVotes} vote${totalVotes === 1 ? "" : "s"} recorded across the class community board.`
+      : "No votes recorded yet.",
+    voteRows: voteKeys.map(key => ({
+      id: key,
+      label: voteLabels[key],
+      percent: totalVotes ? Math.round((voteCounts[key] / totalVotes) * 100) : 0
+    }))
+  });
+}
+
+function renderSharedGlobalPage(players) {
+  const metrics = document.getElementById("global-page-metrics");
+  if (!metrics) return;
+
+  const latestPlayers = dedupeLatestPlayers(players);
+  const averageFor = key => latestPlayers.length
+    ? Math.round(latestPlayers.reduce((sum, player) => sum + Number(player[key] || 0), 0) / latestPlayers.length)
+    : 0;
+
+  const tech = averageFor("tech_mastery");
+  const climate = averageFor("climate_mastery");
+  const demo = averageFor("demo_mastery");
+  const economic = averageFor("economic_mastery");
+  const overall = Math.round((tech + climate + demo + economic) / 4) || 0;
+
+  metrics.innerHTML = `
+    <article class="metric">
+      <div class="metric-label">Overall Readiness</div>
+      <div class="metric-value">${overall}%</div>
+      <div class="metric-note">Average mastery across all four megatrends</div>
+    </article>
+    <article class="metric">
+      <div class="metric-label">Tech</div>
+      <div class="metric-value">${tech}%</div>
+      <div class="metric-note">Impactful technology readiness</div>
+    </article>
+    <article class="metric">
+      <div class="metric-label">Climate</div>
+      <div class="metric-value">${climate}%</div>
+      <div class="metric-note">Climate change readiness</div>
+    </article>
+    <article class="metric">
+      <div class="metric-label">Demographic</div>
+      <div class="metric-value">${demo}%</div>
+      <div class="metric-note">Demographic shifts readiness</div>
+    </article>
+    <article class="metric">
+      <div class="metric-label">Economic</div>
+      <div class="metric-value">${economic}%</div>
+      <div class="metric-note">Economic power shifts readiness</div>
+    </article>
+  `;
+}
+
 function renderTeacherInterventions(items) {
   const container = document.getElementById("teacher-interventions");
   if (!container) return;
@@ -572,13 +704,7 @@ async function renderStudentLiveData(players, skillsData) {
   setText("student-tax-paid", formatCurrency(taxPaid));
   setText("student-assets-owned", String(assetsOwned));
 
-  const voteLabels = {
-    climate: "Climate and Sustainability",
-    tech: "Tech Education and Inclusion",
-    diversity: "Diversity and Economic Equity",
-    global: "Global Opportunity Access",
-    none: "No community vote yet"
-  };
+  const voteLabels = getCommunityVoteLabels();
   const voteKeys = ["climate", "tech", "diversity", "global"];
   const voteCounts = voteKeys.reduce((acc, key) => {
     acc[key] = latestPlayers.filter(player => player.community_vote === key).length;
@@ -820,6 +946,15 @@ async function initDashboards() {
   const players = await getPlayers();
   if (document.getElementById("student-module-grid")) {
     await renderStudentLiveData(players, skillsData);
+  }
+  if (document.getElementById("leaderboard-page-list")) {
+    renderSharedLeaderboard(players, skillsData);
+  }
+  if (document.getElementById("community-page-board")) {
+    renderSharedCommunityPage(players);
+  }
+  if (document.getElementById("global-page-metrics")) {
+    renderSharedGlobalPage(players);
   }
   if (document.getElementById("teacher-module-health")) {
     const teacherData = await getTeacherDashboardData();
