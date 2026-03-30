@@ -933,6 +933,223 @@ function normaliseStoreRequest(row) {
   };
 }
 
+function isPromoTeacherDashboardMode() {
+  if (!document.getElementById("teacher-module-health")) return false;
+  const params = new URLSearchParams(window.location.search);
+  return params.get("demo") === "promo" || params.get("promo") === "1";
+}
+
+function getPromoTeacherDashboardData() {
+  const now = new Date();
+  const minutesAgo = value => new Date(now.getTime() - value * 60 * 1000).toISOString();
+  const hoursAgo = value => new Date(now.getTime() - value * 60 * 60 * 1000).toISOString();
+
+  const classes = [
+    { id: "promo-class-a", name: "Year 12 Careers A", class_code: "Y12A" },
+    { id: "promo-class-b", name: "Year 12 Careers B", class_code: "Y12B" }
+  ];
+
+  const studentSeeds = [
+    ["Mia", "Mia26", "promo-class-a", 82, 91, 112000, 3, 84, 78, "communication"],
+    ["Jayden", "Jayden26", "promo-class-a", 77, 86, 104500, 3, 80, 75, "teamwork"],
+    ["Aaliyah", "Aaliyah26", "promo-class-a", 88, 95, 128000, 4, 89, 82, "critical-thinking"],
+    ["Noah", "Noah26", "promo-class-a", 73, 83, 97800, 3, 78, 74, "digital-literacy"],
+    ["Sienna", "Sienna26", "promo-class-a", 84, 92, 118200, 4, 86, 81, "time-management"],
+    ["Luca", "Luca26", "promo-class-a", 69, 79, 91500, 2, 76, 73, "problem-solving"],
+    ["Chloe", "Chloe26", "promo-class-a", 81, 89, 109400, 3, 82, 79, "communication"],
+    ["Ethan", "Ethan26", "promo-class-a", 75, 84, 99500, 3, 79, 72, "teamwork"],
+    ["Grace", "Grace26", "promo-class-b", 86, 94, 123600, 4, 88, 84, "critical-thinking"],
+    ["Hudson", "Hudson26", "promo-class-b", 72, 82, 96800, 2, 77, 71, "digital-literacy"],
+    ["Zara", "Zara26", "promo-class-b", 90, 97, 133400, 4, 91, 86, "communication"],
+    ["Cooper", "Cooper26", "promo-class-b", 78, 87, 106700, 3, 81, 76, "problem-solving"],
+    ["Ruby", "Ruby26", "promo-class-b", 83, 90, 114900, 3, 85, 80, "time-management"],
+    ["Leo", "Leo26", "promo-class-b", 74, 83, 98700, 2, 78, 74, "teamwork"],
+    ["Evie", "Evie26", "promo-class-b", 87, 95, 126100, 4, 90, 85, "critical-thinking"],
+    ["Mason", "Mason26", "promo-class-b", 71, 81, 95400, 2, 75, 70, "digital-literacy"]
+  ];
+
+  const students = studentSeeds.map((seed, index) => ({
+    id: `promo-student-${index + 1}`,
+    display_name: seed[0],
+    username: seed[1],
+    class_id: seed[2],
+    created_at: hoursAgo(240 - index * 6),
+    last_login_at: index < 14 ? minutesAgo(20 + index * 7) : null
+  }));
+
+  const profiles = studentSeeds.map((seed, index) => {
+    const classRow = classes.find(row => row.id === seed[2]);
+    const mastery = seed[3];
+    return {
+      id: `promo-student-${index + 1}`,
+      player_name: seed[0],
+      school_name: "Emmanuel Catholic College",
+      class_code: classRow?.class_code || "",
+      career_title: mastery >= 85 ? "Senior Strategist" : mastery >= 78 ? "Project Lead" : "Career Builder",
+      annual_salary: seed[4] * 1000,
+      cumulative_net_worth: seed[5],
+      career_level: seed[6],
+      job_security: seed[7],
+      work_life_balance: seed[8],
+      community_vote: index % 4 === 0 ? "tech" : index % 4 === 1 ? "climate" : index % 4 === 2 ? "global" : "diversity",
+      years_played: seed[6],
+      tech_mastery: mastery + (seed[9] === "digital-literacy" ? 6 : 1),
+      climate_mastery: mastery + (seed[9] === "problem-solving" ? 4 : 0),
+      demo_mastery: mastery + (seed[9] === "communication" || seed[9] === "teamwork" ? 5 : 1),
+      economic_mastery: mastery + (seed[9] === "critical-thinking" || seed[9] === "time-management" ? 4 : 1),
+      timestamp: minutesAgo(15 + index * 3)
+    };
+  });
+
+  const moduleProgress = students.flatMap((student, index) => {
+    const profile = profiles[index];
+    const overallMastery = average([
+      profile.tech_mastery,
+      profile.climate_mastery,
+      profile.demo_mastery,
+      profile.economic_mastery
+    ]);
+    const estMastery = Math.max(62, overallMastery - 8 + (index % 5));
+    return [
+      {
+        student_id: student.id,
+        class_id: student.class_id,
+        module_id: "megatrends",
+        completion_percent: Math.min(100, 62 + (index % 5) * 8),
+        mastery_percent: overallMastery,
+        attempts: 3 + (index % 3)
+      },
+      {
+        student_id: student.id,
+        class_id: student.class_id,
+        module_id: "est-prep",
+        completion_percent: 48 + (index % 4) * 10,
+        mastery_percent: estMastery,
+        attempts: 2 + (index % 2)
+      }
+    ];
+  });
+
+  const evidenceRows = students.flatMap((student, index) => [
+    {
+      id: `promo-est-${index + 1}`,
+      student_id: student.id,
+      class_id: student.class_id,
+      module_id: "est-prep",
+      evidence_type: "boss-round",
+      prompt: "Explain how labour market information can shape post-school decisions.",
+      response_text: JSON.stringify({
+        module_id: "est-prep",
+        task_name: "Boss Round",
+        prompt_text: "Explain how labour market information can shape post-school decisions.",
+        response_text: `${student.display_name} explains that labour market information helps students compare growth industries, future demand, and training pathways before making a career decision.`,
+        score_percent: 72 + (index % 6) * 4,
+        duration_seconds: 230 + index * 9
+      }),
+      auto_score: 72 + (index % 6) * 4,
+      created_at: minutesAgo(55 + index * 6),
+      students: {
+        display_name: student.display_name,
+        username: student.username
+      }
+    },
+    {
+      id: `promo-mega-${index + 1}`,
+      student_id: student.id,
+      class_id: student.class_id,
+      module_id: "megatrends",
+      evidence_type: "concept-lock",
+      prompt: "Which megatrend best explains this workplace change?",
+      response_text: JSON.stringify({
+        module_id: "megatrends",
+        task_name: "Concept Lock-In",
+        prompt_text: "Which megatrend best explains this workplace change?",
+        response_text: `${student.display_name} linked the scenario to Economic Power Shifts and justified the response with a concise explanation.`,
+        score_percent: 76 + (index % 5) * 4,
+        duration_seconds: 88 + index * 5
+      }),
+      auto_score: 76 + (index % 5) * 4,
+      created_at: minutesAgo(18 + index * 4),
+      students: {
+        display_name: student.display_name,
+        username: student.username
+      }
+    }
+  ]);
+
+  const voteRows = students.map((student, index) => ({
+    id: `promo-vote-${index + 1}`,
+    class_id: student.class_id,
+    vote_key: index % 3 === 0 ? "tech" : index % 3 === 1 ? "climate" : "global",
+    cause: index % 3 === 0 ? "tech" : index % 3 === 1 ? "climate" : "global"
+  }));
+
+  const feedbackRows = [
+    {
+      id: "promo-request-1",
+      created_at: hoursAgo(8),
+      login_name: "Mia26",
+      feedback_type: "store-item-request",
+      message: JSON.stringify({
+        kind: "store-item-request",
+        status: "pending",
+        student_name: "Mia",
+        school_name: "Emmanuel Catholic College",
+        class_code: "Y12A",
+        item_name: "Tesla Model 3",
+        category: "cars",
+        category_label: "Cars",
+        reason: "A realistic aspirational item that feels exciting and fits the career theme."
+      })
+    },
+    {
+      id: "promo-request-2",
+      created_at: hoursAgo(20),
+      login_name: "Zara26",
+      feedback_type: "store-item-request",
+      message: JSON.stringify({
+        kind: "store-item-request",
+        status: "approved",
+        student_name: "Zara",
+        school_name: "Emmanuel Catholic College",
+        class_code: "Y12B",
+        item_name: "Designer Laptop",
+        category: "mobile-phones",
+        category_label: "Mobile Phones & Tech",
+        reason: "Students wanted a higher-tier tech item in the store.",
+        approved_item: {
+          code: "promo-laptop",
+          name: "Designer Laptop",
+          category: "mobile-phones",
+          categoryLabel: "Mobile Phones & Tech",
+          description: "A premium productivity upgrade for high-performing players."
+        }
+      })
+    }
+  ];
+
+  return {
+    context: {
+      teacher: {
+        id: "promo-teacher",
+        fullName: "Tania Byrnes",
+        email: "tania.byrnes@cewa.edu.au",
+        schoolId: "promo-school",
+        schoolName: "Emmanuel Catholic College"
+      }
+    },
+    availableClasses: classes,
+    selectedClassId: "all",
+    selectedClassName: "All classes at Emmanuel Catholic College",
+    students,
+    moduleProgress,
+    evidenceRows,
+    voteRows,
+    profileRows: profiles,
+    feedbackRows
+  };
+}
+
 function buildStoreRequestApprovedItem(request, formData) {
   return {
     code: request.approvedItem?.code || `store-request-${request.id}`,
@@ -1772,10 +1989,15 @@ async function initDashboards() {
   }
   if (document.getElementById("teacher-module-health")) {
     let teacherData = null;
-    try {
-      teacherData = await getTeacherDashboardData();
-    } catch (error) {
-      console.error("Failed to load teacher dashboard data", error);
+    if (isPromoTeacherDashboardMode()) {
+      teacherData = getPromoTeacherDashboardData();
+      players = teacherData.profileRows || players;
+    } else {
+      try {
+        teacherData = await getTeacherDashboardData();
+      } catch (error) {
+        console.error("Failed to load teacher dashboard data", error);
+      }
     }
 
     try {
