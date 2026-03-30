@@ -117,6 +117,14 @@ function getTeacherSession() {
   return readJsonStorage("career-empire-teacher-session", null);
 }
 
+function getTeacherDashboardFilter() {
+  return readJsonStorage("career-empire-teacher-dashboard-filter", { scope: "all", classId: "all" });
+}
+
+function setTeacherDashboardFilter(nextFilter) {
+  localStorage.setItem("career-empire-teacher-dashboard-filter", JSON.stringify(nextFilter));
+}
+
 function getAuthPrototypeState() {
   return readJsonStorage("career-empire-auth-demo", {});
 }
@@ -1013,33 +1021,90 @@ async function updateStoreRequest(request, status, approvedItem = null) {
 async function getTeacherDashboardData() {
   const supabase = await getSupabaseClientOrNull();
   const context = getActiveTeacherContext();
-  if (!supabase || !context.classroom?.id) {
+  const teacherId = context.teacher?.id || null;
+  const schoolId = context.teacher?.schoolId || null;
+  if (!supabase || (!teacherId && !schoolId)) {
     return null;
   }
 
-  const classroomId = context.classroom.id;
+  const dashboardFilter = getTeacherDashboardFilter();
+  const { data: classRows, error: classesError } = await supabase
+    .from("classes")
+    .select("id, name, class_code, year_level, school_id, teacher_id")
+    .or([
+      schoolId ? `school_id.eq.${schoolId}` : null,
+      teacherId ? `teacher_id.eq.${teacherId}` : null
+    ].filter(Boolean).join(","))
+    .order("name", { ascending: true });
 
-  const [{ data: students, error: studentsError }, { data: moduleProgress, error: moduleProgressError }, { data: evidenceRows, error: evidenceError }, { data: voteRows, error: votesError }, { data: profileRows, error: profilesError }, { data: feedbackRows, error: feedbackError }] = await Promise.all([
+  if (classesError) throw classesError;
+
+  const availableClasses = classRows || [];
+  if (!availableClasses.length) {
+    return {
+      context,
+      availableClasses: [],
+      selectedClassId: "all",
+      selectedClassName: "No classes found",
+      students: [],
+      moduleProgress: [],
+      evidenceRows: [],
+      voteRows: [],
+      profileRows: [],
+      feedbackRows: []
+    };
+  }
+
+  const requestedClassId = dashboardFilter.classId || context.classroom?.id || "all";
+  const selectedClassId = requestedClassId === "all" || availableClasses.some(row => row.id === requestedClassId)
+    ? requestedClassId
+    : (context.classroom?.id && availableClasses.some(row => row.id === context.classroom.id) ? context.classroom.id : "all");
+  const selectedClassRows = selectedClassId === "all"
+    ? availableClasses
+    : availableClasses.filter(row => row.id === selectedClassId);
+  const classIds = selectedClassRows.map(row => row.id);
+  const selectedClassName = selectedClassId === "all"
+    ? `All classes at ${context.teacher?.schoolName || "this school"}`
+    : (selectedClassRows[0]?.name || "Selected class");
+
+  const [{ data: students, error: studentsError }, { data: moduleProgress, error: moduleProgressError }, { data: evidenceRows, error: evidenceError }, { data: voteRows, error: votesError }, { data: feedbackRows, error: feedbackError }] = await Promise.all([
     supabase
       .from("students")
       .select("id, display_name, username, created_at, last_login_at, class_id")
-      .eq("class_id", classroomId)
+      .in("class_id", classIds)
       .order("created_at", { ascending: true }),
     supabase
       .from("student_module_progress")
       .select("*")
-      .eq("class_id", classroomId),
+      .in("class_id", classIds),
     supabase
       .from("assessment_evidence")
       .select("*, students(display_name, username)")
-      .eq("class_id", classroomId)
+      .in("class_id", classIds)
       .order("created_at", { ascending: false })
-      .limit(20),
+      .limit(60),
     supabase
       .from("community_votes")
       .select("*")
-      .eq("class_id", classroomId),
+      .in("class_id", classIds),
     supabase
+      .from("feedback_reports")
+      .select("*")
+      .eq("feedback_type", "store-item-request")
+      .order("created_at", { ascending: false })
+      .limit(40)
+  ]);
+
+  if (studentsError) throw studentsError;
+  if (moduleProgressError) throw moduleProgressError;
+  if (evidenceError) throw evidenceError;
+  if (votesError) throw votesError;
+  if (feedbackError) throw feedbackError;
+
+  const studentIds = (students || []).map(student => student.id);
+  let profileRows = [];
+  if (studentIds.length) {
+    const { data, error: profilesError } = await supabase
       .from("player_profiles")
       .select(`
         student_id,
@@ -1065,30 +1130,50 @@ async function getTeacherDashboardData() {
           schools(name)
         )
       `)
-      .eq("students.class_id", classroomId),
-    supabase
-      .from("feedback_reports")
-      .select("*")
-      .eq("feedback_type", "store-item-request")
-      .order("created_at", { ascending: false })
-      .limit(40)
-  ]);
+      .in("student_id", studentIds);
 
-  if (studentsError) throw studentsError;
-  if (moduleProgressError) throw moduleProgressError;
-  if (evidenceError) throw evidenceError;
-  if (votesError) throw votesError;
-  if (profilesError) throw profilesError;
-  if (feedbackError) throw feedbackError;
+    if (profilesError) throw profilesError;
+    profileRows = data || [];
+  }
 
   return {
     context,
+    availableClasses,
+    selectedClassId,
+    selectedClassName,
     students: students || [],
     moduleProgress: moduleProgress || [],
     evidenceRows: evidenceRows || [],
     voteRows: voteRows || [],
     profileRows: (profileRows || []).map(mapRemotePlayerProfile),
     feedbackRows: feedbackRows || []
+  };
+}
+
+function renderTeacherClassSelector(teacherData) {
+  const selector = document.getElementById("teacher-class-selector");
+  const summary = document.getElementById("teacher-class-summary");
+  const note = document.getElementById("teacher-class-scope-note");
+  if (!selector || !summary || !note) return;
+
+  const classes = teacherData?.availableClasses || [];
+  const selectedClassId = teacherData?.selectedClassId || "all";
+
+  selector.innerHTML = [
+    '<option value="all">All Classes At School</option>',
+    ...classes.map(classroom => `<option value="${classroom.id}" ${classroom.id === selectedClassId ? "selected" : ""}>${escapeHtml(classroom.name)} (${escapeHtml(classroom.class_code || "No code")})</option>`)
+  ].join("");
+  summary.value = teacherData?.selectedClassName || "No class selected";
+  note.textContent = classes.length
+    ? `${classes.length} class option(s) found for this teacher/school context.`
+    : "No classes found for this teacher yet.";
+
+  selector.onchange = () => {
+    setTeacherDashboardFilter({
+      scope: selector.value === "all" ? "all" : "class",
+      classId: selector.value
+    });
+    initDashboards().catch(console.error);
   };
 }
 
@@ -1254,7 +1339,10 @@ async function renderStudentLiveData(players, skillsData) {
 
 function renderTeacherLiveData(players, skillsData, teacherData = null) {
   const teacherContext = getActiveTeacherContext();
-  const classCodeFilter = teacherContext.classroom?.classCode || teacherContext.teacherSession?.classCode || "";
+  const selectedClassCode = teacherData?.selectedClassId && teacherData.selectedClassId !== "all"
+    ? (teacherData.availableClasses || []).find(row => row.id === teacherData.selectedClassId)?.class_code || ""
+    : "";
+  const classCodeFilter = selectedClassCode || teacherContext.classroom?.classCode || teacherContext.teacherSession?.classCode || "";
   const latestPlayers = teacherData?.profileRows?.length
     ? dedupeLatestPlayers(teacherData.profileRows)
     : dedupeLatestPlayers(players).filter(player => !classCodeFilter || player.class_code === classCodeFilter);
@@ -1446,11 +1534,12 @@ function renderTeacherLiveData(players, skillsData, teacherData = null) {
     return bScore - aScore;
   });
 
-  setText("teacher-hero-title", classCodeFilter ? `Class ${classCodeFilter} overview` : "Teacher dashboard for all active records");
+  renderTeacherClassSelector(teacherData);
+  setText("teacher-hero-title", teacherData?.selectedClassId === "all" ? `All classes at ${teacherContext.teacher?.schoolName || "your school"}` : (classCodeFilter ? `Class ${classCodeFilter} overview` : "Teacher dashboard for all active records"));
   setText(
     "teacher-hero-subtitle",
     students.length
-      ? `Tracking ${students.length} student accounts with ${loggedInStudents} logged in, ${evidenceCount} evidence item(s), and live module data feeding the class view.`
+      ? `Tracking ${students.length} student accounts with ${loggedInStudents} logged in, ${evidenceCount} evidence item(s), and live module data feeding the ${teacherData?.selectedClassId === "all" ? "school-wide" : "class"} view.`
       : "Unlock the teacher area in the game or create student progress first to populate this dashboard."
   );
 
@@ -1458,6 +1547,7 @@ function renderTeacherLiveData(players, skillsData, teacherData = null) {
   if (badgeStack) {
     badgeStack.innerHTML = students.length ? [
       renderBadge(`Class: ${classCodeFilter || "Current class"}`),
+      renderBadge(`Scope: ${teacherData?.selectedClassId === "all" ? "All classes" : "Single class"}`),
       renderBadge(`Students: ${students.length}`),
       renderBadge(`Logged in: ${loggedInStudents}`),
       renderBadge(`Average mastery: ${classMastery}%`),
