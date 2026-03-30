@@ -1494,6 +1494,20 @@
       };
     }
 
+    function getStudentIdentityFromAuthState() {
+      const authState = getAuthPrototypeState();
+      const studentLogin = authState?.studentLogin;
+      if (!studentLogin?.username && !studentLogin?.displayName) return null;
+
+      return {
+        id: studentLogin.id || null,
+        display_name: studentLogin.displayName || studentLogin.username || 'Student',
+        username: studentLogin.username || studentLogin.displayName || '',
+        classes: studentLogin.classCode ? { class_code: studentLogin.classCode } : null,
+        schools: studentLogin.schoolName ? { name: studentLogin.schoolName } : null
+      };
+    }
+
     function openMegatrendsHome() {
       hidePlatformHome();
       document.getElementById('intro-screen').classList.remove('hidden');
@@ -1502,7 +1516,7 @@
       document.getElementById('leaderboard-tab').classList.add('hidden');
       document.getElementById('community-tab').classList.add('hidden');
       document.getElementById('global-tab').classList.add('hidden');
-      renderIntroLaunchState(null);
+      renderIntroLaunchState(getStudentIdentityFromAuthState() || getStoredPlayerIdentity());
       prefillFromLoggedInStudent();
     }
 
@@ -1524,7 +1538,7 @@
       if (gameState.playerName) return true;
 
       const authState = getAuthPrototypeState();
-      let student = null;
+      let student = getStudentIdentityFromAuthState();
 
       if (authState?.studentLogin?.id) {
         student = await getLoggedInStudentIdentity();
@@ -1590,7 +1604,10 @@
     }
 
     async function prefillFromLoggedInStudent() {
-      let student = await getLoggedInStudentIdentity();
+      let student = getStudentIdentityFromAuthState();
+      if (student?.id) {
+        student = await getLoggedInStudentIdentity();
+      }
       if (!student) {
         student = getStoredPlayerIdentity();
       }
