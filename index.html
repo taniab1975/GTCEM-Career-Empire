@@ -389,9 +389,116 @@
       gap: 18px;
       box-shadow: inset 0 0 0 1px rgba(255,255,255,0.03);
     }
-    .platform-media-player video {
+    .platform-video-launch {
+      position: relative;
+      min-height: 440px;
+      border-radius: 20px;
+      border: 1px solid rgba(148, 163, 184, 0.2);
+      background:
+        linear-gradient(160deg, rgba(15, 23, 42, 0.88), rgba(2, 6, 23, 0.96)),
+        radial-gradient(circle at top left, rgba(59, 130, 246, 0.22), transparent 40%);
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      padding: 28px;
+      overflow: hidden;
+    }
+    .platform-video-launch::after {
+      content: "";
+      position: absolute;
+      inset: auto -60px -60px auto;
+      width: 220px;
+      height: 220px;
+      border-radius: 50%;
+      background: radial-gradient(circle, rgba(34, 197, 94, 0.2), transparent 70%);
+      pointer-events: none;
+    }
+    .platform-video-launch h4 {
+      margin: 0 0 10px 0;
+      color: #ffffff;
+      font-size: 2rem;
+      font-weight: 800;
+      max-width: 520px;
+      line-height: 1.1;
+    }
+    .platform-video-launch p {
+      margin: 0;
+      color: #cbd5e1;
+      max-width: 560px;
+      line-height: 1.7;
+      position: relative;
+      z-index: 1;
+    }
+    .platform-video-open {
+      position: relative;
+      z-index: 1;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      width: fit-content;
+      padding: 16px 24px;
+      border: none;
+      border-radius: 16px;
+      background: linear-gradient(135deg, #60a5fa, #2563eb);
+      color: #fff;
+      font-size: 1rem;
+      font-weight: 800;
+      cursor: pointer;
+      box-shadow: 0 20px 40px rgba(37, 99, 235, 0.28);
+      transition: transform 0.18s ease, box-shadow 0.18s ease;
+    }
+    .platform-video-open:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 24px 50px rgba(37, 99, 235, 0.36);
+    }
+    .platform-video-modal {
+      position: fixed;
+      inset: 0;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      padding: 24px;
+      background: rgba(2, 6, 23, 0.86);
+      backdrop-filter: blur(8px);
+      z-index: 1200;
+    }
+    .platform-video-modal.active {
+      display: flex;
+    }
+    .platform-video-modal-card {
+      width: min(1200px, 100%);
+      background: linear-gradient(180deg, rgba(15, 23, 42, 0.98), rgba(2, 6, 23, 0.98));
+      border: 1px solid rgba(125, 211, 252, 0.26);
+      border-radius: 24px;
+      padding: 20px;
+      box-shadow: 0 30px 80px rgba(2, 6, 23, 0.65);
+    }
+    .platform-video-modal-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      margin-bottom: 16px;
+    }
+    .platform-video-modal-header h3 {
+      margin: 0;
+      color: #fff;
+      font-size: 1.35rem;
+      font-weight: 800;
+    }
+    .platform-video-close {
+      border: 1px solid rgba(148, 163, 184, 0.25);
+      background: rgba(15, 23, 42, 0.9);
+      color: #fff;
+      border-radius: 12px;
+      padding: 10px 14px;
+      font-weight: 700;
+      cursor: pointer;
+    }
+    .platform-video-modal video {
       width: 100%;
-      min-height: 420px;
+      max-height: 78vh;
       border-radius: 18px;
       background: #020617;
       border: 1px solid rgba(148, 163, 184, 0.2);
@@ -678,10 +785,13 @@
                   <span class="platform-media-label">What is Career Empire?</span>
                   <h3>See the platform in action</h3>
                   <p>Watch the promo walkthrough to see how students play, earn, compete, contribute to community goals, and build their career journey through the curriculum.</p>
-                  <video controls playsinline preload="metadata">
-                    <source src="./Assets/Videos/Career%20Empire%20Promo%20Draft.mp4" type="video/mp4">
-                    Your browser does not support the video tag.
-                  </video>
+                  <div class="platform-video-launch">
+                    <div>
+                      <h4>Open the full Career Empire promo experience</h4>
+                      <p>Launch the video in a larger pop-out player so dashboard screens, gameplay moments, and promo snapshots are big enough to read clearly.</p>
+                    </div>
+                    <button type="button" class="platform-video-open" id="open-promo-video">Play Promo Video</button>
+                  </div>
                 </div>
               </div>
             </div>
@@ -3290,8 +3400,52 @@
       }
     }
   </script>
+  <div class="platform-video-modal" id="promo-video-modal" aria-hidden="true">
+    <div class="platform-video-modal-card">
+      <div class="platform-video-modal-header">
+        <h3>What is Career Empire?</h3>
+        <button type="button" class="platform-video-close" id="close-promo-video">Close</button>
+      </div>
+      <video controls playsinline preload="metadata" id="promo-video-player">
+        <source src="./Assets/Videos/Career%20Empire%20Promo%20Draft.mp4" type="video/mp4">
+        Your browser does not support the video tag.
+      </video>
+    </div>
+  </div>
   <script src="./config/supabase-config.js"></script>
   <script src="./src/services/supabase-browser.js"></script>
   <script src="./src/services/feedback-widget.js"></script>
+  <script>
+    (function () {
+      const modal = document.getElementById("promo-video-modal");
+      const openButton = document.getElementById("open-promo-video");
+      const closeButton = document.getElementById("close-promo-video");
+      const video = document.getElementById("promo-video-player");
+      if (!modal || !openButton || !closeButton || !video) return;
+
+      const closeModal = () => {
+        modal.classList.remove("active");
+        modal.setAttribute("aria-hidden", "true");
+        video.pause();
+      };
+
+      openButton.addEventListener("click", () => {
+        modal.classList.add("active");
+        modal.setAttribute("aria-hidden", "false");
+        video.currentTime = 0;
+        video.play().catch(() => {});
+      });
+
+      closeButton.addEventListener("click", closeModal);
+      modal.addEventListener("click", event => {
+        if (event.target === modal) closeModal();
+      });
+      document.addEventListener("keydown", event => {
+        if (event.key === "Escape" && modal.classList.contains("active")) {
+          closeModal();
+        }
+      });
+    }());
+  </script>
 </body>
 </html>
