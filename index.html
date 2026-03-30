@@ -1508,9 +1508,26 @@
       showPlatformHome();
     }
 
-    function startGame() {
+    async function ensureLoggedInStudentReadyForLaunch() {
+      if (gameState.playerName) return true;
+
+      const authState = getAuthPrototypeState();
+      if (!authState?.studentLogin?.id) return false;
+
+      const student = await getLoggedInStudentIdentity();
+      if (!student) return false;
+
+      gameState.playerName = student.display_name || student.username || '';
+      gameState.schoolName = student.schools?.name || authState.studentLogin.schoolName || '';
+      gameState.classCode = (student.classes?.class_code || authState.studentLogin.classCode || '').toUpperCase();
+
+      return Boolean(gameState.playerName);
+    }
+
+    async function startGame() {
       hidePlatformHome();
-      if (!gameState.playerName) {
+      const isReadyToLaunch = await ensureLoggedInStudentReadyForLaunch();
+      if (!isReadyToLaunch) {
         window.location.href = './auth/student-login.html';
         return;
       }
@@ -2938,9 +2955,9 @@
     function attachLaunchButton() {
       const launchBtn = document.getElementById('launch-btn');
       if (launchBtn) {
-        launchBtn.addEventListener('click', function(e) {
+        launchBtn.addEventListener('click', async function(e) {
           e.preventDefault();
-          startGame();
+          await startGame();
         });
       }
     }
