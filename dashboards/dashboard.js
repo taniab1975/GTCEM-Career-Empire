@@ -1694,15 +1694,21 @@ function renderTeacherLiveData(players, skillsData, teacherData = null) {
     Number(player.demo_mastery || 0),
     Number(player.economic_mastery || 0)
   ]));
-  const studentsOnTrack = moduleMasteries.filter(value => value >= 50).length;
-  const studentsAtRisk = moduleMasteries.filter(value => value < 35).length;
+  let studentsOnTrack = moduleMasteries.filter(value => value >= 50).length;
+  let studentsAtRisk = moduleMasteries.filter(value => value < 35).length;
   const evidenceCount = evidenceRows.length;
   const classFund = latestPlayers.reduce((sum, player) => sum + Math.floor(Number(player.annual_salary || 0) * 0.1), 0);
-  const classMastery = average(moduleMasteries);
-  const averageSecurity = average(latestPlayers.map(player => Number(player.job_security || 0)));
+  let classMastery = average(moduleMasteries);
+  let averageSecurity = average(latestPlayers.map(player => Number(player.job_security || 0)));
   const loggedInStudents = students.filter(student => student.last_login_at).length;
   const moduleCompletion = average(moduleProgressRows.map(row => Number(row.completion_percent || 0)));
   const moduleMastery = average(moduleProgressRows.map(row => Number(row.mastery_percent || 0)));
+  if (isPromoTeacherDashboardMode()) {
+    studentsOnTrack = 14;
+    studentsAtRisk = 2;
+    classMastery = Math.max(classMastery, 78);
+    averageSecurity = Math.max(averageSecurity, 84);
+  }
   const latestEvidence = evidenceRows.slice(0, 4).map(row => ({
     title: `${row.module_id || row.module_slug || "module"} • ${formatDateTime(row.created_at)}`,
     detail: `${row.prompt || "Reflection submitted"}${row.response_text ? ` — ${String(row.response_text).slice(0, 120)}${String(row.response_text).length > 120 ? "..." : ""}` : ""}`
