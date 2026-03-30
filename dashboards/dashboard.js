@@ -121,6 +121,34 @@ function getAuthPrototypeState() {
   return readJsonStorage("career-empire-auth-demo", {});
 }
 
+function buildMegatrendsLaunchPath() {
+  const authState = getAuthPrototypeState();
+  const session = getCurrentPlayerSession();
+  const studentLogin = authState?.studentLogin || {};
+  const params = new URLSearchParams({ screen: "megatrends" });
+
+  const studentName = studentLogin.displayName || studentLogin.username || session?.playerName || "";
+  const studentUsername = studentLogin.username || "";
+  const schoolName = studentLogin.schoolName || session?.schoolName || "";
+  const classCode = studentLogin.classCode || session?.classCode || "";
+
+  if (studentName) params.set("student_name", studentName);
+  if (studentUsername) params.set("student_username", studentUsername);
+  if (schoolName) params.set("school_name", schoolName);
+  if (classCode) params.set("class_code", classCode);
+
+  return `../index.html?${params.toString()}`;
+}
+
+function syncMegatrendsLaunchLinks() {
+  const launchPath = buildMegatrendsLaunchPath();
+  document.querySelectorAll('a[href="../index.html?screen=megatrends"]').forEach(link => {
+    link.href = launchPath;
+  });
+  const hubLink = document.getElementById("student-hub-megatrends-link");
+  if (hubLink) hubLink.href = launchPath;
+}
+
 function getActiveTeacherContext() {
   const authState = getAuthPrototypeState();
   const teacherSession = getTeacherSession();
@@ -747,7 +775,7 @@ async function renderStudentLiveData(players, skillsData) {
       spotlight: true,
       logoPath: skillsData.categories.find(category => category.id === "digital-literacy")?.logoPath,
       logoLabel: "Digital Literacy",
-      launchPath: "../index.html?screen=megatrends",
+      launchPath: buildMegatrendsLaunchPath(),
       launchLabel: "Open Megatrends",
       tags: ["Live data", "Career stats", "Class impact"]
     },
@@ -946,6 +974,7 @@ function renderTeacherLiveData(players, skillsData, teacherData = null) {
 }
 
 async function initDashboards() {
+  syncMegatrendsLaunchLinks();
   const skillsData = await loadEmployabilitySkills();
   const players = await getPlayers();
   if (document.getElementById("student-module-grid")) {
