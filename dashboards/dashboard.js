@@ -173,7 +173,17 @@ async function resolveTeacherDashboardContext(supabase, context) {
     return context;
   }
 
-  const email = context?.teacherLogin?.email || context?.teacher?.email || "";
+  let email = context?.teacherLogin?.email || context?.teacher?.email || "";
+  if (!email && supabase?.auth?.getUser) {
+    try {
+      const { data, error } = await supabase.auth.getUser();
+      if (!error && data?.user?.email) {
+        email = data.user.email;
+      }
+    } catch (error) {
+      console.error(error);
+    }
+  }
   if (!email) return context;
 
   const { data, error } = await supabase
@@ -201,6 +211,11 @@ async function resolveTeacherDashboardContext(supabase, context) {
     teacher: {
       ...(authState.teacher || {}),
       ...nextTeacher
+    },
+    teacherLogin: {
+      ...(authState.teacherLogin || {}),
+      email: data.email,
+      schoolName: data.schools?.name || authState.teacherLogin?.schoolName || ""
     }
   }));
 
