@@ -1426,6 +1426,22 @@ async function renderStudentLiveData(players, skillsData) {
 
 function renderTeacherLiveData(players, skillsData, teacherData = null) {
   const teacherContext = getActiveTeacherContext();
+  const safeTeacherData = teacherData || {
+    context: teacherContext,
+    availableClasses: [],
+    selectedClassId: "all",
+    selectedClassName: "No classes found",
+    students: [],
+    moduleProgress: [],
+    evidenceRows: [],
+    voteRows: [],
+    profileRows: [],
+    feedbackRows: []
+  };
+  const skillCategories = Array.isArray(skillsData?.categories) ? skillsData.categories : [];
+
+  renderTeacherClassSelector(safeTeacherData);
+
   const selectedClassCode = teacherData?.selectedClassId && teacherData.selectedClassId !== "all"
     ? (teacherData.availableClasses || []).find(row => row.id === teacherData.selectedClassId)?.class_code || ""
     : "";
@@ -1454,7 +1470,7 @@ function renderTeacherLiveData(players, skillsData, teacherData = null) {
     "problem-solving": average(skillProgressRows.map(row => row["problem-solving"] || 0))
   };
   const weakestSkillId = getWeakestSkill(classSkillMap)[0];
-  const weakestSkill = skillsData.categories.find(category => category.id === weakestSkillId);
+  const weakestSkill = skillCategories.find(category => category.id === weakestSkillId);
   const moduleMasteries = latestPlayers.map(player => average([
     Number(player.tech_mastery || 0),
     Number(player.climate_mastery || 0),
@@ -1570,7 +1586,7 @@ function renderTeacherLiveData(players, skillsData, teacherData = null) {
       "critical-thinking": 0,
       "problem-solving": 0
     })[0];
-    const strongestSkill = skillsData.categories.find(category => category.id === strongestSkillId);
+    const strongestSkill = skillCategories.find(category => category.id === strongestSkillId);
     const recentResponseText = latestEST?.response_text || latestMegatrends?.response_text || "";
     const recentPrompt = latestEST?.prompt_text || latestMegatrends?.prompt_text || "";
     const recentModule = latestEST ? "EST Prep" : latestMegatrends ? "Megatrends" : "No written evidence yet";
@@ -1621,7 +1637,6 @@ function renderTeacherLiveData(players, skillsData, teacherData = null) {
     return bScore - aScore;
   });
 
-  renderTeacherClassSelector(teacherData);
   setText("teacher-hero-title", teacherData?.selectedClassId === "all" ? `All classes at ${teacherContext.teacher?.schoolName || "your school"}` : (classCodeFilter ? `Class ${classCodeFilter} overview` : "Teacher dashboard for all active records"));
   setText(
     "teacher-hero-subtitle",
@@ -1650,7 +1665,7 @@ function renderTeacherLiveData(players, skillsData, teacherData = null) {
   setText("teacher-evidence-count", String(evidenceCount));
   setText("teacher-class-fund", formatCurrency(classFund));
 
-  renderSkills(skillsData, "teacher-skill-grid", classSkillMap);
+  renderSkills({ categories: skillCategories }, "teacher-skill-grid", classSkillMap);
   renderTeacherModuleHealth([
     {
       title: "Megatrends",
