@@ -29,6 +29,21 @@
       background: rgba(59, 130, 246, 0.16);
       border-color: rgba(125, 211, 252, 0.48);
     }
+    .shop-request-panel {
+      display: grid;
+      gap: 14px;
+      margin-bottom: 18px;
+      padding: 18px;
+      border-radius: 20px;
+      border: 1px solid rgba(104, 210, 255, 0.22);
+      background: linear-gradient(145deg, rgba(16, 34, 58, 0.92), rgba(11, 23, 39, 0.92));
+    }
+    .shop-request-panel p {
+      margin: 0;
+    }
+    .shop-request-panel .shop-secondary-button {
+      justify-self: start;
+    }
     .shop-category-bar {
       display: flex;
       flex-wrap: wrap;
@@ -157,7 +172,7 @@
           <span class="badge">Loading student account...</span>
         </div>
         <div class="shop-action-row">
-          <button id="shop-add-item-button" class="shop-secondary-button" type="button">Add an Item to the Store</button>
+          <button id="shop-add-item-button" class="shop-secondary-button" type="button" data-open-store-request="true">Add an Item to the Store</button>
         </div>
       </article>
       <div class="hero-side">
@@ -206,6 +221,11 @@
         <div class="section-title">
           <h2>Available Upgrades</h2>
           <p>Buy once, keep across modules</p>
+        </div>
+        <div class="shop-request-panel">
+          <p class="eyebrow">Student Ownership</p>
+          <p><strong>Want something new in the shop?</strong> Suggest an item, choose its category, and optionally upload a photo so your teacher can review it and publish it.</p>
+          <button class="shop-secondary-button" type="button" data-open-store-request="true">Suggest a New Store Item</button>
         </div>
         <div id="shop-category-bar" class="shop-category-bar"></div>
         <div id="shop-grid" class="module-grid"></div>

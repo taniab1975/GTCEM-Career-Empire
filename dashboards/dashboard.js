@@ -713,6 +713,46 @@ function renderTeacherTaskTimeList(items) {
   `).join("");
 }
 
+function renderTeacherStudentCompareList(items) {
+  const container = document.getElementById("teacher-student-compare-list");
+  if (!container) return;
+
+  if (!items.length) {
+    container.innerHTML = '<div class="timeline-item"><strong>No student comparison data yet</strong><p>Once students have module progress and evidence saved, this area will compare them across Megatrends and EST Prep.</p></div>';
+    return;
+  }
+
+  container.innerHTML = items.map(item => `
+    <article class="module-card ${item.spotlight ? "spotlight" : ""}">
+      <div class="section-title">
+        <div>
+          <h3>${escapeHtml(item.name)}</h3>
+          <p>${escapeHtml(item.meta)}</p>
+        </div>
+        <p>${escapeHtml(item.status)}</p>
+      </div>
+      <p>${escapeHtml(item.summary)}</p>
+      <div class="pill-row">
+        ${item.pills.map(pill => `<span class="pill">${escapeHtml(pill)}</span>`).join("")}
+      </div>
+      <div class="section-title" style="margin-top: 12px;">
+        <p>Megatrends ${item.megatrendsCompletion}% complete</p>
+        <p>EST ${item.estCompletion}% complete</p>
+      </div>
+      ${createProgressBar(item.megatrendsCompletion)}
+      ${createProgressBar(item.estCompletion, "green")}
+      <div class="list" style="margin-top: 14px;">
+        ${item.details.map(detail => `
+          <div class="timeline-item">
+            <strong>${escapeHtml(detail.title)}</strong>
+            <p>${escapeHtml(detail.detail)}</p>
+          </div>
+        `).join("")}
+      </div>
+    </article>
+  `).join("");
+}
+
 function getSkillCategoryById(skillsData, skillId) {
   return skillsData.categories.find(category => category.id === skillId) || null;
 }
@@ -1327,6 +1367,84 @@ function renderTeacherLiveData(players, skillsData, teacherData = null) {
       const matchesSchool = !teacherSchool || request.schoolName === teacherSchool;
       return matchesClass || matchesSchool;
     });
+  const studentCompareRows = students.map(student => {
+    const player = latestPlayers.find(entry => entry.id === student.id) || null;
+    const studentProgress = moduleProgressRows.filter(row => row.student_id === student.id);
+    const megatrendsProgress = studentProgress.find(row => (row.module_id || row.module_slug) === "megatrends") || null;
+    const estProgress = studentProgress.find(row => (row.module_id || row.module_slug) === "est-prep") || null;
+    const studentEvidence = parsedEvidenceRows.filter(entry => entry.row.student_id === student.id);
+    const estEvidence = studentEvidence.filter(entry => (entry.row.module_id || entry.row.module_slug || entry.payload?.module_id) === "est-prep");
+    const megatrendsEvidence = studentEvidence.filter(entry => (entry.row.module_id || entry.row.module_slug || entry.payload?.module_id) === "megatrends");
+    const latestEST = estEvidence[0]?.payload || null;
+    const latestMegatrends = megatrendsEvidence[0]?.payload || null;
+    const timedEvidence = studentEvidence.filter(entry => entry.payload?.duration_seconds);
+    const averageTaskTime = timedEvidence.length
+      ? Math.round(timedEvidence.reduce((sum, entry) => sum + Number(entry.payload.duration_seconds || 0), 0) / timedEvidence.length)
+      : 0;
+    const overallMastery = player ? average([
+      Number(player.tech_mastery || 0),
+      Number(player.climate_mastery || 0),
+      Number(player.demo_mastery || 0),
+      Number(player.economic_mastery || 0)
+    ]) : 0;
+    const strongestSkillId = getStrongestSkill(player ? deriveEmployabilityProgress(player) : {
+      communication: 0,
+      "digital-literacy": 0,
+      teamwork: 0,
+      "time-management": 0,
+      "critical-thinking": 0,
+      "problem-solving": 0
+    })[0];
+    const strongestSkill = skillsData.categories.find(category => category.id === strongestSkillId);
+    const recentResponseText = latestEST?.response_text || latestMegatrends?.response_text || "";
+    const recentPrompt = latestEST?.prompt_text || latestMegatrends?.prompt_text || "";
+    const recentModule = latestEST ? "EST Prep" : latestMegatrends ? "Megatrends" : "No written evidence yet";
+
+    return {
+      name: student.display_name || student.username || "Student",
+      meta: [
+        student.username || "No username",
+        student.last_login_at ? `Last login ${formatDateTime(student.last_login_at)}` : "Not logged in yet"
+      ].join(" • "),
+      status: overallMastery >= 60 ? "On track" : estProgress || megatrendsProgress ? "Building" : "Not started",
+      summary: player
+        ? `${player.career_title || "Career Builder"} with ${overallMastery}% overall megatrend mastery, ${formatCurrency(player.annual_salary || 0)} salary, and ${formatCurrency(player.cumulative_net_worth || 0)} net worth.`
+        : "No live profile yet. This student needs first-play data to unlock deeper comparison.",
+      pills: [
+        `Megatrends mastery: ${Number(megatrendsProgress?.mastery_percent || overallMastery)}%`,
+        `EST mastery: ${Number(estProgress?.mastery_percent || 0)}%`,
+        `Avg task time: ${averageTaskTime ? formatDurationSeconds(averageTaskTime) : "No timings yet"}`,
+        `Strongest skill: ${strongestSkill?.title || "Not clear yet"}`
+      ],
+      megatrendsCompletion: Number(megatrendsProgress?.completion_percent || Math.min(100, Number(player?.years_played || 0) * 18 || 0)),
+      estCompletion: Number(estProgress?.completion_percent || 0),
+      spotlight: Boolean(estProgress && megatrendsProgress),
+      details: [
+        {
+          title: "Megatrends snapshot",
+          detail: player
+            ? `Years played ${Number(player.years_played || 0)} • Job security ${Number(player.job_security || 0)}% • Work-life balance ${Number(player.work_life_balance || 0)}%`
+            : "No Megatrends profile saved yet."
+        },
+        {
+          title: "EST snapshot",
+          detail: estProgress
+            ? `Completion ${Number(estProgress.completion_percent || 0)}% • Mastery ${Number(estProgress.mastery_percent || 0)}% • Attempts ${Number(estProgress.attempts || 0)}`
+            : "No EST progress saved yet."
+        },
+        {
+          title: `Latest response • ${recentModule}`,
+          detail: recentResponseText
+            ? `${recentPrompt ? `${String(recentPrompt).slice(0, 70)}${String(recentPrompt).length > 70 ? "..." : ""} • ` : ""}${String(recentResponseText).slice(0, 120)}${String(recentResponseText).length > 120 ? "..." : ""}`
+            : "No written response stored yet."
+        }
+      ]
+    };
+  }).sort((a, b) => {
+    const aScore = Number(a.megatrendsCompletion || 0) + Number(a.estCompletion || 0);
+    const bScore = Number(b.megatrendsCompletion || 0) + Number(b.estCompletion || 0);
+    return bScore - aScore;
+  });
 
   setText("teacher-hero-title", classCodeFilter ? `Class ${classCodeFilter} overview` : "Teacher dashboard for all active records");
   setText(
@@ -1411,6 +1529,7 @@ function renderTeacherLiveData(players, skillsData, teacherData = null) {
   renderTeacherEvidenceList(latestEvidence);
   renderTeacherESTResponseList(estResponses);
   renderTeacherTaskTimeList(taskTimingRows);
+  renderTeacherStudentCompareList(studentCompareRows);
   renderTeacherStoreRequestList(storeRequests);
 }
 

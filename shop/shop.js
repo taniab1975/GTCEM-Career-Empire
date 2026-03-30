@@ -448,14 +448,13 @@ function closeStoreRequestModal() {
 }
 
 function bindStoreRequestActions() {
-  const openButton = document.getElementById("shop-add-item-button");
   const cancelButton = document.getElementById("shop-request-cancel");
   const submitButton = document.getElementById("shop-request-submit");
   const imageInput = document.getElementById("shop-request-image");
 
-  if (openButton) {
-    openButton.addEventListener("click", openStoreRequestModal);
-  }
+  document.querySelectorAll("[data-open-store-request]").forEach(button => {
+    button.addEventListener("click", openStoreRequestModal);
+  });
   if (cancelButton) {
     cancelButton.addEventListener("click", closeStoreRequestModal);
   }
