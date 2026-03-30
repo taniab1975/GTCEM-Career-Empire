@@ -234,6 +234,31 @@
     .skill-spotlight-card { display: flex; gap: 12px; align-items: flex-start; padding: 12px; border-radius: 12px; border: 1px solid rgba(255, 255, 255, 0.08); background: rgba(255, 255, 255, 0.04); }
     .skill-spotlight-card img { width: 48px; height: 48px; object-fit: contain; border-radius: 14px; background: rgba(255, 255, 255, 0.06); padding: 6px; flex-shrink: 0; }
     .skill-spotlight-card p { margin: 0; }
+    .choice-outcome-card { display: grid; gap: 18px; }
+    .choice-outcome-intro { padding: 18px; border-radius: 16px; border: 1px solid rgba(96, 165, 250, 0.2); background: rgba(15, 23, 42, 0.44); }
+    .choice-outcome-intro p { margin: 0; }
+    .choice-outcome-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 14px; }
+    .choice-outcome-stat { padding: 16px; border-radius: 16px; border: 1px solid rgba(96, 165, 250, 0.18); background: rgba(8, 20, 36, 0.58); }
+    .choice-outcome-stat p { margin: 0; }
+    .choice-outcome-vote { padding: 18px; border-radius: 16px; border: 1px solid rgba(59, 130, 246, 0.22); background: rgba(8, 20, 36, 0.72); }
+    .choice-outcome-vote p { margin: 0; }
+    .community-vote-button {
+      width: 100%;
+      text-align: left;
+      padding: 14px 16px;
+      border-radius: 14px;
+      background: rgba(51, 65, 85, 0.85);
+      border: 1px solid rgba(148, 163, 184, 0.14);
+      color: #e5e7eb;
+      font-size: 15px;
+      font-weight: 700;
+      transition: all 0.25s ease;
+    }
+    .community-vote-button:hover {
+      background: rgba(59, 130, 246, 0.18);
+      border-color: rgba(96, 165, 250, 0.4);
+      transform: translateY(-1px);
+    }
     .milestone-header { display: flex; gap: 14px; align-items: center; margin-bottom: 10px; }
     .milestone-header img { width: 52px; height: 52px; object-fit: contain; border-radius: 16px; background: rgba(255, 255, 255, 0.1); padding: 8px; border: 1px solid rgba(255, 255, 255, 0.18); flex-shrink: 0; }
     .leaderboard-skill { display: inline-flex; align-items: center; gap: 8px; margin-top: 8px; font-size: 12px; color: #cbd5e1; }
@@ -1346,6 +1371,27 @@
       return data || fallbackStudent;
     }
 
+    function startMegatrendsTask(taskName, promptText = '') {
+      window.__MEGATRENDS_TASK_TIMER__ = {
+        taskName,
+        promptText,
+        startedAt: Date.now()
+      };
+    }
+
+    function getMegatrendsTaskMeta(overrides = {}) {
+      const timer = window.__MEGATRENDS_TASK_TIMER__ || {};
+      const startedAt = Number(timer.startedAt || 0);
+      return {
+        taskName: overrides.taskName || timer.taskName || '',
+        promptText: overrides.promptText || timer.promptText || '',
+        responseText: overrides.responseText || '',
+        durationSeconds: overrides.durationSeconds || (startedAt ? Math.max(1, Math.round((Date.now() - startedAt) / 1000)) : null),
+        autoScore: typeof overrides.autoScore === 'number' ? overrides.autoScore : null,
+        evidenceType: overrides.evidenceType || 'task-attempt'
+      };
+    }
+
     const TEACHER_SESSION_CODE = 'ECC-CAREERS-2026';
     let gameState = {
       playerName: '',
@@ -1660,6 +1706,15 @@
       `;
     }
 
+    function scrollMegatrendsOutcomeIntoView() {
+      const container = document.getElementById('scenario-container');
+      if (!container) return;
+      requestAnimationFrame(() => {
+        container.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        window.scrollTo({ top: Math.max(0, container.offsetTop - 18), behavior: 'smooth' });
+      });
+    }
+
     function getMilestoneSkillMeta(masteryName) {
       const skillId = MASTERY_TO_SKILL_ID[masteryName];
       if (!skillId) return null;
@@ -1697,6 +1752,7 @@
     }
 
     function displayScenario(scenario) {
+      startMegatrendsTask('Scenario Choice', `${scenario.megatrend}: ${scenario.title}`);
       const container = document.getElementById('scenario-container');
       let badgeClass = 'tech-badge';
       let bgClass = 'bg-purple-900 bg-opacity-30 border-l-4 border-purple-400';
@@ -1765,6 +1821,10 @@
     function submitChoice() {
       if (selectedChoiceIdx === null) return;
       const choice = currentScenario.choices[selectedChoiceIdx];
+      const taskMeta = getMegatrendsTaskMeta({
+        responseText: choice.text,
+        evidenceType: 'scenario-choice'
+      });
       lastScenarioChoice = choice;
       gameState.careerTitle = 'Professional';
       gameState.annualSalary = choice.salary;
@@ -1780,18 +1840,44 @@
         else if (choice.masteryBoost === 'economic') gameState.economicMastery += 15;
       }
       updateStats();
-      saveProgress('scenario_choice');
-      const feedbackMessage = `${choice.message}<br><br>You chose <strong>"${choice.text}"</strong> in response to this scenario. You just explored <strong>"${currentScenario.megatrend}"</strong>. Cast your community vote below, then complete the concept challenge to learn deeply!`;
+      saveProgress('scenario_choice', taskMeta);
+      const communityTax = Math.floor(gameState.annualSalary * 0.1);
+      const earnedThisYear = gameState.annualSalary;
       document.getElementById('choices-section').classList.add('hidden');
       document.getElementById('submit-section').classList.add('hidden');
       document.getElementById('feedback-section').classList.remove('hidden');
       document.getElementById('feedback-section').innerHTML = `
         <div class="card-glow p-6 rounded-xl border-l-4 border-blue-400">
-          <p id="feedback-text" class="text-lg text-gray-200 mb-4">${feedbackMessage}</p>
-          ${renderEmployabilitySkillSpotlight(choice)}
+          <div class="choice-outcome-card">
+            <div class="choice-outcome-intro">
+              <p class="text-xs font-semibold text-cyan-300 uppercase tracking-wide mb-3">Your choice consequences</p>
+              <p id="feedback-text" class="text-lg text-gray-100 leading-relaxed">
+                <strong>${choice.message}</strong><br><br>
+                You chose <strong>"${choice.text}"</strong> for the <strong>${currentScenario.title}</strong> scenario, which helped you explore <strong>${currentScenario.megatrend}</strong>.
+              </p>
+            </div>
+            ${renderEmployabilitySkillSpotlight(choice)}
+            <div class="choice-outcome-grid">
+              <div class="choice-outcome-stat">
+                <p class="text-sm font-semibold text-yellow-300 uppercase tracking-wide mb-2">Income unlocked</p>
+                <p class="text-3xl font-extrabold text-white">$${earnedThisYear.toLocaleString()}</p>
+                <p class="text-sm text-gray-300 mt-2">This choice grows your career earnings and leaderboard power.</p>
+              </div>
+              <div class="choice-outcome-stat">
+                <p class="text-sm font-semibold text-green-300 uppercase tracking-wide mb-2">Class community tax</p>
+                <p class="text-3xl font-extrabold text-white">$${communityTax.toLocaleString()}</p>
+                <p class="text-sm text-gray-300 mt-2">Ten percent of this income goes into your class community fund.</p>
+              </div>
+            </div>
+            <div class="choice-outcome-vote">
+              <p class="text-sm font-semibold text-blue-300 uppercase tracking-wide mb-2">What is the class community fund?</p>
+              <p class="text-sm text-gray-200 leading-relaxed">All student taxes are pooled together so your class builds a shared community total. Every choice helps your class create a bigger fund and shape where that support goes.</p>
+            </div>
+          </div>
         </div>
       `;
       showCommunityVotePrompt();
+      scrollMegatrendsOutcomeIntoView();
     }
 
     function showCommunityVotePrompt() {
@@ -1801,19 +1887,14 @@
         { id: 'diversity', label: '🌈 Diversity & Economic Equity' },
         { id: 'global', label: '💰 Global Opportunity Access' }
       ];
-      const communityTax = Math.floor(gameState.annualSalary * 0.1);
-      const earnedThisYear = gameState.annualSalary;
       const feedbackSection = document.getElementById('feedback-section');
       const voteHTML = `
-        <div class="mt-6 pt-6 border-t border-blue-600">
-          <div class="mb-4 p-4 bg-blue-900 bg-opacity-40 rounded-lg border border-blue-500">
-            <p class="text-sm text-blue-200 mb-2">💰 <strong>Community Fund Contribution</strong></p>
-            <p class="text-xs text-gray-300">You just answered the scenario and earned <strong>$${earnedThisYear.toLocaleString()}</strong> in income. <strong>$${communityTax.toLocaleString()}</strong> (10%) will be paid into your class community fund to help build your community.</p>
-          </div>
-          <p class="text-sm font-semibold text-blue-300 mb-4">🗳️ Please choose which aspect of community you want your taxes to contribute to.</p>
+        <div class="choice-outcome-vote mt-2">
+          <p class="text-sm font-semibold text-blue-300 uppercase tracking-wide mb-2">Choose your community direction</p>
+          <p class="text-sm text-gray-200 mb-4">Decide where your class fund should make the biggest impact next. Your vote gives meaning to the tax your choice just contributed.</p>
           <div class="space-y-2" id="vote-buttons-container">
             ${causes.map(cause => `
-              <button onclick="castCommunityVote('${cause.id}'); updateVoteUI();" class="w-full text-left px-4 py-2 rounded-lg bg-slate-700 hover:bg-slate-600 text-gray-200 text-sm font-semibold transition-all" id="vote-btn-${cause.id}">
+              <button onclick="castCommunityVote('${cause.id}'); updateVoteUI();" class="community-vote-button" id="vote-btn-${cause.id}">
                 ${cause.label}
               </button>
             `).join('')}
@@ -1827,7 +1908,7 @@
     function updateVoteUI() {
       const container = document.getElementById('vote-buttons-container');
       if (container) {
-        container.innerHTML = '<p class="text-sm font-semibold text-green-300">✓ Vote recorded! This cause will receive your support.</p>';
+        container.innerHTML = '<p class="text-sm font-semibold text-green-300">✓ Vote recorded! Your tax is now backing this community direction. You can move on to Learn the Concept when you are ready.</p>';
       }
     }
 
@@ -1854,6 +1935,7 @@
     }
 
     function showConceptChallenge() {
+      startMegatrendsTask('Concept Challenge', currentScenario?.conceptQuiz?.question || currentScenario?.megatrend || '');
       const modal = document.getElementById('concept-modal');
       const content = document.getElementById('concept-content');
       const quiz = currentScenario.conceptQuiz;
@@ -1906,6 +1988,8 @@
       const targetSentence = TARGET_SENTENCE_BY_MEGATREND[megatrend] || `${megatrend} is affecting ${correctAspect}, by changing how work happens.`;
       const selectedChoiceText = lastScenarioChoice?.text || 'your scenario answer';
       const selectedChoiceMessage = lastScenarioChoice?.message || '';
+      const scenarioTitle = currentScenario?.title || 'this scenario';
+      const scenarioQuestion = currentScenario?.description || 'the question you just explored';
       const ownWordsStarter = `My answer was in response to ${megatrend}, and it affected ${correctAspect} because `;
 
       const recapHtml = MEGATREND_RECAP.map(t => {
@@ -1931,9 +2015,10 @@
 
       content.innerHTML = `
         <div class="card-glow p-6 rounded-xl border-l-4 border-cyan-400">
-          <p class="text-xs uppercase tracking-wide text-cyan-300 font-semibold mb-2">Your scenario answer</p>
-          <p class="text-xl font-bold text-white mb-2">${selectedChoiceText}</p>
-          <p class="text-sm text-cyan-100">${selectedChoiceMessage}</p>
+          <p class="text-xs uppercase tracking-wide text-cyan-300 font-semibold mb-2">Scenario recap</p>
+          <p class="text-xl font-bold text-white mb-3">Remember: you chose "${selectedChoiceText}"</p>
+          <p class="text-sm text-cyan-100 leading-relaxed mb-2">This was your response to <strong>${scenarioTitle}</strong>: ${scenarioQuestion}</p>
+          <p class="text-sm text-gray-300">${selectedChoiceMessage}</p>
         </div>
         <div class="card-glow p-8 rounded-xl bg-blue-900 bg-opacity-30 border-l-4 border-blue-400">
           <h3 class="text-xl font-bold mb-6 text-blue-300">📚 Megatrend recap</h3>
@@ -2036,7 +2121,6 @@
       });
       ownWordsEl.addEventListener('input', updateLockInReadyState);
 
-      setTimeout(() => inputEl.focus(), 120);
       setTimeout(resetConceptModalScroll, 0);
       window.__LOCKIN_TARGET_SENTENCE__ = targetSentence;
       window.__LOCKIN_OWN_WORDS_STARTER__ = ownWordsStarter;
@@ -2055,7 +2139,13 @@
       }
       gameState.reflectionFromLastScenario = typed;
       gameState.ownWordsReflectionFromLastScenario = ownWords;
-      saveProgress('reflection_complete');
+      saveProgress('reflection_complete', getMegatrendsTaskMeta({
+        taskName: 'Reflection Lock-In',
+        promptText: target,
+        responseText: `Typed sentence: ${typed}\nOwn words: ${ownWords}`,
+        autoScore: 100,
+        evidenceType: 'typed-sentence'
+      }));
       document.getElementById('concept-modal').classList.add('hidden');
       showConceptRecap();
     }
@@ -2237,6 +2327,7 @@
     }
 
     function showMiniGame() {
+      startMegatrendsTask('Arcade Break', `${currentScenario.megatrend} arcade challenge`);
       const modal = document.getElementById('game-modal');
       modal.classList.remove('hidden');
       startMiniGameInputs();
@@ -2569,6 +2660,11 @@
     }
 
     function endMiniGame(score, bonusHits) {
+      const taskMeta = getMegatrendsTaskMeta({
+        responseText: `Score ${score} with ${bonusHits} bonus hit${bonusHits === 1 ? '' : 's'}`,
+        autoScore: Math.min(100, Math.max(0, score)),
+        evidenceType: 'mini-game'
+      });
       const masteryGain = Math.floor(score / 10) + bonusHits * 5;
       if (currentScenario.megatrend === 'Impactful Technology') gameState.techMastery = Math.min(100, gameState.techMastery + masteryGain);
       else if (currentScenario.megatrend === 'Climate Change') gameState.climateMastery = Math.min(100, gameState.climateMastery + masteryGain);
@@ -2581,7 +2677,7 @@
       const feedbackText = document.getElementById('feedback-text');
       if (feedbackText) feedbackText.innerHTML = `🎮 Final Score: ${score} | Bonus Hits: ${bonusHits}<br><strong>Rewards unlocked:</strong> +${masteryGain}% mastery • +$${salaryBoost} annual salary • +5% job security 🚀`;
       document.querySelector('#game-modal button').textContent = 'Continue to Next Scenario';
-      saveProgress('mini_game_end');
+      saveProgress('mini_game_end', taskMeta);
     }
 
     function closeMiniGame() {
@@ -2615,6 +2711,7 @@
 
     function showLifeShock() {
       const shock = lifeShocks[Math.floor(Math.random() * lifeShocks.length)];
+      startMegatrendsTask('Life Shock Decision', shock.title);
       const container = document.getElementById('scenario-container');
       let html = `
         <div class="card-glow p-8 rounded-xl bg-red-900 bg-opacity-30 border-l-4 border-red-400 mb-8">
@@ -2657,13 +2754,17 @@
     function submitLifeShockChoice() {
       if (selectedChoiceIdx === null) return;
       const choice = currentShock.choices[selectedChoiceIdx];
+      const taskMeta = getMegatrendsTaskMeta({
+        responseText: choice.text,
+        evidenceType: 'life-shock'
+      });
       gameState.annualSalary = Math.floor(gameState.annualSalary * choice.salary_mult);
       gameState.cumulativeNetWorth += Math.floor(gameState.annualSalary * 0.5);
       gameState.yearsPlayed++;
       gameState.workLifeBalance = Math.max(0, Math.min(100, gameState.workLifeBalance + choice.balance_gain));
       gameState.jobSecurity = Math.max(0, Math.min(100, gameState.jobSecurity + choice.security_loss));
       updateStats();
-      saveProgress('life_shock');
+      saveProgress('life_shock', taskMeta);
       document.getElementById('scenario-container').innerHTML = `
         <div class="card-glow p-8 rounded-xl border-l-4 border-yellow-400 mb-8">
           <p class="text-lg font-semibold text-yellow-300 mb-4">${choice.message}</p>
@@ -2755,7 +2856,7 @@
       }, 3000);
     }
 
-    async function saveProgress(checkpoint = 'manual') {
+    async function saveProgress(checkpoint = 'manual', meta = {}) {
       const checkpointKey = `${gameState.playerName}|${checkpoint}|year:${gameState.yearsPlayed}|salary:${gameState.annualSalary}|net:${gameState.cumulativeNetWorth}`;
       if (checkpointKey === lastCheckpointKey) return;
       lastCheckpointKey = checkpointKey;
@@ -2788,7 +2889,7 @@
       const result = await window.dataSdk.create(payload);
       if (!result.isOk) console.error('Failed to save progress:', result.error);
       syncActivePlayerSession(checkpoint);
-      await syncProgressToSupabase(checkpoint, payload);
+      await syncProgressToSupabase(checkpoint, payload, meta);
       await loadRemotePlayers();
     }
 
@@ -3095,7 +3196,7 @@
       }
     }
 
-    async function syncProgressToSupabase(checkpoint, payload) {
+    async function syncProgressToSupabase(checkpoint, payload, meta = {}) {
       const supabase = await getSupabaseClientOrNull();
       const authState = getAuthPrototypeState();
       const studentLogin = authState.studentLogin;
@@ -3150,18 +3251,29 @@
         console.error('Failed to sync module progress:', moduleError);
       }
 
-      if (checkpoint === 'reflection_complete' && gameState.reflectionFromLastScenario) {
+      if (meta.taskName) {
         const student = await getLoggedInStudentIdentity();
+        const responsePayload = {
+          kind: 'career-empire-evidence',
+          module_id: 'megatrends',
+          checkpoint,
+          evidence_type: meta.evidenceType || 'task-attempt',
+          task_name: meta.taskName,
+          duration_seconds: meta.durationSeconds || null,
+          score_percent: typeof meta.autoScore === 'number' ? meta.autoScore : null,
+          prompt_text: meta.promptText || '',
+          response_text: meta.responseText || ''
+        };
         const { error: evidenceError } = await supabase
           .from('assessment_evidence')
           .insert({
             student_id: studentLogin.id,
             class_id: student?.class_id || null,
             module_id: 'megatrends',
-            evidence_type: 'typed-sentence',
-            prompt: 'Type the exact sentence that explains how the megatrend affects work.',
-            response_text: gameState.reflectionFromLastScenario,
-            auto_score: 100
+            evidence_type: meta.evidenceType || 'task-attempt',
+            prompt: meta.promptText || `Megatrends ${meta.taskName}`,
+            response_text: JSON.stringify(responsePayload),
+            auto_score: typeof meta.autoScore === 'number' ? meta.autoScore : null
           });
 
         if (evidenceError) {

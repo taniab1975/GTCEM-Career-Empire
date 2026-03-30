@@ -445,46 +445,189 @@ function renderSharedCommunityPage(players) {
 
 function renderSharedGlobalPage(players) {
   const metrics = document.getElementById("global-page-metrics");
-  if (!metrics) return;
+  const schoolRankings = document.getElementById("global-school-rankings");
+  const classRankings = document.getElementById("global-class-rankings");
+  const spotlights = document.getElementById("global-spotlights");
+  if (!metrics || !schoolRankings || !classRankings || !spotlights) return;
 
   const latestPlayers = dedupeLatestPlayers(players);
-  const averageFor = key => latestPlayers.length
-    ? Math.round(latestPlayers.reduce((sum, player) => sum + Number(player[key] || 0), 0) / latestPlayers.length)
+  if (!latestPlayers.length) {
+    metrics.innerHTML = `
+      <article class="metric">
+        <div class="metric-label">Global Status</div>
+        <div class="metric-value">0</div>
+        <div class="metric-note">No school competition data yet</div>
+      </article>
+    `;
+    schoolRankings.innerHTML = '<div class="timeline-item"><strong>No schools ranked yet</strong><p>Once students start playing, this page will turn into a live inter-school ladder.</p></div>';
+    classRankings.innerHTML = '<article class="module-card"><div class="kicker">Awaiting data</div><h3>No classes yet</h3><p>The rivalry board will populate once classes begin banking earnings and progress.</p></article>';
+    spotlights.innerHTML = '<div class="timeline-item"><strong>No spotlight stats yet</strong><p>Competitive highlights will appear once schools start generating results.</p></div>';
+    return;
+  }
+
+  const averageForPlayers = (items, key) => items.length
+    ? Math.round(items.reduce((sum, player) => sum + Number(player[key] || 0), 0) / items.length)
     : 0;
 
-  const tech = averageFor("tech_mastery");
-  const climate = averageFor("climate_mastery");
-  const demo = averageFor("demo_mastery");
-  const economic = averageFor("economic_mastery");
-  const overall = Math.round((tech + climate + demo + economic) / 4) || 0;
+  const schoolMap = new Map();
+  const classMap = new Map();
+
+  latestPlayers.forEach(player => {
+    const schoolKey = player.school_name || "Unlinked School";
+    const classKey = `${schoolKey}::${player.class_code || "No Class Code"}`;
+
+    if (!schoolMap.has(schoolKey)) {
+      schoolMap.set(schoolKey, []);
+    }
+    schoolMap.get(schoolKey).push(player);
+
+    if (!classMap.has(classKey)) {
+      classMap.set(classKey, []);
+    }
+    classMap.get(classKey).push(player);
+  });
+
+  const schoolRows = [...schoolMap.entries()].map(([schoolName, members]) => {
+    const earnings = members.reduce((sum, player) => sum + Number(player.annual_salary || 0), 0);
+    const netWorth = members.reduce((sum, player) => sum + Number(player.cumulative_net_worth || 0), 0);
+    const tax = members.reduce((sum, player) => sum + Math.floor(Number(player.annual_salary || 0) * 0.1), 0);
+    const readiness = Math.round((
+      averageForPlayers(members, "tech_mastery") +
+      averageForPlayers(members, "climate_mastery") +
+      averageForPlayers(members, "demo_mastery") +
+      averageForPlayers(members, "economic_mastery")
+    ) / 4);
+    const yearsPlayed = members.reduce((sum, player) => sum + Number(player.years_played || 0), 0);
+    const jobSecurity = averageForPlayers(members, "job_security");
+    const workLifeBalance = averageForPlayers(members, "work_life_balance");
+    const competitiveScore = Math.round(
+      (earnings / Math.max(1, members.length * 1000)) +
+      readiness * 1.8 +
+      yearsPlayed * 3 +
+      (jobSecurity * 0.4)
+    );
+
+    return {
+      schoolName,
+      members,
+      studentCount: members.length,
+      earnings,
+      netWorth,
+      tax,
+      readiness,
+      yearsPlayed,
+      jobSecurity,
+      workLifeBalance,
+      competitiveScore
+    };
+  }).sort((a, b) => b.competitiveScore - a.competitiveScore);
+
+  const classRows = [...classMap.entries()].map(([key, members]) => {
+    const [schoolName, classCode] = key.split("::");
+    const earnings = members.reduce((sum, player) => sum + Number(player.annual_salary || 0), 0);
+    const tax = members.reduce((sum, player) => sum + Math.floor(Number(player.annual_salary || 0) * 0.1), 0);
+    const readiness = Math.round((
+      averageForPlayers(members, "tech_mastery") +
+      averageForPlayers(members, "climate_mastery") +
+      averageForPlayers(members, "demo_mastery") +
+      averageForPlayers(members, "economic_mastery")
+    ) / 4);
+    const yearsPlayed = members.reduce((sum, player) => sum + Number(player.years_played || 0), 0);
+    const score = Math.round((earnings / Math.max(1, members.length * 1000)) + readiness * 1.7 + yearsPlayed * 4);
+
+    return {
+      schoolName,
+      classCode,
+      studentCount: members.length,
+      earnings,
+      tax,
+      readiness,
+      yearsPlayed,
+      score
+    };
+  }).sort((a, b) => b.score - a.score);
+
+  const topSchool = schoolRows[0];
+  const topClass = classRows[0];
+  const highestReadiness = [...schoolRows].sort((a, b) => b.readiness - a.readiness)[0];
+  const biggestTaxBase = [...schoolRows].sort((a, b) => b.tax - a.tax)[0];
+  const bestAttendanceProxy = [...schoolRows].sort((a, b) => b.yearsPlayed - a.yearsPlayed)[0];
+  const safestSchool = [...schoolRows].sort((a, b) => b.jobSecurity - a.jobSecurity)[0];
 
   metrics.innerHTML = `
     <article class="metric">
-      <div class="metric-label">Overall Readiness</div>
-      <div class="metric-value">${overall}%</div>
-      <div class="metric-note">Average mastery across all four megatrends</div>
+      <div class="metric-label">Top School</div>
+      <div class="metric-value">${escapeHtml(topSchool.schoolName)}</div>
+      <div class="metric-note">${topSchool.competitiveScore} rivalry points</div>
     </article>
     <article class="metric">
-      <div class="metric-label">Tech</div>
-      <div class="metric-value">${tech}%</div>
-      <div class="metric-note">Impactful technology readiness</div>
+      <div class="metric-label">Top Class</div>
+      <div class="metric-value">${escapeHtml(topClass.classCode || "No code")}</div>
+      <div class="metric-note">${escapeHtml(topClass.schoolName)} • ${topClass.score} points</div>
     </article>
     <article class="metric">
-      <div class="metric-label">Climate</div>
-      <div class="metric-value">${climate}%</div>
-      <div class="metric-note">Climate change readiness</div>
+      <div class="metric-label">Highest Readiness</div>
+      <div class="metric-value">${highestReadiness.readiness}%</div>
+      <div class="metric-note">${escapeHtml(highestReadiness.schoolName)}</div>
     </article>
     <article class="metric">
-      <div class="metric-label">Demographic</div>
-      <div class="metric-value">${demo}%</div>
-      <div class="metric-note">Demographic shifts readiness</div>
-    </article>
-    <article class="metric">
-      <div class="metric-label">Economic</div>
-      <div class="metric-value">${economic}%</div>
-      <div class="metric-note">Economic power shifts readiness</div>
+      <div class="metric-label">Biggest Community Fund</div>
+      <div class="metric-value">${formatCurrency(biggestTaxBase.tax)}</div>
+      <div class="metric-note">${escapeHtml(biggestTaxBase.schoolName)}</div>
     </article>
   `;
+
+  schoolRankings.innerHTML = schoolRows.slice(0, 8).map((row, index) => `
+    <div class="timeline-item">
+      <strong>#${index + 1} ${escapeHtml(row.schoolName)}</strong>
+      <p>
+        Rivalry score ${row.competitiveScore} • ${row.studentCount} students • Earnings ${formatCurrency(row.earnings)} •
+        Readiness ${row.readiness}% • Class fund ${formatCurrency(row.tax)} • Job security ${row.jobSecurity}%
+      </p>
+    </div>
+  `).join("");
+
+  classRankings.innerHTML = classRows.slice(0, 6).map((row, index) => `
+    <article class="module-card ${index === 0 ? "spotlight" : ""}">
+      <div class="kicker">#${index + 1} Class Rival</div>
+      <h3>${escapeHtml(row.classCode || "No class code")}</h3>
+      <p>${escapeHtml(row.schoolName)}</p>
+      ${createProgressBar(row.readiness, index === 0 ? "green" : "")}
+      <div class="section-title">
+        <p>${row.readiness}% readiness</p>
+        <p>${row.studentCount} students</p>
+      </div>
+      <div class="pill-row">
+        <span class="pill">Earnings: ${formatCurrency(row.earnings)}</span>
+        <span class="pill">Class fund: ${formatCurrency(row.tax)}</span>
+        <span class="pill">Rounds: ${row.yearsPlayed}</span>
+      </div>
+    </article>
+  `).join("");
+
+  spotlights.innerHTML = [
+    {
+      title: "Most Match Fit",
+      detail: `${escapeHtml(highestReadiness.schoolName)} has the highest future-readiness average at ${highestReadiness.readiness}%.`
+    },
+    {
+      title: "Most Active School",
+      detail: `${escapeHtml(bestAttendanceProxy.schoolName)} has banked ${bestAttendanceProxy.yearsPlayed} total played rounds across its students.`
+    },
+    {
+      title: "Safest Career Build",
+      detail: `${escapeHtml(safestSchool.schoolName)} leads average job security with ${safestSchool.jobSecurity}%.`
+    },
+    {
+      title: "Biggest Economy",
+      detail: `${escapeHtml(topSchool.schoolName)} leads total salary earnings with ${formatCurrency(topSchool.earnings)} and net worth of ${formatCurrency(topSchool.netWorth)}.`
+    }
+  ].map(item => `
+    <div class="timeline-item">
+      <strong>${item.title}</strong>
+      <p>${item.detail}</p>
+    </div>
+  `).join("");
 }
 
 function renderTeacherInterventions(items) {
@@ -525,6 +668,40 @@ function renderTeacherEvidenceList(items) {
 
   if (!items.length) {
     container.innerHTML = '<div class="timeline-item"><strong>No evidence submitted yet</strong><p>Typed reflections and lock-in tasks will appear here after students complete them.</p></div>';
+    return;
+  }
+
+  container.innerHTML = items.map(item => `
+    <div class="timeline-item">
+      <strong>${item.title}</strong>
+      <p>${item.detail}</p>
+    </div>
+  `).join("");
+}
+
+function renderTeacherESTResponseList(items) {
+  const container = document.getElementById("teacher-est-response-list");
+  if (!container) return;
+
+  if (!items.length) {
+    container.innerHTML = '<div class="timeline-item"><strong>No EST responses yet</strong><p>Boss-round EST answers and other EST artifacts will appear here once students start submitting the EST module.</p></div>';
+    return;
+  }
+
+  container.innerHTML = items.map(item => `
+    <div class="timeline-item">
+      <strong>${item.title}</strong>
+      <p>${item.detail}</p>
+    </div>
+  `).join("");
+}
+
+function renderTeacherTaskTimeList(items) {
+  const container = document.getElementById("teacher-task-time-list");
+  if (!container) return;
+
+  if (!items.length) {
+    container.innerHTML = '<div class="timeline-item"><strong>No task timing yet</strong><p>Once students complete Megatrends and EST stages, their recent time-on-task entries will appear here.</p></div>';
     return;
   }
 
@@ -598,6 +775,26 @@ function formatDateTime(value) {
   return Number.isNaN(date.getTime()) ? "Not yet" : date.toLocaleString();
 }
 
+function parseStructuredEvidence(row) {
+  if (!row?.response_text || typeof row.response_text !== "string") return null;
+  const text = row.response_text.trim();
+  if (!text.startsWith("{")) return null;
+  try {
+    return JSON.parse(text);
+  } catch (error) {
+    return null;
+  }
+}
+
+function formatDurationSeconds(value) {
+  const seconds = Number(value || 0);
+  if (!seconds) return "Time not captured";
+  if (seconds < 60) return `${seconds}s`;
+  const minutes = Math.floor(seconds / 60);
+  const remainder = seconds % 60;
+  return remainder ? `${minutes}m ${remainder}s` : `${minutes}m`;
+}
+
 async function getTeacherDashboardData() {
   const supabase = await getSupabaseClientOrNull();
   const context = getActiveTeacherContext();
@@ -615,17 +812,17 @@ async function getTeacherDashboardData() {
       .order("created_at", { ascending: true }),
     supabase
       .from("student_module_progress")
-      .select("student_id, module_slug, completion_percent, mastery_percent, updated_at")
+      .select("*")
       .eq("class_id", classroomId),
     supabase
       .from("assessment_evidence")
-      .select("student_id, prompt, response_text, module_slug, created_at")
+      .select("*, students(display_name, username)")
       .eq("class_id", classroomId)
       .order("created_at", { ascending: false })
-      .limit(8),
+      .limit(20),
     supabase
       .from("community_votes")
-      .select("student_id, cause, created_at")
+      .select("*")
       .eq("class_id", classroomId),
     supabase
       .from("player_profiles")
@@ -842,6 +1039,12 @@ function renderTeacherLiveData(players, skillsData, teacherData = null) {
   const moduleProgressRows = teacherData?.moduleProgress || [];
   const evidenceRows = teacherData?.evidenceRows || [];
   const voteRows = teacherData?.voteRows || [];
+  const estProgressRows = moduleProgressRows.filter(row => (row.module_id || row.module_slug) === "est-prep");
+  const estEvidenceRows = evidenceRows.filter(row => (row.module_id || row.module_slug) === "est-prep");
+  const parsedEvidenceRows = evidenceRows.map(row => ({
+    row,
+    payload: parseStructuredEvidence(row)
+  }));
   const skillProgressRows = latestPlayers.map(deriveEmployabilityProgress);
   const classSkillMap = {
     "communication": average(skillProgressRows.map(row => row.communication || 0)),
@@ -869,9 +1072,39 @@ function renderTeacherLiveData(players, skillsData, teacherData = null) {
   const moduleCompletion = average(moduleProgressRows.map(row => Number(row.completion_percent || 0)));
   const moduleMastery = average(moduleProgressRows.map(row => Number(row.mastery_percent || 0)));
   const latestEvidence = evidenceRows.slice(0, 4).map(row => ({
-    title: `${row.module_slug || "module"} • ${formatDateTime(row.created_at)}`,
+    title: `${row.module_id || row.module_slug || "module"} • ${formatDateTime(row.created_at)}`,
     detail: `${row.prompt || "Reflection submitted"}${row.response_text ? ` — ${String(row.response_text).slice(0, 120)}${String(row.response_text).length > 120 ? "..." : ""}` : ""}`
   }));
+  const estResponses = estEvidenceRows.slice(0, 8).map(row => {
+    const payload = parseStructuredEvidence(row);
+    const responseText = payload?.response_text || row.response_text || "";
+    const promptText = payload?.prompt_text || row.prompt || "";
+    const score = typeof payload?.score_percent === "number"
+      ? Math.round(payload.score_percent)
+      : typeof row.auto_score === "number"
+        ? Math.round(row.auto_score)
+        : null;
+
+    return {
+      title: `${row.students?.display_name || row.students?.username || "Student"} • ${payload?.task_name || row.evidence_type || "response"} • ${score !== null ? `${score}%` : "Unscored"} • ${formatDateTime(row.created_at)}`,
+      detail: [
+        promptText ? `Prompt: ${promptText}` : "",
+        responseText ? `Response: ${String(responseText).slice(0, 220)}${String(responseText).length > 220 ? "..." : ""}` : "No response text stored yet."
+      ].filter(Boolean).join(" • ")
+    };
+  });
+  const taskTimingRows = parsedEvidenceRows
+    .filter(entry => entry.payload?.duration_seconds)
+    .slice(0, 10)
+    .map(({ row, payload }) => {
+      const studentName = row.students?.display_name || row.students?.username || "Student";
+      const moduleLabel = payload.module_id === "est-prep" ? "EST Prep" : payload.module_id === "megatrends" ? "Megatrends" : (payload.module_id || row.module_id || "Module");
+      const score = typeof payload.score_percent === "number" ? ` • ${Math.round(payload.score_percent)}%` : "";
+      return {
+        title: `${studentName} • ${moduleLabel} • ${payload.task_name || row.evidence_type || "Task"}`,
+        detail: `${formatDurationSeconds(payload.duration_seconds)}${score} • ${formatDateTime(row.created_at)}${payload.prompt_text ? ` • Prompt: ${String(payload.prompt_text).slice(0, 120)}${String(payload.prompt_text).length > 120 ? "..." : ""}` : ""}`
+      };
+    });
   const rosterActivity = students.slice()
     .sort((a, b) => parseTime(b.last_login_at || b.created_at) - parseTime(a.last_login_at || a.created_at))
     .slice(0, 6)
@@ -894,7 +1127,8 @@ function renderTeacherLiveData(players, skillsData, teacherData = null) {
   const voteCount = voteRows.length;
   const voteLeader = (() => {
     const counts = voteRows.reduce((acc, row) => {
-      acc[row.cause] = (acc[row.cause] || 0) + 1;
+      const key = row.vote_key || row.cause;
+      acc[key] = (acc[key] || 0) + 1;
       return acc;
     }, {});
     const top = Object.entries(counts).sort((a, b) => b[1] - a[1])[0];
@@ -940,6 +1174,17 @@ function renderTeacherLiveData(players, skillsData, teacherData = null) {
       spotlight: true
     },
     {
+      title: "EST Prep",
+      status: estProgressRows.length ? "Prototype live" : "Awaiting EST submissions",
+      summary: estProgressRows.length
+        ? `Tracking ${estProgressRows.length} EST progress row(s) and ${estEvidenceRows.length} EST evidence artifact(s), including boss-round written responses.`
+        : "Once students complete EST stages, this card will show EST-specific progress, mastery, and written responses.",
+      completion: average(estProgressRows.map(row => Number(row.completion_percent || 0))),
+      mastery: average(estProgressRows.map(row => Number(row.mastery_percent || 0))),
+      variant: "green",
+      spotlight: false
+    },
+    {
       title: "Lifelong Learning",
       status: "Next build target",
       summary: "This module should be used to lift planning, reflection, and self-management once it is live.",
@@ -971,6 +1216,8 @@ function renderTeacherLiveData(players, skillsData, teacherData = null) {
   ]);
   renderTeacherRosterActivity(rosterActivity);
   renderTeacherEvidenceList(latestEvidence);
+  renderTeacherESTResponseList(estResponses);
+  renderTeacherTaskTimeList(taskTimingRows);
 }
 
 async function initDashboards() {
