@@ -1095,7 +1095,21 @@ async function getTeacherDashboardData() {
     ].filter(Boolean).join(","))
     .order("name", { ascending: true });
 
-  if (classesError) throw classesError;
+  if (classesError) {
+    console.error(classesError);
+    return {
+      context,
+      availableClasses: [],
+      selectedClassId: "all",
+      selectedClassName: "No classes found",
+      students: [],
+      moduleProgress: [],
+      evidenceRows: [],
+      voteRows: [],
+      profileRows: [],
+      feedbackRows: []
+    };
+  }
 
   const availableClasses = classRows || [];
   if (!availableClasses.length) {
@@ -1125,7 +1139,7 @@ async function getTeacherDashboardData() {
     ? `All classes at ${context.teacher?.schoolName || "this school"}`
     : (selectedClassRows[0]?.name || "Selected class");
 
-  const [{ data: students, error: studentsError }, { data: moduleProgress, error: moduleProgressError }, { data: evidenceRows, error: evidenceError }, { data: voteRows, error: votesError }, { data: feedbackRows, error: feedbackError }] = await Promise.all([
+  const [studentsResult, moduleProgressResult, evidenceResult, votesResult, feedbackResult] = await Promise.allSettled([
     supabase
       .from("students")
       .select("id, display_name, username, created_at, last_login_at, class_id")
@@ -1153,13 +1167,25 @@ async function getTeacherDashboardData() {
       .limit(40)
   ]);
 
-  if (studentsError) throw studentsError;
-  if (moduleProgressError) throw moduleProgressError;
-  if (evidenceError) throw evidenceError;
-  if (votesError) throw votesError;
-  if (feedbackError) throw feedbackError;
+  const unwrapResult = (result, label) => {
+    if (result.status === "rejected") {
+      console.error(`${label} query failed`, result.reason);
+      return [];
+    }
+    if (result.value?.error) {
+      console.error(`${label} query failed`, result.value.error);
+      return [];
+    }
+    return result.value?.data || [];
+  };
 
-  const studentIds = (students || []).map(student => student.id);
+  const students = unwrapResult(studentsResult, "students");
+  const moduleProgress = unwrapResult(moduleProgressResult, "student_module_progress");
+  const evidenceRows = unwrapResult(evidenceResult, "assessment_evidence");
+  const voteRows = unwrapResult(votesResult, "community_votes");
+  const feedbackRows = unwrapResult(feedbackResult, "feedback_reports");
+
+  const studentIds = students.map(student => student.id);
   let profileRows = [];
   if (studentIds.length) {
     const { data, error: profilesError } = await supabase
@@ -1190,8 +1216,11 @@ async function getTeacherDashboardData() {
       `)
       .in("student_id", studentIds);
 
-    if (profilesError) throw profilesError;
-    profileRows = data || [];
+    if (profilesError) {
+      console.error("player_profiles query failed", profilesError);
+    } else {
+      profileRows = data || [];
+    }
   }
 
   return {
