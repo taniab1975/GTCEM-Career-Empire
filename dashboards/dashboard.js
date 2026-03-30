@@ -168,6 +168,48 @@ function getActiveTeacherContext() {
   };
 }
 
+async function resolveTeacherDashboardContext(supabase, context) {
+  if (context?.teacher?.id && context?.teacher?.schoolId) {
+    return context;
+  }
+
+  const email = context?.teacherLogin?.email || context?.teacher?.email || "";
+  if (!email) return context;
+
+  const { data, error } = await supabase
+    .from("teachers")
+    .select("id, full_name, email, school_id, schools(name)")
+    .eq("email", email)
+    .maybeSingle();
+
+  if (error || !data) {
+    if (error) console.error(error);
+    return context;
+  }
+
+  const nextTeacher = {
+    id: data.id,
+    fullName: data.full_name || context?.teacher?.fullName || "",
+    email: data.email,
+    schoolId: data.school_id,
+    schoolName: data.schools?.name || context?.teacher?.schoolName || ""
+  };
+
+  const authState = getAuthPrototypeState();
+  localStorage.setItem("career-empire-auth-demo", JSON.stringify({
+    ...authState,
+    teacher: {
+      ...(authState.teacher || {}),
+      ...nextTeacher
+    }
+  }));
+
+  return {
+    ...context,
+    teacher: nextTeacher
+  };
+}
+
 function parseTime(value) {
   const timestamp = Date.parse(value || "");
   return Number.isNaN(timestamp) ? 0 : timestamp;
@@ -1020,7 +1062,8 @@ async function updateStoreRequest(request, status, approvedItem = null) {
 
 async function getTeacherDashboardData() {
   const supabase = await getSupabaseClientOrNull();
-  const context = getActiveTeacherContext();
+  let context = getActiveTeacherContext();
+  context = await resolveTeacherDashboardContext(supabase, context);
   const teacherId = context.teacher?.id || null;
   const schoolId = context.teacher?.schoolId || null;
   if (!supabase || (!teacherId && !schoolId)) {
