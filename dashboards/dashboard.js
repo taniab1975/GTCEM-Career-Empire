@@ -1712,23 +1712,74 @@ function renderTeacherLiveData(players, skillsData, teacherData = null) {
 
 async function initDashboards() {
   syncMegatrendsLaunchLinks();
-  const skillsData = await loadEmployabilitySkills();
-  const players = await getPlayers();
+  let skillsData = { categories: [] };
+  let players = [];
+
+  try {
+    skillsData = await loadEmployabilitySkills();
+  } catch (error) {
+    console.error("Failed to load employability skills", error);
+  }
+
+  try {
+    players = await getPlayers();
+  } catch (error) {
+    console.error("Failed to load player data", error);
+  }
+
   if (document.getElementById("student-module-grid")) {
-    await renderStudentLiveData(players, skillsData);
+    try {
+      await renderStudentLiveData(players, skillsData);
+    } catch (error) {
+      console.error("Failed to render student dashboard", error);
+    }
   }
   if (document.getElementById("leaderboard-page-list")) {
-    renderSharedLeaderboard(players, skillsData);
+    try {
+      renderSharedLeaderboard(players, skillsData);
+    } catch (error) {
+      console.error("Failed to render leaderboard page", error);
+    }
   }
   if (document.getElementById("community-page-board")) {
-    renderSharedCommunityPage(players);
+    try {
+      renderSharedCommunityPage(players);
+    } catch (error) {
+      console.error("Failed to render community page", error);
+    }
   }
   if (document.getElementById("global-page-metrics")) {
-    renderSharedGlobalPage(players);
+    try {
+      renderSharedGlobalPage(players);
+    } catch (error) {
+      console.error("Failed to render global index page", error);
+    }
   }
   if (document.getElementById("teacher-module-health")) {
-    const teacherData = await getTeacherDashboardData();
-    renderTeacherLiveData(players, skillsData, teacherData);
+    let teacherData = null;
+    try {
+      teacherData = await getTeacherDashboardData();
+    } catch (error) {
+      console.error("Failed to load teacher dashboard data", error);
+    }
+
+    try {
+      renderTeacherLiveData(players, skillsData, teacherData);
+    } catch (error) {
+      console.error("Failed to render teacher dashboard", error);
+      renderTeacherLiveData([], { categories: [] }, teacherData || {
+        context: getActiveTeacherContext(),
+        availableClasses: [],
+        selectedClassId: "all",
+        selectedClassName: "No classes found",
+        students: [],
+        moduleProgress: [],
+        evidenceRows: [],
+        voteRows: [],
+        profileRows: [],
+        feedbackRows: []
+      });
+    }
   }
 }
 
