@@ -373,26 +373,28 @@
     .platform-media-grid {
       position: relative;
       z-index: 1;
-      display: grid;
-      grid-template-columns: 1.3fr 0.7fr;
-      gap: 16px;
-      align-items: stretch;
+      display: block;
     }
-    .platform-media-placeholder {
-      border-radius: 22px;
-      border: 1px dashed rgba(125, 211, 252, 0.34);
+    .platform-media-player {
+      border-radius: 24px;
+      border: 1px solid rgba(125, 211, 252, 0.28);
       background:
         linear-gradient(135deg, rgba(30, 41, 59, 0.92), rgba(15, 23, 42, 0.8)),
         radial-gradient(circle at center, rgba(59, 130, 246, 0.12), transparent 55%);
-      min-height: 280px;
+      min-height: 520px;
       padding: 22px;
       display: flex;
       flex-direction: column;
-      justify-content: flex-end;
+      justify-content: flex-start;
+      gap: 18px;
       box-shadow: inset 0 0 0 1px rgba(255,255,255,0.03);
     }
-    .platform-media-placeholder.video {
-      min-height: 320px;
+    .platform-media-player video {
+      width: 100%;
+      min-height: 420px;
+      border-radius: 18px;
+      background: #020617;
+      border: 1px solid rgba(148, 163, 184, 0.2);
     }
     .platform-media-label {
       display: inline-flex;
@@ -409,20 +411,16 @@
       text-transform: uppercase;
       margin-bottom: 12px;
     }
-    .platform-media-placeholder h3 {
+    .platform-media-player h3 {
       margin: 0 0 8px 0;
       color: white;
       font-size: 1.5rem;
       font-weight: 800;
     }
-    .platform-media-placeholder p {
+    .platform-media-player p {
       margin: 0;
       color: #cbd5e1;
       line-height: 1.6;
-    }
-    .platform-media-stack {
-      display: grid;
-      gap: 16px;
     }
     .platform-portal-grid {
       display: grid;
@@ -676,22 +674,14 @@
 
             <div class="platform-media-stage">
               <div class="platform-media-grid">
-                <div class="platform-media-placeholder video">
-                  <span class="platform-media-label">Hero Video Placeholder</span>
-                  <h3>Best future asset here: a short hype video</h3>
-                  <p>Use a 10 to 20 second loop showing dashboards, salary growth, upgrades, leaderboards, and quick gameplay moments. This should be the main emotional hook on the page.</p>
-                </div>
-                <div class="platform-media-stack">
-                  <div class="platform-media-placeholder">
-                    <span class="platform-media-label">Image Placeholder</span>
-                    <h3>Shop + upgrades shot</h3>
-                    <p>Ideal image: a futuristic student room, upgraded tech, transport, and visible buyable items.</p>
-                  </div>
-                  <div class="platform-media-placeholder">
-                    <span class="platform-media-label">Image Placeholder</span>
-                    <h3>Competition shot</h3>
-                    <p>Ideal image: class leaderboard, school-vs-school map, or a dramatic progress board feeling competitive and fun.</p>
-                  </div>
+                <div class="platform-media-player">
+                  <span class="platform-media-label">What is Career Empire?</span>
+                  <h3>See the platform in action</h3>
+                  <p>Watch the promo walkthrough to see how students play, earn, compete, contribute to community goals, and build their career journey through the curriculum.</p>
+                  <video controls playsinline preload="metadata">
+                    <source src="./Assets/Videos/Career%20Empire%20Promo%20Draft.mp4" type="video/mp4">
+                    Your browser does not support the video tag.
+                  </video>
                 </div>
               </div>
             </div>
