@@ -795,6 +795,181 @@ function formatDurationSeconds(value) {
   return remainder ? `${minutes}m ${remainder}s` : `${minutes}m`;
 }
 
+function parseStructuredFeedback(row) {
+  if (!row?.message || typeof row.message !== "string") return null;
+  const text = row.message.trim();
+  if (!text.startsWith("{")) return null;
+  try {
+    return JSON.parse(text);
+  } catch (error) {
+    return null;
+  }
+}
+
+function normaliseStoreRequest(row) {
+  const payload = parseStructuredFeedback(row);
+  if (!payload || payload.kind !== "store-item-request") return null;
+  const approvedItem = payload.approved_item || null;
+  return {
+    id: row.id,
+    createdAt: row.created_at,
+    loginName: row.login_name,
+    status: payload.status || "pending",
+    studentName: payload.student_name || row.login_name || "Student",
+    schoolName: payload.school_name || "",
+    classCode: payload.class_code || "",
+    itemName: approvedItem?.name || payload.item_name || "",
+    category: approvedItem?.category || payload.category || "wellbeing",
+    categoryLabel: approvedItem?.categoryLabel || payload.category_label || payload.category || "Category",
+    reason: payload.reason || "",
+    image: approvedItem?.image || payload.image || null,
+    approvedItem,
+    payload
+  };
+}
+
+function buildStoreRequestApprovedItem(request, formData) {
+  return {
+    code: request.approvedItem?.code || `store-request-${request.id}`,
+    name: formData.name,
+    category: formData.category,
+    categoryLabel: formData.categoryLabel,
+    cost: Number(formData.cost || 0),
+    icon: formData.icon || "🛍️",
+    benefit: formData.benefit,
+    image: request.image || null
+  };
+}
+
+function renderTeacherStoreRequestList(items) {
+  const container = document.getElementById("teacher-store-request-list");
+  if (!container) return;
+
+  if (!items.length) {
+    container.innerHTML = '<div class="timeline-item"><strong>No store requests yet</strong><p>When students suggest new shop items, you will be able to review, edit, approve, and reject them here.</p></div>';
+    return;
+  }
+
+  container.innerHTML = items.map(item => {
+    const defaultCost = item.approvedItem?.cost || 1000;
+    const defaultIcon = item.approvedItem?.icon || "🛍️";
+    const defaultBenefit = item.approvedItem?.benefit || item.reason || "Student-requested item for the Career Empire store.";
+    return `
+      <article class="module-card store-request-card" data-store-request-id="${item.id}">
+        <div class="section-title">
+          <div>
+            <h2>${escapeHtml(item.itemName || "Requested item")}</h2>
+            <p>${escapeHtml(item.studentName)} • ${escapeHtml(item.classCode || "Class not set")} • ${formatDateTime(item.createdAt)}</p>
+          </div>
+          <p class="status-${item.status === "approved" ? "good" : item.status === "rejected" ? "risk" : "watch"}">${escapeHtml(item.status)}</p>
+        </div>
+        <div class="store-request-meta">
+          <span class="pill">Category: ${escapeHtml(item.categoryLabel)}</span>
+          <span class="pill">Login: ${escapeHtml(item.loginName || "unknown")}</span>
+          ${item.schoolName ? `<span class="pill">School: ${escapeHtml(item.schoolName)}</span>` : ""}
+        </div>
+        ${item.image?.dataUrl ? `<img class="store-request-image" src="${item.image.dataUrl}" alt="${escapeHtml(item.itemName)} image">` : ""}
+        <p>${escapeHtml(item.reason || "No reason provided.")}</p>
+        <div class="store-request-form">
+          <div class="store-request-grid">
+            <div>
+              <label>Approved item name</label>
+              <input type="text" data-store-field="name" value="${escapeHtml(item.itemName)}">
+            </div>
+            <div>
+              <label>Category</label>
+              <select data-store-field="category">
+                ${[
+                  ["cars", "Cars"],
+                  ["mobile-phones", "Mobile Phones"],
+                  ["clothes", "Clothes"],
+                  ["investments", "Investments"],
+                  ["wellbeing", "Wellbeing"],
+                  ["technology", "Technology"],
+                  ["study", "Study"],
+                  ["mobility", "Mobility"],
+                  ["housing", "Housing"],
+                  ["fun", "Fun"],
+                  ["experiences", "Experiences"]
+                ].map(([value, label]) => `<option value="${value}" ${value === item.category ? "selected" : ""}>${label}</option>`).join("")}
+              </select>
+            </div>
+            <div>
+              <label>Cost</label>
+              <input type="number" min="0" step="10" data-store-field="cost" value="${defaultCost}">
+            </div>
+            <div>
+              <label>Emoji icon</label>
+              <input type="text" maxlength="4" data-store-field="icon" value="${escapeHtml(defaultIcon)}">
+            </div>
+          </div>
+          <div>
+            <label>Store description</label>
+            <textarea data-store-field="benefit">${escapeHtml(defaultBenefit)}</textarea>
+          </div>
+        </div>
+        <div class="module-actions">
+          <button class="module-link" type="button" data-store-action="approve">Approve and Publish</button>
+          <button class="module-link button-danger" type="button" data-store-action="reject">Reject</button>
+        </div>
+        <p class="store-request-status" data-store-status>
+          <strong>Current status:</strong> ${escapeHtml(item.status)}${item.status === "approved" ? " and visible in the shop." : ""}
+        </p>
+      </article>
+    `;
+  }).join("");
+
+  container.querySelectorAll("[data-store-action]").forEach(button => {
+    button.addEventListener("click", async event => {
+      const action = event.currentTarget.dataset.storeAction;
+      const card = event.currentTarget.closest("[data-store-request-id]");
+      if (!card) return;
+      const requestId = card.dataset.storeRequestId;
+      const fields = Object.fromEntries([...card.querySelectorAll("[data-store-field]")].map(field => [field.dataset.storeField, field.value.trim()]));
+      const request = items.find(entry => entry.id === requestId);
+      if (!request) return;
+
+      const categoryLabel = card.querySelector('[data-store-field="category"]')?.selectedOptions?.[0]?.textContent || fields.category;
+      const statusEl = card.querySelector("[data-store-status]");
+      if (statusEl) statusEl.innerHTML = "<strong>Updating...</strong>";
+
+      try {
+        if (action === "approve") {
+          const approvedItem = buildStoreRequestApprovedItem(request, {
+            ...fields,
+            categoryLabel
+          });
+          await updateStoreRequest(request, "approved", approvedItem);
+        } else {
+          await updateStoreRequest(request, "rejected", null);
+        }
+        await initDashboards();
+      } catch (error) {
+        if (statusEl) statusEl.innerHTML = `<strong>Error:</strong> ${escapeHtml(error.message || "Could not update request.")}`;
+      }
+    });
+  });
+}
+
+async function updateStoreRequest(request, status, approvedItem = null) {
+  const supabase = await getSupabaseClientOrNull();
+  if (!supabase) throw new Error("Supabase is not available.");
+  const nextPayload = {
+    ...request.payload,
+    status,
+    approved_item: approvedItem,
+    reviewed_at: new Date().toISOString()
+  };
+  const { error } = await supabase
+    .from("feedback_reports")
+    .update({
+      message: JSON.stringify(nextPayload)
+    })
+    .eq("id", request.id);
+
+  if (error) throw error;
+}
+
 async function getTeacherDashboardData() {
   const supabase = await getSupabaseClientOrNull();
   const context = getActiveTeacherContext();
@@ -804,7 +979,7 @@ async function getTeacherDashboardData() {
 
   const classroomId = context.classroom.id;
 
-  const [{ data: students, error: studentsError }, { data: moduleProgress, error: moduleProgressError }, { data: evidenceRows, error: evidenceError }, { data: voteRows, error: votesError }, { data: profileRows, error: profilesError }] = await Promise.all([
+  const [{ data: students, error: studentsError }, { data: moduleProgress, error: moduleProgressError }, { data: evidenceRows, error: evidenceError }, { data: voteRows, error: votesError }, { data: profileRows, error: profilesError }, { data: feedbackRows, error: feedbackError }] = await Promise.all([
     supabase
       .from("students")
       .select("id, display_name, username, created_at, last_login_at, class_id")
@@ -850,7 +1025,13 @@ async function getTeacherDashboardData() {
           schools(name)
         )
       `)
-      .eq("students.class_id", classroomId)
+      .eq("students.class_id", classroomId),
+    supabase
+      .from("feedback_reports")
+      .select("*")
+      .eq("feedback_type", "store-item-request")
+      .order("created_at", { ascending: false })
+      .limit(40)
   ]);
 
   if (studentsError) throw studentsError;
@@ -858,6 +1039,7 @@ async function getTeacherDashboardData() {
   if (evidenceError) throw evidenceError;
   if (votesError) throw votesError;
   if (profilesError) throw profilesError;
+  if (feedbackError) throw feedbackError;
 
   return {
     context,
@@ -865,7 +1047,8 @@ async function getTeacherDashboardData() {
     moduleProgress: moduleProgress || [],
     evidenceRows: evidenceRows || [],
     voteRows: voteRows || [],
-    profileRows: (profileRows || []).map(mapRemotePlayerProfile)
+    profileRows: (profileRows || []).map(mapRemotePlayerProfile),
+    feedbackRows: feedbackRows || []
   };
 }
 
@@ -1039,6 +1222,7 @@ function renderTeacherLiveData(players, skillsData, teacherData = null) {
   const moduleProgressRows = teacherData?.moduleProgress || [];
   const evidenceRows = teacherData?.evidenceRows || [];
   const voteRows = teacherData?.voteRows || [];
+  const feedbackRows = teacherData?.feedbackRows || [];
   const estProgressRows = moduleProgressRows.filter(row => (row.module_id || row.module_slug) === "est-prep");
   const estEvidenceRows = evidenceRows.filter(row => (row.module_id || row.module_slug) === "est-prep");
   const parsedEvidenceRows = evidenceRows.map(row => ({
@@ -1134,6 +1318,15 @@ function renderTeacherLiveData(players, skillsData, teacherData = null) {
     const top = Object.entries(counts).sort((a, b) => b[1] - a[1])[0];
     return top ? `${top[0]} (${top[1]} votes)` : "No votes yet";
   })();
+  const storeRequests = feedbackRows
+    .map(normaliseStoreRequest)
+    .filter(Boolean)
+    .filter(request => {
+      const matchesClass = !classCodeFilter || request.classCode === classCodeFilter;
+      const teacherSchool = teacherContext.teacherLogin?.schoolName || teacherContext.teacher?.schoolName || "";
+      const matchesSchool = !teacherSchool || request.schoolName === teacherSchool;
+      return matchesClass || matchesSchool;
+    });
 
   setText("teacher-hero-title", classCodeFilter ? `Class ${classCodeFilter} overview` : "Teacher dashboard for all active records");
   setText(
@@ -1218,6 +1411,7 @@ function renderTeacherLiveData(players, skillsData, teacherData = null) {
   renderTeacherEvidenceList(latestEvidence);
   renderTeacherESTResponseList(estResponses);
   renderTeacherTaskTimeList(taskTimingRows);
+  renderTeacherStoreRequestList(storeRequests);
 }
 
 async function initDashboards() {

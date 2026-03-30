@@ -8,6 +8,133 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="../dashboards/dashboard.css">
+  <style>
+    .shop-action-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+      margin-top: 18px;
+    }
+    .shop-secondary-button {
+      border: 1px solid rgba(125, 211, 252, 0.28);
+      border-radius: 999px;
+      background: rgba(255, 255, 255, 0.06);
+      color: #e2e8f0;
+      padding: 12px 18px;
+      font: 700 14px "Outfit", "Segoe UI", sans-serif;
+      cursor: pointer;
+      transition: all 0.25s ease;
+    }
+    .shop-secondary-button:hover {
+      background: rgba(59, 130, 246, 0.16);
+      border-color: rgba(125, 211, 252, 0.48);
+    }
+    .shop-category-bar {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin: 16px 0 20px;
+    }
+    .shop-category-pill {
+      border: 1px solid rgba(148, 163, 184, 0.2);
+      border-radius: 999px;
+      padding: 10px 14px;
+      background: rgba(255, 255, 255, 0.04);
+      color: #cbd5e1;
+      font: 700 13px "Outfit", "Segoe UI", sans-serif;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+    .shop-category-pill.active {
+      background: linear-gradient(145deg, rgba(56, 189, 248, 0.18), rgba(59, 130, 246, 0.16));
+      border-color: rgba(125, 211, 252, 0.44);
+      color: #eff6ff;
+    }
+    .shop-request-backdrop {
+      position: fixed;
+      inset: 0;
+      background: rgba(3, 8, 18, 0.76);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 10000;
+      padding: 20px;
+    }
+    .shop-request-backdrop.open {
+      display: flex;
+    }
+    .shop-request-card {
+      width: min(100%, 640px);
+      background: linear-gradient(145deg, rgba(10, 22, 38, 0.98), rgba(18, 36, 61, 0.98));
+      border: 1px solid rgba(126, 168, 255, 0.24);
+      border-radius: 24px;
+      box-shadow: 0 28px 70px rgba(0, 0, 0, 0.35);
+      padding: 22px;
+      color: #e9f1ff;
+    }
+    .shop-request-card h3,
+    .shop-request-card p {
+      margin-top: 0;
+    }
+    .shop-request-grid {
+      display: grid;
+      gap: 14px;
+    }
+    .shop-request-card label {
+      display: block;
+      margin-bottom: 8px;
+      font-size: 14px;
+      font-weight: 600;
+    }
+    .shop-request-card input,
+    .shop-request-card select,
+    .shop-request-card textarea {
+      width: 100%;
+      border-radius: 14px;
+      border: 1px solid rgba(126, 168, 255, 0.2);
+      background: rgba(255, 255, 255, 0.05);
+      color: #e9f1ff;
+      padding: 12px 14px;
+      font: inherit;
+      box-sizing: border-box;
+    }
+    .shop-request-card textarea {
+      min-height: 120px;
+      resize: vertical;
+    }
+    .shop-request-actions {
+      display: flex;
+      gap: 12px;
+      margin-top: 16px;
+      flex-wrap: wrap;
+    }
+    .shop-request-actions button {
+      border: 0;
+      border-radius: 14px;
+      padding: 12px 16px;
+      font: 700 14px "Outfit", "Segoe UI", sans-serif;
+      cursor: pointer;
+    }
+    .shop-request-primary {
+      background: linear-gradient(145deg, #1f8ef1, #1667d8);
+      color: white;
+    }
+    .shop-request-secondary {
+      background: rgba(255, 255, 255, 0.08);
+      color: #e9f1ff;
+      border: 1px solid rgba(126, 168, 255, 0.2);
+    }
+    .shop-request-status {
+      margin-top: 10px;
+      font-size: 13px;
+      color: #cbd5e1;
+    }
+    .shop-request-note {
+      font-size: 12px;
+      color: #94a3b8;
+      margin-top: 8px;
+    }
+  </style>
 </head>
 <body>
   <main class="page-shell">
@@ -28,6 +155,9 @@
         </p>
         <div id="shop-badge-stack" class="badge-stack">
           <span class="badge">Loading student account...</span>
+        </div>
+        <div class="shop-action-row">
+          <button id="shop-add-item-button" class="shop-secondary-button" type="button">Add an Item to the Store</button>
         </div>
       </article>
       <div class="hero-side">
@@ -77,6 +207,7 @@
           <h2>Available Upgrades</h2>
           <p>Buy once, keep across modules</p>
         </div>
+        <div id="shop-category-bar" class="shop-category-bar"></div>
         <div id="shop-grid" class="module-grid"></div>
       </article>
 
