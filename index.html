@@ -790,7 +790,7 @@
                       <h4>Open the full Career Empire promo experience</h4>
                       <p>Launch the video in a larger pop-out player so dashboard screens, gameplay moments, and promo snapshots are big enough to read clearly.</p>
                     </div>
-                    <button type="button" class="platform-video-open" id="open-promo-video">Play Promo Video</button>
+                    <button type="button" class="platform-video-open" id="open-promo-video" onclick="openPromoVideo()">Play Promo Video</button>
                   </div>
                 </div>
               </div>
@@ -3404,7 +3404,7 @@
     <div class="platform-video-modal-card">
       <div class="platform-video-modal-header">
         <h3>What is Career Empire?</h3>
-        <button type="button" class="platform-video-close" id="close-promo-video">Close</button>
+        <button type="button" class="platform-video-close" id="close-promo-video" onclick="closePromoVideo()">Close</button>
       </div>
       <video controls playsinline preload="metadata" id="promo-video-player">
         <source src="./Assets/Videos/Career%20Empire%20Promo%20Draft.mp4" type="video/mp4">
@@ -3418,31 +3418,28 @@
   <script>
     (function () {
       const modal = document.getElementById("promo-video-modal");
-      const openButton = document.getElementById("open-promo-video");
-      const closeButton = document.getElementById("close-promo-video");
       const video = document.getElementById("promo-video-player");
-      if (!modal || !openButton || !closeButton || !video) return;
+      if (!modal || !video) return;
 
-      const closeModal = () => {
+      window.closePromoVideo = function closePromoVideo() {
         modal.classList.remove("active");
         modal.setAttribute("aria-hidden", "true");
         video.pause();
       };
 
-      openButton.addEventListener("click", () => {
+      window.openPromoVideo = function openPromoVideo() {
         modal.classList.add("active");
         modal.setAttribute("aria-hidden", "false");
         video.currentTime = 0;
         video.play().catch(() => {});
-      });
+      };
 
-      closeButton.addEventListener("click", closeModal);
       modal.addEventListener("click", event => {
-        if (event.target === modal) closeModal();
+        if (event.target === modal) window.closePromoVideo();
       });
       document.addEventListener("keydown", event => {
         if (event.key === "Escape" && modal.classList.contains("active")) {
-          closeModal();
+          window.closePromoVideo();
         }
       });
     }());
