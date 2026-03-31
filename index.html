@@ -790,7 +790,7 @@
                       <h4>Open the full Career Empire promo experience</h4>
                       <p>Launch the video in a larger pop-out player so dashboard screens, gameplay moments, and promo snapshots are big enough to read clearly.</p>
                     </div>
-                    <button type="button" class="platform-video-open" id="open-promo-video" onclick="openPromoVideo()">Play Promo Video</button>
+                    <a class="platform-video-open" href="./promo-video.html" target="_blank" rel="noopener noreferrer">Play Promo Video</a>
                   </div>
                 </div>
               </div>
@@ -3400,49 +3400,8 @@
       }
     }
   </script>
-  <div class="platform-video-modal" id="promo-video-modal" aria-hidden="true">
-    <div class="platform-video-modal-card">
-      <div class="platform-video-modal-header">
-        <h3>What is Career Empire?</h3>
-        <button type="button" class="platform-video-close" id="close-promo-video" onclick="closePromoVideo()">Close</button>
-      </div>
-      <video controls playsinline preload="metadata" id="promo-video-player">
-        <source src="./Assets/videos/1280x720%20Career%20Empire%20Promo.mp4" type="video/mp4">
-        Your browser does not support the video tag.
-      </video>
-    </div>
-  </div>
   <script src="./config/supabase-config.js"></script>
   <script src="./src/services/supabase-browser.js"></script>
   <script src="./src/services/feedback-widget.js"></script>
-  <script>
-    (function () {
-      const modal = document.getElementById("promo-video-modal");
-      const video = document.getElementById("promo-video-player");
-      if (!modal || !video) return;
-
-      window.closePromoVideo = function closePromoVideo() {
-        modal.classList.remove("active");
-        modal.setAttribute("aria-hidden", "true");
-        video.pause();
-      };
-
-      window.openPromoVideo = function openPromoVideo() {
-        modal.classList.add("active");
-        modal.setAttribute("aria-hidden", "false");
-        video.currentTime = 0;
-        video.play().catch(() => {});
-      };
-
-      modal.addEventListener("click", event => {
-        if (event.target === modal) window.closePromoVideo();
-      });
-      document.addEventListener("keydown", event => {
-        if (event.key === "Escape" && modal.classList.contains("active")) {
-          window.closePromoVideo();
-        }
-      });
-    }());
-  </script>
 </body>
 </html>
