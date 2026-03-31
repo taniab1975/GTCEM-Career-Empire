@@ -235,6 +235,46 @@ const CONTENT_TRAINING_BAYS = {
   }
 };
 
+const FULL_GLOSSARY_TERMS = [
+  { term: "Arbitration", definition: "A formal dispute resolution process whereby a neutral third party considers the arguments and evidence presented by disputing parties to determine a solution that will be binding for all involved." },
+  { term: "Career", definition: "The sequence and variety of roles which one undertakes throughout a lifetime. It encompasses all life roles, not just occupation, and includes all paid and unpaid work, learning, leisure activities, and community and family responsibilities." },
+  { term: "Career adaptability", definition: "The ability to adjust to changing work conditions and or environments by recognising and pursuing opportunities for a positive transition to new work roles." },
+  { term: "Career competencies", definition: "The knowledge, skills and attitudes that promote intentional career development, lifelong learning and work life balance that can be developed and strengthened over time." },
+  { term: "Career development", definition: "The lifelong process of gaining the knowledge, skills, attributes and behaviours to manage life, learning, leisure and work in order to move towards a personally determined and evolving preferred future." },
+  { term: "Cover letter", definition: "A document that accompanies a job applicant's resume which concisely communicates their interest in a job opportunity and highlights the skills and attributes that make them a suitable candidate." },
+  { term: "Demographic shift", definition: "The change in the size and nature of a population due to migration and changes in birth and death rates." },
+  { term: "Dispute resolution", definition: "A process which aims to settle a conflict or disagreement between two or more people by developing a solution which is believed to be fair to all parties." },
+  { term: "Diversity", definition: "The state of having or being composed of a variety of elements. In a work context, it refers to the inclusion of different types of people based on age, ethnicity, gender, religion and or ability disability." },
+  { term: "Economic power shift", definition: "The long term global shift away from established advanced economies to emerging market countries." },
+  { term: "Emerging industries", definition: "Industries that are in the early stages of creating new products and services or transforming existing products and services through innovation and or technology." },
+  { term: "Enterprise", definition: "The willingness to try new things, show initiative and embrace and or promote innovative activities." },
+  { term: "Enterprise culture", definition: "The shared values, beliefs, attitudes, standards and behaviours that characterise a work environment." },
+  { term: "Impactful technology", definition: "The emergence of technologies that have the capacity to improve products, services and processes, but to also cause disruption and uncertainty for society and the economy." },
+  { term: "Green industries", definition: "Industries that actively participate in protecting or improving the environment by adopting processes that reduce waste and or pollution or by producing sustainable products using environmentally friendly processes and materials." },
+  { term: "Grievance", definition: "Any real or perceived problem an employee has about their work, the workplace or someone they work with." },
+  { term: "Growth industry", definition: "An industry that is experiencing a higher than average growth rate compared to other industries." },
+  { term: "Initiative", definition: "Taking a proactive approach to completing work tasks, overcoming challenges and dealing with unexpected events." },
+  { term: "Learning opportunity", definition: "A situation that allows a person to develop knowledge, understanding and skills." },
+  { term: "Lifelong learning", definition: "The ongoing, voluntary and self motivated pursuit of knowledge, understanding and skill development for either personal or professional reasons." },
+  { term: "Mediation", definition: "A dispute resolution process whereby a neutral third party facilitates communication and negotiation between disputing parties, helping them to reach a compromised solution." },
+  { term: "Megatrend", definition: "A significant and long lasting development that has a transformative impact on the way we live, work and do business." },
+  { term: "Performance management", definition: "The continuous process of feedback and communication between an employer and an employee, so that the employee is supported in performing their work role to the best of their ability." },
+  { term: "Personal risk", definition: "A risk that directly impacts on the individual and or their family." },
+  { term: "Professional development", definition: "Undertaking learning and training to develop, refine and enhance skills, knowledge and understandings." },
+  { term: "Professional risk", definition: "A risk taken during career development which can result in improved outcomes for the individual." },
+  { term: "Resilience", definition: "The ability to endure adversity and bounce back from challenging life events." },
+  { term: "Selection criteria", definition: "The qualities, skills, abilities, knowledge and qualifications needed to perform a job role effectively." },
+  { term: "Skills shortage", definition: "A situation that occurs when employers cannot fill vacancies in an occupation or in a specialisation within that occupation." },
+  { term: "Work environment", definition: "The physical conditions, procedures and processes, and social dynamics which comprise a place of work." }
+];
+
+const GLOSSARY_ROUND_CONFIGS = [
+  { id: "colour-shape", title: "Round 1: Colour and Shape Match", cue: "Match each term piece to the definition socket using both colour and shape clues." },
+  { id: "shape-only", title: "Round 2: Shape Match", cue: "The colour cue is gone. Now only the shape matches the correct definition." },
+  { id: "plain-match", title: "Round 3: Term to Definition", cue: "No visual scaffolds now. Match the term to the correct definition on memory and understanding." },
+  { id: "recall", title: "Round 4: Recall Forge", cue: "Use keywords to retrieve the term, then retrieve a keyword from the term." }
+];
+
 const STAGES = [
   { id: "content", title: "EST Content Check", state: "Knowledge reactor", summary: "Check the actual revision content before answering under pressure.", marks: 4, readiness: 18, credits: 1600, taxRate: 0.1 },
   { id: "glossary", title: "Glossary Check", state: "Precision language", summary: "Use exact glossary terms and definitions, not vague wording.", marks: 4, readiness: 20, credits: 1600, taxRate: 0.1 },
@@ -268,6 +308,13 @@ const state = {
   matchedGlossaryCards: [],
   matchedGlossaryTerms: [],
   glossaryTarget: null,
+  glossaryRoundIndex: 0,
+  glossaryBatchIndex: 0,
+  glossaryAssignments: {},
+  glossarySelectedTermId: "",
+  glossaryDraggedTermId: "",
+  glossaryRecallAnswers: {},
+  glossaryRecallResults: {},
   glossaryStreak: 0,
   glossaryBestStreak: 0,
   glossaryMisses: 0,
@@ -339,6 +386,14 @@ function pickRandom(items, count) {
   return shuffle(items).slice(0, Math.min(count, items.length));
 }
 
+function chunkArray(items, size) {
+  const chunks = [];
+  for (let index = 0; index < items.length; index += size) {
+    chunks.push(items.slice(index, index + size));
+  }
+  return chunks;
+}
+
 function buildContentGroups(bank) {
   const rounds = bank.contentRounds || [];
   return CONTENT_TOPIC_GROUPS.map(group => ({
@@ -369,26 +424,41 @@ async function loadBank() {
   return response.json();
 }
 
+function normaliseGlossaryTermText(value) {
+  return String(value || "")
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, " ")
+    .trim();
+}
+
+function deriveGlossaryKeywords(definition) {
+  const stopWords = new Set(["the", "and", "that", "with", "from", "their", "this", "into", "which", "when", "whereby", "while", "between", "they", "them", "such", "have", "has", "been", "will", "just", "more", "than", "over", "under", "work", "role", "roles", "process", "processes", "using", "used", "throughout", "within", "towards", "about", "your", "their", "these", "those", "what", "because", "allows", "allow", "being"]);
+  return [...new Set(
+    String(definition || "")
+      .toLowerCase()
+      .replace(/[^a-z0-9\s]/g, " ")
+      .split(/\s+/)
+      .filter(word => word.length > 3 && !stopWords.has(word))
+  )].slice(0, 4);
+}
+
+function buildGlossarySource() {
+  return FULL_GLOSSARY_TERMS.map((item, index) => ({
+    id: `full-glossary-${index + 1}`,
+    term: item.term,
+    definition: item.definition,
+    keywords: deriveGlossaryKeywords(item.definition)
+  }));
+}
+
 function buildStageDeck(bank) {
-  const glossaryTerms = bank.glossaryTerms || [];
+  const glossaryTerms = buildGlossarySource();
   const contentGroups = buildContentGroups(bank);
-  const glossaryRounds = pickRandom(glossaryTerms, Math.min(5, glossaryTerms.length)).map(term => {
-    const distractors = pickRandom(glossaryTerms.filter(item => item.term !== term.term), 3);
-    return {
-      term,
-      scenarioOptions: shuffle([term.term, ...distractors.map(item => item.term)]),
-      definitionOptions: shuffle([term.definition, ...distractors.map(item => item.definition)])
-    };
-  });
-  const glossaryTermBank = shuffle([
-    ...glossaryRounds.map(round => round.term.term),
-    ...pickRandom(glossaryTerms.map(item => item.term).filter(term => !glossaryRounds.some(round => round.term.term === term)), Math.max(0, 6 - glossaryRounds.length))
-  ]);
+  const glossaryBatches = chunkArray(glossaryTerms, 6);
 
   return {
     contentGroups,
-    glossaryRounds,
-    glossaryTermBank,
+    glossaryBatches,
     decoderRound: pickRandom(bank.decoderRounds || [], 1)[0] || null,
     bossRound: pickRandom(bank.bossRounds || [], 1)[0] || null,
     communityOptions: bank.communityOptions || []
@@ -754,76 +824,142 @@ function buildGlossaryBoard(rounds) {
   ])));
 }
 
+function getCurrentGlossaryBatch() {
+  const batches = state.stageDeck?.glossaryBatches || [];
+  return batches[state.glossaryBatchIndex] || [];
+}
+
+function getCurrentGlossaryRound() {
+  return GLOSSARY_ROUND_CONFIGS[state.glossaryRoundIndex] || GLOSSARY_ROUND_CONFIGS[0];
+}
+
+function getGlossaryVisual(index) {
+  const visuals = [
+    { shape: "circle", color: "#ff8a5b" },
+    { shape: "diamond", color: "#5dd6ff" },
+    { shape: "pill", color: "#ffd86c" },
+    { shape: "hex", color: "#72f7b8" },
+    { shape: "arch", color: "#c48bff" },
+    { shape: "ticket", color: "#ff7dc0" }
+  ];
+  return visuals[index % visuals.length];
+}
+
 function initialiseGlossaryBoard() {
-  const rounds = state.stageDeck?.glossaryRounds || [];
-  state.glossaryBoard = buildGlossaryBoard(rounds);
-  state.glossarySelection = [];
-  state.matchedGlossaryCards = [];
-  state.matchedGlossaryTerms = [];
-  state.glossaryTarget = rounds.length ? 0 : null;
+  state.glossaryRoundIndex = 0;
+  state.glossaryBatchIndex = 0;
+  state.glossaryAssignments = {};
+  state.glossarySelectedTermId = "";
+  state.glossaryDraggedTermId = "";
+  state.glossaryRecallAnswers = {};
+  state.glossaryRecallResults = {};
   state.glossaryStreak = 0;
   state.glossaryBestStreak = 0;
   state.glossaryMisses = 0;
-  state.glossaryPulse = "Pick a term dock, then catch its matching keyword, scenario, and definition chips.";
+  state.glossaryPulse = "Start with colour and shape. Match each term piece to the correct definition socket.";
 }
 
-function selectGlossaryDock(matchId) {
-  if (state.matchedGlossaryTerms.includes(matchId)) return;
-  state.glossaryTarget = matchId;
-  state.glossarySelection = [];
-  state.glossaryPulse = "Now catch the 3 clue chips that belong to this term.";
+function getGlossaryBatchKey() {
+  return `glossary-r${state.glossaryRoundIndex}-b${state.glossaryBatchIndex}`;
+}
+
+function getGlossaryAssignmentsForBatch() {
+  return state.glossaryAssignments[getGlossaryBatchKey()] || {};
+}
+
+function setGlossarySelectedTerm(termId) {
+  const assignments = getGlossaryAssignmentsForBatch();
+  const usedTermIds = Object.values(assignments);
+  if (usedTermIds.includes(termId)) return;
+  state.glossarySelectedTermId = state.glossarySelectedTermId === termId ? "" : termId;
   renderGlossaryStage();
 }
 
-function clickGlossaryCard(cardId) {
-  if (state.matchedGlossaryCards.includes(cardId)) return;
-  if (state.glossaryTarget === null || state.glossaryTarget === undefined) {
-    state.glossaryPulse = "Choose a term dock first so you know which clues you are collecting.";
-    renderGlossaryStage();
-    return;
+function startGlossaryDrag(termId) {
+  state.glossaryDraggedTermId = termId;
+  state.glossarySelectedTermId = termId;
+}
+
+function attemptGlossaryMatch(termId, targetTermId) {
+  if (!termId) return;
+  const batch = getCurrentGlossaryBatch();
+  const assignments = { ...getGlossaryAssignmentsForBatch() };
+  if (assignments[targetTermId]) return;
+  const draggedTerm = batch.find(item => item.id === termId);
+  const targetTerm = batch.find(item => item.id === targetTermId);
+  if (!draggedTerm || !targetTerm) return;
+
+  if (termId === targetTermId) {
+    assignments[targetTermId] = termId;
+    state.glossaryAssignments[getGlossaryBatchKey()] = assignments;
+    state.glossarySelectedTermId = "";
+    state.glossaryDraggedTermId = "";
+    state.glossaryStreak += 1;
+    state.glossaryBestStreak = Math.max(state.glossaryBestStreak, state.glossaryStreak);
+    state.glossaryPulse = `${targetTerm.term} matched. The blueprint wall is lighting up.`;
+    state.recentReward = {
+      type: "positive",
+      title: "Correct match",
+      detail: `${targetTerm.term} has been locked in. Keep matching to complete the blueprint.`
+    };
+  } else {
+    state.glossarySelectedTermId = "";
+    state.glossaryDraggedTermId = "";
+    state.glossaryMisses += 1;
+    state.glossaryStreak = 0;
+    state.glossaryPulse = "Try again. That term piece does not fit this definition socket.";
+    state.recentReward = {
+      type: "warning",
+      title: "Try again",
+      detail: `${draggedTerm.term} does not match that definition. Re-check the clue.`
+    };
   }
-  if (state.glossarySelection.includes(cardId)) {
-    state.glossarySelection = state.glossarySelection.filter(id => id !== cardId);
-    renderGlossaryStage();
-    return;
-  }
-  if (state.glossarySelection.length >= 3) return;
-  state.glossarySelection = [...state.glossarySelection, cardId];
-  if (state.glossarySelection.length === 3) {
-    const selectedCards = state.glossaryBoard.filter(card => state.glossarySelection.includes(card.id));
-    const sameMatch = new Set(selectedCards.map(card => card.matchId)).size === 1 && selectedCards[0]?.matchId === state.glossaryTarget;
-    const uniqueKinds = new Set(selectedCards.map(card => card.kind)).size === 3;
-    if (sameMatch && uniqueKinds) {
-      state.matchedGlossaryCards = [...state.matchedGlossaryCards, ...state.glossarySelection];
-      state.matchedGlossaryTerms = [...state.matchedGlossaryTerms, state.glossaryTarget];
-      state.glossaryStreak += 1;
-      state.glossaryBestStreak = Math.max(state.glossaryBestStreak, state.glossaryStreak);
-      const clearedTerm = (state.stageDeck?.glossaryRounds || [])[state.glossaryTarget]?.term?.term || "Glossary set";
-      state.glossaryPulse = `${clearedTerm} cleared. Keep the streak alive.`;
-      state.recentReward = {
-        type: "positive",
-        title: "Glossary set cleared",
-        detail: `${clearedTerm} matched correctly. Precision language is building exam readiness.`
-      };
-      const rounds = state.stageDeck?.glossaryRounds || [];
-      const nextTarget = rounds.findIndex((_, index) => !state.matchedGlossaryTerms.includes(index) && index !== state.glossaryTarget);
-      state.glossaryTarget = nextTarget >= 0 ? nextTarget : null;
-      state.glossarySelection = [];
-      renderRewardPulse();
-    } else {
-      state.glossaryMisses += 1;
-      state.glossaryStreak = 0;
-      state.glossaryPulse = "Not quite. Stay on the selected term and look for its keyword, scenario, and definition.";
-      state.recentReward = {
-        type: "warning",
-        title: "Mismatch",
-        detail: "That set did not fully match. Try another combination and rebuild the streak."
-      };
-      state.glossarySelection = [];
-      renderRewardPulse();
+
+  renderRewardPulse();
+  renderGlossaryStage();
+}
+
+function dropGlossaryTerm(event, targetTermId) {
+  event.preventDefault();
+  attemptGlossaryMatch(state.glossaryDraggedTermId || state.glossarySelectedTermId, targetTermId);
+}
+
+function handleGlossarySocketClick(targetTermId) {
+  if (!state.glossarySelectedTermId) return;
+  attemptGlossaryMatch(state.glossarySelectedTermId, targetTermId);
+}
+
+function isGlossaryBatchMatched() {
+  const batch = getCurrentGlossaryBatch();
+  const assignments = getGlossaryAssignmentsForBatch();
+  return batch.length && batch.every(item => assignments[item.id] === item.id);
+}
+
+function moveToNextGlossaryBatchOrRound() {
+  const batchCount = (state.stageDeck?.glossaryBatches || []).length;
+  if (state.glossaryBatchIndex < batchCount - 1) {
+    state.glossaryBatchIndex += 1;
+  } else {
+    state.glossaryBatchIndex = 0;
+    state.glossaryRoundIndex += 1;
+    if (state.glossaryRoundIndex < 3) {
+      state.glossaryPulse = GLOSSARY_ROUND_CONFIGS[state.glossaryRoundIndex].cue;
     }
   }
+  state.glossarySelectedTermId = "";
+  state.glossaryDraggedTermId = "";
   renderGlossaryStage();
+}
+
+function nextGlossaryPhase() {
+  if (state.glossaryRoundIndex < 3) {
+    if (!isGlossaryBatchMatched()) return;
+    moveToNextGlossaryBatchOrRound();
+  }
+}
+
+function setGlossaryRecallAnswer(key, value) {
+  state.glossaryRecallAnswers[key] = value;
 }
 
 function renderContentStage() {
@@ -900,68 +1036,131 @@ function renderContentStage() {
 }
 
 function renderGlossaryStage() {
-  const rounds = state.stageDeck?.glossaryRounds || [];
-  const clearedSets = state.matchedGlossaryTerms.length;
-  setText("stage-title", "Glossary Check");
-  setText("stage-subtitle", "Clear matching sets to lock the language into memory.");
+  const batch = getCurrentGlossaryBatch();
+  const round = getCurrentGlossaryRound();
+  const assignments = getGlossaryAssignmentsForBatch();
+  const totalBatches = (state.stageDeck?.glossaryBatches || []).length;
+  const roundNumber = state.glossaryRoundIndex + 1;
+  const batchNumber = state.glossaryBatchIndex + 1;
+  const matchedCount = Object.keys(assignments).length;
+  setText("stage-title", "Glossary Match Lab");
+  setText("stage-subtitle", round.cue);
+
+  if (round.id === "recall") {
+    renderStageRoot(`
+      <div class="question-card">
+        <div class="kicker">Recall Forge</div>
+        <h3>${escapeHtml(round.title)}</h3>
+        <p>Batch ${batchNumber} of ${totalBatches}. Use the keyword clues to retrieve the term, then retrieve at least one keyword from the term.</p>
+      </div>
+      <div class="panel">
+        <div class="section-title">
+          <h2>Recall Round</h2>
+          <p>Batch ${batchNumber}/${totalBatches}</p>
+        </div>
+        <div class="badge-row" style="margin-bottom:14px;">
+          <span class="badge">Round 4 of 4</span>
+          <span class="badge">Terms in batch: ${batch.length}</span>
+        </div>
+        <div class="sample-grid">
+          ${batch.map(item => `
+            <article class="sample-card">
+              <div class="sample-meta">
+                <strong>${escapeHtml(item.term)}</strong>
+                <span>Recall pair</span>
+              </div>
+              <p><strong>Keywords to term:</strong> ${escapeHtml(item.keywords.join(", "))}</p>
+              <textarea
+                placeholder="Type the term..."
+                oninput="window.ESTPrep.setGlossaryRecallAnswer('term-${item.id}', this.value)"
+              >${escapeHtml(state.glossaryRecallAnswers[`term-${item.id}`] || "")}</textarea>
+              <p style="margin-top:12px;"><strong>Term to keyword:</strong> Give at least one keyword for <em>${escapeHtml(item.term)}</em>.</p>
+              <textarea
+                placeholder="Type one keyword..."
+                oninput="window.ESTPrep.setGlossaryRecallAnswer('keyword-${item.id}', this.value)"
+              >${escapeHtml(state.glossaryRecallAnswers[`keyword-${item.id}`] || "")}</textarea>
+            </article>
+          `).join("")}
+        </div>
+      </div>
+      <div class="written-stage">
+        <strong>Round 4 complete</strong>
+        <p class="small-copy">This is the teacher-visible mastery round. Each term is marked for success or failure so the dashboard can show exactly where support is needed.</p>
+        <button class="submit-button" type="button" onclick="window.ESTPrep.submitGlossary()">${batchNumber === totalBatches ? "Bank Glossary Results" : "Next Recall Batch"}</button>
+      </div>
+    `);
+    return;
+  }
+
   renderStageRoot(`
     <div class="question-card">
-      <div class="kicker">Term Vault</div>
-      <h3>Pick a term dock, then catch the right clue chips to clear it.</h3>
-      <p>Each cleared set banks a tiny win. Keep your streak alive and learn the exact EST terminology through repetition.</p>
+      <div class="kicker">Blueprint Wall</div>
+      <h3>${escapeHtml(round.title)}</h3>
+      <p>Batch ${batchNumber} of ${totalBatches}. Match the term pieces to the correct definition sockets. The wall gets brighter as you lock more pieces in.</p>
     </div>
     <div class="panel">
       <div class="section-title">
-        <h2>Glossary Rush</h2>
-        <p>${clearedSets}/${rounds.length} sets cleared</p>
+        <h2>Career Empire Blueprint Wall</h2>
+        <p>Round ${roundNumber}/4 • ${matchedCount}/${batch.length} matched</p>
       </div>
       <div class="badge-row" style="margin-bottom:14px;">
         <span class="badge">Current streak: x${state.glossaryStreak}</span>
         <span class="badge">Best streak: x${state.glossaryBestStreak}</span>
         <span class="badge">Misses: ${state.glossaryMisses}</span>
       </div>
-      <p class="small-copy">${escapeHtml(state.glossaryPulse || "Pick three tiles that belong together.")}</p>
-      <div class="glossary-docks">
-        ${rounds.map((round, index) => {
-          const active = state.glossaryTarget === index;
-          const matched = state.matchedGlossaryTerms.includes(index);
-          return `
-            <button
-              type="button"
-              class="choice-button glossary-dock ${active ? "selected live-selected" : ""} ${matched ? "matched" : ""}"
-              ${matched ? "disabled" : ""}
-              onclick="window.ESTPrep.selectGlossaryDock(${index})"
-            >
-              <span class="kicker">${matched ? "Cleared" : active ? "Live dock" : "Dock"}</span>
-              <strong>${escapeHtml(round.term.term)}</strong>
-            </button>
-          `;
-        }).join("")}
-      </div>
-      <div class="glossary-arena">
-        ${state.glossaryBoard.map(card => {
-          const selected = state.glossarySelection.includes(card.id);
-          const matched = state.matchedGlossaryCards.includes(card.id);
-          const style = card.style || {};
-          return `
-            <button
-              type="button"
-              class="choice-button glossary-chip ${selected ? "selected live-selected" : ""} ${matched ? "matched" : ""}"
-              ${matched ? "disabled" : ""}
-              style="--chip-x:${style.x || "10%"}; --chip-y:${style.y || "10%"}; --chip-delay:${style.delay || "0s"}; --chip-duration:${style.duration || "6s"};"
-              onclick="window.ESTPrep.clickGlossaryCard('${card.id}')"
-            >
-              <span class="kicker">${escapeHtml(card.kind)}</span>
-              <strong>${escapeHtml(card.text)}</strong>
-            </button>
-          `;
-        }).join("")}
+      <p class="small-copy">${escapeHtml(state.glossaryPulse || round.cue)}</p>
+      <div class="glossary-blueprint" style="--glossary-progress:${Math.round((matchedCount / Math.max(1, batch.length)) * 100)}%;">
+        <div class="glossary-sockets">
+          ${batch.map((item, index) => {
+            const visual = getGlossaryVisual(index);
+            const assigned = assignments[item.id];
+            const showColour = round.id === "colour-shape";
+            const shapeClass = `shape-${visual.shape}`;
+            return `
+              <button
+                type="button"
+                class="glossary-socket ${shapeClass} ${assigned ? "matched" : ""} ${showColour ? "colour-cued" : ""}"
+                style="${showColour ? `--socket-colour:${visual.color};` : ""}"
+                onclick="window.ESTPrep.handleGlossarySocketClick('${item.id}')"
+                ondragover="event.preventDefault()"
+                ondrop="window.ESTPrep.dropGlossaryTerm(event, '${item.id}')"
+              >
+                <span class="kicker">${showColour ? "Shape + colour" : round.id === "shape-only" ? "Shape only" : "Definition only"}</span>
+                <strong>${escapeHtml(item.definition)}</strong>
+                ${assigned ? '<span class="glossary-mark good">✓</span>' : ""}
+              </button>
+            `;
+          }).join("")}
+        </div>
+        <div class="glossary-term-pool">
+          ${batch.map((item, index) => {
+            const visual = getGlossaryVisual(index);
+            const shapeClass = `shape-${visual.shape}`;
+            const used = Object.values(assignments).includes(item.id);
+            const selected = state.glossarySelectedTermId === item.id;
+            const showColour = round.id === "colour-shape";
+            return `
+              <button
+                type="button"
+                draggable="${used ? "false" : "true"}"
+                class="choice-button glossary-piece ${shapeClass} ${used ? "matched" : ""} ${selected ? "selected live-selected" : ""} ${showColour ? "colour-cued" : ""}"
+                style="${showColour ? `--socket-colour:${visual.color};` : ""}"
+                ${used ? "disabled" : ""}
+                onclick="window.ESTPrep.setGlossarySelectedTerm('${item.id}')"
+                ondragstart="window.ESTPrep.startGlossaryDrag('${item.id}')"
+              >
+                <span class="kicker">${showColour ? "Piece" : round.id === "shape-only" ? "Shape piece" : "Term piece"}</span>
+                <strong>${escapeHtml(item.term)}</strong>
+              </button>
+            `;
+          }).join("")}
+        </div>
       </div>
     </div>
     <div class="written-stage">
-      <strong>Precision beats waffle</strong>
-      <p class="small-copy">This is a real catch-and-clear loop: choose the term, match its floating clue chips, and keep the combo alive until the glossary run is finished.</p>
-      <button class="submit-button" type="button" onclick="window.ESTPrep.submitGlossary()">Bank Glossary Results</button>
+      <strong>Blueprint feedback</strong>
+      <p class="small-copy">Correct matches trigger a green tick and light up the wall. Incorrect drops trigger an orange retry pulse. Finish the full batch before moving on.</p>
+      <button class="submit-button" type="button" onclick="window.ESTPrep.nextGlossaryPhase()" ${isGlossaryBatchMatched() ? "" : "disabled"}>${batchNumber === totalBatches ? "Next Round" : "Next Batch"}</button>
     </div>
   `);
 }
@@ -1611,39 +1810,58 @@ async function submitContent() {
 }
 
 async function submitGlossary() {
-  const rounds = state.stageDeck?.glossaryRounds || [];
+  const batches = state.stageDeck?.glossaryBatches || [];
+  const batch = getCurrentGlossaryBatch();
   const durationSeconds = getCurrentStageDurationSeconds();
-  const clearedSets = Math.floor(state.matchedGlossaryCards.length / 3);
-  const total = rounds.length;
-  const scoreRatio = total ? clearedSets / total : 0;
+  if (state.glossaryRoundIndex < 3) return;
+
+  batch.forEach(item => {
+    const typedTerm = normaliseGlossaryTermText(state.glossaryRecallAnswers[`term-${item.id}`]);
+    const typedKeyword = normaliseGlossaryTermText(state.glossaryRecallAnswers[`keyword-${item.id}`]);
+    const termCorrect = typedTerm === normaliseGlossaryTermText(item.term);
+    const keywordCorrect = item.keywords.some(keyword => typedKeyword.includes(normaliseGlossaryTermText(keyword)));
+    const overallCorrect = termCorrect && keywordCorrect;
+    state.glossaryRecallResults[item.id] = {
+      term: item.term,
+      keywords: item.keywords,
+      termCorrect,
+      keywordCorrect,
+      overallCorrect
+    };
+  });
+
+  if (state.glossaryBatchIndex < batches.length - 1) {
+    state.glossaryBatchIndex += 1;
+    state.glossaryPulse = "Nice. Next recall batch ready.";
+    renderGlossaryStage();
+    return;
+  }
+
+  const allResults = batches.flatMap(batchItems => batchItems.map(item => state.glossaryRecallResults[item.id]).filter(Boolean));
+  const overallCorrect = allResults.filter(item => item.overallCorrect).length;
+  const total = allResults.length;
+  const scoreRatio = total ? overallCorrect / total : 0;
   const scorePercent = Math.round(scoreRatio * 100);
   awardStage("glossary", { scoreRatio });
-  addEvidence("Glossary lock-in", `${clearedSets}/${total} sets cleared • Best streak x${state.glossaryBestStreak} • Misses ${state.glossaryMisses}`);
-  await saveProgress("glossary-lock-in", "glossary-check", `Glossary board clears: ${clearedSets}/${total}`, scorePercent, {
+  addEvidence("Glossary mastery run", `${overallCorrect}/${total} final recall pairs correct • Best streak x${state.glossaryBestStreak} • Misses ${state.glossaryMisses}`);
+  await saveProgress("glossary-lock-in", "glossary-check", `Glossary final recall: ${overallCorrect}/${total}`, scorePercent, {
     taskName: "Glossary Check",
     durationSeconds,
-    promptText: "Match glossary terms to context and definition.",
+    promptText: "Match and recall glossary terms across four scaffolded rounds.",
     extraPayload: {
-      board_results: {
-        cleared_sets: clearedSets,
-        total_sets: total,
+      round_summary: {
+        rounds: GLOSSARY_ROUND_CONFIGS.map(item => item.title),
+        total_terms: FULL_GLOSSARY_TERMS.length,
         best_streak: state.glossaryBestStreak,
         misses: state.glossaryMisses
       },
-      clue_cards: rounds.map((round, index) => ({
-        term: round.term.term,
-        scenario: round.term.scenario,
-        definition: round.term.definition,
-        cleared: state.matchedGlossaryCards.includes(`glossary-${index}-term`) &&
-          state.matchedGlossaryCards.includes(`glossary-${index}-scenario`) &&
-          state.matchedGlossaryCards.includes(`glossary-${index}-definition`)
-      }))
+      final_round_results: allResults
     }
   });
   showFeedbackBox(scoreRatio >= 0.8 ? "good" : scoreRatio >= 0.5 ? "warn" : "bad", [
-    `<strong>Glossary score:</strong> ${clearedSets}/${total} sets cleared.`,
+    `<strong>Glossary score:</strong> ${overallCorrect}/${total} final recall pairs correct.`,
     `Best streak: x${state.glossaryBestStreak}. Misses: ${state.glossaryMisses}.`,
-    "Precise EST language makes short answers sound deliberate and exam-ready."
+    "Teachers can now inspect which terms were mastered or missed in the final recall round."
   ]);
 }
 
@@ -1743,9 +1961,13 @@ window.ESTPrep = {
   jumpToContentGroup,
   setTrainingChoice,
   setTrainingChoiceEncoded,
-  selectGlossaryDock,
-  clickGlossaryCard,
+  setGlossarySelectedTerm,
+  startGlossaryDrag,
+  dropGlossaryTerm,
+  handleGlossarySocketClick,
+  nextGlossaryPhase,
   toggleReveal,
+  setGlossaryRecallAnswer,
   setBossScaffold,
   setBossShowdownReason,
   buildBossDraft,
