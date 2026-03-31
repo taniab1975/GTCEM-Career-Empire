@@ -574,6 +574,23 @@ h1 {
     radial-gradient(circle at top left, rgba(255, 216, 108, 0.08), transparent 35%);
 }
 
+.glossary-board {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 14px;
+  margin-top: 16px;
+}
+
+.glossary-tile {
+  min-height: 150px;
+}
+
+.glossary-tile.matched {
+  border-color: rgba(114, 247, 184, 0.56);
+  background: rgba(17, 62, 52, 0.6);
+  opacity: 0.88;
+}
+
 .forensics-grid,
 .builder-grid,
 .builder-actions {
@@ -734,6 +751,7 @@ h1 {
   .chapter-grid,
   .mcq-grid,
   .choice-grid,
+  .glossary-board,
   .prompt-grid,
   .forensics-grid,
   .builder-grid,
@@ -757,6 +775,7 @@ h1 {
   .chapter-grid,
   .mcq-grid,
   .choice-grid,
+  .glossary-board,
   .prompt-grid,
   .forensics-grid,
   .builder-grid,

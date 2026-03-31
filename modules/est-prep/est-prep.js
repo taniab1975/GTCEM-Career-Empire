@@ -262,7 +262,14 @@ const state = {
   lastBossReview: null,
   contentGroupIndex: 0,
   contentGroupStartedAt: 0,
-  contentGroupDurations: {}
+  contentGroupDurations: {},
+  glossaryBoard: [],
+  glossarySelection: [],
+  matchedGlossaryCards: [],
+  glossaryStreak: 0,
+  glossaryBestStreak: 0,
+  glossaryMisses: 0,
+  glossaryPulse: ""
 };
 
 function readJsonStorage(key, fallback) {
@@ -669,6 +676,82 @@ function renderBossResponseBuilder(round) {
   `;
 }
 
+function buildGlossaryBoard(rounds) {
+  return shuffle(rounds.flatMap((round, index) => ([
+    {
+      id: `glossary-${index}-term`,
+      matchId: index,
+      kind: "Term",
+      text: round.term.term
+    },
+    {
+      id: `glossary-${index}-scenario`,
+      matchId: index,
+      kind: "Scenario",
+      text: round.term.scenario
+    },
+    {
+      id: `glossary-${index}-definition`,
+      matchId: index,
+      kind: "Definition",
+      text: round.term.definition
+    }
+  ])));
+}
+
+function initialiseGlossaryBoard() {
+  const rounds = state.stageDeck?.glossaryRounds || [];
+  state.glossaryBoard = buildGlossaryBoard(rounds);
+  state.glossarySelection = [];
+  state.matchedGlossaryCards = [];
+  state.glossaryStreak = 0;
+  state.glossaryBestStreak = 0;
+  state.glossaryMisses = 0;
+  state.glossaryPulse = "Clear sets by matching the term, scenario, and definition.";
+}
+
+function clickGlossaryCard(cardId) {
+  if (state.matchedGlossaryCards.includes(cardId)) return;
+  if (state.glossarySelection.includes(cardId)) {
+    state.glossarySelection = state.glossarySelection.filter(id => id !== cardId);
+    renderGlossaryStage();
+    return;
+  }
+  if (state.glossarySelection.length >= 3) return;
+  state.glossarySelection = [...state.glossarySelection, cardId];
+  if (state.glossarySelection.length === 3) {
+    const selectedCards = state.glossaryBoard.filter(card => state.glossarySelection.includes(card.id));
+    const sameMatch = new Set(selectedCards.map(card => card.matchId)).size === 1;
+    const uniqueKinds = new Set(selectedCards.map(card => card.kind)).size === 3;
+    if (sameMatch && uniqueKinds) {
+      state.matchedGlossaryCards = [...state.matchedGlossaryCards, ...state.glossarySelection];
+      state.glossaryStreak += 1;
+      state.glossaryBestStreak = Math.max(state.glossaryBestStreak, state.glossaryStreak);
+      const clearedTerm = selectedCards.find(card => card.kind === "Term")?.text || "Glossary set";
+      state.glossaryPulse = `${clearedTerm} cleared. Keep the streak alive.`;
+      state.recentReward = {
+        type: "positive",
+        title: "Glossary set cleared",
+        detail: `${clearedTerm} matched correctly. Precision language is building exam readiness.`
+      };
+      state.glossarySelection = [];
+      renderRewardPulse();
+    } else {
+      state.glossaryMisses += 1;
+      state.glossaryStreak = 0;
+      state.glossaryPulse = "Not quite. Look for one term, one scenario, and one definition that belong together.";
+      state.recentReward = {
+        type: "warning",
+        title: "Mismatch",
+        detail: "That set did not fully match. Try another combination and rebuild the streak."
+      };
+      state.glossarySelection = [];
+      renderRewardPulse();
+    }
+  }
+  renderGlossaryStage();
+}
+
 function renderContentStage() {
   const groups = state.stageDeck?.contentGroups || [];
   const currentGroup = groups[state.contentGroupIndex];
@@ -744,66 +827,47 @@ function renderContentStage() {
 
 function renderGlossaryStage() {
   const rounds = state.stageDeck?.glossaryRounds || [];
-  const termBank = state.stageDeck?.glossaryTermBank || rounds.map(round => round.term.term);
+  const clearedSets = Math.floor(state.matchedGlossaryCards.length / 3);
   setText("stage-title", "Glossary Check");
-  setText("stage-subtitle", "Reveal the clue, match the term, then lock in the exact definition.");
+  setText("stage-subtitle", "Clear matching sets to lock the language into memory.");
   renderStageRoot(`
     <div class="question-card">
       <div class="kicker">Term Vault</div>
-      <h3>Crack the clue cards, match the term, then reveal and lock the right definition.</h3>
-      <p>This stage rotates glossary terms every run so students rehearse the language instead of memorising one order.</p>
+      <h3>Clear the board by matching the right term, scenario, and definition.</h3>
+      <p>Each cleared set banks a tiny win. Keep your streak alive and learn the exact EST terminology through repetition.</p>
     </div>
     <div class="panel">
       <div class="section-title">
-        <h2>Term Bank</h2>
-        <p>Reusable clue-matching deck</p>
+        <h2>Glossary Match Grid</h2>
+        <p>${clearedSets}/${rounds.length} sets cleared</p>
       </div>
-      <div class="pill-row">
-        ${termBank.map(term => `<span class="pill">${escapeHtml(term)}</span>`).join("")}
+      <div class="badge-row" style="margin-bottom:14px;">
+        <span class="badge">Current streak: x${state.glossaryStreak}</span>
+        <span class="badge">Best streak: x${state.glossaryBestStreak}</span>
+        <span class="badge">Misses: ${state.glossaryMisses}</span>
+      </div>
+      <p class="small-copy">${escapeHtml(state.glossaryPulse || "Pick three tiles that belong together.")}</p>
+      <div class="glossary-board">
+        ${state.glossaryBoard.map(card => {
+          const selected = state.glossarySelection.includes(card.id);
+          const matched = state.matchedGlossaryCards.includes(card.id);
+          return `
+            <button
+              type="button"
+              class="choice-button glossary-tile ${selected ? "selected live-selected" : ""} ${matched ? "matched" : ""}"
+              ${matched ? "disabled" : ""}
+              onclick="window.ESTPrep.clickGlossaryCard('${card.id}')"
+            >
+              <span class="kicker">${escapeHtml(card.kind)}</span>
+              <strong>${escapeHtml(card.text)}</strong>
+            </button>
+          `;
+        }).join("")}
       </div>
     </div>
-    ${rounds.map((round, index) => `
-      <div class="panel glossary-card">
-        <div class="section-title">
-          <h2>Clue Card ${index + 1}</h2>
-          <p>${state.answers[`glossary-reveal-${index}`] ? "Revealed" : "Hidden"}</p>
-        </div>
-        <p class="small-copy">${state.answers[`glossary-reveal-${index}`] ? `<strong>Scenario:</strong> ${escapeHtml(round.term.scenario)}` : "Click reveal to open the clue card and inspect the scenario."}</p>
-        <div class="builder-actions">
-          <button class="ghost-link" type="button" onclick="window.ESTPrep.toggleReveal('glossary-reveal-${index}')">${state.answers[`glossary-reveal-${index}`] ? "Hide clue" : "Reveal clue"}</button>
-        </div>
-        <div class="mcq-grid" style="margin-top: 14px;">
-          ${termBank.map(option => `
-            <button
-              type="button"
-              class="choice-button ${state.answers[`glossary-term-${index}`] === option ? "selected live-selected" : ""}"
-              data-group="glossary-term-${index}"
-              data-value="${escapeHtml(option)}"
-              onclick="window.ESTPrep.setChoiceEncoded('glossary-term-${index}', '${encodeURIComponent(option)}')"
-            >
-              <strong>${escapeHtml(option)}</strong>
-            </button>
-          `).join("")}
-        </div>
-        <p class="small-copy" style="margin-top: 16px;"><strong>Definition reveal:</strong> Once you think you have the term, lock the exact definition.</p>
-        <div class="mcq-grid" style="margin-top: 14px;">
-          ${round.definitionOptions.map(option => `
-            <button
-              type="button"
-              class="choice-button ${state.answers[`glossary-definition-${index}`] === option ? "selected live-selected" : ""}"
-              data-group="glossary-definition-${index}"
-              data-value="${escapeHtml(option)}"
-              onclick="window.ESTPrep.setChoiceEncoded('glossary-definition-${index}', '${encodeURIComponent(option)}')"
-            >
-              <strong>${escapeHtml(option)}</strong>
-            </button>
-          `).join("")}
-        </div>
-      </div>
-    `).join("")}
     <div class="written-stage">
       <strong>Precision beats waffle</strong>
-      <p class="small-copy">This is now a clue-match-reveal loop. Students inspect the clue, retrieve the term, and then lock the exact wording they need in the EST.</p>
+      <p class="small-copy">This is a real clear-the-board loop: students repeatedly link term, scenario, and definition until the board is empty and the language feels automatic.</p>
       <button class="submit-button" type="button" onclick="window.ESTPrep.submitGlossary()">Bank Glossary Results</button>
     </div>
   `);
@@ -973,6 +1037,9 @@ function openStage(stageId) {
     state.contentGroupIndex = 0;
     state.contentGroupStartedAt = Date.now();
     state.contentGroupDurations = {};
+  }
+  if (stageId === "glossary") {
+    initialiseGlossaryBoard();
   }
   renderMap();
   if (stageId === "content") renderContentStage();
@@ -1453,33 +1520,36 @@ async function submitContent() {
 async function submitGlossary() {
   const rounds = state.stageDeck?.glossaryRounds || [];
   const durationSeconds = getCurrentStageDurationSeconds();
-  let correctCount = 0;
-  rounds.forEach((round, index) => {
-    if (state.answers[`glossary-term-${index}`] === round.term.term) correctCount += 1;
-    if (state.answers[`glossary-definition-${index}`] === round.term.definition) correctCount += 1;
-  });
-  const total = rounds.length * 2;
-  const scoreRatio = total ? correctCount / total : 0;
+  const clearedSets = Math.floor(state.matchedGlossaryCards.length / 3);
+  const total = rounds.length;
+  const scoreRatio = total ? clearedSets / total : 0;
+  const scorePercent = Math.round(scoreRatio * 100);
   awardStage("glossary", { scoreRatio });
-  addEvidence("Glossary lock-in", rounds.map((round, index) => `${round.term.term}: scenario=${state.answers[`glossary-term-${index}`] || "not chosen"} • definition=${state.answers[`glossary-definition-${index}`] || "not chosen"}`).join(" || "));
-  await saveProgress("glossary-lock-in", "glossary-check", `Glossary stage accuracy: ${correctCount}/${total}`, Math.round(scoreRatio * 100), {
+  addEvidence("Glossary lock-in", `${clearedSets}/${total} sets cleared • Best streak x${state.glossaryBestStreak} • Misses ${state.glossaryMisses}`);
+  await saveProgress("glossary-lock-in", "glossary-check", `Glossary board clears: ${clearedSets}/${total}`, scorePercent, {
     taskName: "Glossary Check",
     durationSeconds,
     promptText: "Match glossary terms to context and definition.",
     extraPayload: {
+      board_results: {
+        cleared_sets: clearedSets,
+        total_sets: total,
+        best_streak: state.glossaryBestStreak,
+        misses: state.glossaryMisses
+      },
       clue_cards: rounds.map((round, index) => ({
         term: round.term.term,
-        revealed: Boolean(state.answers[`glossary-reveal-${index}`]),
         scenario: round.term.scenario,
-        matched_term: state.answers[`glossary-term-${index}`] || "",
-        chosen_definition: state.answers[`glossary-definition-${index}`] || "",
-        correct_definition: round.term.definition
+        definition: round.term.definition,
+        cleared: state.matchedGlossaryCards.includes(`glossary-${index}-term`) &&
+          state.matchedGlossaryCards.includes(`glossary-${index}-scenario`) &&
+          state.matchedGlossaryCards.includes(`glossary-${index}-definition`)
       }))
     }
   });
   showFeedbackBox(scoreRatio >= 0.8 ? "good" : scoreRatio >= 0.5 ? "warn" : "bad", [
-    `<strong>Glossary score:</strong> ${correctCount}/${total} correct.`,
-    "This round now works as a clue-match-reveal loop, so students have to retrieve the term from context before locking the exact wording.",
+    `<strong>Glossary score:</strong> ${clearedSets}/${total} sets cleared.`,
+    `Best streak: x${state.glossaryBestStreak}. Misses: ${state.glossaryMisses}.`,
     "Precise EST language makes short answers sound deliberate and exam-ready."
   ]);
 }
@@ -1580,6 +1650,7 @@ window.ESTPrep = {
   jumpToContentGroup,
   setTrainingChoice,
   setTrainingChoiceEncoded,
+  clickGlossaryCard,
   toggleReveal,
   setBossScaffold,
   setBossShowdownReason,
