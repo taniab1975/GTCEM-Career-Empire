@@ -312,6 +312,7 @@ const state = {
   glossaryBatchIndex: 0,
   glossaryAssignments: {},
   glossarySelectedTermId: "",
+  glossarySelectedSocketId: "",
   glossaryDraggedTermId: "",
   glossaryRecallAnswers: {},
   glossaryRecallResults: {},
@@ -325,7 +326,9 @@ const state = {
   glossaryRoundVotes: {},
   glossaryMissionMode: false,
   glossaryRoundStartedAt: 0,
-  glossaryHasStarted: false
+  glossaryHasStarted: false,
+  glossaryMode: "play",
+  glossaryStudyIndex: 0
 };
 
 let glossaryTimerInterval = null;
@@ -915,6 +918,7 @@ function initialiseGlossaryBoard() {
   state.glossaryBatchIndex = 0;
   state.glossaryAssignments = {};
   state.glossarySelectedTermId = "";
+  state.glossarySelectedSocketId = "";
   state.glossaryDraggedTermId = "";
   state.glossaryRecallAnswers = {};
   state.glossaryRecallResults = {};
@@ -925,6 +929,8 @@ function initialiseGlossaryBoard() {
   state.glossaryPulseType = "neutral";
   state.glossaryMissionMode = true;
   state.glossaryHasStarted = true;
+  state.glossaryMode = "play";
+  state.glossaryStudyIndex = 0;
   resetGlossaryRewardLoop();
   syncMissionMode();
   startGlossaryRoundTimer(true);
@@ -943,7 +949,47 @@ function setGlossarySelectedTerm(termId) {
   const usedTermIds = Object.values(assignments);
   if (usedTermIds.includes(termId)) return;
   state.glossarySelectedTermId = state.glossarySelectedTermId === termId ? "" : termId;
+  if (state.glossarySelectedTermId && state.glossarySelectedSocketId) {
+    attemptGlossaryMatch(state.glossarySelectedTermId, state.glossarySelectedSocketId);
+    return;
+  }
   renderGlossaryStage();
+}
+
+function setGlossarySelectedSocket(socketId) {
+  const assignments = getGlossaryAssignmentsForBatch();
+  if (assignments[socketId]) return;
+  state.glossarySelectedSocketId = state.glossarySelectedSocketId === socketId ? "" : socketId;
+  if (state.glossarySelectedTermId && state.glossarySelectedSocketId) {
+    attemptGlossaryMatch(state.glossarySelectedTermId, state.glossarySelectedSocketId);
+    return;
+  }
+  renderGlossaryStage();
+}
+
+function setGlossaryMode(mode) {
+  state.glossaryMode = mode === "study" ? "study" : "play";
+  renderGlossaryStage();
+}
+
+function moveGlossaryStudy(step) {
+  const batch = getCurrentGlossaryBatch();
+  if (!batch.length) return;
+  const nextIndex = (state.glossaryStudyIndex + step + batch.length) % batch.length;
+  state.glossaryStudyIndex = nextIndex;
+  renderGlossaryStage();
+}
+
+function flipGlossaryStudyCard() {
+  const currentKey = `${getGlossaryBatchKey()}-flip-${state.glossaryStudyIndex}`;
+  state.answers[currentKey] = !state.answers[currentKey];
+  renderGlossaryStage();
+}
+
+function resetGlossarySelections() {
+  state.glossarySelectedTermId = "";
+  state.glossarySelectedSocketId = "";
+  state.glossaryDraggedTermId = "";
 }
 
 function startGlossaryDrag(termId) {
@@ -1074,8 +1120,7 @@ function attemptGlossaryMatch(termId, targetTermId) {
   if (termId === targetTermId) {
     assignments[targetTermId] = termId;
     state.glossaryAssignments[getGlossaryBatchKey()] = assignments;
-    state.glossarySelectedTermId = "";
-    state.glossaryDraggedTermId = "";
+    resetGlossarySelections();
     state.glossaryStreak += 1;
     state.glossaryBestStreak = Math.max(state.glossaryBestStreak, state.glossaryStreak);
     state.glossaryPulse = `${targetTerm.term} matched. The blueprint wall is lighting up.`;
@@ -1086,8 +1131,7 @@ function attemptGlossaryMatch(termId, targetTermId) {
       detail: `${targetTerm.term} has been locked in. Keep matching to complete the blueprint.`
     };
   } else {
-    state.glossarySelectedTermId = "";
-    state.glossaryDraggedTermId = "";
+    resetGlossarySelections();
     state.glossaryMisses += 1;
     state.glossaryStreak = 0;
     state.glossaryPulse = "Try again. That term piece does not fit this definition socket.";
@@ -1109,8 +1153,7 @@ function dropGlossaryTerm(event, targetTermId) {
 }
 
 function handleGlossarySocketClick(targetTermId) {
-  if (!state.glossarySelectedTermId) return;
-  attemptGlossaryMatch(state.glossarySelectedTermId, targetTermId);
+  setGlossarySelectedSocket(targetTermId);
 }
 
 function isGlossaryBatchMatched() {
@@ -1125,14 +1168,14 @@ function moveToNextGlossaryBatchOrRound() {
     state.glossaryBatchIndex += 1;
     state.glossaryPulse = `Batch ${state.glossaryBatchIndex + 1} loaded. Keep the wall glowing.`;
     state.glossaryPulseType = "neutral";
+    state.glossaryStudyIndex = 0;
   } else {
     const completedRound = state.glossaryRoundIndex + 1;
     buildGlossaryCelebration(completedRound, `All ${FULL_GLOSSARY_TERMS.length} glossary terms cleared in this round.`);
     renderGlossaryStage();
     return;
   }
-  state.glossarySelectedTermId = "";
-  state.glossaryDraggedTermId = "";
+  resetGlossarySelections();
   renderGlossaryStage();
 }
 
@@ -1204,6 +1247,44 @@ function renderGlossaryCelebration() {
         </div>
       </div>
     </section>
+  `;
+}
+
+function renderGlossaryStudyDeck(batch) {
+  const card = batch[state.glossaryStudyIndex] || batch[0];
+  if (!card) return "";
+  const flipKey = `${getGlossaryBatchKey()}-flip-${state.glossaryStudyIndex}`;
+  const flipped = !!state.answers[flipKey];
+  return `
+    <div class="panel glossary-study-panel">
+      <div class="section-title">
+        <h2>Study Deck</h2>
+        <p>Flip through the current batch before you play for speed and salary.</p>
+      </div>
+      <div class="badge-row" style="margin-bottom:14px;">
+        <span class="badge">Card ${state.glossaryStudyIndex + 1} / ${batch.length}</span>
+        <span class="badge">${escapeHtml(card.term)}</span>
+      </div>
+      <button type="button" class="glossary-study-card ${flipped ? "flipped" : ""}" onclick="window.ESTPrep.flipGlossaryStudyCard()">
+        <div class="glossary-study-inner">
+          <div class="glossary-study-face">
+            <span class="kicker">Term</span>
+            <strong>${escapeHtml(card.term)}</strong>
+            <p>Click to reveal the meaning.</p>
+          </div>
+          <div class="glossary-study-face glossary-study-back">
+            <span class="kicker">Definition</span>
+            <strong>${escapeHtml(card.definition)}</strong>
+            <p>Keywords: ${escapeHtml(card.keywords.join(", "))}</p>
+          </div>
+        </div>
+      </button>
+      <div class="builder-actions glossary-study-actions">
+        <button class="choice-button" type="button" onclick="window.ESTPrep.moveGlossaryStudy(-1)">Previous</button>
+        <button class="choice-button" type="button" onclick="window.ESTPrep.flipGlossaryStudyCard()">Flip Card</button>
+        <button class="choice-button" type="button" onclick="window.ESTPrep.moveGlossaryStudy(1)">Next</button>
+      </div>
+    </div>
   `;
 }
 
@@ -1370,6 +1451,42 @@ function renderGlossaryStage() {
     return;
   }
 
+  const progressPercent = Math.round((matchedCount / Math.max(1, batch.length)) * 100);
+  const roundScore = Math.max(0, (matchedCount * 100) - (state.glossaryMisses * 25));
+  const showColour = round.id === "colour-shape";
+  const selectedTermId = state.glossarySelectedTermId;
+  const selectedSocketId = state.glossarySelectedSocketId;
+  const modeSwitch = `
+    <div class="glossary-mode-switch">
+      <button type="button" class="choice-button ${state.glossaryMode === "play" ? "selected live-selected" : ""}" onclick="window.ESTPrep.setGlossaryMode('play')">Play Round</button>
+      <button type="button" class="choice-button ${state.glossaryMode === "study" ? "selected live-selected" : ""}" onclick="window.ESTPrep.setGlossaryMode('study')">Study Deck</button>
+    </div>
+  `;
+
+  if (state.glossaryMode === "study") {
+    renderStageRoot(`
+      <div class="glossary-mission-shell">
+        <div class="glossary-mission-topbar">
+          <div>
+            <div class="kicker">Glossary Mission Access</div>
+            <h3>Study before the speed run</h3>
+            <p class="small-copy">Use the deck to learn the batch, then switch back into play mode for points and rewards.</p>
+          </div>
+          <div class="glossary-mission-actions">
+            <span class="badge">Round ${roundNumber} / 4</span>
+            <span class="badge">Batch ${batchNumber} / ${totalBatches}</span>
+            <span class="badge">Timer <strong id="glossary-round-timer">${formatSecondsAsClock(getGlossaryRoundElapsedSeconds())}</strong></span>
+            <button class="choice-button" type="button" onclick="window.ESTPrep.returnToLab()">Return to EST Lab</button>
+          </div>
+        </div>
+        ${modeSwitch}
+        ${renderGlossaryStudyDeck(batch)}
+      </div>
+    `);
+    startGlossaryRoundTimer();
+    return;
+  }
+
   renderStageRoot(`
     <div class="glossary-mission-shell">
       <div class="glossary-mission-topbar">
@@ -1390,6 +1507,7 @@ function renderGlossaryStage() {
         <h3>${escapeHtml(round.title)}</h3>
         <p>Match the term pieces to the correct definition sockets. The wall brightens, your streak rises, and faster clean rounds pay better.</p>
       </div>
+      ${modeSwitch}
       <div class="panel">
         <div class="section-title">
           <h2>Career Empire Blueprint Wall</h2>
@@ -1399,23 +1517,25 @@ function renderGlossaryStage() {
           <span class="badge">Current streak: x${state.glossaryStreak}</span>
           <span class="badge">Best streak: x${state.glossaryBestStreak}</span>
           <span class="badge">Misses: ${state.glossaryMisses}</span>
+          <span class="badge">Score: ${roundScore}</span>
         </div>
         <p class="small-copy glossary-pulse ${state.glossaryPulseType}">${escapeHtml(state.glossaryPulse || round.cue)}</p>
+        <div class="glossary-progress-track" aria-hidden="true">
+          <div class="glossary-progress-bar" style="width:${progressPercent}%;"></div>
+        </div>
         <div class="glossary-blueprint" style="--glossary-progress:${Math.round((matchedCount / Math.max(1, batch.length)) * 100)}%;">
           <div class="glossary-sockets">
             ${batch.map((item, index) => {
               const visual = getGlossaryVisual(index);
               const assigned = assignments[item.id];
-              const showColour = round.id === "colour-shape";
               const shapeClass = `shape-${visual.shape}`;
+              const selected = selectedSocketId === item.id;
               return `
                 <button
                   type="button"
-                  class="glossary-socket ${shapeClass} ${assigned ? "matched" : ""} ${showColour ? "colour-cued" : ""}"
+                  class="glossary-socket ${shapeClass} ${assigned ? "matched" : ""} ${selected ? "selected live-selected" : ""} ${showColour ? "colour-cued" : ""}"
                   style="${showColour ? `--socket-colour:${visual.color};` : ""}"
                   onclick="window.ESTPrep.handleGlossarySocketClick('${item.id}')"
-                  ondragover="event.preventDefault()"
-                  ondrop="window.ESTPrep.dropGlossaryTerm(event, '${item.id}')"
                 >
                   <span class="kicker">${showColour ? "Shape + colour" : round.id === "shape-only" ? "Shape only" : "Definition only"}</span>
                   <strong>${escapeHtml(item.definition)}</strong>
@@ -1429,19 +1549,14 @@ function renderGlossaryStage() {
               const visual = getGlossaryVisual(index);
               const shapeClass = `shape-${visual.shape}`;
               const used = Object.values(assignments).includes(item.id);
-              const selected = state.glossarySelectedTermId === item.id;
-              const dragging = state.glossaryDraggedTermId === item.id;
-              const showColour = round.id === "colour-shape";
+              const selected = selectedTermId === item.id;
               return `
                 <button
                   type="button"
-                  draggable="${used ? "false" : "true"}"
-                  class="choice-button glossary-piece ${shapeClass} ${used ? "matched" : ""} ${selected ? "selected live-selected" : ""} ${dragging ? "dragging" : ""} ${showColour ? "colour-cued" : ""}"
+                  class="choice-button glossary-piece ${shapeClass} ${used ? "matched" : ""} ${selected ? "selected live-selected" : ""} ${showColour ? "colour-cued" : ""}"
                   style="${showColour ? `--socket-colour:${visual.color};` : ""}"
                   ${used ? "disabled" : ""}
                   onclick="window.ESTPrep.setGlossarySelectedTerm('${item.id}')"
-                  ondragstart="window.ESTPrep.startGlossaryDrag('${item.id}')"
-                  ondragend="window.ESTPrep.endGlossaryDrag()"
                 >
                   <span class="kicker">${showColour ? "Piece" : round.id === "shape-only" ? "Shape piece" : "Term piece"}</span>
                   <strong>${escapeHtml(item.term)}</strong>
@@ -2285,6 +2400,10 @@ window.ESTPrep = {
   setTrainingChoice,
   setTrainingChoiceEncoded,
   setGlossarySelectedTerm,
+  setGlossarySelectedSocket,
+  setGlossaryMode,
+  moveGlossaryStudy,
+  flipGlossaryStudyCard,
   startGlossaryDrag,
   endGlossaryDrag,
   dropGlossaryTerm,

@@ -679,6 +679,29 @@ h1 {
   color: #ffd86c;
 }
 
+.glossary-mode-switch {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.glossary-progress-track {
+  width: 100%;
+  height: 12px;
+  margin: 10px 0 18px;
+  border-radius: 999px;
+  overflow: hidden;
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(129, 166, 255, 0.18);
+}
+
+.glossary-progress-bar {
+  height: 100%;
+  border-radius: inherit;
+  background: linear-gradient(90deg, #7c3aed, #4f46e5 45%, #22c55e 100%);
+  transition: width 0.35s ease;
+}
+
 .glossary-mission-shell {
   display: grid;
   gap: 18px;
@@ -709,6 +732,69 @@ h1 {
   background:
     radial-gradient(circle at top right, rgba(255, 216, 108, 0.12), transparent 32%),
     linear-gradient(180deg, rgba(16, 28, 62, 0.96), rgba(11, 20, 46, 0.98));
+}
+
+.glossary-study-panel {
+  max-width: 880px;
+}
+
+.glossary-study-card {
+  width: 100%;
+  min-height: 320px;
+  border: 0;
+  padding: 0;
+  background: transparent;
+  perspective: 1000px;
+  cursor: pointer;
+}
+
+.glossary-study-inner {
+  position: relative;
+  min-height: 320px;
+  transform-style: preserve-3d;
+  transition: transform 0.6s ease;
+}
+
+.glossary-study-card.flipped .glossary-study-inner {
+  transform: rotateY(180deg);
+}
+
+.glossary-study-face {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  align-content: center;
+  gap: 14px;
+  padding: 32px;
+  border-radius: 28px;
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+  border: 1px solid rgba(129, 166, 255, 0.24);
+  background:
+    radial-gradient(circle at top left, rgba(97, 240, 255, 0.12), transparent 36%),
+    linear-gradient(135deg, rgba(12, 36, 77, 0.98), rgba(15, 28, 58, 0.98));
+  text-align: left;
+}
+
+.glossary-study-face strong {
+  font-size: clamp(1.3rem, 2vw, 2rem);
+  line-height: 1.35;
+}
+
+.glossary-study-face p {
+  margin: 0;
+  color: var(--muted);
+}
+
+.glossary-study-back {
+  transform: rotateY(180deg);
+  background:
+    radial-gradient(circle at top right, rgba(255, 216, 108, 0.14), transparent 36%),
+    linear-gradient(135deg, rgba(31, 59, 103, 0.98), rgba(20, 34, 70, 0.98));
+}
+
+.glossary-study-actions {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
 }
 
 .glossary-celebration {
@@ -993,7 +1079,8 @@ body.glossary-mission-active #stage-root {
   .builder-grid,
   .training-grid,
   .training-actions,
-  .training-lanes {
+  .training-lanes,
+  .glossary-study-actions {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 }
@@ -1027,7 +1114,8 @@ body.glossary-mission-active #stage-root {
   .builder-grid,
   .training-grid,
   .training-actions,
-  .training-lanes {
+  .training-lanes,
+  .glossary-study-actions {
     grid-template-columns: 1fr;
   }
 
