@@ -1730,6 +1730,7 @@ function renderTeacherLiveData(players, skillsData, teacherData = null) {
         topicLabel ? `Topic: ${topicLabel}` : "",
         promptText ? `Prompt: ${promptText}` : "",
         responseText ? `Response: ${String(responseText).slice(0, 220)}${String(responseText).length > 220 ? "..." : ""}` : "No response text stored yet.",
+        typeof payload?.training_score_percent === "number" ? `Practice Bay: ${Math.round(payload.training_score_percent)}%` : "",
         payload?.sample_response ? `Sample shown: ${String(payload.sample_response).slice(0, 140)}${String(payload.sample_response).length > 140 ? "..." : ""}` : ""
       ].filter(Boolean).join(" • ")
     };
@@ -1744,7 +1745,7 @@ function renderTeacherLiveData(players, skillsData, teacherData = null) {
       const topicLabel = payload.topic_group ? ` • ${payload.topic_group}` : "";
       return {
         title: `${studentName} • ${moduleLabel} • ${payload.task_name || row.evidence_type || "Task"}${topicLabel}`,
-        detail: `${formatDurationSeconds(payload.duration_seconds)}${score} • ${formatDateTime(row.created_at)}${payload.prompt_text ? ` • Prompt: ${String(payload.prompt_text).slice(0, 120)}${String(payload.prompt_text).length > 120 ? "..." : ""}` : ""}`
+        detail: `${formatDurationSeconds(payload.duration_seconds)}${score}${typeof payload.training_score_percent === "number" ? ` • Practice Bay ${Math.round(payload.training_score_percent)}%` : ""} • ${formatDateTime(row.created_at)}${payload.prompt_text ? ` • Prompt: ${String(payload.prompt_text).slice(0, 120)}${String(payload.prompt_text).length > 120 ? "..." : ""}` : ""}`
       };
     });
   const rosterActivity = students.slice()

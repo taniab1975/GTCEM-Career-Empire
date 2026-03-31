@@ -26,7 +26,7 @@ const CONTENT_TOPIC_GROUPS = [
   },
   {
     id: "personal-finance",
-    title: "Strategies to Manage Personal Finance, Including Budgeting and Seeking Assistance",
+    title: "Strategies to Manage Personal Finance, Including Budgeting and Seeking Assistance, and Unexpected Life Events Including Changes to Financial Circumstances",
     topics: ["Budgeting", "Tracking money in and out", "Seeking assistance", "Unexpected life events", "Responding to changed financial circumstances"],
     writePrompt: "Write one or two EST-ready sentences explaining how budgeting and seeking assistance support personal financial management.",
     sampleResponse: "Budgeting helps a person balance income and expenses, identify unnecessary spending, and plan for unexpected events. Seeking assistance from trusted services or experts also supports financial management because it provides reliable advice and helps people make informed decisions."
@@ -46,6 +46,194 @@ const CONTENT_TOPIC_GROUPS = [
     sampleResponse: "Communication skills can be applied by using clear verbal language, active listening, and appropriate non-verbal communication for the audience and purpose. This is important because it reduces misunderstandings, builds rapport, and helps tasks or interviews run more effectively."
   }
 ];
+
+const CONTENT_TRAINING_BAYS = {
+  initiative: {
+    type: "sort",
+    title: "Signal Sort",
+    subtitle: "Sort the workplace moves into strong initiative or weak initiative.",
+    leftLabel: "Shows initiative",
+    rightLabel: "Needs more initiative",
+    cards: [
+      {
+        id: "initiative-stock",
+        text: "A worker notices stock is running low and restocks before customers complain.",
+        correctBucket: "left",
+        feedback: "This is proactive. The worker spots a problem early and acts without being told."
+      },
+      {
+        id: "initiative-wait",
+        text: "A worker sees a spill but leaves it until a supervisor gives exact instructions.",
+        correctBucket: "right",
+        feedback: "This is passive, not initiative. Waiting can create safety issues and delays."
+      },
+      {
+        id: "initiative-improve",
+        text: "A worker suggests a faster way to label items so the whole team saves time.",
+        correctBucket: "left",
+        feedback: "Improving work practices is a clear sign of initiative and problem-solving."
+      },
+      {
+        id: "initiative-avoid",
+        text: "A worker avoids new tasks because they might make a mistake.",
+        correctBucket: "right",
+        feedback: "Avoiding responsibility limits learning and does not show initiative."
+      }
+    ]
+  },
+  "time-management": {
+    type: "sort",
+    title: "Deadline Dash",
+    subtitle: "Sort each move into strong planning or weak planning.",
+    leftLabel: "Strong planning",
+    rightLabel: "Weak planning",
+    cards: [
+      {
+        id: "time-plan",
+        text: "A student lists tasks, prioritises the urgent ones, and sets reminders.",
+        correctBucket: "left",
+        feedback: "This shows planning and prioritising, which is the heart of time management."
+      },
+      {
+        id: "time-easiest",
+        text: "A worker does the easiest task first and ignores the deadline order.",
+        correctBucket: "right",
+        feedback: "Doing easy tasks first can create bigger problems if urgent tasks are ignored."
+      },
+      {
+        id: "time-adjust",
+        text: "A worker checks progress and adjusts the plan when a delivery is delayed.",
+        correctBucket: "left",
+        feedback: "Good time management is flexible. Monitoring and adjusting helps meet deadlines."
+      },
+      {
+        id: "time-memory",
+        text: "A student keeps everything in their head and does not write deadlines down.",
+        correctBucket: "right",
+        feedback: "Relying only on memory makes it easier to miss tasks and deadlines."
+      }
+    ]
+  },
+  "personal-finance": {
+    type: "rescue",
+    title: "Scenario Rescue",
+    subtitle: "Choose the strongest next move when life events affect money and planning.",
+    scenarios: [
+      {
+        id: "finance-shifts",
+        title: "Reduced shifts",
+        prompt: "Your work hours are cut suddenly and your phone bill plus transport costs are due next week.",
+        options: [
+          "Review the budget, prioritise essentials, and cut non-essential spending straight away.",
+          "Keep spending normally and hope the next roster fixes the problem.",
+          "Ignore the bills until a family member notices."
+        ],
+        correct: "Review the budget, prioritise essentials, and cut non-essential spending straight away.",
+        feedback: "Strong response. The first move is to review income and expenses so the situation is clear."
+      },
+      {
+        id: "finance-support",
+        title: "Unexpected expense",
+        prompt: "Your car needs urgent repairs and you are unsure how to cover the cost without missing rent.",
+        options: [
+          "Seek reliable assistance early and look at payment options, support services, or temporary income.",
+          "Use random advice from social media and avoid asking for help.",
+          "Spend more on non-essential items to feel better before dealing with it."
+        ],
+        correct: "Seek reliable assistance early and look at payment options, support services, or temporary income.",
+        feedback: "Strong response. Seeking assistance helps avoid bigger mistakes and opens up practical support."
+      },
+      {
+        id: "finance-life-event",
+        title: "Life event disruption",
+        prompt: "A family change means you may need to move and adjust your work or study plans quickly.",
+        options: [
+          "Adapt goals, review finances, and change timelines or work arrangements to suit the new situation.",
+          "Pretend nothing has changed because changing plans looks like failure.",
+          "Stop planning completely because the future feels uncertain."
+        ],
+        correct: "Adapt goals, review finances, and change timelines or work arrangements to suit the new situation.",
+        feedback: "Strong response. Unexpected life events often require revised timelines, goals, and financial choices."
+      }
+    ]
+  },
+  "job-application": {
+    type: "rescue",
+    title: "Application Forge",
+    subtitle: "Choose the move that would make an application or interview response stronger.",
+    scenarios: [
+      {
+        id: "job-cover-letter",
+        title: "Cover letter purpose",
+        prompt: "You are applying for a retail role. What makes the cover letter strongest?",
+        options: [
+          "Mention the specific job advertisement, explain why you are applying, and highlight your suitability briefly.",
+          "Write a generic note that never names the role because it can be reused anywhere.",
+          "Repeat the resume word for word without linking it to the employer."
+        ],
+        correct: "Mention the specific job advertisement, explain why you are applying, and highlight your suitability briefly.",
+        feedback: "Strong response. A cover letter should target the specific role and make a positive first impression."
+      },
+      {
+        id: "job-star",
+        title: "Selection criteria",
+        prompt: "You need to respond to teamwork selection criteria in an interview. What should you do?",
+        options: [
+          "Use STAR so the employer can see the situation, task, action, and result clearly.",
+          "Give a vague answer because details might sound like bragging.",
+          "Talk only about what the team did and leave out your own action."
+        ],
+        correct: "Use STAR so the employer can see the situation, task, action, and result clearly.",
+        feedback: "Strong response. STAR helps structure evidence so the response is clear and relevant."
+      },
+      {
+        id: "job-interview",
+        title: "Interview communication",
+        prompt: "The interviewer asks a question you did not fully understand. What is the best move?",
+        options: [
+          "Ask politely for clarification so you can answer the actual question well.",
+          "Guess what they meant and answer quickly so you sound confident.",
+          "Stay silent and hope they move to the next question."
+        ],
+        correct: "Ask politely for clarification so you can answer the actual question well.",
+        feedback: "Strong response. Clarifying shows active listening and improves answer accuracy."
+      }
+    ]
+  },
+  communication: {
+    type: "sort",
+    title: "Communication Radar",
+    subtitle: "Sort the behaviours into effective communication or weak communication.",
+    leftLabel: "Effective communication",
+    rightLabel: "Weak communication",
+    cards: [
+      {
+        id: "comm-listen",
+        text: "A worker listens fully, nods, and asks, 'Do you mean these arranged by size?'",
+        correctBucket: "left",
+        feedback: "This shows active listening because the worker checks understanding before acting."
+      },
+      {
+        id: "comm-phone",
+        text: "A team member checks their phone while a customer explains the issue.",
+        correctBucket: "right",
+        feedback: "This weakens communication because it suggests poor listening and low respect."
+      },
+      {
+        id: "comm-tone",
+        text: "An applicant uses calm tone, eye contact, and clear language in an interview.",
+        correctBucket: "left",
+        feedback: "This combines verbal and non-verbal communication to build rapport and clarity."
+      },
+      {
+        id: "comm-slang",
+        text: "A worker uses slang and rushed explanations with a confused customer.",
+        correctBucket: "right",
+        feedback: "Messages should suit the audience. Unclear language creates misunderstandings."
+      }
+    ]
+  }
+};
 
 const STAGES = [
   { id: "content", title: "EST Content Check", state: "Knowledge reactor", summary: "Check the actual revision content before answering under pressure.", marks: 4, readiness: 18, credits: 1600, taxRate: 0.1 },
@@ -333,17 +521,113 @@ function renderOptionGroup(groupKey, title, options) {
   `;
 }
 
+function getContentTrainingConfig(groupId) {
+  return CONTENT_TRAINING_BAYS[groupId] || null;
+}
+
+function getTrainingScore(config) {
+  if (!config) return { correct: 0, total: 0, percent: 0 };
+  if (config.type === "sort") {
+    const total = config.cards.length;
+    const correct = config.cards.filter(card => state.answers[`training-${config.type}-${card.id}`] === card.correctBucket).length;
+    return { correct, total, percent: total ? Math.round((correct / total) * 100) : 0 };
+  }
+  if (config.type === "rescue") {
+    const total = config.scenarios.length;
+    const correct = config.scenarios.filter(scenario => state.answers[`training-${config.type}-${scenario.id}`] === scenario.correct).length;
+    return { correct, total, percent: total ? Math.round((correct / total) * 100) : 0 };
+  }
+  return { correct: 0, total: 0, percent: 0 };
+}
+
+function renderTrainingBay(group) {
+  const config = getContentTrainingConfig(group.id);
+  if (!config) return "";
+  const score = getTrainingScore(config);
+  if (config.type === "sort") {
+    return `
+      <div class="panel training-bay">
+        <div class="section-title">
+          <h2>${escapeHtml(config.title)}</h2>
+          <p>${score.correct}/${score.total} sorted</p>
+        </div>
+        <p class="small-copy">${escapeHtml(config.subtitle)}</p>
+        <div class="training-lanes">
+          <span class="training-lane-tag good">${escapeHtml(config.leftLabel)}</span>
+          <span class="training-lane-tag">${escapeHtml(config.rightLabel)}</span>
+        </div>
+        <div class="training-grid">
+          ${config.cards.map(card => {
+            const answer = state.answers[`training-sort-${card.id}`];
+            const isCorrect = answer && answer === card.correctBucket;
+            return `
+              <article class="training-card ${answer ? (isCorrect ? "good" : "bad") : ""}">
+                <strong>${escapeHtml(card.text)}</strong>
+                <div class="training-actions">
+                  <button type="button" class="choice-button ${answer === "left" ? "selected live-selected" : ""}" onclick="window.ESTPrep.setTrainingChoice('training-sort-${card.id}', 'left')">${escapeHtml(config.leftLabel)}</button>
+                  <button type="button" class="choice-button ${answer === "right" ? "selected live-selected" : ""}" onclick="window.ESTPrep.setTrainingChoice('training-sort-${card.id}', 'right')">${escapeHtml(config.rightLabel)}</button>
+                </div>
+                <p class="training-feedback">${answer ? `${isCorrect ? "Strong call." : "Try again mentally."} ${escapeHtml(card.feedback)}` : "Pick the lane that best matches the behaviour."}</p>
+              </article>
+            `;
+          }).join("")}
+        </div>
+      </div>
+    `;
+  }
+
+  if (config.type === "rescue") {
+    return `
+      <div class="panel training-bay">
+        <div class="section-title">
+          <h2>${escapeHtml(config.title)}</h2>
+          <p>${score.correct}/${score.total} rescue calls</p>
+        </div>
+        <p class="small-copy">${escapeHtml(config.subtitle)}</p>
+        <div class="training-grid">
+          ${config.scenarios.map(scenario => {
+            const answer = state.answers[`training-rescue-${scenario.id}`];
+            const isCorrect = answer && answer === scenario.correct;
+            return `
+              <article class="training-card ${answer ? (isCorrect ? "good" : "bad") : ""}">
+                <div class="kicker">${escapeHtml(scenario.title)}</div>
+                <p>${escapeHtml(scenario.prompt)}</p>
+                <div class="training-stack">
+                  ${scenario.options.map(option => `
+                    <button
+                      type="button"
+                      class="choice-button ${answer === option ? "selected live-selected" : ""}"
+                      onclick="window.ESTPrep.setTrainingChoiceEncoded('training-rescue-${scenario.id}', '${encodeURIComponent(option)}')"
+                    >
+                      <strong>${escapeHtml(option)}</strong>
+                    </button>
+                  `).join("")}
+                </div>
+                <p class="training-feedback">${answer ? `${isCorrect ? "Best move." : "Risky move."} ${escapeHtml(scenario.feedback)}` : "Choose the strongest next action."}</p>
+              </article>
+            `;
+          }).join("")}
+        </div>
+      </div>
+    `;
+  }
+
+  return "";
+}
+
 function renderContentStage() {
   const groups = state.stageDeck?.contentGroups || [];
   const currentGroup = groups[state.contentGroupIndex];
   if (!currentGroup) return;
+  const trainingConfig = getContentTrainingConfig(currentGroup.id);
+  const trainingScore = getTrainingScore(trainingConfig);
   setText("stage-title", "EST Content Check");
-  setText("stage-subtitle", "Use the assessed revision content, not just generic exam technique.");
+  setText("stage-subtitle", "Train the content first, then prove it under pressure.");
   renderStageRoot(`
     <div class="question-card">
       <div class="kicker">Revision Arena</div>
       <h3>Move through the five EST content strands and bank evidence for each one.</h3>
-      <p>Each strand is tracked separately so teachers can see where students spend time and how they explain each content area.</p>
+      <p>Each strand now runs as a training loop: briefing, practice bay, knowledge check, then a quick EST response for teacher-visible evidence.</p>
     </div>
     <div class="choice-grid" style="margin-bottom: 18px;">
       ${groups.map((group, index) => `
@@ -363,7 +647,9 @@ function renderContentStage() {
         <p>EST content strand ${state.contentGroupIndex + 1} of ${groups.length}</p>
       </div>
       <p class="small-copy">${escapeHtml(currentGroup.writePrompt)}</p>
+      ${trainingConfig ? `<div class="badge-row" style="margin-top:14px;"><span class="badge">Practice Bay: ${escapeHtml(trainingConfig.title)}</span><span class="badge">Training score: ${trainingScore.percent}%</span></div>` : ""}
     </div>
+    ${renderTrainingBay(currentGroup)}
     ${currentGroup.rounds.map((round, index) => `
       <div class="panel">
         <div class="section-title">
@@ -388,7 +674,7 @@ function renderContentStage() {
     `).join("")}
     <div class="written-stage">
       <strong>Quick EST response</strong>
-      <p class="small-copy">Write a short response so teachers can see how well you can explain this content area, not just select the right option.</p>
+      <p class="small-copy">Write a short response so teachers can see how well you can explain this content area, not just select the right option. Students can compare this with a model answer after submission.</p>
       <textarea id="content-note" placeholder="Write one or two EST-ready sentences for this content strand...">${escapeHtml(state.answers[`content-note-${currentGroup.id}`] || "")}</textarea>
     </div>
     <div class="written-stage">
@@ -587,6 +873,21 @@ function setChoice(groupKey, option) {
 
 function setChoiceEncoded(groupKey, encodedOption) {
   setChoice(groupKey, decodeURIComponent(encodedOption));
+}
+
+function setTrainingChoice(groupKey, option) {
+  state.answers[groupKey] = option;
+  renderContentStage();
+  state.recentReward = {
+    type: "positive",
+    title: "Practice move logged",
+    detail: "Training Bay choices sharpen your understanding before the marked EST response."
+  };
+  renderRewardPulse();
+}
+
+function setTrainingChoiceEncoded(groupKey, encodedOption) {
+  setTrainingChoice(groupKey, decodeURIComponent(encodedOption));
 }
 
 function setBossVote(optionId) {
@@ -876,6 +1177,7 @@ async function submitContent() {
   const correctCount = scoredRounds.filter(item => item.correct).length;
   const scoreRatio = scoredRounds.length ? correctCount / scoredRounds.length : 0;
   const topicSummaries = groups.map(group => {
+    const trainingConfig = getContentTrainingConfig(group.id);
     const results = group.rounds.map((round, index) => ({
       topic: round.topic,
       question: round.question,
@@ -890,6 +1192,24 @@ async function submitContent() {
       results,
       topicCorrect,
       topicScore,
+      training: trainingConfig
+        ? {
+            title: trainingConfig.title,
+            type: trainingConfig.type,
+            ...getTrainingScore(trainingConfig),
+            interactions: trainingConfig.type === "sort"
+              ? trainingConfig.cards.map(card => ({
+                  item: card.text,
+                  selected: state.answers[`training-sort-${card.id}`] || "",
+                  correct_bucket: card.correctBucket
+                }))
+              : trainingConfig.scenarios.map(scenario => ({
+                  item: scenario.prompt,
+                  selected: state.answers[`training-rescue-${scenario.id}`] || "",
+                  correct_answer: scenario.correct
+                }))
+          }
+        : null,
       response: state.answers[`content-note-${group.id}`] || "",
       durationSeconds: state.contentGroupDurations[group.id] || 0
     };
@@ -906,7 +1226,9 @@ async function submitContent() {
         topic_group: summary.group.title,
         duration_seconds: summary.durationSeconds,
         score_percent: summary.topicScore,
+        training_score_percent: summary.training?.percent ?? null,
         written_response: summary.response,
+        training: summary.training,
         items: summary.results.map(item => ({
           topic: item.topic,
           question: item.question,
@@ -925,14 +1247,18 @@ async function submitContent() {
       prompt: summary.group.title,
       promptText: summary.group.writePrompt,
       responseText: summary.response || "No written response entered.",
-      extraPayload: {
-        topic_group_id: summary.group.id,
-        topic_group: summary.group.title,
-        sample_response: summary.group.sampleResponse,
-        selected_options: summary.results.map(item => ({
-          topic: item.topic,
-          question: item.question,
-          selected: item.selected,
+        extraPayload: {
+          topic_group_id: summary.group.id,
+          topic_group: summary.group.title,
+          sample_response: summary.group.sampleResponse,
+          training_title: summary.training?.title || "",
+          training_type: summary.training?.type || "",
+          training_score_percent: summary.training?.percent ?? null,
+          training_interactions: summary.training?.interactions || [],
+          selected_options: summary.results.map(item => ({
+            topic: item.topic,
+            question: item.question,
+            selected: item.selected,
           correct_answer: item.correctAnswer,
           correct: item.correct
         }))
@@ -948,11 +1274,11 @@ async function submitContent() {
           <article class="sample-card ${summary.topicScore >= 80 ? "strong" : summary.topicScore >= 50 ? "developing" : "needs-work"}">
             <div class="sample-meta">
               <strong>${escapeHtml(summary.group.title)}</strong>
-              <span>${summary.topicScore}% • ${formatDurationSeconds(summary.durationSeconds)}</span>
+              <span>${summary.topicScore}% • ${formatDurationSeconds(summary.durationSeconds)}${summary.training ? ` • Practice ${summary.training.percent}%` : ""}</span>
             </div>
             <p><strong>Your response:</strong> ${escapeHtml(summary.response || "No written response entered.")}</p>
             <p><strong>Sample response:</strong> ${escapeHtml(summary.group.sampleResponse)}</p>
-            <p class="sample-commentary">${escapeHtml(`${summary.topicCorrect}/${summary.results.length} knowledge checks correct in this content strand.`)}</p>
+            <p class="sample-commentary">${escapeHtml(`${summary.topicCorrect}/${summary.results.length} knowledge checks correct in this content strand.${summary.training ? ` Practice Bay: ${summary.training.correct}/${summary.training.total}.` : ""}`)}</p>
           </article>
         `).join("")}
       </div>
@@ -1073,6 +1399,8 @@ window.ESTPrep = {
   nextContentGroup: () => moveContentGroup(1),
   prevContentGroup: () => moveContentGroup(-1),
   jumpToContentGroup,
+  setTrainingChoice,
+  setTrainingChoiceEncoded,
   setChoice,
   setChoiceEncoded,
   setBossVote,
