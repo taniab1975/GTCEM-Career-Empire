@@ -577,9 +577,7 @@
     }
     .platform-landing-grid {
       display: grid;
-      grid-template-columns: minmax(320px, 0.86fr) minmax(0, 1.14fr);
-      gap: 20px;
-      align-items: stretch;
+      gap: 22px;
     }
     .platform-copy-panel,
     .platform-video-panel {
@@ -590,25 +588,24 @@
       box-shadow: 0 22px 54px rgba(2, 8, 23, 0.3);
     }
     .platform-copy-panel {
-      display: flex;
-      flex-direction: column;
-      justify-content: space-between;
-      text-align: left;
+      text-align: center;
+      padding-bottom: 20px;
     }
     .platform-copy-panel .platform-kicker {
-      margin-bottom: 16px;
+      margin-bottom: 14px;
     }
     .platform-copy-title {
       margin: 0;
-      font-size: clamp(2.3rem, 4vw, 4.25rem);
+      font-size: clamp(2rem, 3vw, 3.25rem);
       font-weight: 800;
-      line-height: 0.96;
+      line-height: 1.02;
       letter-spacing: -0.03em;
       color: #fff;
+      max-width: none;
     }
     .platform-copy-subtitle {
       margin: 18px 0 0 0;
-      font-size: clamp(1.2rem, 2vw, 1.75rem);
+      font-size: clamp(1.1rem, 1.8vw, 1.55rem);
       font-weight: 700;
       color: #dbeafe;
     }
@@ -622,28 +619,25 @@
     }
     .platform-link-stack {
       display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
       gap: 12px;
-      margin-top: 28px;
+      margin-top: 22px;
     }
     .platform-link-stack .platform-entry-btn,
     .platform-link-stack .platform-ghost,
     .platform-link-stack .platform-video-open {
       width: 100%;
       justify-content: center;
+      min-width: 0;
     }
     .platform-link-caption {
-      margin: 2px 0 0 0;
+      margin: 12px 0 0 0;
       color: #94a3b8;
       font-size: 0.92rem;
       line-height: 1.45;
     }
     .platform-mini-note {
-      margin-top: 18px;
-      padding-top: 16px;
-      border-top: 1px solid rgba(148, 163, 184, 0.12);
-      color: #cbd5e1;
-      font-size: 0.94rem;
-      line-height: 1.5;
+      display: none;
     }
     .platform-video-panel {
       display: flex;
@@ -671,8 +665,8 @@
     }
     .platform-embed-frame {
       flex: 1;
-      min-height: 520px;
-      padding: 10px;
+      min-height: 680px;
+      padding: 8px;
       border-radius: 22px;
       border: 1px solid rgba(148, 163, 184, 0.18);
       background: rgba(2, 6, 23, 0.78);
@@ -681,7 +675,7 @@
     .platform-embed-frame video {
       width: 100%;
       height: 100%;
-      min-height: 500px;
+      min-height: 660px;
       border-radius: 16px;
       background: #000;
       border: 1px solid rgba(148, 163, 184, 0.16);
@@ -887,7 +881,7 @@
     body { box-sizing: border-box; }
 
     @media (max-width: 900px) {
-      .platform-home-grid, .platform-portal-grid, .platform-showcase, .platform-media-grid, .platform-role-grid, .platform-landing-grid { grid-template-columns: 1fr; }
+      .platform-home-grid, .platform-portal-grid, .platform-showcase, .platform-media-grid, .platform-role-grid, .platform-landing-grid, .platform-link-stack { grid-template-columns: 1fr; }
       .megatrends-hud {
         padding: 12px 14px 16px;
       }
@@ -940,7 +934,6 @@
                     <a class="platform-ghost platform-entry-btn" href="./modules/year10-megatrends/index.html">Year 10 Quick Link</a>
                   </div>
                   <p class="platform-link-caption">Start with the promo, then jump straight into the right entry point.</p>
-                  <p class="platform-mini-note">Prefer a bigger view? Open the dedicated promo page for a large-screen version with fullscreen support.</p>
                 </div>
               </div>
 
@@ -956,7 +949,7 @@
                 </div>
                 <div class="platform-embed-frame">
                   <video controls playsinline preload="metadata">
-                    <source src="./Assets/videos/Career%20Empire%20Promo%20Final.mp4" type="video/mp4">
+                    <source src="./Assets/videos/Career%20Empire%20Final.mp4" type="video/mp4">
                     Your browser does not support the video tag.
                   </video>
                 </div>
