@@ -266,6 +266,8 @@ const state = {
   glossaryBoard: [],
   glossarySelection: [],
   matchedGlossaryCards: [],
+  matchedGlossaryTerms: [],
+  glossaryTarget: null,
   glossaryStreak: 0,
   glossaryBestStreak: 0,
   glossaryMisses: 0,
@@ -370,7 +372,7 @@ async function loadBank() {
 function buildStageDeck(bank) {
   const glossaryTerms = bank.glossaryTerms || [];
   const contentGroups = buildContentGroups(bank);
-  const glossaryRounds = pickRandom(glossaryTerms, Math.min(4, glossaryTerms.length)).map(term => {
+  const glossaryRounds = pickRandom(glossaryTerms, Math.min(5, glossaryTerms.length)).map(term => {
     const distractors = pickRandom(glossaryTerms.filter(item => item.term !== term.term), 3);
     return {
       term,
@@ -676,25 +678,78 @@ function renderBossResponseBuilder(round) {
   `;
 }
 
+function getGlossaryKeywordHint(termName, definition) {
+  const hintMap = {
+    "Initiative": "proactive action",
+    "Proactive": "act early",
+    "Time management": "plan + prioritise",
+    "Budget": "income vs expenses",
+    "Seeking assistance": "trusted advice",
+    "Labour market information": "jobs + wages",
+    "Growth industry": "high growth",
+    "Emerging industry": "new industry",
+    "Green industry": "sustainable work",
+    "Cover letter": "first impression",
+    "Selection criteria": "job requirements",
+    "STAR": "situation task action result",
+    "Megatrend": "long-term change",
+    "Demographic shift": "population change",
+    "Economic power shift": "global market shift",
+    "Impactful technologies": "innovation + disruption",
+    "Career planning": "goals + pathways",
+    "Communication skills": "message for audience",
+    "Non-verbal communication": "body language",
+    "Active listening": "check understanding",
+    "Unexpected life event": "unplanned disruption"
+  };
+  if (hintMap[termName]) return hintMap[termName];
+  const words = String(definition || "").replace(/[^\w\s]/g, "").split(/\s+/).filter(Boolean);
+  return words.slice(0, 3).join(" ");
+}
+
+function getGlossaryScenarioHint(scenario) {
+  const text = String(scenario || "").trim();
+  if (text.length <= 72) return text;
+  return `${text.slice(0, 72).trim()}...`;
+}
+
 function buildGlossaryBoard(rounds) {
   return shuffle(rounds.flatMap((round, index) => ([
     {
-      id: `glossary-${index}-term`,
+      id: `glossary-${index}-keyword`,
       matchId: index,
-      kind: "Term",
-      text: round.term.term
+      kind: "Keyword",
+      text: getGlossaryKeywordHint(round.term.term, round.term.definition),
+      style: {
+        x: `${8 + ((index * 17) % 62)}%`,
+        y: `${8 + ((index * 13) % 52)}%`,
+        delay: `${(index % 5) * 0.4}s`,
+        duration: `${5 + (index % 4)}s`
+      }
     },
     {
       id: `glossary-${index}-scenario`,
       matchId: index,
       kind: "Scenario",
-      text: round.term.scenario
+      text: getGlossaryScenarioHint(round.term.scenario),
+      style: {
+        x: `${16 + ((index * 19) % 58)}%`,
+        y: `${18 + ((index * 11) % 48)}%`,
+        delay: `${((index + 2) % 5) * 0.35}s`,
+        duration: `${6 + (index % 3)}s`
+      }
     },
     {
       id: `glossary-${index}-definition`,
       matchId: index,
       kind: "Definition",
-      text: round.term.definition
+      text: round.term.definition,
+      style: {
+        x: `${12 + ((index * 23) % 60)}%`,
+        y: `${12 + ((index * 7) % 54)}%`,
+        delay: `${((index + 1) % 5) * 0.45}s`,
+        duration: `${7 + (index % 4)}s`
+      }
     }
   ])));
 }
@@ -704,14 +759,29 @@ function initialiseGlossaryBoard() {
   state.glossaryBoard = buildGlossaryBoard(rounds);
   state.glossarySelection = [];
   state.matchedGlossaryCards = [];
+  state.matchedGlossaryTerms = [];
+  state.glossaryTarget = rounds.length ? 0 : null;
   state.glossaryStreak = 0;
   state.glossaryBestStreak = 0;
   state.glossaryMisses = 0;
-  state.glossaryPulse = "Clear sets by matching the term, scenario, and definition.";
+  state.glossaryPulse = "Pick a term dock, then catch its matching keyword, scenario, and definition chips.";
+}
+
+function selectGlossaryDock(matchId) {
+  if (state.matchedGlossaryTerms.includes(matchId)) return;
+  state.glossaryTarget = matchId;
+  state.glossarySelection = [];
+  state.glossaryPulse = "Now catch the 3 clue chips that belong to this term.";
+  renderGlossaryStage();
 }
 
 function clickGlossaryCard(cardId) {
   if (state.matchedGlossaryCards.includes(cardId)) return;
+  if (state.glossaryTarget === null || state.glossaryTarget === undefined) {
+    state.glossaryPulse = "Choose a term dock first so you know which clues you are collecting.";
+    renderGlossaryStage();
+    return;
+  }
   if (state.glossarySelection.includes(cardId)) {
     state.glossarySelection = state.glossarySelection.filter(id => id !== cardId);
     renderGlossaryStage();
@@ -721,25 +791,29 @@ function clickGlossaryCard(cardId) {
   state.glossarySelection = [...state.glossarySelection, cardId];
   if (state.glossarySelection.length === 3) {
     const selectedCards = state.glossaryBoard.filter(card => state.glossarySelection.includes(card.id));
-    const sameMatch = new Set(selectedCards.map(card => card.matchId)).size === 1;
+    const sameMatch = new Set(selectedCards.map(card => card.matchId)).size === 1 && selectedCards[0]?.matchId === state.glossaryTarget;
     const uniqueKinds = new Set(selectedCards.map(card => card.kind)).size === 3;
     if (sameMatch && uniqueKinds) {
       state.matchedGlossaryCards = [...state.matchedGlossaryCards, ...state.glossarySelection];
+      state.matchedGlossaryTerms = [...state.matchedGlossaryTerms, state.glossaryTarget];
       state.glossaryStreak += 1;
       state.glossaryBestStreak = Math.max(state.glossaryBestStreak, state.glossaryStreak);
-      const clearedTerm = selectedCards.find(card => card.kind === "Term")?.text || "Glossary set";
+      const clearedTerm = (state.stageDeck?.glossaryRounds || [])[state.glossaryTarget]?.term?.term || "Glossary set";
       state.glossaryPulse = `${clearedTerm} cleared. Keep the streak alive.`;
       state.recentReward = {
         type: "positive",
         title: "Glossary set cleared",
         detail: `${clearedTerm} matched correctly. Precision language is building exam readiness.`
       };
+      const rounds = state.stageDeck?.glossaryRounds || [];
+      const nextTarget = rounds.findIndex((_, index) => !state.matchedGlossaryTerms.includes(index) && index !== state.glossaryTarget);
+      state.glossaryTarget = nextTarget >= 0 ? nextTarget : null;
       state.glossarySelection = [];
       renderRewardPulse();
     } else {
       state.glossaryMisses += 1;
       state.glossaryStreak = 0;
-      state.glossaryPulse = "Not quite. Look for one term, one scenario, and one definition that belong together.";
+      state.glossaryPulse = "Not quite. Stay on the selected term and look for its keyword, scenario, and definition.";
       state.recentReward = {
         type: "warning",
         title: "Mismatch",
@@ -827,18 +901,18 @@ function renderContentStage() {
 
 function renderGlossaryStage() {
   const rounds = state.stageDeck?.glossaryRounds || [];
-  const clearedSets = Math.floor(state.matchedGlossaryCards.length / 3);
+  const clearedSets = state.matchedGlossaryTerms.length;
   setText("stage-title", "Glossary Check");
   setText("stage-subtitle", "Clear matching sets to lock the language into memory.");
   renderStageRoot(`
     <div class="question-card">
       <div class="kicker">Term Vault</div>
-      <h3>Clear the board by matching the right term, scenario, and definition.</h3>
+      <h3>Pick a term dock, then catch the right clue chips to clear it.</h3>
       <p>Each cleared set banks a tiny win. Keep your streak alive and learn the exact EST terminology through repetition.</p>
     </div>
     <div class="panel">
       <div class="section-title">
-        <h2>Glossary Match Grid</h2>
+        <h2>Glossary Rush</h2>
         <p>${clearedSets}/${rounds.length} sets cleared</p>
       </div>
       <div class="badge-row" style="margin-bottom:14px;">
@@ -847,15 +921,34 @@ function renderGlossaryStage() {
         <span class="badge">Misses: ${state.glossaryMisses}</span>
       </div>
       <p class="small-copy">${escapeHtml(state.glossaryPulse || "Pick three tiles that belong together.")}</p>
-      <div class="glossary-board">
-        ${state.glossaryBoard.map(card => {
-          const selected = state.glossarySelection.includes(card.id);
-          const matched = state.matchedGlossaryCards.includes(card.id);
+      <div class="glossary-docks">
+        ${rounds.map((round, index) => {
+          const active = state.glossaryTarget === index;
+          const matched = state.matchedGlossaryTerms.includes(index);
           return `
             <button
               type="button"
-              class="choice-button glossary-tile ${selected ? "selected live-selected" : ""} ${matched ? "matched" : ""}"
+              class="choice-button glossary-dock ${active ? "selected live-selected" : ""} ${matched ? "matched" : ""}"
               ${matched ? "disabled" : ""}
+              onclick="window.ESTPrep.selectGlossaryDock(${index})"
+            >
+              <span class="kicker">${matched ? "Cleared" : active ? "Live dock" : "Dock"}</span>
+              <strong>${escapeHtml(round.term.term)}</strong>
+            </button>
+          `;
+        }).join("")}
+      </div>
+      <div class="glossary-arena">
+        ${state.glossaryBoard.map(card => {
+          const selected = state.glossarySelection.includes(card.id);
+          const matched = state.matchedGlossaryCards.includes(card.id);
+          const style = card.style || {};
+          return `
+            <button
+              type="button"
+              class="choice-button glossary-chip ${selected ? "selected live-selected" : ""} ${matched ? "matched" : ""}"
+              ${matched ? "disabled" : ""}
+              style="--chip-x:${style.x || "10%"}; --chip-y:${style.y || "10%"}; --chip-delay:${style.delay || "0s"}; --chip-duration:${style.duration || "6s"};"
               onclick="window.ESTPrep.clickGlossaryCard('${card.id}')"
             >
               <span class="kicker">${escapeHtml(card.kind)}</span>
@@ -867,7 +960,7 @@ function renderGlossaryStage() {
     </div>
     <div class="written-stage">
       <strong>Precision beats waffle</strong>
-      <p class="small-copy">This is a real clear-the-board loop: students repeatedly link term, scenario, and definition until the board is empty and the language feels automatic.</p>
+      <p class="small-copy">This is a real catch-and-clear loop: choose the term, match its floating clue chips, and keep the combo alive until the glossary run is finished.</p>
       <button class="submit-button" type="button" onclick="window.ESTPrep.submitGlossary()">Bank Glossary Results</button>
     </div>
   `);
@@ -1650,6 +1743,7 @@ window.ESTPrep = {
   jumpToContentGroup,
   setTrainingChoice,
   setTrainingChoiceEncoded,
+  selectGlossaryDock,
   clickGlossaryCard,
   toggleReveal,
   setBossScaffold,

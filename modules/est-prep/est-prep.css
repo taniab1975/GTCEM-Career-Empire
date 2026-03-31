@@ -574,21 +574,58 @@ h1 {
     radial-gradient(circle at top left, rgba(255, 216, 108, 0.08), transparent 35%);
 }
 
-.glossary-board {
+.glossary-docks {
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-template-columns: repeat(5, minmax(0, 1fr));
   gap: 14px;
   margin-top: 16px;
 }
 
-.glossary-tile {
-  min-height: 150px;
+.glossary-dock {
+  min-height: 110px;
 }
 
-.glossary-tile.matched {
+.glossary-dock.matched {
   border-color: rgba(114, 247, 184, 0.56);
   background: rgba(17, 62, 52, 0.6);
   opacity: 0.88;
+}
+
+.glossary-arena {
+  position: relative;
+  min-height: 420px;
+  margin-top: 18px;
+  border-radius: 24px;
+  border: 1px solid rgba(129, 166, 255, 0.2);
+  background:
+    radial-gradient(circle at top left, rgba(97, 240, 255, 0.08), transparent 28%),
+    linear-gradient(180deg, rgba(8, 16, 39, 0.9), rgba(16, 23, 52, 0.92));
+  overflow: hidden;
+}
+
+.glossary-chip {
+  position: absolute;
+  left: var(--chip-x);
+  top: var(--chip-y);
+  width: min(240px, 28%);
+  min-height: 120px;
+  animation: glossaryFloat var(--chip-duration) ease-in-out infinite alternate;
+  animation-delay: var(--chip-delay);
+}
+
+.glossary-chip.matched {
+  border-color: rgba(114, 247, 184, 0.56);
+  background: rgba(17, 62, 52, 0.6);
+  opacity: 0.3;
+}
+
+@keyframes glossaryFloat {
+  from {
+    transform: translateY(0px) translateX(0px);
+  }
+  to {
+    transform: translateY(-10px) translateX(8px);
+  }
 }
 
 .forensics-grid,
@@ -751,7 +788,7 @@ h1 {
   .chapter-grid,
   .mcq-grid,
   .choice-grid,
-  .glossary-board,
+  .glossary-docks,
   .prompt-grid,
   .forensics-grid,
   .builder-grid,
@@ -775,7 +812,7 @@ h1 {
   .chapter-grid,
   .mcq-grid,
   .choice-grid,
-  .glossary-board,
+  .glossary-docks,
   .prompt-grid,
   .forensics-grid,
   .builder-grid,
@@ -789,5 +826,17 @@ h1 {
   .panel,
   .metric {
     padding: 18px;
+  }
+
+  .glossary-chip {
+    position: static;
+    width: 100%;
+    animation: none;
+  }
+
+  .glossary-arena {
+    display: grid;
+    gap: 14px;
+    min-height: 0;
   }
 }
