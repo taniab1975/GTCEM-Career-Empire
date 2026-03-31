@@ -28,8 +28,8 @@
       min-height: 100vh;
       display: flex;
       flex-direction: column;
-      gap: 20px;
-      padding: 24px;
+      gap: 14px;
+      padding: 14px;
     }
     .promo-header {
       display: flex;
@@ -40,16 +40,24 @@
     }
     .promo-header h1 {
       margin: 0;
-      font-size: clamp(2rem, 3vw, 3rem);
+      font-size: clamp(1.5rem, 2.2vw, 2.4rem);
       line-height: 1.05;
     }
     .promo-header p {
-      margin: 8px 0 0 0;
+      margin: 6px 0 0 0;
       color: #cbd5e1;
-      max-width: 760px;
-      line-height: 1.6;
+      max-width: 860px;
+      line-height: 1.5;
+      font-size: 0.98rem;
     }
-    .promo-close {
+    .promo-actions {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+    .promo-close,
+    .promo-fullscreen {
       display: inline-flex;
       align-items: center;
       justify-content: center;
@@ -60,32 +68,45 @@
       color: #fff;
       text-decoration: none;
       font-weight: 700;
+      cursor: pointer;
+      font-family: inherit;
+      font-size: 0.95rem;
+    }
+    .promo-fullscreen {
+      background: linear-gradient(135deg, #60a5fa, #2563eb);
+      border: none;
+      box-shadow: 0 16px 36px rgba(37, 99, 235, 0.28);
     }
     .promo-video-frame {
       flex: 1;
       display: flex;
       align-items: center;
       justify-content: center;
-      padding: 18px;
-      border-radius: 28px;
+      padding: 10px;
+      border-radius: 24px;
       border: 1px solid rgba(125, 211, 252, 0.2);
       background: rgba(15, 23, 42, 0.74);
       box-shadow: 0 30px 80px rgba(2, 6, 23, 0.45);
     }
     .promo-video-frame video {
       width: 100%;
-      max-width: 1280px;
-      max-height: 78vh;
-      border-radius: 18px;
+      max-width: none;
+      height: calc(100vh - 140px);
+      max-height: calc(100vh - 140px);
+      border-radius: 16px;
       background: #000;
       border: 1px solid rgba(148, 163, 184, 0.2);
     }
     @media (max-width: 720px) {
       .promo-shell {
-        padding: 16px;
+        padding: 10px;
       }
       .promo-video-frame {
-        padding: 12px;
+        padding: 8px;
+      }
+      .promo-video-frame video {
+        height: calc(100vh - 170px);
+        max-height: calc(100vh - 170px);
       }
     }
   </style>
@@ -97,14 +118,36 @@
         <h1>What is Career Empire?</h1>
         <p>Watch the full promo walkthrough to see how students learn, earn, compete, contribute to their class community, and build their career journey through the curriculum.</p>
       </div>
-      <a class="promo-close" href="./index.html">Back to Homepage</a>
+      <div class="promo-actions">
+        <button type="button" class="promo-fullscreen" id="promo-fullscreen-btn">Full Screen</button>
+        <a class="promo-close" href="./index.html">Back to Homepage</a>
+      </div>
     </header>
     <section class="promo-video-frame">
-      <video controls playsinline preload="metadata" autoplay>
+      <video controls playsinline preload="metadata" autoplay id="promo-video">
         <source src="./Assets/videos/90%20sec%20video.mp4" type="video/mp4">
         Your browser does not support the video tag.
       </video>
     </section>
   </main>
+  <script>
+    (function () {
+      const video = document.getElementById("promo-video");
+      const fullscreenButton = document.getElementById("promo-fullscreen-btn");
+      if (!video || !fullscreenButton) return;
+
+      fullscreenButton.addEventListener("click", async () => {
+        try {
+          if (video.requestFullscreen) {
+            await video.requestFullscreen();
+          } else if (video.webkitEnterFullscreen) {
+            video.webkitEnterFullscreen();
+          }
+        } catch (_) {
+          // Ignore browser fullscreen failures and leave the large inline player visible.
+        }
+      });
+    }());
+  </script>
 </body>
 </html>

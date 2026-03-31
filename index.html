@@ -268,7 +268,7 @@
       radial-gradient(circle at top left, rgba(59, 130, 246, 0.18), transparent 28%),
       radial-gradient(circle at bottom right, rgba(34, 197, 94, 0.12), transparent 24%),
       linear-gradient(145deg, #020817, #0f172a 45%, #13233f 100%); }
-    .platform-home-grid { display: grid; grid-template-columns: 1.15fr 0.85fr; gap: 24px; }
+    .platform-home-grid { max-width: 980px; margin: 0 auto; }
     .platform-pill-row { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 16px; }
     .platform-pill { padding: 8px 12px; border-radius: 999px; border: 1px solid rgba(255,255,255,0.12); background: rgba(255,255,255,0.05); font-size: 12px; color: #cbd5e1; }
     .platform-action-row { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 18px; }
@@ -575,6 +575,59 @@
       justify-content: center;
       text-decoration: none;
     }
+    .platform-minimal-actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+      justify-content: center;
+      margin-top: 24px;
+    }
+    .platform-role-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 16px;
+      margin-top: 22px;
+    }
+    .platform-role-card {
+      padding: 22px;
+      border-radius: 22px;
+      border: 1px solid rgba(255,255,255,0.1);
+      background: rgba(15, 23, 42, 0.62);
+      text-align: left;
+      box-shadow: 0 18px 40px rgba(2, 8, 23, 0.24);
+    }
+    .platform-role-card h2 {
+      margin: 0 0 8px 0;
+      font-size: 1.35rem;
+      font-weight: 800;
+    }
+    .platform-role-card p {
+      margin: 0;
+      color: #cbd5e1;
+      line-height: 1.55;
+    }
+    .platform-role-card .platform-action-row {
+      margin-top: 16px;
+    }
+    .platform-quick-link {
+      margin-top: 18px;
+      padding: 20px 22px;
+      border-radius: 22px;
+      border: 1px solid rgba(52, 211, 153, 0.2);
+      background: linear-gradient(180deg, rgba(8, 20, 36, 0.82), rgba(15, 23, 42, 0.68));
+      text-align: left;
+    }
+    .platform-quick-link p {
+      margin: 0;
+      color: #cbd5e1;
+      line-height: 1.55;
+    }
+    .platform-quick-link-title {
+      margin: 0 0 8px 0;
+      color: #fff;
+      font-size: 1.15rem;
+      font-weight: 800;
+    }
     .platform-preview-stack {
       display: grid;
       gap: 16px;
@@ -718,7 +771,7 @@
     body { box-sizing: border-box; }
 
     @media (max-width: 900px) {
-      .platform-home-grid, .platform-portal-grid, .platform-showcase, .platform-media-grid { grid-template-columns: 1fr; }
+      .platform-home-grid, .platform-portal-grid, .platform-showcase, .platform-media-grid, .platform-role-grid { grid-template-columns: 1fr; }
       .megatrends-hud {
         padding: 12px 14px 16px;
       }
@@ -751,145 +804,57 @@
 <body class="h-full text-white">
   <div id="platform-home" class="platform-home-shell">
     <div class="px-4 sm:px-8 py-8 sm:py-12">
-      <div class="max-w-6xl mx-auto platform-home-grid">
-        <div class="space-y-6">
-          <div class="platform-hero-card">
+      <div class="platform-home-grid">
+        <div class="space-y-5">
+          <div class="platform-hero-card text-center">
             <span class="platform-kicker">Career Empire</span>
-            <h1 class="text-4xl sm:text-6xl font-bold mt-4 mb-4">A new way to learn the Year 12 Careers and Employability curriculum.</h1>
-            <p class="platform-subtitle">An interactive game where you get to be the master of your own destiny, enjoy the consequences of your choices, play some fun games for a brain break, and learn stuff too.</p>
-            <p class="platform-power-line">Play. Earn. Upgrade. Compete.</p>
-            <div class="platform-pill-row">
-              <span class="platform-pill">Build your career journey</span>
-              <span class="platform-pill">Earn, spend, and upgrade</span>
-              <span class="platform-pill">Compete with your class</span>
-              <span class="platform-pill">Track real learning</span>
-            </div>
-            <div class="platform-showcase">
-              <div class="platform-showcase-card">
-                <strong>Career + money</strong>
-                <p>Make choices, earn salary, and decide what kind of life you want to build.</p>
-              </div>
-              <div class="platform-showcase-card">
-                <strong>Shop + upgrades</strong>
-                <p>Buy tools, transport, and lifestyle upgrades that carry across the game.</p>
-              </div>
-              <div class="platform-showcase-card">
-                <strong>Class + competition</strong>
-                <p>Contribute to class progress, leaderboards, and wider school competition.</p>
-              </div>
-            </div>
+            <h1 class="text-4xl sm:text-6xl font-bold mt-4 mb-4">Play the curriculum.</h1>
+            <p class="platform-subtitle mx-auto">A visual, game-based way to experience Year 12 Careers and Employability.</p>
+            <p class="platform-power-line">Watch. Play. Learn.</p>
 
             <div class="platform-media-stage">
               <div class="platform-media-grid">
                 <div class="platform-media-player">
                   <span class="platform-media-label">What is Career Empire?</span>
-                  <h3>See the platform in action</h3>
-                  <p>Watch the promo walkthrough to see how students play, earn, compete, contribute to community goals, and build their career journey through the curriculum.</p>
+                  <h3>See it first</h3>
+                  <p>Start with the 90-second promo for the clearest view of the experience.</p>
                   <div class="platform-video-launch">
                     <div>
-                      <h4>Open the full Career Empire promo experience</h4>
-                      <p>Launch the video in a larger pop-out player so dashboard screens, gameplay moments, and promo snapshots are big enough to read clearly.</p>
+                      <h4>Open the full promo</h4>
+                      <p>Watch the platform in a dedicated large-screen view.</p>
                     </div>
-                    <a class="platform-video-open" href="./promo-video.html" target="_blank" rel="noopener noreferrer">Play Promo Video</a>
+                    <div class="platform-minimal-actions">
+                      <a class="platform-video-open" href="./promo-video.html" target="_blank" rel="noopener noreferrer">Play Promo Video</a>
+                    </div>
                   </div>
                 </div>
               </div>
             </div>
-          </div>
 
-          <div class="platform-portal-grid">
-            <div class="platform-portal student">
-              <h2>I’m a Student</h2>
-              <p>Ever played Monopoly, The Sims, BitLife, or Game of Life? Career Empire is a little like that, making learning fun, interactive, and rewarding. You will still need to work to make gains.</p>
-              <ul>
-                <li>Build your own career journey</li>
-                <li>Earn salary and improve your life setup</li>
-                <li>Buy upgrades and shape your future</li>
-                <li>Level up employability skills while you play</li>
-              </ul>
-              <div class="platform-action-row">
-                <a class="btn-primary text-white font-bold py-3 px-6 rounded-lg platform-entry-btn" href="./auth/student-login.html">I’m a Student</a>
+            <div class="platform-role-grid">
+              <div class="platform-role-card">
+                <h2>Student Entry</h2>
+                <p>Log in and start building your career journey through the game.</p>
+                <div class="platform-action-row">
+                  <a class="btn-primary text-white font-bold py-3 px-6 rounded-lg platform-entry-btn" href="./auth/student-login.html">Student Login</a>
+                </div>
+              </div>
+              <div class="platform-role-card">
+                <h2>Teacher Entry</h2>
+                <p>Create classes, manage student access, and track learning activity.</p>
+                <div class="platform-action-row">
+                  <a class="btn-primary text-white font-bold py-3 px-6 rounded-lg platform-entry-btn" href="./auth/teacher-login.html">Teacher Login</a>
+                  <a class="platform-ghost platform-entry-btn" href="./auth/teacher-signup.html">Register</a>
+                </div>
               </div>
             </div>
 
-            <div class="platform-portal teacher">
-              <h2>I’m a Teacher</h2>
-              <p>Career Empire is a curriculum-aligned game platform for Year 12 Careers and Employability. Students build a life and career over time while you track real learning, evidence, and growth.</p>
-              <ul>
-                <li>Create classes and issue student logins</li>
-                <li>Track progress, evidence, and engagement</li>
-                <li>Monitor employability skills across modules</li>
-                <li>Use student feedback to improve the experience</li>
-              </ul>
-              <div class="platform-action-row">
-                <a class="btn-primary text-white font-bold py-3 px-6 rounded-lg platform-entry-btn" href="./auth/teacher-login.html">I’m a Teacher</a>
-                <a class="platform-ghost platform-entry-btn" href="./auth/teacher-signup.html">Register</a>
-              </div>
-            </div>
-          </div>
-
-          <div class="card-glow p-6 rounded-xl border-l-4 border-emerald-400">
-            <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-              <div>
-                <p class="text-sm font-semibold uppercase tracking-wide text-emerald-300 mb-2">Year 10 Quick Link</p>
-                <h2 class="text-2xl font-bold text-white mb-2">No-login Megatrends Explorer</h2>
-                <p class="text-slate-200 max-w-3xl">Open a simplified Year 10 version with easier language, local-only stats, arcade challenges, a downloadable PDF summary, and a new “Will my job be automated?” activity.</p>
-              </div>
-              <div class="platform-action-row">
+            <div class="platform-quick-link">
+              <p class="text-sm font-semibold uppercase tracking-wide text-emerald-300 mb-2">Year 10 Quick Link</p>
+              <p class="platform-quick-link-title">No-login Megatrends Explorer</p>
+              <p>Open the simplified Year 10 version with easier language and quick-play activities.</p>
+              <div class="platform-action-row justify-center sm:justify-start">
                 <a class="btn-primary text-white font-bold py-3 px-6 rounded-lg platform-entry-btn" href="./modules/year10-megatrends/index.html">Open Year 10 Game</a>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <div>
-          <div class="platform-preview-stack">
-            <div class="platform-floating-wrap">
-              <div class="platform-floating-card one">
-                <div class="platform-floating-icon">💸</div>
-                <strong>Earn salary</strong>
-                <p>Smart decisions grow your income, options, and future lifestyle.</p>
-              </div>
-              <div class="platform-floating-card two">
-                <div class="platform-floating-icon">🛍️</div>
-                <strong>Buy upgrades</strong>
-                <p>Build your setup with tools, transport, study boosts, and home upgrades.</p>
-              </div>
-              <div class="platform-floating-card three">
-                <div class="platform-floating-icon">🌍</div>
-                <strong>Compete together</strong>
-                <p>Push your class forward and see how your school stacks up globally.</p>
-              </div>
-            </div>
-
-            <div class="platform-preview-card">
-              <p class="platform-status font-semibold mb-3">Inside the game</p>
-              <h3 class="text-2xl font-bold text-white">What students can build</h3>
-              <p class="text-slate-300 mt-2">This is not just a quiz with points. Students build a life, make trade-offs, collect assets, and see the results of their choices.</p>
-              <div class="platform-preview-mock">
-                <div class="platform-mock-row">
-                  <span>💻 Laptop Upgrade</span>
-                  <span class="platform-mock-pill">Bought in shop</span>
-                </div>
-                <div class="platform-mock-row">
-                  <span>🏠 Rental Upgrade</span>
-                  <span class="platform-mock-pill">Unlock stability</span>
-                </div>
-                <div class="platform-mock-row">
-                  <span>🏆 Class leaderboard</span>
-                  <span class="platform-mock-pill">Compete + contribute</span>
-                </div>
-              </div>
-            </div>
-
-            <div class="platform-preview-card">
-              <p class="platform-status font-semibold mb-3">Current session</p>
-              <div id="platform-session-summary" class="text-slate-200 space-y-2">
-                <p>No active student or teacher session detected yet.</p>
-              </div>
-              <div class="platform-action-row">
-                <a class="platform-ghost" href="./dashboards/student.html">Student Dashboard</a>
-                <a class="platform-ghost" href="./dashboards/teacher.html">Teacher Dashboard</a>
               </div>
             </div>
           </div>
