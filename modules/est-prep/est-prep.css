@@ -568,6 +568,43 @@ h1 {
   color: var(--green);
 }
 
+.glossary-card {
+  background:
+    linear-gradient(135deg, rgba(17, 34, 72, 0.92), rgba(14, 24, 57, 0.95)),
+    radial-gradient(circle at top left, rgba(255, 216, 108, 0.08), transparent 35%);
+}
+
+.forensics-grid,
+.builder-grid,
+.builder-actions {
+  display: grid;
+  gap: 14px;
+}
+
+.forensics-grid {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  margin-top: 18px;
+}
+
+.forensics-slot {
+  min-height: 128px;
+  background: rgba(12, 19, 43, 0.88);
+}
+
+.forensics-slot.filled {
+  border-color: rgba(97, 240, 255, 0.42);
+  box-shadow: inset 0 0 0 1px rgba(97, 240, 255, 0.12);
+}
+
+.builder-grid {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  margin-top: 16px;
+}
+
+.builder-actions {
+  margin-top: 14px;
+}
+
 .list {
   min-height: 92px;
 }
@@ -698,6 +735,8 @@ h1 {
   .mcq-grid,
   .choice-grid,
   .prompt-grid,
+  .forensics-grid,
+  .builder-grid,
   .training-grid,
   .training-actions,
   .training-lanes {
@@ -719,6 +758,8 @@ h1 {
   .mcq-grid,
   .choice-grid,
   .prompt-grid,
+  .forensics-grid,
+  .builder-grid,
   .training-grid,
   .training-actions,
   .training-lanes {

@@ -371,10 +371,15 @@ function buildStageDeck(bank) {
       definitionOptions: shuffle([term.definition, ...distractors.map(item => item.definition)])
     };
   });
+  const glossaryTermBank = shuffle([
+    ...glossaryRounds.map(round => round.term.term),
+    ...pickRandom(glossaryTerms.map(item => item.term).filter(term => !glossaryRounds.some(round => round.term.term === term)), Math.max(0, 6 - glossaryRounds.length))
+  ]);
 
   return {
     contentGroups,
     glossaryRounds,
+    glossaryTermBank,
     decoderRound: pickRandom(bank.decoderRounds || [], 1)[0] || null,
     bossRound: pickRandom(bank.bossRounds || [], 1)[0] || null,
     communityOptions: bank.communityOptions || []
@@ -615,6 +620,55 @@ function renderTrainingBay(group) {
   return "";
 }
 
+function toggleReveal(key) {
+  state.answers[key] = !state.answers[key];
+  if (state.selectedStageId === "glossary") renderGlossaryStage();
+  if (state.selectedStageId === "boss") renderBossStage();
+}
+
+function getBossShowdownPair(round) {
+  if (!round?.sampleResponses?.length) return [];
+  const strong = round.sampleResponses.find(sample => /strong/i.test(sample.band || ""));
+  const developing = round.sampleResponses.find(sample => /developing/i.test(sample.band || ""));
+  if (strong && developing) return [strong, developing];
+  return round.sampleResponses.slice(0, 2);
+}
+
+function getBossScaffoldLines(round) {
+  return String(round?.scaffold || "")
+    .split("\n")
+    .map(line => line.trim())
+    .filter(Boolean);
+}
+
+function renderBossResponseBuilder(round) {
+  const lines = getBossScaffoldLines(round);
+  return `
+    <div class="panel">
+      <div class="section-title">
+        <h2>Response Forge</h2>
+        <p>Build before you write</p>
+      </div>
+      <p class="small-copy">Use the scaffold blocks to build a stronger answer before drafting the final response.</p>
+      <div class="builder-grid">
+        ${lines.map((line, index) => `
+          <div class="written-stage">
+            <strong>${escapeHtml(line.replace("...", "").trim() || `Scaffold ${index + 1}`)}</strong>
+            <textarea
+              id="boss-scaffold-${index}"
+              placeholder="Write the key idea for this part..."
+              oninput="window.ESTPrep.setBossScaffold(${index}, this.value)"
+            >${escapeHtml(state.answers[`boss-scaffold-${index}`] || "")}</textarea>
+          </div>
+        `).join("")}
+      </div>
+      <div class="builder-actions">
+        <button class="submit-button" type="button" onclick="window.ESTPrep.buildBossDraft()">Build Draft from Scaffold</button>
+      </div>
+    </div>
+  `;
+}
+
 function renderContentStage() {
   const groups = state.stageDeck?.contentGroups || [];
   const currentGroup = groups[state.contentGroupIndex];
@@ -690,23 +744,36 @@ function renderContentStage() {
 
 function renderGlossaryStage() {
   const rounds = state.stageDeck?.glossaryRounds || [];
+  const termBank = state.stageDeck?.glossaryTermBank || rounds.map(round => round.term.term);
   setText("stage-title", "Glossary Check");
-  setText("stage-subtitle", "Random glossary terms rotate in each run so students have to know the language, not the order.");
+  setText("stage-subtitle", "Reveal the clue, match the term, then lock in the exact definition.");
   renderStageRoot(`
     <div class="question-card">
       <div class="kicker">Term Vault</div>
-      <h3>Match the right glossary term to the context, then lock in the correct definition.</h3>
-      <p>This stage pulls random terms from the EST glossary bank each time you play.</p>
+      <h3>Crack the clue cards, match the term, then reveal and lock the right definition.</h3>
+      <p>This stage rotates glossary terms every run so students rehearse the language instead of memorising one order.</p>
+    </div>
+    <div class="panel">
+      <div class="section-title">
+        <h2>Term Bank</h2>
+        <p>Reusable clue-matching deck</p>
+      </div>
+      <div class="pill-row">
+        ${termBank.map(term => `<span class="pill">${escapeHtml(term)}</span>`).join("")}
+      </div>
     </div>
     ${rounds.map((round, index) => `
-      <div class="panel">
+      <div class="panel glossary-card">
         <div class="section-title">
-          <h2>${escapeHtml(round.term.term)}</h2>
-          <p>Glossary round ${index + 1}</p>
+          <h2>Clue Card ${index + 1}</h2>
+          <p>${state.answers[`glossary-reveal-${index}`] ? "Revealed" : "Hidden"}</p>
         </div>
-        <p class="small-copy"><strong>Context:</strong> ${escapeHtml(round.term.scenario)}</p>
+        <p class="small-copy">${state.answers[`glossary-reveal-${index}`] ? `<strong>Scenario:</strong> ${escapeHtml(round.term.scenario)}` : "Click reveal to open the clue card and inspect the scenario."}</p>
+        <div class="builder-actions">
+          <button class="ghost-link" type="button" onclick="window.ESTPrep.toggleReveal('glossary-reveal-${index}')">${state.answers[`glossary-reveal-${index}`] ? "Hide clue" : "Reveal clue"}</button>
+        </div>
         <div class="mcq-grid" style="margin-top: 14px;">
-          ${round.scenarioOptions.map(option => `
+          ${termBank.map(option => `
             <button
               type="button"
               class="choice-button ${state.answers[`glossary-term-${index}`] === option ? "selected live-selected" : ""}"
@@ -718,7 +785,7 @@ function renderGlossaryStage() {
             </button>
           `).join("")}
         </div>
-        <p class="small-copy" style="margin-top: 16px;"><strong>Definition:</strong> Which definition best matches <em>${escapeHtml(round.term.term)}</em>?</p>
+        <p class="small-copy" style="margin-top: 16px;"><strong>Definition reveal:</strong> Once you think you have the term, lock the exact definition.</p>
         <div class="mcq-grid" style="margin-top: 14px;">
           ${round.definitionOptions.map(option => `
             <button
@@ -736,7 +803,7 @@ function renderGlossaryStage() {
     `).join("")}
     <div class="written-stage">
       <strong>Precision beats waffle</strong>
-      <p class="small-copy">The EST rewards exact terminology. This round trains the language that makes short answers sound deliberate and exam-ready.</p>
+      <p class="small-copy">This is now a clue-match-reveal loop. Students inspect the clue, retrieve the term, and then lock the exact wording they need in the EST.</p>
       <button class="submit-button" type="button" onclick="window.ESTPrep.submitGlossary()">Bank Glossary Results</button>
     </div>
   `);
@@ -746,25 +813,44 @@ function renderDecoderStage() {
   const round = state.stageDeck?.decoderRound;
   if (!round) return;
   setText("stage-title", "VTCS Decoder");
-  setText("stage-subtitle", "Use verb, topic, context, and structure before you start writing.");
+  setText("stage-subtitle", "Run question forensics before you write.");
   renderStageRoot(`
     <div class="question-card">
       <div class="kicker">VTCS Core</div>
       <h3>${escapeHtml(round.question)}</h3>
       <p>${escapeHtml(round.feedback)}</p>
     </div>
-    <div class="prompt-grid">
-      <div class="prompt-card"><strong>Verb</strong><p>What does the question want you to do?</p></div>
-      <div class="prompt-card"><strong>Topic</strong><p>What concept is being assessed?</p></div>
-      <div class="prompt-card"><strong>Context</strong><p>What narrows the response?</p></div>
-      <div class="prompt-card"><strong>Structure</strong><p>How should you build the answer?</p></div>
+    <div class="panel training-bay">
+      <div class="section-title">
+        <h2>Question Forensics Board</h2>
+        <p>Build the brief</p>
+      </div>
+      <p class="small-copy">Treat the EST question like evidence. Build the four-part brief by locking the correct verb, topic, context, and response structure.</p>
+      <div class="forensics-grid">
+        <div class="prompt-card forensics-slot ${state.answers["decoder-verb"] ? "filled" : ""}">
+          <strong>Verb</strong>
+          <p>${escapeHtml(state.answers["decoder-verb"] || "Select the command word")}</p>
+        </div>
+        <div class="prompt-card forensics-slot ${state.answers["decoder-topic"] ? "filled" : ""}">
+          <strong>Topic</strong>
+          <p>${escapeHtml(state.answers["decoder-topic"] || "Select the concept")}</p>
+        </div>
+        <div class="prompt-card forensics-slot ${state.answers["decoder-context"] ? "filled" : ""}">
+          <strong>Context</strong>
+          <p>${escapeHtml(state.answers["decoder-context"] || "Select the context")}</p>
+        </div>
+        <div class="prompt-card forensics-slot ${state.answers["decoder-structure"] ? "filled" : ""}">
+          <strong>Structure</strong>
+          <p>${escapeHtml(state.answers["decoder-structure"] || "Select the structure")}</p>
+        </div>
+      </div>
     </div>
-    ${renderOptionGroup("decoder-verb", "Choose the command verb", round.verbOptions)}
-    ${renderOptionGroup("decoder-topic", "Choose the topic", round.topicOptions)}
-    ${renderOptionGroup("decoder-context", "Choose the context term", round.contextOptions)}
-    ${renderOptionGroup("decoder-structure", "Choose the answer structure", round.structureOptions)}
+    ${renderOptionGroup("decoder-verb", "Forensics Tool 1: Command verb", round.verbOptions)}
+    ${renderOptionGroup("decoder-topic", "Forensics Tool 2: Topic", round.topicOptions)}
+    ${renderOptionGroup("decoder-context", "Forensics Tool 3: Context", round.contextOptions)}
+    ${renderOptionGroup("decoder-structure", "Forensics Tool 4: Structure", round.structureOptions)}
     <div class="written-stage">
-      <strong>Why this matters</strong>
+      <strong>Case summary</strong>
       <p class="small-copy">Students lose marks when they misread what the question is actually asking. Strong decoding protects marks before writing starts.</p>
       <button class="submit-button" type="button" onclick="window.ESTPrep.submitDecoder()">Bank Decoder Results</button>
     </div>
@@ -774,6 +860,7 @@ function renderDecoderStage() {
 function renderBossStage() {
   const round = state.stageDeck?.bossRound;
   if (!round) return;
+  const showdownPair = getBossShowdownPair(round);
   const communityOptions = (state.stageDeck?.communityOptions || []).map(option => `
     <button type="button" class="choice-button ${state.answers.bossVote === option.id ? "selected live-selected" : ""}" data-group="boss-vote" data-value="${option.id}" onclick="window.ESTPrep.setBossVote('${option.id}')">
       <strong>${escapeHtml(option.label)}</strong>
@@ -786,6 +873,39 @@ function renderBossStage() {
       <h3>${escapeHtml(round.question)}</h3>
       <p>${escapeHtml(round.help)}</p>
     </div>
+    ${showdownPair.length === 2 ? `
+      <div class="panel training-bay">
+        <div class="section-title">
+          <h2>Worked Example Showdown</h2>
+          <p>Judge before you draft</p>
+        </div>
+        <p class="small-copy">Choose the stronger response first. This helps students notice what quality looks like before they write their own answer.</p>
+        <div class="sample-grid">
+          ${showdownPair.map((sample, index) => `
+            <article class="sample-card">
+              <div class="sample-meta">
+                <strong>Sample ${index + 1}</strong>
+                <span>${escapeHtml(sample.label)}</span>
+              </div>
+              <p>${escapeHtml(sample.response)}</p>
+              <button
+                type="button"
+                class="choice-button ${state.answers.bossShowdown === sample.label ? "selected live-selected" : ""}"
+                style="margin-top:12px;"
+                onclick="window.ESTPrep.setChoiceEncoded('bossShowdown', '${encodeURIComponent(sample.label)}')"
+              >
+                <strong>This is stronger</strong>
+              </button>
+            </article>
+          `).join("")}
+        </div>
+        <div class="written-stage">
+          <strong>Why?</strong>
+          <p class="small-copy">Explain what makes the stronger sample better.</p>
+          <textarea id="boss-showdown-reason" placeholder="Explain what the stronger sample includes or does better..." oninput="window.ESTPrep.setBossShowdownReason(this.value)">${escapeHtml(state.answers.bossShowdownReason || "")}</textarea>
+        </div>
+      </div>
+    ` : ""}
     <div class="prompt-grid">
       ${round.conceptTags.map(tag => `<div class="prompt-card"><strong>Revision tag</strong><p>${escapeHtml(tag)}</p></div>`).join("")}
       <div class="prompt-card"><strong>Structure hint</strong><p>${escapeHtml(round.scaffold.split("\n").join(" "))}</p></div>
@@ -793,8 +913,9 @@ function renderBossStage() {
     ${renderOptionGroup("boss-command", "Command word", round.commandOptions)}
     ${renderOptionGroup("boss-content", "Best content point", round.contentOptions)}
     ${renderOptionGroup("boss-glossary", "Glossary context term", round.glossaryOptions)}
+    ${renderBossResponseBuilder(round)}
     <div class="written-stage">
-      <strong>Response scaffold</strong>
+      <strong>Final simulation response</strong>
       <p class="small-copy">${escapeHtml(round.scaffold)}</p>
       <textarea id="boss-response" placeholder="Write your EST-style answer here...">${escapeHtml(state.answers.bossText || "")}</textarea>
     </div>
@@ -888,6 +1009,36 @@ function setTrainingChoice(groupKey, option) {
 
 function setTrainingChoiceEncoded(groupKey, encodedOption) {
   setTrainingChoice(groupKey, decodeURIComponent(encodedOption));
+}
+
+function setBossScaffold(index, value) {
+  state.answers[`boss-scaffold-${index}`] = value;
+}
+
+function setBossShowdownReason(value) {
+  state.answers.bossShowdownReason = value;
+}
+
+function buildBossDraft() {
+  const round = state.stageDeck?.bossRound;
+  if (!round) return;
+  const draft = getBossScaffoldLines(round)
+    .map((line, index) => {
+      const label = line.replace("...", "").trim();
+      const value = state.answers[`boss-scaffold-${index}`] || "";
+      return value ? `${label} ${value}`.trim() : "";
+    })
+    .filter(Boolean)
+    .join("\n");
+  state.answers.bossText = draft;
+  const textarea = document.getElementById("boss-response");
+  if (textarea) textarea.value = draft;
+  state.recentReward = {
+    type: "positive",
+    title: "Draft built",
+    detail: "Your scaffold blocks have been assembled into a first EST response draft."
+  };
+  renderRewardPulse();
 }
 
 function setBossVote(optionId) {
@@ -1152,7 +1303,15 @@ async function submitDecoder() {
   await saveProgress("decoder-drill", "decoder-breakdown", `Question: ${round.question}\nVerb: ${state.answers["decoder-verb"] || "not chosen"}\nTopic: ${state.answers["decoder-topic"] || "not chosen"}\nContext: ${state.answers["decoder-context"] || "not chosen"}\nStructure: ${state.answers["decoder-structure"] || "not chosen"}`, Math.round(scoreRatio * 100), {
     taskName: "VTCS Decoder",
     durationSeconds,
-    promptText: round.question
+    promptText: round.question,
+    extraPayload: {
+      forensic_brief: {
+        verb: state.answers["decoder-verb"] || "",
+        topic: state.answers["decoder-topic"] || "",
+        context: state.answers["decoder-context"] || "",
+        structure: state.answers["decoder-structure"] || ""
+      }
+    }
   });
   showFeedbackBox(scoreRatio >= 0.75 ? "good" : scoreRatio >= 0.5 ? "warn" : "bad", [
     `<strong>Decoder results:</strong> ${correctCount}/4 parts correct.`,
@@ -1306,11 +1465,21 @@ async function submitGlossary() {
   await saveProgress("glossary-lock-in", "glossary-check", `Glossary stage accuracy: ${correctCount}/${total}`, Math.round(scoreRatio * 100), {
     taskName: "Glossary Check",
     durationSeconds,
-    promptText: "Match glossary terms to context and definition."
+    promptText: "Match glossary terms to context and definition.",
+    extraPayload: {
+      clue_cards: rounds.map((round, index) => ({
+        term: round.term.term,
+        revealed: Boolean(state.answers[`glossary-reveal-${index}`]),
+        scenario: round.term.scenario,
+        matched_term: state.answers[`glossary-term-${index}`] || "",
+        chosen_definition: state.answers[`glossary-definition-${index}`] || "",
+        correct_definition: round.term.definition
+      }))
+    }
   });
   showFeedbackBox(scoreRatio >= 0.8 ? "good" : scoreRatio >= 0.5 ? "warn" : "bad", [
     `<strong>Glossary score:</strong> ${correctCount}/${total} correct.`,
-    "This round rotates glossary terms randomly, so students have to know the terminology itself rather than memorise one fixed list.",
+    "This round now works as a clue-match-reveal loop, so students have to retrieve the term from context before locking the exact wording.",
     "Precise EST language makes short answers sound deliberate and exam-ready."
   ]);
 }
@@ -1320,7 +1489,9 @@ async function submitBoss() {
   if (!round) return;
   const durationSeconds = getCurrentStageDurationSeconds();
   const textarea = document.getElementById("boss-response");
-  const response = textarea ? textarea.value.trim() : "";
+  const existingResponse = textarea ? textarea.value.trim() : "";
+  if (!existingResponse) buildBossDraft();
+  const response = textarea ? textarea.value.trim() : (state.answers.bossText || "");
   state.answers.bossText = response;
   const review = bossCriterionReview(round, response);
   state.lastBossReview = review;
@@ -1335,7 +1506,15 @@ async function submitBoss() {
     {
       taskName: "Boss Round",
       durationSeconds,
-      promptText: round.question
+      promptText: round.question,
+      extraPayload: {
+        showdown_choice: state.answers.bossShowdown || "",
+        showdown_reason: state.answers.bossShowdownReason || "",
+        scaffold_parts: getBossScaffoldLines(round).map((line, index) => ({
+          label: line,
+          response: state.answers[`boss-scaffold-${index}`] || ""
+        }))
+      }
     }
   );
 
@@ -1401,6 +1580,10 @@ window.ESTPrep = {
   jumpToContentGroup,
   setTrainingChoice,
   setTrainingChoiceEncoded,
+  toggleReveal,
+  setBossScaffold,
+  setBossShowdownReason,
+  buildBossDraft,
   setChoice,
   setChoiceEncoded,
   setBossVote,
