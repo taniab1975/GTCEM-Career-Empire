@@ -450,6 +450,12 @@ function chunkArray(items, size) {
   return chunks;
 }
 
+function clampText(text, maxLength = 120) {
+  const value = String(text || "").trim();
+  if (value.length <= maxLength) return value;
+  return `${value.slice(0, maxLength).trim()}...`;
+}
+
 function buildContentGroups(bank) {
   const rounds = bank.contentRounds || [];
   return CONTENT_TOPIC_GROUPS.map(group => ({
@@ -510,7 +516,7 @@ function buildGlossarySource() {
 function buildStageDeck(bank) {
   const glossaryTerms = buildGlossarySource();
   const contentGroups = buildContentGroups(bank);
-  const glossaryBatches = chunkArray(glossaryTerms, 6);
+  const glossaryBatches = chunkArray(glossaryTerms, 4);
 
   return {
     contentGroups,
@@ -1519,6 +1525,16 @@ function renderGlossaryStage() {
           <span class="badge">Misses: ${state.glossaryMisses}</span>
           <span class="badge">Score: ${roundScore}</span>
         </div>
+        <div class="glossary-instructions">
+          <div class="glossary-step">
+            <span>1</span>
+            <strong>Choose a term card</strong>
+          </div>
+          <div class="glossary-step">
+            <span>2</span>
+            <strong>Choose its matching definition</strong>
+          </div>
+        </div>
         <p class="small-copy glossary-pulse ${state.glossaryPulseType}">${escapeHtml(state.glossaryPulse || round.cue)}</p>
         <div class="glossary-progress-track" aria-hidden="true">
           <div class="glossary-progress-bar" style="width:${progressPercent}%;"></div>
@@ -1538,7 +1554,8 @@ function renderGlossaryStage() {
                   onclick="window.ESTPrep.handleGlossarySocketClick('${item.id}')"
                 >
                   <span class="kicker">${showColour ? "Shape + colour" : round.id === "shape-only" ? "Shape only" : "Definition only"}</span>
-                  <strong>${escapeHtml(item.definition)}</strong>
+                  <strong>${escapeHtml(clampText(item.definition, 120))}</strong>
+                  <span class="small-copy">Tap to lock this definition</span>
                   ${assigned ? '<span class="glossary-mark good">✓</span><span class="glossary-float-success">Nice lock-in!</span>' : ""}
                 </button>
               `;
@@ -1560,6 +1577,7 @@ function renderGlossaryStage() {
                 >
                   <span class="kicker">${showColour ? "Piece" : round.id === "shape-only" ? "Shape piece" : "Term piece"}</span>
                   <strong>${escapeHtml(item.term)}</strong>
+                  <span class="small-copy">Tap to arm this card</span>
                 </button>
               `;
             }).join("")}
