@@ -9,6 +9,44 @@ const SKILL_LOGOS = {
   "time-management": "../../Assets/employability-logos/main/time-management.png"
 };
 
+const CONTENT_TOPIC_GROUPS = [
+  {
+    id: "initiative",
+    title: "Enterprise Behaviours - Initiative",
+    topics: ["Initiative", "Being proactive", "Improving work practices", "Helping fellow workers", "Seeking more responsibilities"],
+    writePrompt: "Write one or two EST-ready sentences explaining how initiative can be shown in a workplace situation.",
+    sampleResponse: "Initiative can be shown when a worker acts proactively, suggests improvements, helps colleagues, or volunteers for extra responsibilities before being told. This matters because it improves productivity and shows the worker can contribute positively to the workplace."
+  },
+  {
+    id: "time-management",
+    title: "Time Management Skills - Plan and Prioritise Tasks to Meet Specific Deadlines",
+    topics: ["Time management", "Time-management tools", "Managing multiple tasks"],
+    writePrompt: "Write one or two EST-ready sentences explaining how a student or worker can plan and prioritise tasks to meet deadlines.",
+    sampleResponse: "Time management involves planning ahead, prioritising urgent tasks, and using tools such as calendars, lists, or reminders to stay organised. This helps a person meet deadlines because responsibilities are visible, manageable, and easier to adjust when circumstances change."
+  },
+  {
+    id: "personal-finance",
+    title: "Strategies to Manage Personal Finance, Including Budgeting and Seeking Assistance",
+    topics: ["Budgeting", "Tracking money in and out", "Seeking assistance", "Unexpected life events", "Responding to changed financial circumstances"],
+    writePrompt: "Write one or two EST-ready sentences explaining how budgeting and seeking assistance support personal financial management.",
+    sampleResponse: "Budgeting helps a person balance income and expenses, identify unnecessary spending, and plan for unexpected events. Seeking assistance from trusted services or experts also supports financial management because it provides reliable advice and helps people make informed decisions."
+  },
+  {
+    id: "job-application",
+    title: "Purpose of a Cover Letter, STAR, and Techniques to Address Selection Criteria",
+    topics: ["Cover letter purpose", "Selection criteria", "STAR method"],
+    writePrompt: "Write one or two EST-ready sentences explaining how STAR helps an applicant address selection criteria effectively.",
+    sampleResponse: "The STAR method helps applicants address selection criteria by structuring examples into Situation, Task, Action, and Result. This makes a response clearer because the employer can see exactly what the applicant did and what outcome was achieved."
+  },
+  {
+    id: "communication",
+    title: "Communication Skills",
+    topics: ["Communication skills", "Non-verbal communication", "Active listening"],
+    writePrompt: "Write one or two EST-ready sentences explaining how communication skills can be applied in a workplace or interview situation.",
+    sampleResponse: "Communication skills can be applied by using clear verbal language, active listening, and appropriate non-verbal communication for the audience and purpose. This is important because it reduces misunderstandings, builds rapport, and helps tasks or interviews run more effectively."
+  }
+];
+
 const STAGES = [
   { id: "content", title: "EST Content Check", state: "Knowledge reactor", summary: "Check the actual revision content before answering under pressure.", marks: 4, readiness: 18, credits: 1600, taxRate: 0.1 },
   { id: "glossary", title: "Glossary Check", state: "Precision language", summary: "Use exact glossary terms and definitions, not vague wording.", marks: 4, readiness: 20, credits: 1600, taxRate: 0.1 },
@@ -33,7 +71,10 @@ const state = {
   salaryBoost: 0,
   taxContribution: 0,
   answers: {},
-  lastBossReview: null
+  lastBossReview: null,
+  contentGroupIndex: 0,
+  contentGroupStartedAt: 0,
+  contentGroupDurations: {}
 };
 
 function readJsonStorage(key, fallback) {
@@ -101,6 +142,14 @@ function pickRandom(items, count) {
   return shuffle(items).slice(0, Math.min(count, items.length));
 }
 
+function buildContentGroups(bank) {
+  const rounds = bank.contentRounds || [];
+  return CONTENT_TOPIC_GROUPS.map(group => ({
+    ...group,
+    rounds: pickRandom(rounds.filter(round => group.topics.includes(round.topic)), 2)
+  })).filter(group => group.rounds.length);
+}
+
 function getLoggedInStudent() {
   const auth = getAuthState();
   const session = getPlayerSession();
@@ -125,7 +174,7 @@ async function loadBank() {
 
 function buildStageDeck(bank) {
   const glossaryTerms = bank.glossaryTerms || [];
-  const contentRounds = pickRandom(bank.contentRounds || [], 5);
+  const contentGroups = buildContentGroups(bank);
   const glossaryRounds = pickRandom(glossaryTerms, Math.min(4, glossaryTerms.length)).map(term => {
     const distractors = pickRandom(glossaryTerms.filter(item => item.term !== term.term), 3);
     return {
@@ -136,7 +185,7 @@ function buildStageDeck(bank) {
   });
 
   return {
-    contentRounds,
+    contentGroups,
     glossaryRounds,
     decoderRound: pickRandom(bank.decoderRounds || [], 1)[0] || null,
     bossRound: pickRandom(bank.bossRounds || [], 1)[0] || null,
@@ -285,30 +334,51 @@ function renderOptionGroup(groupKey, title, options) {
 }
 
 function renderContentStage() {
-  const rounds = state.stageDeck?.contentRounds || [];
+  const groups = state.stageDeck?.contentGroups || [];
+  const currentGroup = groups[state.contentGroupIndex];
+  if (!currentGroup) return;
   setText("stage-title", "EST Content Check");
   setText("stage-subtitle", "Use the assessed revision content, not just generic exam technique.");
   renderStageRoot(`
     <div class="question-card">
       <div class="kicker">Revision Arena</div>
-      <h3>Choose the strongest content statement for each EST revision topic.</h3>
-      <p>This bank rotates across the revision topics so the module can keep testing recall, not memorising one static set.</p>
+      <h3>Move through the five EST content strands and bank evidence for each one.</h3>
+      <p>Each strand is tracked separately so teachers can see where students spend time and how they explain each content area.</p>
     </div>
-    ${rounds.map((round, index) => `
+    <div class="choice-grid" style="margin-bottom: 18px;">
+      ${groups.map((group, index) => `
+        <button
+          type="button"
+          class="choice-button ${index === state.contentGroupIndex ? "selected live-selected" : ""}"
+          style="min-height:auto;padding:10px 14px;"
+          onclick="window.ESTPrep.jumpToContentGroup(${index})"
+        >
+          <strong>${index + 1}. ${escapeHtml(group.title)}</strong>
+        </button>
+      `).join("")}
+    </div>
+    <div class="panel">
+      <div class="section-title">
+        <h2>${escapeHtml(currentGroup.title)}</h2>
+        <p>EST content strand ${state.contentGroupIndex + 1} of ${groups.length}</p>
+      </div>
+      <p class="small-copy">${escapeHtml(currentGroup.writePrompt)}</p>
+    </div>
+    ${currentGroup.rounds.map((round, index) => `
       <div class="panel">
         <div class="section-title">
           <h2>${escapeHtml(round.topic)}</h2>
-          <p>Topic ${index + 1}</p>
+          <p>Knowledge check ${index + 1}</p>
         </div>
         <p class="small-copy">${escapeHtml(round.question)}</p>
         <div class="mcq-grid" style="margin-top: 14px;">
           ${round.options.map(option => `
             <button
               type="button"
-              class="choice-button ${state.answers[`content-${index}`] === option ? "selected live-selected" : ""}"
-              data-group="content-${index}"
+              class="choice-button ${state.answers[`content-${currentGroup.id}-${index}`] === option ? "selected live-selected" : ""}"
+              data-group="content-${currentGroup.id}-${index}"
               data-value="${escapeHtml(option)}"
-              onclick="window.ESTPrep.setChoiceEncoded('content-${index}', '${encodeURIComponent(option)}')"
+              onclick="window.ESTPrep.setChoiceEncoded('content-${currentGroup.id}-${index}', '${encodeURIComponent(option)}')"
             >
               <strong>${escapeHtml(option)}</strong>
             </button>
@@ -317,9 +387,17 @@ function renderContentStage() {
       </div>
     `).join("")}
     <div class="written-stage">
-      <strong>Why this matters</strong>
-      <p class="small-copy">The EST rewards accurate content points under pressure. This stage is about having the right knowledge ready before you start building answers.</p>
-      <button class="submit-button" type="button" onclick="window.ESTPrep.submitContent()">Bank Content Results</button>
+      <strong>Quick EST response</strong>
+      <p class="small-copy">Write a short response so teachers can see how well you can explain this content area, not just select the right option.</p>
+      <textarea id="content-note" placeholder="Write one or two EST-ready sentences for this content strand...">${escapeHtml(state.answers[`content-note-${currentGroup.id}`] || "")}</textarea>
+    </div>
+    <div class="written-stage">
+      <div style="display:flex;gap:12px;flex-wrap:wrap;">
+        ${state.contentGroupIndex > 0 ? '<button class="submit-button" type="button" onclick="window.ESTPrep.prevContentGroup()">Previous Topic</button>' : ""}
+        ${state.contentGroupIndex < groups.length - 1
+          ? '<button class="submit-button" type="button" onclick="window.ESTPrep.nextContentGroup()">Next Topic</button>'
+          : '<button class="submit-button" type="button" onclick="window.ESTPrep.submitContent()">Bank Content Results</button>'}
+      </div>
     </div>
   `);
 }
@@ -448,10 +526,47 @@ function renderBossStage() {
   `);
 }
 
+function persistCurrentContentNote() {
+  const groups = state.stageDeck?.contentGroups || [];
+  const currentGroup = groups[state.contentGroupIndex];
+  if (!currentGroup) return;
+  const textarea = document.getElementById("content-note");
+  if (!textarea) return;
+  state.answers[`content-note-${currentGroup.id}`] = textarea.value.trim();
+}
+
+function bankCurrentContentDuration() {
+  const groups = state.stageDeck?.contentGroups || [];
+  const currentGroup = groups[state.contentGroupIndex];
+  if (!currentGroup || !state.contentGroupStartedAt) return;
+  const elapsed = Math.max(1, Math.round((Date.now() - state.contentGroupStartedAt) / 1000));
+  state.contentGroupDurations[currentGroup.id] = (state.contentGroupDurations[currentGroup.id] || 0) + elapsed;
+  state.contentGroupStartedAt = Date.now();
+}
+
+function jumpToContentGroup(index) {
+  const groups = state.stageDeck?.contentGroups || [];
+  if (!groups.length) return;
+  const nextIndex = Math.max(0, Math.min(index, groups.length - 1));
+  persistCurrentContentNote();
+  bankCurrentContentDuration();
+  state.contentGroupIndex = nextIndex;
+  renderContentStage();
+}
+
+function moveContentGroup(step) {
+  jumpToContentGroup(state.contentGroupIndex + step);
+}
+
 function openStage(stageId) {
   state.selectedStageId = stageId;
   state.lastBossReview = null;
   state.stageStartedAt = Date.now();
+  if (stageId === "content") {
+    state.contentGroupIndex = 0;
+    state.contentGroupStartedAt = Date.now();
+    state.contentGroupDurations = {};
+  }
   renderMap();
   if (stageId === "content") renderContentStage();
   if (stageId === "glossary") renderGlossaryStage();
@@ -595,7 +710,8 @@ async function saveProgress(checkpoint, evidenceType = "artifact", evidenceText 
       duration_seconds: meta.durationSeconds ?? null,
       score_percent: autoScore,
       prompt_text: meta.promptText || "",
-      response_text: evidenceText
+      response_text: evidenceText,
+      ...meta.extraPayload
     });
     await supabase.from("assessment_evidence").insert({
       student_id: student.id,
@@ -607,6 +723,31 @@ async function saveProgress(checkpoint, evidenceType = "artifact", evidenceText 
       auto_score: autoScore,
       created_at: new Date().toISOString()
     });
+  }
+
+  if (Array.isArray(meta.additionalEvidenceRows) && meta.additionalEvidenceRows.length) {
+    const additionalRows = meta.additionalEvidenceRows.map(item => ({
+      student_id: student.id,
+      class_id: student.classId,
+      module_id: MODULE_ID,
+      evidence_type: item.evidenceType || evidenceType,
+      prompt: item.prompt || checkpoint,
+      response_text: JSON.stringify({
+        kind: "career-empire-evidence",
+        module_id: MODULE_ID,
+        checkpoint: item.checkpoint || checkpoint,
+        evidence_type: item.evidenceType || evidenceType,
+        task_name: item.taskName || meta.taskName || state.selectedStageId || checkpoint,
+        duration_seconds: item.durationSeconds ?? null,
+        score_percent: typeof item.autoScore === "number" ? item.autoScore : autoScore,
+        prompt_text: item.promptText || "",
+        response_text: item.responseText || "",
+        ...(item.extraPayload || {})
+      }),
+      auto_score: typeof item.autoScore === "number" ? item.autoScore : autoScore,
+      created_at: new Date().toISOString()
+    }));
+    await supabase.from("assessment_evidence").insert(additionalRows);
   }
 
   await supabase.from("player_profiles").upsert({
@@ -720,22 +861,108 @@ async function submitDecoder() {
 }
 
 async function submitContent() {
-  const rounds = state.stageDeck?.contentRounds || [];
+  const groups = state.stageDeck?.contentGroups || [];
+  persistCurrentContentNote();
+  bankCurrentContentDuration();
   const durationSeconds = getCurrentStageDurationSeconds();
-  const correctCount = rounds.filter((round, index) => state.answers[`content-${index}`] === round.correct).length;
-  const scoreRatio = rounds.length ? correctCount / rounds.length : 0;
+  const scoredRounds = groups.flatMap(group => group.rounds.map((round, index) => ({
+    group,
+    round,
+    index,
+    answerKey: `content-${group.id}-${index}`,
+    selected: state.answers[`content-${group.id}-${index}`] || "",
+    correct: state.answers[`content-${group.id}-${index}`] === round.correct
+  })));
+  const correctCount = scoredRounds.filter(item => item.correct).length;
+  const scoreRatio = scoredRounds.length ? correctCount / scoredRounds.length : 0;
+  const topicSummaries = groups.map(group => {
+    const results = group.rounds.map((round, index) => ({
+      topic: round.topic,
+      question: round.question,
+      selected: state.answers[`content-${group.id}-${index}`] || "not chosen",
+      correctAnswer: round.correct,
+      correct: state.answers[`content-${group.id}-${index}`] === round.correct
+    }));
+    const topicCorrect = results.filter(item => item.correct).length;
+    const topicScore = results.length ? Math.round((topicCorrect / results.length) * 100) : 0;
+    return {
+      group,
+      results,
+      topicCorrect,
+      topicScore,
+      response: state.answers[`content-note-${group.id}`] || "",
+      durationSeconds: state.contentGroupDurations[group.id] || 0
+    };
+  });
   awardStage("content", { scoreRatio });
-  addEvidence("EST content check", rounds.map((round, index) => `${round.topic}: ${state.answers[`content-${index}`] || "not chosen"}`).join(" • "));
-  await saveProgress("revision-arena", "revision-check", `Content check accuracy: ${correctCount}/${rounds.length}`, Math.round(scoreRatio * 100), {
+  addEvidence("EST content check", topicSummaries.map(summary => `${summary.group.title}: ${summary.topicCorrect}/${summary.results.length} correct • ${summary.response || "No written response yet"}`).join(" || "));
+  await saveProgress("revision-arena", "revision-check", `Content check accuracy: ${correctCount}/${scoredRounds.length}`, Math.round(scoreRatio * 100), {
     taskName: "EST Content Check",
     durationSeconds,
-    promptText: "Choose the strongest content statement for each EST revision topic."
+    promptText: "Choose the strongest content statement for each EST revision topic.",
+    extraPayload: {
+      topic_groups: topicSummaries.map(summary => ({
+        topic_group_id: summary.group.id,
+        topic_group: summary.group.title,
+        duration_seconds: summary.durationSeconds,
+        score_percent: summary.topicScore,
+        written_response: summary.response,
+        items: summary.results.map(item => ({
+          topic: item.topic,
+          question: item.question,
+          selected: item.selected,
+          correct_answer: item.correctAnswer,
+          correct: item.correct
+        }))
+      }))
+    },
+    additionalEvidenceRows: topicSummaries.map(summary => ({
+      checkpoint: `revision-arena-${summary.group.id}`,
+      evidenceType: "revision-topic-check",
+      taskName: `EST Content Check - ${summary.group.title}`,
+      durationSeconds: summary.durationSeconds,
+      autoScore: summary.topicScore,
+      prompt: summary.group.title,
+      promptText: summary.group.writePrompt,
+      responseText: summary.response || "No written response entered.",
+      extraPayload: {
+        topic_group_id: summary.group.id,
+        topic_group: summary.group.title,
+        sample_response: summary.group.sampleResponse,
+        selected_options: summary.results.map(item => ({
+          topic: item.topic,
+          question: item.question,
+          selected: item.selected,
+          correct_answer: item.correctAnswer,
+          correct: item.correct
+        }))
+      }
+    }))
   });
+  const sampleReviewHtml = `
+    <div class="sample-review">
+      <h3>Topic-by-topic recap</h3>
+      <p class="small-copy">Use these model responses to compare your own EST-ready explanation for each content strand.</p>
+      <div class="sample-grid">
+        ${topicSummaries.map(summary => `
+          <article class="sample-card ${summary.topicScore >= 80 ? "strong" : summary.topicScore >= 50 ? "developing" : "needs-work"}">
+            <div class="sample-meta">
+              <strong>${escapeHtml(summary.group.title)}</strong>
+              <span>${summary.topicScore}% • ${formatDurationSeconds(summary.durationSeconds)}</span>
+            </div>
+            <p><strong>Your response:</strong> ${escapeHtml(summary.response || "No written response entered.")}</p>
+            <p><strong>Sample response:</strong> ${escapeHtml(summary.group.sampleResponse)}</p>
+            <p class="sample-commentary">${escapeHtml(`${summary.topicCorrect}/${summary.results.length} knowledge checks correct in this content strand.`)}</p>
+          </article>
+        `).join("")}
+      </div>
+    </div>
+  `;
   showFeedbackBox(scoreRatio === 1 ? "good" : scoreRatio >= 0.5 ? "warn" : "bad", [
-    `<strong>Content check:</strong> ${correctCount}/${rounds.length} strongest answer points selected.`,
-    "This stage is about knowing the actual assessed content for this EST, not just learning exam technique.",
-    "Those content points are what later feed the decoder and boss-round responses."
-  ]);
+    `<strong>Content check:</strong> ${correctCount}/${scoredRounds.length} strongest answer points selected.`,
+    "This stage is now grouped into the five core EST revision strands, so students and teachers can see which content area was strongest and where the most time was spent.",
+    "Those content points and written explanations are what later feed the decoder and boss-round responses."
+  ], sampleReviewHtml);
 }
 
 async function submitGlossary() {
@@ -843,6 +1070,9 @@ async function init() {
 
 window.ESTPrep = {
   openStage,
+  nextContentGroup: () => moveContentGroup(1),
+  prevContentGroup: () => moveContentGroup(-1),
+  jumpToContentGroup,
   setChoice,
   setChoiceEncoded,
   setBossVote,

@@ -201,6 +201,36 @@
       ]
     },
     {
+      "topic": "Communication skills",
+      "question": "Which statement best explains communication skills in the EST curriculum?",
+      "correct": "Communication skills involve sharing and receiving information clearly while adapting language, tone, audience, purpose, and format to suit the situation.",
+      "options": [
+        "Communication skills involve sharing and receiving information clearly while adapting language, tone, audience, purpose, and format to suit the situation.",
+        "Communication skills are only about talking confidently, even if the message does not suit the audience or task.",
+        "Communication skills are mainly fixed personality traits and do not change across contexts."
+      ]
+    },
+    {
+      "topic": "Non-verbal communication",
+      "question": "Which answer best explains non-verbal communication in a workplace or interview?",
+      "correct": "Non-verbal communication uses body language, facial expressions, eye contact, posture, and tone of voice to reinforce meaning and build connection.",
+      "options": [
+        "Non-verbal communication uses body language, facial expressions, eye contact, posture, and tone of voice to reinforce meaning and build connection.",
+        "Non-verbal communication only refers to written messages such as emails and text messages.",
+        "Non-verbal communication is unimportant because employers only assess the words a person says."
+      ]
+    },
+    {
+      "topic": "Active listening",
+      "question": "Which statement best explains active listening?",
+      "correct": "Active listening means focusing fully on the speaker, checking understanding through questions or paraphrasing, and responding thoughtfully.",
+      "options": [
+        "Active listening means focusing fully on the speaker, checking understanding through questions or paraphrasing, and responding thoughtfully.",
+        "Active listening means staying silent without asking clarifying questions or responding.",
+        "Active listening mainly means waiting for your turn to speak while planning your own answer."
+      ]
+    },
+    {
       "topic": "Megatrends",
       "question": "Which statement best explains a megatrend?",
       "correct": "A megatrend is a significant and long-lasting development that transforms the way we live, work, and do business.",
@@ -301,6 +331,16 @@
       "term": "Communication skills",
       "definition": "Written, verbal, non-verbal, and active-listening skills used to communicate effectively with different audiences.",
       "scenario": "A worker or student adapts their message, listens carefully, and uses an appropriate format for the audience."
+    },
+    {
+      "term": "Non-verbal communication",
+      "definition": "Using body language, facial expressions, eye contact, posture, and tone of voice to support or influence a message.",
+      "scenario": "An applicant maintains eye contact, sits upright, and uses a calm, respectful tone during an interview."
+    },
+    {
+      "term": "Active listening",
+      "definition": "Focusing on the speaker, checking understanding with questions or paraphrasing, and responding appropriately.",
+      "scenario": "A worker listens carefully to a supervisor, asks clarifying questions, and repeats key instructions before starting."
     },
     {
       "term": "Unexpected life event",

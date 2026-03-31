@@ -1717,6 +1717,7 @@ function renderTeacherLiveData(players, skillsData, teacherData = null) {
     const payload = parseStructuredEvidence(row);
     const responseText = payload?.response_text || row.response_text || "";
     const promptText = payload?.prompt_text || row.prompt || "";
+    const topicLabel = payload?.topic_group || "";
     const score = typeof payload?.score_percent === "number"
       ? Math.round(payload.score_percent)
       : typeof row.auto_score === "number"
@@ -1724,10 +1725,12 @@ function renderTeacherLiveData(players, skillsData, teacherData = null) {
         : null;
 
     return {
-      title: `${row.students?.display_name || row.students?.username || "Student"} • ${payload?.task_name || row.evidence_type || "response"} • ${score !== null ? `${score}%` : "Unscored"} • ${formatDateTime(row.created_at)}`,
+      title: `${row.students?.display_name || row.students?.username || "Student"} • ${topicLabel || payload?.task_name || row.evidence_type || "response"} • ${score !== null ? `${score}%` : "Unscored"} • ${formatDateTime(row.created_at)}`,
       detail: [
+        topicLabel ? `Topic: ${topicLabel}` : "",
         promptText ? `Prompt: ${promptText}` : "",
-        responseText ? `Response: ${String(responseText).slice(0, 220)}${String(responseText).length > 220 ? "..." : ""}` : "No response text stored yet."
+        responseText ? `Response: ${String(responseText).slice(0, 220)}${String(responseText).length > 220 ? "..." : ""}` : "No response text stored yet.",
+        payload?.sample_response ? `Sample shown: ${String(payload.sample_response).slice(0, 140)}${String(payload.sample_response).length > 140 ? "..." : ""}` : ""
       ].filter(Boolean).join(" • ")
     };
   });
@@ -1738,8 +1741,9 @@ function renderTeacherLiveData(players, skillsData, teacherData = null) {
       const studentName = row.students?.display_name || row.students?.username || "Student";
       const moduleLabel = payload.module_id === "est-prep" ? "EST Prep" : payload.module_id === "megatrends" ? "Megatrends" : (payload.module_id || row.module_id || "Module");
       const score = typeof payload.score_percent === "number" ? ` • ${Math.round(payload.score_percent)}%` : "";
+      const topicLabel = payload.topic_group ? ` • ${payload.topic_group}` : "";
       return {
-        title: `${studentName} • ${moduleLabel} • ${payload.task_name || row.evidence_type || "Task"}`,
+        title: `${studentName} • ${moduleLabel} • ${payload.task_name || row.evidence_type || "Task"}${topicLabel}`,
         detail: `${formatDurationSeconds(payload.duration_seconds)}${score} • ${formatDateTime(row.created_at)}${payload.prompt_text ? ` • Prompt: ${String(payload.prompt_text).slice(0, 120)}${String(payload.prompt_text).length > 120 ? "..." : ""}` : ""}`
       };
     });
@@ -1791,6 +1795,10 @@ function renderTeacherLiveData(players, skillsData, teacherData = null) {
     const megatrendsEvidence = studentEvidence.filter(entry => (entry.row.module_id || entry.row.module_slug || entry.payload?.module_id) === "megatrends");
     const latestEST = estEvidence[0]?.payload || null;
     const latestMegatrends = megatrendsEvidence[0]?.payload || null;
+    const latestESTTopicRows = estEvidence
+      .filter(entry => entry.payload?.topic_group)
+      .slice(0, 3)
+      .map(entry => `${entry.payload.topic_group}: ${typeof entry.payload.score_percent === "number" ? `${Math.round(entry.payload.score_percent)}%` : "unscored"} in ${formatDurationSeconds(entry.payload.duration_seconds)}`);
     const timedEvidence = studentEvidence.filter(entry => entry.payload?.duration_seconds);
     const averageTaskTime = timedEvidence.length
       ? Math.round(timedEvidence.reduce((sum, entry) => sum + Number(entry.payload.duration_seconds || 0), 0) / timedEvidence.length)
@@ -1843,13 +1851,13 @@ function renderTeacherLiveData(players, skillsData, teacherData = null) {
         {
           title: "EST snapshot",
           detail: estProgress
-            ? `Completion ${Number(estProgress.completion_percent || 0)}% • Mastery ${Number(estProgress.mastery_percent || 0)}% • Attempts ${Number(estProgress.attempts || 0)}`
+            ? `Completion ${Number(estProgress.completion_percent || 0)}% • Mastery ${Number(estProgress.mastery_percent || 0)}% • Attempts ${Number(estProgress.attempts || 0)}${latestESTTopicRows.length ? ` • ${latestESTTopicRows.join(" | ")}` : ""}`
             : "No EST progress saved yet."
         },
         {
           title: `Latest response • ${recentModule}`,
           detail: recentResponseText
-            ? `${recentPrompt ? `${String(recentPrompt).slice(0, 70)}${String(recentPrompt).length > 70 ? "..." : ""} • ` : ""}${String(recentResponseText).slice(0, 120)}${String(recentResponseText).length > 120 ? "..." : ""}`
+            ? `${latestEST?.topic_group ? `${latestEST.topic_group} • ` : ""}${recentPrompt ? `${String(recentPrompt).slice(0, 70)}${String(recentPrompt).length > 70 ? "..." : ""} • ` : ""}${String(recentResponseText).slice(0, 120)}${String(recentResponseText).length > 120 ? "..." : ""}`
             : "No written response stored yet."
         }
       ]
