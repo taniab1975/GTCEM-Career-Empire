@@ -1455,22 +1455,6 @@ function renderContentTopicIntro(group) {
   const hasVideo = Boolean(group.introVideo);
   return `
     <div class="topic-intro-grid">
-      <div class="topic-intro-copy panel">
-        <div class="kicker">Topic intro</div>
-        <h3>${escapeHtml(group.introTitle || group.title)}</h3>
-        <p class="small-copy">${escapeHtml(group.introSummary || group.writePrompt)}</p>
-        ${highlights.length ? `
-          <div class="badge-row" style="margin-top:18px;">
-            ${highlights.map(item => `<span class="badge">${escapeHtml(item)}</span>`).join("")}
-          </div>
-        ` : ""}
-        <div class="written-stage" style="margin-top:18px;">
-          <div style="display:flex;gap:12px;flex-wrap:wrap;">
-            <button class="submit-button" type="button" onclick="window.ESTPrep.openStage('content')">Back to topic menu</button>
-            <button class="submit-button" type="button" onclick="window.ESTPrep.startContentGroup()">Start content check</button>
-          </div>
-        </div>
-      </div>
       <div class="topic-media-card">
         ${hasVideo ? `
           <video class="topic-media" autoplay muted loop playsinline poster="${escapeHtml(group.introImage || "")}">
@@ -1479,6 +1463,22 @@ function renderContentTopicIntro(group) {
         ` : `
           <img class="topic-media topic-media-image" src="${escapeHtml(group.introImage || "")}" alt="${escapeHtml(group.title)}">
         `}
+      </div>
+      <div class="topic-intro-copy panel">
+        <div class="kicker">Topic intro</div>
+        <h3>${escapeHtml(group.introTitle || group.title)}</h3>
+        <p class="small-copy">${escapeHtml(group.introSummary || group.writePrompt)}</p>
+        ${highlights.length ? `
+          <div class="badge-row topic-intro-highlights">
+            ${highlights.map(item => `<span class="badge">${escapeHtml(item)}</span>`).join("")}
+          </div>
+        ` : ""}
+        <div class="written-stage topic-intro-actions">
+          <div class="topic-intro-button-row">
+            <button class="submit-button" type="button" onclick="window.ESTPrep.openStage('content')">Back to topic menu</button>
+            <button class="submit-button" type="button" onclick="window.ESTPrep.startContentGroup()">Start content check</button>
+          </div>
+        </div>
       </div>
     </div>
   `;
