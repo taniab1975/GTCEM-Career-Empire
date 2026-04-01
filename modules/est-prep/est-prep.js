@@ -2,6 +2,7 @@ const AUTH_DEMO_STATE_KEY = "career-empire-auth-demo";
 const PLAYER_SESSION_KEY = "career-empire-session";
 const MODULE_ID = "est-prep";
 const BANK_PATH = "../../data/modules/est-prep-bank.json";
+const CONTENT_STAGE_CONFIG_PATH = "../../data/modules/est-prep-rounds/content-stage.json";
 
 const SKILL_LOGOS = {
   communication: "../../Assets/employability-logos/main/communication.png",
@@ -9,7 +10,7 @@ const SKILL_LOGOS = {
   "time-management": "../../Assets/employability-logos/main/time-management.png"
 };
 
-const CONTENT_TOPIC_GROUPS = [
+const DEFAULT_CONTENT_TOPIC_GROUPS = [
   {
     id: "initiative",
     title: "Enterprise Behaviours - Initiative",
@@ -19,21 +20,21 @@ const CONTENT_TOPIC_GROUPS = [
   },
   {
     id: "time-management",
-    title: "Time Management Skills - Plan and Prioritise Tasks to Meet Specific Deadlines",
+    title: "Time Management Skills - Plan and prioritise tasks to meet deadlines",
     topics: ["Time management", "Time-management tools", "Managing multiple tasks"],
     writePrompt: "Write one or two EST-ready sentences explaining how a student or worker can plan and prioritise tasks to meet deadlines.",
     sampleResponse: "Time management involves planning ahead, prioritising urgent tasks, and using tools such as calendars, lists, or reminders to stay organised. This helps a person meet deadlines because responsibilities are visible, manageable, and easier to adjust when circumstances change."
   },
   {
     id: "personal-finance",
-    title: "Strategies to Manage Personal Finance, Including Budgeting and Seeking Assistance, and Unexpected Life Events Including Changes to Financial Circumstances",
+    title: "Managing personal finance, budgeting, seeking assistance, unexpected financial events inc changes to financial circumstance",
     topics: ["Budgeting", "Tracking money in and out", "Seeking assistance", "Unexpected life events", "Responding to changed financial circumstances"],
     writePrompt: "Write one or two EST-ready sentences explaining how budgeting and seeking assistance support personal financial management.",
     sampleResponse: "Budgeting helps a person balance income and expenses, identify unnecessary spending, and plan for unexpected events. Seeking assistance from trusted services or experts also supports financial management because it provides reliable advice and helps people make informed decisions."
   },
   {
     id: "job-application",
-    title: "Purpose of a Cover Letter, STAR, and Techniques to Address Selection Criteria",
+    title: "Cover Letters, STAR and Addressing Selection Criteria",
     topics: ["Cover letter purpose", "Selection criteria", "STAR method"],
     writePrompt: "Write one or two EST-ready sentences explaining how STAR helps an applicant address selection criteria effectively.",
     sampleResponse: "The STAR method helps applicants address selection criteria by structuring examples into Situation, Task, Action, and Result. This makes a response clearer because the employer can see exactly what the applicant did and what outcome was achieved."
@@ -47,7 +48,7 @@ const CONTENT_TOPIC_GROUPS = [
   }
 ];
 
-const CONTENT_TRAINING_BAYS = {
+const DEFAULT_CONTENT_TRAINING_BAYS = {
   initiative: {
     type: "sort",
     title: "Signal Sort",
@@ -115,7 +116,7 @@ const CONTENT_TRAINING_BAYS = {
     ]
   },
   "personal-finance": {
-    type: "rescue",
+    type: "scenario",
     title: "Scenario Rescue",
     subtitle: "Choose the strongest next move when life events affect money and planning.",
     scenarios: [
@@ -158,10 +159,10 @@ const CONTENT_TRAINING_BAYS = {
     ]
   },
   "job-application": {
-    type: "rescue",
+    type: "builder",
     title: "Application Forge",
-    subtitle: "Choose the move that would make an application or interview response stronger.",
-    scenarios: [
+    subtitle: "Build stronger job application responses by choosing the move that earns more marks.",
+    rounds: [
       {
         id: "job-cover-letter",
         title: "Cover letter purpose",
@@ -172,7 +173,8 @@ const CONTENT_TRAINING_BAYS = {
           "Repeat the resume word for word without linking it to the employer."
         ],
         correct: "Mention the specific job advertisement, explain why you are applying, and highlight your suitability briefly.",
-        feedback: "Strong response. A cover letter should target the specific role and make a positive first impression."
+        feedback: "Strong response. A cover letter should target the specific role and make a positive first impression.",
+        builderLabel: "Best opening move"
       },
       {
         id: "job-star",
@@ -184,7 +186,8 @@ const CONTENT_TRAINING_BAYS = {
           "Talk only about what the team did and leave out your own action."
         ],
         correct: "Use STAR so the employer can see the situation, task, action, and result clearly.",
-        feedback: "Strong response. STAR helps structure evidence so the response is clear and relevant."
+        feedback: "Strong response. STAR helps structure evidence so the response is clear and relevant.",
+        builderLabel: "Best response structure"
       },
       {
         id: "job-interview",
@@ -196,7 +199,8 @@ const CONTENT_TRAINING_BAYS = {
           "Stay silent and hope they move to the next question."
         ],
         correct: "Ask politely for clarification so you can answer the actual question well.",
-        feedback: "Strong response. Clarifying shows active listening and improves answer accuracy."
+        feedback: "Strong response. Clarifying shows active listening and improves answer accuracy.",
+        builderLabel: "Best interview move"
       }
     ]
   },
@@ -282,6 +286,8 @@ const STAGES = [
   { id: "boss", title: "Boss Round", state: "EST simulation", summary: "Build and justify a mark-worthy EST response with richer feedback.", marks: 8, readiness: 34, credits: 3400, taxRate: 0.1 }
 ];
 
+const HUB_SECTION_IDS = ["hero-section", "metrics-section", "reward-strip", "track-section", "logs-section"];
+
 const state = {
   student: null,
   bank: null,
@@ -292,6 +298,7 @@ const state = {
   evidenceLog: [],
   debriefLog: [],
   recentReward: null,
+  contentStageConfig: null,
   marksBanked: 0,
   readiness: 0,
   confidence: 40,
@@ -300,7 +307,7 @@ const state = {
   taxContribution: 0,
   answers: {},
   lastBossReview: null,
-  contentGroupIndex: 0,
+  contentGroupIndex: -1,
   contentGroupStartedAt: 0,
   contentGroupDurations: {},
   glossaryBoard: [],
@@ -385,6 +392,82 @@ function setText(id, value) {
   if (element) element.textContent = value;
 }
 
+function getStageMeta(stageId) {
+  return STAGES.find(stage => stage.id === stageId) || null;
+}
+
+function getFocusSubtitle() {
+  const stage = getStageMeta(state.selectedStageId);
+  if (!stage) return "Focused EST lab";
+  if (state.selectedStageId !== "content") return `${stage.title} focused mode`;
+  const groups = state.stageDeck?.contentGroups || [];
+  const currentGroup = groups[state.contentGroupIndex];
+  return currentGroup ? `${stage.title} • ${currentGroup.title}` : `${stage.title} topic menu`;
+}
+
+function setLabMode(active) {
+  document.body.classList.toggle("est-lab-mode", active);
+  HUB_SECTION_IDS.forEach(id => {
+    const element = document.getElementById(id);
+    if (element) element.classList.toggle("is-hidden", active);
+  });
+  const stageSection = document.getElementById("stage-section");
+  if (stageSection) stageSection.classList.toggle("is-hidden", !active);
+}
+
+function setStageMenuMode(active) {
+  const stageSection = document.getElementById("stage-section");
+  if (stageSection) stageSection.classList.toggle("menu-mode", active);
+}
+
+function renderFocusNav() {
+  const container = document.getElementById("focus-nav");
+  if (!container) return;
+  if (!state.selectedStageId) {
+    container.innerHTML = "";
+    return;
+  }
+
+  const groups = state.stageDeck?.contentGroups || [];
+  const currentGroup = groups[state.contentGroupIndex];
+  const contentMenuPrompt = "Choose an EST curriculum content area below";
+  container.innerHTML = `
+    <div class="focus-toolbar">
+      <button type="button" class="focus-back" onclick="window.ESTPrep.returnToTrack()">← Back to EST Hub</button>
+      <div class="focus-label">${state.selectedStageId === "content" && !currentGroup ? "Choose an EST curriculum content area below" : escapeHtml(getFocusSubtitle())}</div>
+    </div>
+    <div class="focus-intro">You're in the EST Preparation module.</div>
+    <div class="focus-track">
+      ${STAGES.map(stage => `
+        <button
+          type="button"
+          class="focus-track-button ${state.selectedStageId === stage.id ? "active" : ""}"
+          onclick="window.ESTPrep.openStage('${stage.id}')"
+        >
+          <strong>${escapeHtml(stage.title)}</strong>
+        </button>
+      `).join("")}
+    </div>
+    ${state.selectedStageId === "content" ? `
+      <div class="content-track-title-row">
+        <div class="content-track-title">Topic Menu</div>
+        <div class="content-track-subtitle">${escapeHtml(currentGroup ? currentGroup.title : contentMenuPrompt)}</div>
+      </div>
+      <div class="content-track content-track-menu ${currentGroup ? "has-selection" : ""}">
+        ${groups.map((group, index) => `
+          <button
+            type="button"
+            class="content-track-button ${index === state.contentGroupIndex ? "active" : ""}"
+            onclick="window.ESTPrep.jumpToContentGroup(${index})"
+          >
+            <strong>${index + 1}. ${escapeHtml(group.title)}</strong>
+          </button>
+        `).join("")}
+      </div>
+    ` : ""}
+  `;
+}
+
 function scrollToTopSmooth() {
   try {
     window.scrollTo({ top: 0, behavior: "smooth" });
@@ -456,9 +539,17 @@ function clampText(text, maxLength = 120) {
   return `${value.slice(0, maxLength).trim()}...`;
 }
 
+function getContentStageConfig() {
+  return state.contentStageConfig || {
+    topicGroups: DEFAULT_CONTENT_TOPIC_GROUPS,
+    trainingBays: DEFAULT_CONTENT_TRAINING_BAYS
+  };
+}
+
 function buildContentGroups(bank) {
   const rounds = bank.contentRounds || [];
-  return CONTENT_TOPIC_GROUPS.map(group => ({
+  const { topicGroups } = getContentStageConfig();
+  return topicGroups.map(group => ({
     ...group,
     rounds: pickRandom(rounds.filter(round => group.topics.includes(round.topic)), 2)
   })).filter(group => group.rounds.length);
@@ -484,6 +575,20 @@ async function loadBank() {
   const response = await fetch(BANK_PATH);
   if (!response.ok) throw new Error("Could not load the EST Prep content bank.");
   return response.json();
+}
+
+async function loadContentStageConfig() {
+  try {
+    const response = await fetch(CONTENT_STAGE_CONFIG_PATH);
+    if (!response.ok) throw new Error("Could not load EST content stage config.");
+    return response.json();
+  } catch (error) {
+    console.warn("Using fallback EST content stage config.", error);
+    return {
+      topicGroups: DEFAULT_CONTENT_TOPIC_GROUPS,
+      trainingBays: DEFAULT_CONTENT_TRAINING_BAYS
+    };
+  }
 }
 
 function normaliseGlossaryTermText(value) {
@@ -590,7 +695,7 @@ function renderMap() {
         <span>${stage.marks} marks</span>
         <span>${stage.readiness}% readiness</span>
       </div>
-      <button type="button" onclick="window.ESTPrep.openStage('${stage.id}')">${state.completed[stage.id] ? "Review stage" : "Open stage"}</button>
+      <button type="button" onclick="window.ESTPrep.openStage('${stage.id}')">${state.completed[stage.id] ? "Review lab" : "Open lab"}</button>
     </article>
   `).join("");
 }
@@ -668,7 +773,8 @@ function renderOptionGroup(groupKey, title, options) {
 }
 
 function getContentTrainingConfig(groupId) {
-  return CONTENT_TRAINING_BAYS[groupId] || null;
+  const { trainingBays } = getContentStageConfig();
+  return trainingBays[groupId] || null;
 }
 
 function getTrainingScore(config) {
@@ -678,86 +784,131 @@ function getTrainingScore(config) {
     const correct = config.cards.filter(card => state.answers[`training-${config.type}-${card.id}`] === card.correctBucket).length;
     return { correct, total, percent: total ? Math.round((correct / total) * 100) : 0 };
   }
-  if (config.type === "rescue") {
+  if (config.type === "scenario") {
     const total = config.scenarios.length;
     const correct = config.scenarios.filter(scenario => state.answers[`training-${config.type}-${scenario.id}`] === scenario.correct).length;
     return { correct, total, percent: total ? Math.round((correct / total) * 100) : 0 };
   }
+  if (config.type === "builder") {
+    const total = config.rounds.length;
+    const correct = config.rounds.filter(round => state.answers[`training-${config.type}-${round.id}`] === round.correct).length;
+    return { correct, total, percent: total ? Math.round((correct / total) * 100) : 0 };
+  }
   return { correct: 0, total: 0, percent: 0 };
+}
+
+function renderSortTrainingBay(config, score) {
+  return `
+    <div class="panel training-bay">
+      <div class="section-title">
+        <h2>${escapeHtml(config.title)}</h2>
+        <p>${score.correct}/${score.total} sorted</p>
+      </div>
+      <p class="small-copy">${escapeHtml(config.subtitle)}</p>
+      <div class="training-lanes">
+        <span class="training-lane-tag good">${escapeHtml(config.leftLabel)}</span>
+        <span class="training-lane-tag">${escapeHtml(config.rightLabel)}</span>
+      </div>
+      <div class="training-grid">
+        ${config.cards.map(card => {
+          const answer = state.answers[`training-sort-${card.id}`];
+          const isCorrect = answer && answer === card.correctBucket;
+          return `
+            <article class="training-card ${answer ? (isCorrect ? "good" : "bad") : ""}">
+              <strong>${escapeHtml(card.text)}</strong>
+              <div class="training-actions">
+                <button type="button" class="choice-button ${answer === "left" ? "selected live-selected" : ""}" onclick="window.ESTPrep.setTrainingChoice('training-sort-${card.id}', 'left')">${escapeHtml(config.leftLabel)}</button>
+                <button type="button" class="choice-button ${answer === "right" ? "selected live-selected" : ""}" onclick="window.ESTPrep.setTrainingChoice('training-sort-${card.id}', 'right')">${escapeHtml(config.rightLabel)}</button>
+              </div>
+              <p class="training-feedback">${answer ? `${isCorrect ? "Strong call." : "Try again mentally."} ${escapeHtml(card.feedback)}` : "Pick the lane that best matches the behaviour."}</p>
+            </article>
+          `;
+        }).join("")}
+      </div>
+    </div>
+  `;
+}
+
+function renderScenarioTrainingBay(config, score) {
+  return `
+    <div class="panel training-bay">
+      <div class="section-title">
+        <h2>${escapeHtml(config.title)}</h2>
+        <p>${score.correct}/${score.total} scenario calls</p>
+      </div>
+      <p class="small-copy">${escapeHtml(config.subtitle)}</p>
+      <div class="training-grid">
+        ${config.scenarios.map(scenario => {
+          const answer = state.answers[`training-scenario-${scenario.id}`];
+          const isCorrect = answer && answer === scenario.correct;
+          return `
+            <article class="training-card ${answer ? (isCorrect ? "good" : "bad") : ""}">
+              <div class="kicker">${escapeHtml(scenario.title)}</div>
+              <p>${escapeHtml(scenario.prompt)}</p>
+              <div class="training-stack">
+                ${scenario.options.map(option => `
+                  <button
+                    type="button"
+                    class="choice-button ${answer === option ? "selected live-selected" : ""}"
+                    onclick="window.ESTPrep.setTrainingChoiceEncoded('training-scenario-${scenario.id}', '${encodeURIComponent(option)}')"
+                  >
+                    <strong>${escapeHtml(option)}</strong>
+                  </button>
+                `).join("")}
+              </div>
+              <p class="training-feedback">${answer ? `${isCorrect ? "Best move." : "Risky move."} ${escapeHtml(scenario.feedback)}` : "Choose the strongest next action."}</p>
+            </article>
+          `;
+        }).join("")}
+      </div>
+    </div>
+  `;
+}
+
+function renderBuilderTrainingBay(config, score) {
+  return `
+    <div class="panel training-bay">
+      <div class="section-title">
+        <h2>${escapeHtml(config.title)}</h2>
+        <p>${score.correct}/${score.total} build choices locked</p>
+      </div>
+      <p class="small-copy">${escapeHtml(config.subtitle)}</p>
+      <div class="builder-grid">
+        ${config.rounds.map(round => {
+          const answer = state.answers[`training-builder-${round.id}`];
+          const isCorrect = answer && answer === round.correct;
+          return `
+            <article class="training-card ${answer ? (isCorrect ? "good" : "bad") : ""}">
+              <div class="kicker">${escapeHtml(round.title)}</div>
+              <p>${escapeHtml(round.prompt)}</p>
+              <div class="training-stack">
+                ${round.options.map(option => `
+                  <button
+                    type="button"
+                    class="choice-button ${answer === option ? "selected live-selected" : ""}"
+                    onclick="window.ESTPrep.setTrainingChoiceEncoded('training-builder-${round.id}', '${encodeURIComponent(option)}')"
+                  >
+                    <strong>${escapeHtml(round.builderLabel || "Best move")}</strong>
+                    <small>${escapeHtml(option)}</small>
+                  </button>
+                `).join("")}
+              </div>
+              <p class="training-feedback">${answer ? `${isCorrect ? "Stronger build." : "This weakens the response."} ${escapeHtml(round.feedback)}` : "Choose the move that would build the strongest EST-style response."}</p>
+            </article>
+          `;
+        }).join("")}
+      </div>
+    </div>
+  `;
 }
 
 function renderTrainingBay(group) {
   const config = getContentTrainingConfig(group.id);
   if (!config) return "";
   const score = getTrainingScore(config);
-  if (config.type === "sort") {
-    return `
-      <div class="panel training-bay">
-        <div class="section-title">
-          <h2>${escapeHtml(config.title)}</h2>
-          <p>${score.correct}/${score.total} sorted</p>
-        </div>
-        <p class="small-copy">${escapeHtml(config.subtitle)}</p>
-        <div class="training-lanes">
-          <span class="training-lane-tag good">${escapeHtml(config.leftLabel)}</span>
-          <span class="training-lane-tag">${escapeHtml(config.rightLabel)}</span>
-        </div>
-        <div class="training-grid">
-          ${config.cards.map(card => {
-            const answer = state.answers[`training-sort-${card.id}`];
-            const isCorrect = answer && answer === card.correctBucket;
-            return `
-              <article class="training-card ${answer ? (isCorrect ? "good" : "bad") : ""}">
-                <strong>${escapeHtml(card.text)}</strong>
-                <div class="training-actions">
-                  <button type="button" class="choice-button ${answer === "left" ? "selected live-selected" : ""}" onclick="window.ESTPrep.setTrainingChoice('training-sort-${card.id}', 'left')">${escapeHtml(config.leftLabel)}</button>
-                  <button type="button" class="choice-button ${answer === "right" ? "selected live-selected" : ""}" onclick="window.ESTPrep.setTrainingChoice('training-sort-${card.id}', 'right')">${escapeHtml(config.rightLabel)}</button>
-                </div>
-                <p class="training-feedback">${answer ? `${isCorrect ? "Strong call." : "Try again mentally."} ${escapeHtml(card.feedback)}` : "Pick the lane that best matches the behaviour."}</p>
-              </article>
-            `;
-          }).join("")}
-        </div>
-      </div>
-    `;
-  }
-
-  if (config.type === "rescue") {
-    return `
-      <div class="panel training-bay">
-        <div class="section-title">
-          <h2>${escapeHtml(config.title)}</h2>
-          <p>${score.correct}/${score.total} rescue calls</p>
-        </div>
-        <p class="small-copy">${escapeHtml(config.subtitle)}</p>
-        <div class="training-grid">
-          ${config.scenarios.map(scenario => {
-            const answer = state.answers[`training-rescue-${scenario.id}`];
-            const isCorrect = answer && answer === scenario.correct;
-            return `
-              <article class="training-card ${answer ? (isCorrect ? "good" : "bad") : ""}">
-                <div class="kicker">${escapeHtml(scenario.title)}</div>
-                <p>${escapeHtml(scenario.prompt)}</p>
-                <div class="training-stack">
-                  ${scenario.options.map(option => `
-                    <button
-                      type="button"
-                      class="choice-button ${answer === option ? "selected live-selected" : ""}"
-                      onclick="window.ESTPrep.setTrainingChoiceEncoded('training-rescue-${scenario.id}', '${encodeURIComponent(option)}')"
-                    >
-                      <strong>${escapeHtml(option)}</strong>
-                    </button>
-                  `).join("")}
-                </div>
-                <p class="training-feedback">${answer ? `${isCorrect ? "Best move." : "Risky move."} ${escapeHtml(scenario.feedback)}` : "Choose the strongest next action."}</p>
-              </article>
-            `;
-          }).join("")}
-        </div>
-      </div>
-    `;
-  }
-
+  if (config.type === "sort") return renderSortTrainingBay(config, score);
+  if (config.type === "scenario") return renderScenarioTrainingBay(config, score);
+  if (config.type === "builder") return renderBuilderTrainingBay(config, score);
   return "";
 }
 
@@ -1098,11 +1249,15 @@ function continueGlossaryRound() {
 }
 
 function returnToLab() {
+  setLabMode(false);
+  setStageMenuMode(false);
   state.selectedStageId = null;
+  state.contentGroupIndex = -1;
   state.glossaryMissionMode = false;
   state.glossaryRoundCelebration = null;
   clearGlossaryTimer();
   syncMissionMode();
+  renderFocusNav();
   renderMap();
   setText("stage-title", "Choose your next challenge");
   setText("stage-subtitle", "Return from the glossary mission and keep building your EST run.");
@@ -1297,32 +1452,32 @@ function renderGlossaryStudyDeck(batch) {
 function renderContentStage() {
   const groups = state.stageDeck?.contentGroups || [];
   const currentGroup = groups[state.contentGroupIndex];
-  if (!currentGroup) return;
+  renderFocusNav();
+  if (!currentGroup) {
+    setStageMenuMode(true);
+    setText("stage-title", "");
+    setText("stage-subtitle", "");
+    renderStageRoot(`
+      <div class="focus-card">
+        <p class="small-copy">Select one curriculum area from the topic menu above to open that focused EST content module.</p>
+      </div>
+    `);
+    return;
+  }
+  setStageMenuMode(false);
   const trainingConfig = getContentTrainingConfig(currentGroup.id);
   const trainingScore = getTrainingScore(trainingConfig);
   setText("stage-title", "EST Content Check");
-  setText("stage-subtitle", "Train the content first, then prove it under pressure.");
+  setText("stage-subtitle", "Train one content strand at a time with a clean, distraction-light interface.");
   renderStageRoot(`
     <div class="question-card">
-      <div class="kicker">Revision Arena</div>
-      <h3>Move through the five EST content strands and bank evidence for each one.</h3>
-      <p>Each strand now runs as a training loop: briefing, practice bay, knowledge check, then a quick EST response for teacher-visible evidence.</p>
-    </div>
-    <div class="choice-grid" style="margin-bottom: 18px;">
-      ${groups.map((group, index) => `
-        <button
-          type="button"
-          class="choice-button ${index === state.contentGroupIndex ? "selected live-selected" : ""}"
-          style="min-height:auto;padding:10px 14px;"
-          onclick="window.ESTPrep.jumpToContentGroup(${index})"
-        >
-          <strong>${index + 1}. ${escapeHtml(group.title)}</strong>
-        </button>
-      `).join("")}
+      <div class="kicker">Focused revision</div>
+      <h3>${escapeHtml(currentGroup.title)}</h3>
+      <p>This lab is dedicated to one revision strand only: briefing, practice, knowledge check, then a short EST response.</p>
     </div>
     <div class="panel">
       <div class="section-title">
-        <h2>${escapeHtml(currentGroup.title)}</h2>
+        <h2>Module briefing</h2>
         <p>EST content strand ${state.contentGroupIndex + 1} of ${groups.length}</p>
       </div>
       <p class="small-copy">${escapeHtml(currentGroup.writePrompt)}</p>
@@ -1358,6 +1513,7 @@ function renderContentStage() {
     </div>
     <div class="written-stage">
       <div style="display:flex;gap:12px;flex-wrap:wrap;">
+        <button class="submit-button" type="button" onclick="window.ESTPrep.openStage('content')">Back to topic menu</button>
         ${state.contentGroupIndex > 0 ? '<button class="submit-button" type="button" onclick="window.ESTPrep.prevContentGroup()">Previous Topic</button>' : ""}
         ${state.contentGroupIndex < groups.length - 1
           ? '<button class="submit-button" type="button" onclick="window.ESTPrep.nextContentGroup()">Next Topic</button>'
@@ -1368,6 +1524,8 @@ function renderContentStage() {
 }
 
 function renderGlossaryStage() {
+  setStageMenuMode(false);
+  renderFocusNav();
   syncMissionMode();
   const batch = getCurrentGlossaryBatch();
   const round = getCurrentGlossaryRound();
@@ -1595,6 +1753,8 @@ function renderGlossaryStage() {
 }
 
 function renderDecoderStage() {
+  setStageMenuMode(false);
+  renderFocusNav();
   const round = state.stageDeck?.decoderRound;
   if (!round) return;
   setText("stage-title", "VTCS Decoder");
@@ -1643,6 +1803,8 @@ function renderDecoderStage() {
 }
 
 function renderBossStage() {
+  setStageMenuMode(false);
+  renderFocusNav();
   const round = state.stageDeck?.bossRound;
   if (!round) return;
   const showdownPair = getBossShowdownPair(round);
@@ -1740,10 +1902,15 @@ function jumpToContentGroup(index) {
   const groups = state.stageDeck?.contentGroups || [];
   if (!groups.length) return;
   const nextIndex = Math.max(0, Math.min(index, groups.length - 1));
-  persistCurrentContentNote();
-  bankCurrentContentDuration();
+  if (state.contentGroupIndex >= 0) {
+    persistCurrentContentNote();
+    bankCurrentContentDuration();
+  }
   state.contentGroupIndex = nextIndex;
+  state.selectedStageId = "content";
+  setLabMode(true);
   renderContentStage();
+  scrollToTopSmooth();
 }
 
 function moveContentGroup(step) {
@@ -1751,6 +1918,8 @@ function moveContentGroup(step) {
 }
 
 function openStage(stageId) {
+  const previousStageId = state.selectedStageId;
+  setLabMode(true);
   if (stageId !== "glossary") {
     state.glossaryMissionMode = false;
     clearGlossaryTimer();
@@ -1760,9 +1929,15 @@ function openStage(stageId) {
   state.lastBossReview = null;
   state.stageStartedAt = Date.now();
   if (stageId === "content") {
-    state.contentGroupIndex = 0;
-    state.contentGroupStartedAt = Date.now();
-    state.contentGroupDurations = {};
+    if (previousStageId === "content" && state.contentGroupIndex >= 0) {
+      persistCurrentContentNote();
+      bankCurrentContentDuration();
+    }
+    state.contentGroupIndex = -1;
+    if (previousStageId !== "content") {
+      state.contentGroupStartedAt = Date.now();
+      state.contentGroupDurations = {};
+    }
   }
   if (stageId === "glossary") {
     state.glossaryMissionMode = true;
@@ -1778,6 +1953,7 @@ function openStage(stageId) {
   if (stageId === "glossary") renderGlossaryStage();
   if (stageId === "decoder") renderDecoderStage();
   if (stageId === "boss") renderBossStage();
+  scrollToTopSmooth();
 }
 
 function getCurrentStageDurationSeconds() {
@@ -2161,11 +2337,17 @@ async function submitContent() {
                   selected: state.answers[`training-sort-${card.id}`] || "",
                   correct_bucket: card.correctBucket
                 }))
-              : trainingConfig.scenarios.map(scenario => ({
-                  item: scenario.prompt,
-                  selected: state.answers[`training-rescue-${scenario.id}`] || "",
-                  correct_answer: scenario.correct
-                }))
+              : trainingConfig.type === "scenario"
+                ? trainingConfig.scenarios.map(scenario => ({
+                    item: scenario.prompt,
+                    selected: state.answers[`training-scenario-${scenario.id}`] || "",
+                    correct_answer: scenario.correct
+                  }))
+                : trainingConfig.rounds.map(round => ({
+                    item: round.prompt,
+                    selected: state.answers[`training-builder-${round.id}`] || "",
+                    correct_answer: round.correct
+                  }))
           }
         : null,
       response: state.answers[`content-note-${group.id}`] || "",
@@ -2390,17 +2572,31 @@ async function submitBoss() {
 }
 
 function returnToTrack() {
+  setLabMode(false);
+  setStageMenuMode(false);
   state.selectedStageId = null;
   state.lastBossReview = null;
+  state.contentGroupIndex = -1;
+  renderFocusNav();
+  renderMap();
   setText("stage-title", "Choose your next challenge");
   setText("stage-subtitle", "Move through the EST Lab to build readiness, confidence, and mark-winning habits.");
   renderStageRoot('<div class="empty-state"><p>Select another stage from the EST Lab Track above.</p></div>');
+  scrollToTopSmooth();
 }
 
 async function init() {
   state.student = getLoggedInStudent();
-  state.bank = await loadBank();
+  const [bank, contentStageConfig] = await Promise.all([
+    loadBank(),
+    loadContentStageConfig()
+  ]);
+  state.bank = bank;
+  state.contentStageConfig = contentStageConfig;
   state.stageDeck = buildStageDeck(state.bank);
+  setLabMode(false);
+  setStageMenuMode(false);
+  renderFocusNav();
   renderHero();
   renderMetrics();
   renderMap();
