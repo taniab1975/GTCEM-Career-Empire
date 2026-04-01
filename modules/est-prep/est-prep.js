@@ -286,6 +286,8 @@ const STAGES = [
   { id: "boss", title: "Boss Round", state: "EST simulation", summary: "Build and justify a mark-worthy EST response with richer feedback.", marks: 8, readiness: 34, credits: 3400, taxRate: 0.1 }
 ];
 
+const HUB_SECTION_IDS = ["hero-section", "metrics-section", "reward-strip", "track-section", "logs-section"];
+
 const state = {
   student: null,
   bank: null,
@@ -305,7 +307,7 @@ const state = {
   taxContribution: 0,
   answers: {},
   lastBossReview: null,
-  contentGroupIndex: 0,
+  contentGroupIndex: -1,
   contentGroupStartedAt: 0,
   contentGroupDurations: {},
   glossaryBoard: [],
@@ -388,6 +390,78 @@ function formatCurrency(value) {
 function setText(id, value) {
   const element = document.getElementById(id);
   if (element) element.textContent = value;
+}
+
+function getStageMeta(stageId) {
+  return STAGES.find(stage => stage.id === stageId) || null;
+}
+
+function getFocusSubtitle() {
+  const stage = getStageMeta(state.selectedStageId);
+  if (!stage) return "Focused EST lab";
+  if (state.selectedStageId !== "content") return `${stage.title} focused mode`;
+  const groups = state.stageDeck?.contentGroups || [];
+  const currentGroup = groups[state.contentGroupIndex];
+  return currentGroup ? `${stage.title} • ${currentGroup.title}` : `${stage.title} topic menu`;
+}
+
+function setLabMode(active) {
+  document.body.classList.toggle("est-lab-mode", active);
+  HUB_SECTION_IDS.forEach(id => {
+    const element = document.getElementById(id);
+    if (element) element.classList.toggle("is-hidden", active);
+  });
+  const stageSection = document.getElementById("stage-section");
+  if (stageSection) stageSection.classList.toggle("is-hidden", !active);
+}
+
+function renderFocusNav() {
+  const container = document.getElementById("focus-nav");
+  if (!container) return;
+  if (!state.selectedStageId) {
+    container.innerHTML = "";
+    return;
+  }
+
+  const groups = state.stageDeck?.contentGroups || [];
+  const currentGroup = groups[state.contentGroupIndex];
+  container.innerHTML = `
+    <div class="focus-toolbar">
+      <button type="button" class="focus-back" onclick="window.ESTPrep.returnToTrack()">← Back to EST Hub</button>
+      <div class="focus-label">${escapeHtml(getFocusSubtitle())}</div>
+    </div>
+    <div class="focus-track">
+      ${STAGES.map(stage => `
+        <button
+          type="button"
+          class="focus-track-button ${state.selectedStageId === stage.id ? "active" : ""}"
+          onclick="window.ESTPrep.openStage('${stage.id}')"
+        >
+          <strong>${escapeHtml(stage.title)}</strong>
+        </button>
+      `).join("")}
+    </div>
+    ${state.selectedStageId === "content" ? `
+      <div class="content-track">
+        <button
+          type="button"
+          class="content-track-button ${currentGroup ? "" : "active"}"
+          onclick="window.ESTPrep.openStage('content')"
+        >
+          <strong>Topic menu</strong>
+        </button>
+        ${groups.map((group, index) => `
+          <button
+            type="button"
+            class="content-track-button ${index === state.contentGroupIndex ? "active" : ""}"
+            onclick="window.ESTPrep.jumpToContentGroup(${index})"
+          >
+            <strong>${escapeHtml(group.title)}</strong>
+          </button>
+        `).join("")}
+      </div>
+    ` : ""}
+  `;
 }
 
 function scrollToTopSmooth() {
@@ -617,7 +691,7 @@ function renderMap() {
         <span>${stage.marks} marks</span>
         <span>${stage.readiness}% readiness</span>
       </div>
-      <button type="button" onclick="window.ESTPrep.openStage('${stage.id}')">${state.completed[stage.id] ? "Review stage" : "Open stage"}</button>
+      <button type="button" onclick="window.ESTPrep.openStage('${stage.id}')">${state.completed[stage.id] ? "Review lab" : "Open lab"}</button>
     </article>
   `).join("");
 }
@@ -1171,11 +1245,14 @@ function continueGlossaryRound() {
 }
 
 function returnToLab() {
+  setLabMode(false);
   state.selectedStageId = null;
+  state.contentGroupIndex = -1;
   state.glossaryMissionMode = false;
   state.glossaryRoundCelebration = null;
   clearGlossaryTimer();
   syncMissionMode();
+  renderFocusNav();
   renderMap();
   setText("stage-title", "Choose your next challenge");
   setText("stage-subtitle", "Return from the glossary mission and keep building your EST run.");
@@ -1370,32 +1447,42 @@ function renderGlossaryStudyDeck(batch) {
 function renderContentStage() {
   const groups = state.stageDeck?.contentGroups || [];
   const currentGroup = groups[state.contentGroupIndex];
-  if (!currentGroup) return;
+  renderFocusNav();
+  if (!currentGroup) {
+    setText("stage-title", "EST Content Check");
+    setText("stage-subtitle", "Choose one revision strand and enter a clean, focused learning space.");
+    renderStageRoot(`
+      <div class="focus-card">
+        <div class="kicker">Revision strands</div>
+        <h3>Pick one content module to open</h3>
+        <p>Each strand opens in its own focused view so students can practise with fewer distractions.</p>
+      </div>
+      <div class="content-grid">
+        ${groups.map((group, index) => `
+          <article class="content-module-card">
+            <div class="kicker">Topic ${index + 1}</div>
+            <h3>${escapeHtml(group.title)}</h3>
+            <p>${escapeHtml(group.writePrompt)}</p>
+            <button class="submit-button" type="button" onclick="window.ESTPrep.jumpToContentGroup(${index})">Open module</button>
+          </article>
+        `).join("")}
+      </div>
+    `);
+    return;
+  }
   const trainingConfig = getContentTrainingConfig(currentGroup.id);
   const trainingScore = getTrainingScore(trainingConfig);
   setText("stage-title", "EST Content Check");
-  setText("stage-subtitle", "Train the content first, then prove it under pressure.");
+  setText("stage-subtitle", "Train one content strand at a time with a clean, distraction-light interface.");
   renderStageRoot(`
     <div class="question-card">
-      <div class="kicker">Revision Arena</div>
-      <h3>Move through the five EST content strands and bank evidence for each one.</h3>
-      <p>Each strand now runs as a training loop: briefing, practice bay, knowledge check, then a quick EST response for teacher-visible evidence.</p>
-    </div>
-    <div class="choice-grid" style="margin-bottom: 18px;">
-      ${groups.map((group, index) => `
-        <button
-          type="button"
-          class="choice-button ${index === state.contentGroupIndex ? "selected live-selected" : ""}"
-          style="min-height:auto;padding:10px 14px;"
-          onclick="window.ESTPrep.jumpToContentGroup(${index})"
-        >
-          <strong>${index + 1}. ${escapeHtml(group.title)}</strong>
-        </button>
-      `).join("")}
+      <div class="kicker">Focused revision</div>
+      <h3>${escapeHtml(currentGroup.title)}</h3>
+      <p>This lab is dedicated to one revision strand only: briefing, practice, knowledge check, then a short EST response.</p>
     </div>
     <div class="panel">
       <div class="section-title">
-        <h2>${escapeHtml(currentGroup.title)}</h2>
+        <h2>Module briefing</h2>
         <p>EST content strand ${state.contentGroupIndex + 1} of ${groups.length}</p>
       </div>
       <p class="small-copy">${escapeHtml(currentGroup.writePrompt)}</p>
@@ -1431,6 +1518,7 @@ function renderContentStage() {
     </div>
     <div class="written-stage">
       <div style="display:flex;gap:12px;flex-wrap:wrap;">
+        <button class="submit-button" type="button" onclick="window.ESTPrep.openStage('content')">Back to topic menu</button>
         ${state.contentGroupIndex > 0 ? '<button class="submit-button" type="button" onclick="window.ESTPrep.prevContentGroup()">Previous Topic</button>' : ""}
         ${state.contentGroupIndex < groups.length - 1
           ? '<button class="submit-button" type="button" onclick="window.ESTPrep.nextContentGroup()">Next Topic</button>'
@@ -1441,6 +1529,7 @@ function renderContentStage() {
 }
 
 function renderGlossaryStage() {
+  renderFocusNav();
   syncMissionMode();
   const batch = getCurrentGlossaryBatch();
   const round = getCurrentGlossaryRound();
@@ -1668,6 +1757,7 @@ function renderGlossaryStage() {
 }
 
 function renderDecoderStage() {
+  renderFocusNav();
   const round = state.stageDeck?.decoderRound;
   if (!round) return;
   setText("stage-title", "VTCS Decoder");
@@ -1716,6 +1806,7 @@ function renderDecoderStage() {
 }
 
 function renderBossStage() {
+  renderFocusNav();
   const round = state.stageDeck?.bossRound;
   if (!round) return;
   const showdownPair = getBossShowdownPair(round);
@@ -1813,10 +1904,15 @@ function jumpToContentGroup(index) {
   const groups = state.stageDeck?.contentGroups || [];
   if (!groups.length) return;
   const nextIndex = Math.max(0, Math.min(index, groups.length - 1));
-  persistCurrentContentNote();
-  bankCurrentContentDuration();
+  if (state.contentGroupIndex >= 0) {
+    persistCurrentContentNote();
+    bankCurrentContentDuration();
+  }
   state.contentGroupIndex = nextIndex;
+  state.selectedStageId = "content";
+  setLabMode(true);
   renderContentStage();
+  scrollToTopSmooth();
 }
 
 function moveContentGroup(step) {
@@ -1824,6 +1920,8 @@ function moveContentGroup(step) {
 }
 
 function openStage(stageId) {
+  const previousStageId = state.selectedStageId;
+  setLabMode(true);
   if (stageId !== "glossary") {
     state.glossaryMissionMode = false;
     clearGlossaryTimer();
@@ -1833,9 +1931,15 @@ function openStage(stageId) {
   state.lastBossReview = null;
   state.stageStartedAt = Date.now();
   if (stageId === "content") {
-    state.contentGroupIndex = 0;
-    state.contentGroupStartedAt = Date.now();
-    state.contentGroupDurations = {};
+    if (previousStageId === "content" && state.contentGroupIndex >= 0) {
+      persistCurrentContentNote();
+      bankCurrentContentDuration();
+    }
+    state.contentGroupIndex = -1;
+    if (previousStageId !== "content") {
+      state.contentGroupStartedAt = Date.now();
+      state.contentGroupDurations = {};
+    }
   }
   if (stageId === "glossary") {
     state.glossaryMissionMode = true;
@@ -1851,6 +1955,7 @@ function openStage(stageId) {
   if (stageId === "glossary") renderGlossaryStage();
   if (stageId === "decoder") renderDecoderStage();
   if (stageId === "boss") renderBossStage();
+  scrollToTopSmooth();
 }
 
 function getCurrentStageDurationSeconds() {
@@ -2469,11 +2574,16 @@ async function submitBoss() {
 }
 
 function returnToTrack() {
+  setLabMode(false);
   state.selectedStageId = null;
   state.lastBossReview = null;
+  state.contentGroupIndex = -1;
+  renderFocusNav();
+  renderMap();
   setText("stage-title", "Choose your next challenge");
   setText("stage-subtitle", "Move through the EST Lab to build readiness, confidence, and mark-winning habits.");
   renderStageRoot('<div class="empty-state"><p>Select another stage from the EST Lab Track above.</p></div>');
+  scrollToTopSmooth();
 }
 
 async function init() {
@@ -2485,6 +2595,8 @@ async function init() {
   state.bank = bank;
   state.contentStageConfig = contentStageConfig;
   state.stageDeck = buildStageDeck(state.bank);
+  setLabMode(false);
+  renderFocusNav();
   renderHero();
   renderMetrics();
   renderMap();
