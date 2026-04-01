@@ -70,7 +70,7 @@ function isAllowedTeacherEmail(email) {
 }
 
 function isValidStudentUsername(username) {
-  return /^[A-Za-z]{1,10}[0-9]{1,6}$/.test(String(username || "").trim());
+  return /^[A-Za-z][A-Za-z0-9]{1,23}$/.test(String(username || "").trim());
 }
 
 function extractEmailDomain(email) {
@@ -520,7 +520,15 @@ function initStudentLogin() {
   const usernameInput = document.getElementById("student-username");
   const feedback = document.getElementById("student-username-feedback");
   const form = document.getElementById("student-login-form");
+  const hubButton = document.getElementById("open-student-hub");
   if (!usernameInput || !form) return;
+
+  const redirectedError = sessionStorage.getItem("student-login-error");
+  if (redirectedError) {
+    feedback.className = "feedback bad";
+    feedback.textContent = redirectedError;
+    sessionStorage.removeItem("student-login-error");
+  }
 
   usernameInput.addEventListener("input", () => {
     const username = usernameInput.value.trim();
@@ -534,16 +542,26 @@ function initStudentLogin() {
       feedback.textContent = "Username format looks good for a student account.";
     } else {
       feedback.className = "feedback warn";
-      feedback.textContent = "Use a first name or initials plus a number, such as Mia27 or TB14.";
+      feedback.textContent = "Use the exact teacher-issued username. Letters and numbers are allowed, but no spaces or email addresses.";
     }
   });
+
+  if (hubButton) {
+    hubButton.addEventListener("click", event => {
+      const authState = readState();
+      if (authState?.studentLogin?.id) return;
+      event.preventDefault();
+      feedback.className = "feedback bad";
+      feedback.textContent = "Please log in successfully before opening the Student Hub.";
+    });
+  }
 
   form.addEventListener("submit", async (event) => {
     event.preventDefault();
     const username = usernameInput.value.trim();
     if (!isValidStudentUsername(username)) {
       feedback.className = "feedback bad";
-      feedback.textContent = "Student login requires a teacher-issued username like Mia27 or TB14.";
+      feedback.textContent = "Use the exact teacher-issued username. Letters and numbers are allowed, but no spaces or email addresses.";
       return;
     }
     const password = document.getElementById("student-password").value;
@@ -717,7 +735,7 @@ function initAddStudents() {
       feedback.textContent = "Username format is valid.";
     } else {
       feedback.className = "feedback warn";
-      feedback.textContent = "Use only letters plus numbers, like Mia27 or TB14. No spaces or email addresses.";
+      feedback.textContent = "Use a teacher-issued username with letters and optional numbers. No spaces or email addresses.";
     }
   });
 
@@ -729,7 +747,7 @@ function initAddStudents() {
     const className = state.classroom?.className || "Current class";
     if (!isValidStudentUsername(username)) {
       feedback.className = "feedback bad";
-      feedback.textContent = "Student usernames must use a first name or initials plus a number.";
+      feedback.textContent = "Student usernames must start with a letter and use only letters or numbers. No spaces or email addresses.";
       return;
     }
     const password = document.getElementById("new-student-password").value.trim() || generateStudentPassword();

@@ -121,6 +121,15 @@ function getTeacherDashboardFilter() {
   return readJsonStorage("career-empire-teacher-dashboard-filter", { scope: "all", classId: "all" });
 }
 
+function requireStudentHubAccess() {
+  if (!document.getElementById("student-hero-title")) return true;
+  const authState = getAuthPrototypeState();
+  if (authState?.studentLogin?.id) return true;
+  sessionStorage.setItem("student-login-error", "Please log in before opening the Student Hub.");
+  window.location.href = "../auth/student-login.html";
+  return false;
+}
+
 function setTeacherDashboardFilter(nextFilter) {
   localStorage.setItem("career-empire-teacher-dashboard-filter", JSON.stringify(nextFilter));
 }
@@ -2035,6 +2044,8 @@ async function initDashboards() {
   }
 }
 
-initDashboards().catch(error => {
-  console.error(error);
-});
+if (requireStudentHubAccess()) {
+  initDashboards().catch(error => {
+    console.error(error);
+  });
+}
