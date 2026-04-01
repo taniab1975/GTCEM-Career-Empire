@@ -1458,12 +1458,8 @@ function renderContentStage() {
     setText("stage-title", "");
     setText("stage-subtitle", "");
     renderStageRoot(`
-      <div class="content-grid content-grid-menu">
-        ${groups.map((group, index) => `
-          <button class="content-module-card content-module-button" type="button" onclick="window.ESTPrep.jumpToContentGroup(${index})">
-            <strong>${index + 1}. ${escapeHtml(group.title)}</strong>
-          </button>
-        `).join("")}
+      <div class="focus-card">
+        <p class="small-copy">Select one curriculum area from the topic menu above to open that focused EST content module.</p>
       </div>
     `);
     return;
