@@ -20,21 +20,21 @@ const DEFAULT_CONTENT_TOPIC_GROUPS = [
   },
   {
     id: "time-management",
-    title: "Time Management Skills - Plan and Prioritise Tasks to Meet Specific Deadlines",
+    title: "Time Management Skills - Plan and prioritise tasks to meet deadlines",
     topics: ["Time management", "Time-management tools", "Managing multiple tasks"],
     writePrompt: "Write one or two EST-ready sentences explaining how a student or worker can plan and prioritise tasks to meet deadlines.",
     sampleResponse: "Time management involves planning ahead, prioritising urgent tasks, and using tools such as calendars, lists, or reminders to stay organised. This helps a person meet deadlines because responsibilities are visible, manageable, and easier to adjust when circumstances change."
   },
   {
     id: "personal-finance",
-    title: "Strategies to Manage Personal Finance, Including Budgeting and Seeking Assistance, and Unexpected Life Events Including Changes to Financial Circumstances",
+    title: "Managing personal finance, budgeting, seeking assistance, unexpected financial events inc changes to financial circumstance",
     topics: ["Budgeting", "Tracking money in and out", "Seeking assistance", "Unexpected life events", "Responding to changed financial circumstances"],
     writePrompt: "Write one or two EST-ready sentences explaining how budgeting and seeking assistance support personal financial management.",
     sampleResponse: "Budgeting helps a person balance income and expenses, identify unnecessary spending, and plan for unexpected events. Seeking assistance from trusted services or experts also supports financial management because it provides reliable advice and helps people make informed decisions."
   },
   {
     id: "job-application",
-    title: "Purpose of a Cover Letter, STAR, and Techniques to Address Selection Criteria",
+    title: "Cover Letters, STAR and Addressing Selection Criteria",
     topics: ["Cover letter purpose", "Selection criteria", "STAR method"],
     writePrompt: "Write one or two EST-ready sentences explaining how STAR helps an applicant address selection criteria effectively.",
     sampleResponse: "The STAR method helps applicants address selection criteria by structuring examples into Situation, Task, Action, and Result. This makes a response clearer because the employer can see exactly what the applicant did and what outcome was achieved."
@@ -415,6 +415,11 @@ function setLabMode(active) {
   if (stageSection) stageSection.classList.toggle("is-hidden", !active);
 }
 
+function setStageMenuMode(active) {
+  const stageSection = document.getElementById("stage-section");
+  if (stageSection) stageSection.classList.toggle("menu-mode", active);
+}
+
 function renderFocusNav() {
   const container = document.getElementById("focus-nav");
   if (!container) return;
@@ -425,11 +430,13 @@ function renderFocusNav() {
 
   const groups = state.stageDeck?.contentGroups || [];
   const currentGroup = groups[state.contentGroupIndex];
+  const contentMenuPrompt = "Choose an EST curriculum content area below";
   container.innerHTML = `
     <div class="focus-toolbar">
       <button type="button" class="focus-back" onclick="window.ESTPrep.returnToTrack()">← Back to EST Hub</button>
-      <div class="focus-label">${escapeHtml(getFocusSubtitle())}</div>
+      <div class="focus-label">${state.selectedStageId === "content" && !currentGroup ? "Choose an EST curriculum content area below" : escapeHtml(getFocusSubtitle())}</div>
     </div>
+    <div class="focus-intro">You're in the EST Preparation module.</div>
     <div class="focus-track">
       ${STAGES.map(stage => `
         <button
@@ -442,21 +449,18 @@ function renderFocusNav() {
       `).join("")}
     </div>
     ${state.selectedStageId === "content" ? `
-      <div class="content-track">
-        <button
-          type="button"
-          class="content-track-button ${currentGroup ? "" : "active"}"
-          onclick="window.ESTPrep.openStage('content')"
-        >
-          <strong>Topic menu</strong>
-        </button>
+      <div class="content-track-title-row">
+        <div class="content-track-title">Topic Menu</div>
+        <div class="content-track-subtitle">${escapeHtml(currentGroup ? currentGroup.title : contentMenuPrompt)}</div>
+      </div>
+      <div class="content-track content-track-menu ${currentGroup ? "has-selection" : ""}">
         ${groups.map((group, index) => `
           <button
             type="button"
             class="content-track-button ${index === state.contentGroupIndex ? "active" : ""}"
             onclick="window.ESTPrep.jumpToContentGroup(${index})"
           >
-            <strong>${escapeHtml(group.title)}</strong>
+            <strong>${index + 1}. ${escapeHtml(group.title)}</strong>
           </button>
         `).join("")}
       </div>
@@ -1246,6 +1250,7 @@ function continueGlossaryRound() {
 
 function returnToLab() {
   setLabMode(false);
+  setStageMenuMode(false);
   state.selectedStageId = null;
   state.contentGroupIndex = -1;
   state.glossaryMissionMode = false;
@@ -1449,27 +1454,21 @@ function renderContentStage() {
   const currentGroup = groups[state.contentGroupIndex];
   renderFocusNav();
   if (!currentGroup) {
-    setText("stage-title", "EST Content Check");
-    setText("stage-subtitle", "Choose one revision strand and enter a clean, focused learning space.");
+    setStageMenuMode(true);
+    setText("stage-title", "");
+    setText("stage-subtitle", "");
     renderStageRoot(`
-      <div class="focus-card">
-        <div class="kicker">Revision strands</div>
-        <h3>Pick one content module to open</h3>
-        <p>Each strand opens in its own focused view so students can practise with fewer distractions.</p>
-      </div>
-      <div class="content-grid">
+      <div class="content-grid content-grid-menu">
         ${groups.map((group, index) => `
-          <article class="content-module-card">
-            <div class="kicker">Topic ${index + 1}</div>
-            <h3>${escapeHtml(group.title)}</h3>
-            <p>${escapeHtml(group.writePrompt)}</p>
-            <button class="submit-button" type="button" onclick="window.ESTPrep.jumpToContentGroup(${index})">Open module</button>
-          </article>
+          <button class="content-module-card content-module-button" type="button" onclick="window.ESTPrep.jumpToContentGroup(${index})">
+            <strong>${index + 1}. ${escapeHtml(group.title)}</strong>
+          </button>
         `).join("")}
       </div>
     `);
     return;
   }
+  setStageMenuMode(false);
   const trainingConfig = getContentTrainingConfig(currentGroup.id);
   const trainingScore = getTrainingScore(trainingConfig);
   setText("stage-title", "EST Content Check");
@@ -1529,6 +1528,7 @@ function renderContentStage() {
 }
 
 function renderGlossaryStage() {
+  setStageMenuMode(false);
   renderFocusNav();
   syncMissionMode();
   const batch = getCurrentGlossaryBatch();
@@ -1757,6 +1757,7 @@ function renderGlossaryStage() {
 }
 
 function renderDecoderStage() {
+  setStageMenuMode(false);
   renderFocusNav();
   const round = state.stageDeck?.decoderRound;
   if (!round) return;
@@ -1806,6 +1807,7 @@ function renderDecoderStage() {
 }
 
 function renderBossStage() {
+  setStageMenuMode(false);
   renderFocusNav();
   const round = state.stageDeck?.bossRound;
   if (!round) return;
@@ -2575,6 +2577,7 @@ async function submitBoss() {
 
 function returnToTrack() {
   setLabMode(false);
+  setStageMenuMode(false);
   state.selectedStageId = null;
   state.lastBossReview = null;
   state.contentGroupIndex = -1;
@@ -2596,6 +2599,7 @@ async function init() {
   state.contentStageConfig = contentStageConfig;
   state.stageDeck = buildStageDeck(state.bank);
   setLabMode(false);
+  setStageMenuMode(false);
   renderFocusNav();
   renderHero();
   renderMetrics();
