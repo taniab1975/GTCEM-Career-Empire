@@ -1,0 +1,241 @@
+{
+  "topicGroups": [
+    {
+      "id": "initiative",
+      "title": "Enterprise Behaviours - Initiative",
+      "topics": [
+        "Initiative",
+        "Being proactive",
+        "Improving work practices",
+        "Helping fellow workers",
+        "Seeking more responsibilities"
+      ],
+      "writePrompt": "Write one or two EST-ready sentences explaining how initiative can be shown in a workplace situation.",
+      "sampleResponse": "Initiative can be shown when a worker acts proactively, suggests improvements, helps colleagues, or volunteers for extra responsibilities before being told. This matters because it improves productivity and shows the worker can contribute positively to the workplace."
+    },
+    {
+      "id": "time-management",
+      "title": "Time Management Skills - Plan and Prioritise Tasks to Meet Specific Deadlines",
+      "topics": [
+        "Time management",
+        "Time-management tools",
+        "Managing multiple tasks"
+      ],
+      "writePrompt": "Write one or two EST-ready sentences explaining how a student or worker can plan and prioritise tasks to meet deadlines.",
+      "sampleResponse": "Time management involves planning ahead, prioritising urgent tasks, and using tools such as calendars, lists, or reminders to stay organised. This helps a person meet deadlines because responsibilities are visible, manageable, and easier to adjust when circumstances change."
+    },
+    {
+      "id": "personal-finance",
+      "title": "Strategies to Manage Personal Finance, Including Budgeting and Seeking Assistance, and Unexpected Life Events Including Changes to Financial Circumstances",
+      "topics": [
+        "Budgeting",
+        "Tracking money in and out",
+        "Seeking assistance",
+        "Unexpected life events",
+        "Responding to changed financial circumstances"
+      ],
+      "writePrompt": "Write one or two EST-ready sentences explaining how budgeting and seeking assistance support personal financial management.",
+      "sampleResponse": "Budgeting helps a person balance income and expenses, identify unnecessary spending, and plan for unexpected events. Seeking assistance from trusted services or experts also supports financial management because it provides reliable advice and helps people make informed decisions."
+    },
+    {
+      "id": "job-application",
+      "title": "Purpose of a Cover Letter, STAR, and Techniques to Address Selection Criteria",
+      "topics": [
+        "Cover letter purpose",
+        "Selection criteria",
+        "STAR method"
+      ],
+      "writePrompt": "Write one or two EST-ready sentences explaining how STAR helps an applicant address selection criteria effectively.",
+      "sampleResponse": "The STAR method helps applicants address selection criteria by structuring examples into Situation, Task, Action, and Result. This makes a response clearer because the employer can see exactly what the applicant did and what outcome was achieved."
+    },
+    {
+      "id": "communication",
+      "title": "Communication Skills",
+      "topics": [
+        "Communication skills",
+        "Non-verbal communication",
+        "Active listening"
+      ],
+      "writePrompt": "Write one or two EST-ready sentences explaining how communication skills can be applied in a workplace or interview situation.",
+      "sampleResponse": "Communication skills can be applied by using clear verbal language, active listening, and appropriate non-verbal communication for the audience and purpose. This is important because it reduces misunderstandings, builds rapport, and helps tasks or interviews run more effectively."
+    }
+  ],
+  "trainingBays": {
+    "initiative": {
+      "type": "sort",
+      "title": "Signal Sort",
+      "subtitle": "Sort the workplace moves into strong initiative or weak initiative.",
+      "leftLabel": "Shows initiative",
+      "rightLabel": "Needs more initiative",
+      "cards": [
+        {
+          "id": "initiative-stock",
+          "text": "A worker notices stock is running low and restocks before customers complain.",
+          "correctBucket": "left",
+          "feedback": "This is proactive. The worker spots a problem early and acts without being told."
+        },
+        {
+          "id": "initiative-wait",
+          "text": "A worker sees a spill but leaves it until a supervisor gives exact instructions.",
+          "correctBucket": "right",
+          "feedback": "This is passive, not initiative. Waiting can create safety issues and delays."
+        },
+        {
+          "id": "initiative-improve",
+          "text": "A worker suggests a faster way to label items so the whole team saves time.",
+          "correctBucket": "left",
+          "feedback": "Improving work practices is a clear sign of initiative and problem-solving."
+        },
+        {
+          "id": "initiative-avoid",
+          "text": "A worker avoids new tasks because they might make a mistake.",
+          "correctBucket": "right",
+          "feedback": "Avoiding responsibility limits learning and does not show initiative."
+        }
+      ]
+    },
+    "time-management": {
+      "type": "sort",
+      "title": "Deadline Dash",
+      "subtitle": "Sort each move into strong planning or weak planning.",
+      "leftLabel": "Strong planning",
+      "rightLabel": "Weak planning",
+      "cards": [
+        {
+          "id": "time-plan",
+          "text": "A student lists tasks, prioritises the urgent ones, and sets reminders.",
+          "correctBucket": "left",
+          "feedback": "This shows planning and prioritising, which is the heart of time management."
+        },
+        {
+          "id": "time-easiest",
+          "text": "A worker does the easiest task first and ignores the deadline order.",
+          "correctBucket": "right",
+          "feedback": "Doing easy tasks first can create bigger problems if urgent tasks are ignored."
+        },
+        {
+          "id": "time-adjust",
+          "text": "A worker checks progress and adjusts the plan when a delivery is delayed.",
+          "correctBucket": "left",
+          "feedback": "Good time management is flexible. Monitoring and adjusting helps meet deadlines."
+        },
+        {
+          "id": "time-memory",
+          "text": "A student keeps everything in their head and does not write deadlines down.",
+          "correctBucket": "right",
+          "feedback": "Relying only on memory makes it easier to miss tasks and deadlines."
+        }
+      ]
+    },
+    "personal-finance": {
+      "type": "scenario",
+      "title": "Scenario Rescue",
+      "subtitle": "Choose the strongest next move when life events affect money and planning.",
+      "scenarios": [
+        {
+          "id": "finance-shifts",
+          "title": "Reduced shifts",
+          "prompt": "Your work hours are cut suddenly and your phone bill plus transport costs are due next week.",
+          "options": [
+            "Review the budget, prioritise essentials, and cut non-essential spending straight away.",
+            "Keep spending normally and hope the next roster fixes the problem.",
+            "Ignore the bills until a family member notices."
+          ],
+          "correct": "Review the budget, prioritise essentials, and cut non-essential spending straight away.",
+          "feedback": "Strong response. The first move is to review income and expenses so the situation is clear."
+        },
+        {
+          "id": "finance-support",
+          "title": "Unexpected expense",
+          "prompt": "Your car needs urgent repairs and you are unsure how to cover the cost without missing rent.",
+          "options": [
+            "Seek reliable assistance early and look at payment options, support services, or temporary income.",
+            "Use random advice from social media and avoid asking for help.",
+            "Spend more on non-essential items to feel better before dealing with it."
+          ],
+          "correct": "Seek reliable assistance early and look at payment options, support services, or temporary income.",
+          "feedback": "Strong response. Seeking assistance helps avoid bigger mistakes and opens up practical options."
+        }
+      ]
+    },
+    "job-application": {
+      "type": "builder",
+      "title": "Application Forge",
+      "subtitle": "Build stronger job application responses by choosing the move that earns more marks.",
+      "rounds": [
+        {
+          "id": "job-cover-letter",
+          "title": "Cover letter purpose",
+          "prompt": "You are applying for a retail role. What makes the cover letter strongest?",
+          "options": [
+            "Mention the specific job advertisement, explain why you are applying, and highlight your suitability briefly.",
+            "Write a generic note that never names the role because it can be reused anywhere.",
+            "Repeat the resume word for word without linking it to the employer."
+          ],
+          "correct": "Mention the specific job advertisement, explain why you are applying, and highlight your suitability briefly.",
+          "feedback": "Strong response. A cover letter should target the specific role and make a positive first impression.",
+          "builderLabel": "Best opening move"
+        },
+        {
+          "id": "job-star",
+          "title": "Selection criteria",
+          "prompt": "You need to respond to teamwork selection criteria in an interview. What should you do?",
+          "options": [
+            "Use STAR so the employer can see the situation, task, action, and result clearly.",
+            "Give a vague answer because details might sound like bragging.",
+            "Talk only about what the team did and leave out your own action."
+          ],
+          "correct": "Use STAR so the employer can see the situation, task, action, and result clearly.",
+          "feedback": "Strong response. STAR helps structure evidence so the response is clear and relevant.",
+          "builderLabel": "Best response structure"
+        },
+        {
+          "id": "job-interview",
+          "title": "Interview communication",
+          "prompt": "The interviewer asks a question you did not fully understand. What is the best move?",
+          "options": [
+            "Ask politely for clarification so you can answer the actual question well.",
+            "Guess what they meant and answer quickly so you sound confident.",
+            "Stay silent and hope they move to the next question."
+          ],
+          "correct": "Ask politely for clarification so you can answer the actual question well.",
+          "feedback": "Strong response. Clarifying shows active listening and improves answer accuracy.",
+          "builderLabel": "Best interview move"
+        }
+      ]
+    },
+    "communication": {
+      "type": "sort",
+      "title": "Communication Radar",
+      "subtitle": "Sort the behaviours into effective communication or weak communication.",
+      "leftLabel": "Effective communication",
+      "rightLabel": "Weak communication",
+      "cards": [
+        {
+          "id": "comm-listen",
+          "text": "A worker listens fully, nods, and asks, 'Do you mean these arranged by size?'",
+          "correctBucket": "left",
+          "feedback": "This shows active listening because the worker checks understanding before acting."
+        },
+        {
+          "id": "comm-phone",
+          "text": "A team member checks their phone while a customer explains the issue.",
+          "correctBucket": "right",
+          "feedback": "This weakens communication because it suggests poor listening and low respect."
+        },
+        {
+          "id": "comm-tone",
+          "text": "An applicant uses calm tone, eye contact, and clear language in an interview.",
+          "correctBucket": "left",
+          "feedback": "This combines verbal and non-verbal communication to build rapport and clarity."
+        },
+        {
+          "id": "comm-slang",
+          "text": "A worker uses slang and rushed explanations with a confused customer.",
+          "correctBucket": "right",
+          "feedback": "Messages should suit the audience. Unclear language creates misunderstandings."
+        }
+      ]
+    }
+  }
+}
