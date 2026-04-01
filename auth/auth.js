@@ -1,5 +1,6 @@
 const ALLOWED_TEACHER_DOMAINS = ["cewa.edu.au", "education.wa.edu.au"];
 const AUTH_DEMO_STATE_KEY = "career-empire-auth-demo";
+const PLAYER_SESSION_KEY = "career-empire-session";
 
 async function getSupabaseClientOrNull() {
   if (!window.CareerEmpireSupabase || typeof window.CareerEmpireSupabase.getClient !== "function") {
@@ -25,6 +26,26 @@ function writeState(patch) {
   const next = { ...readState(), ...patch };
   localStorage.setItem(AUTH_DEMO_STATE_KEY, JSON.stringify(next));
   return next;
+}
+
+function syncStudentPlayerSession(student) {
+  if (!student?.id) return;
+  let existing = {};
+  try {
+    existing = JSON.parse(localStorage.getItem(PLAYER_SESSION_KEY) || "{}");
+  } catch (_) {
+    existing = {};
+  }
+  const sameStudent = existing.studentId === student.id;
+  const next = sameStudent ? { ...existing } : {};
+  next.studentId = student.id;
+  next.username = student.username || "";
+  next.playerName = student.display_name || student.username || "Student";
+  next.schoolName = student.schools?.name || "";
+  next.classId = student.class_id || null;
+  next.classCode = student.classes?.class_code || "";
+  next.className = student.classes?.name || "";
+  localStorage.setItem(PLAYER_SESSION_KEY, JSON.stringify(next));
 }
 
 function redirectAfterDelay(path, delayMs = 900) {
@@ -565,8 +586,15 @@ function initStudentLogin() {
           className: student.classes?.name || "",
           createdByTeacherId: student.created_by_teacher_id,
           loggedInAt: new Date().toISOString()
-        }
+        },
+        classroom: student.class_id ? {
+          id: student.class_id,
+          classCode: student.classes?.class_code || "",
+          name: student.classes?.name || ""
+        } : null
       });
+
+      syncStudentPlayerSession(student);
 
       feedback.className = "feedback good";
       feedback.textContent = `Welcome, ${student.display_name}. Redirecting you to your student hub.`;

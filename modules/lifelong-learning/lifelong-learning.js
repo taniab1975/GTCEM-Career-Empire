@@ -275,6 +275,18 @@ function writePlayerSession(patch) {
   localStorage.setItem(PLAYER_SESSION_KEY, JSON.stringify(next));
 }
 
+function shouldWarnBeforeLeaving() {
+  return Boolean(Object.keys(state.completed).length || state.selectedRoundId || state.resources.purchasedUpgrades.length);
+}
+
+function registerLeaveWarning() {
+  window.addEventListener("beforeunload", event => {
+    if (!shouldWarnBeforeLeaving()) return;
+    event.preventDefault();
+    event.returnValue = "";
+  });
+}
+
 async function getLoggedInStudent() {
   const authState = getAuthState();
   const studentLogin = authState.studentLogin;
@@ -976,7 +988,8 @@ async function saveRoundProgress(round, choice, outcome, reflection, correct) {
   const authState = getAuthState();
   const studentLogin = authState.studentLogin;
   const classroom = authState.classroom;
-  if (!supabase || !studentLogin?.id || !classroom?.id) return;
+  const classId = classroom?.id || studentLogin?.classId || null;
+  if (!supabase || !studentLogin?.id) return;
 
   const roundsCompleted = Object.keys(state.completed).length;
   const completionPercent = Math.round((roundsCompleted / ROUNDS.length) * 100);
@@ -991,6 +1004,7 @@ async function saveRoundProgress(round, choice, outcome, reflection, correct) {
     .from("student_module_progress")
     .upsert({
       student_id: studentLogin.id,
+      class_id: classId,
       module_id: MODULE_ID,
       completion_percent: completionPercent,
       mastery_percent: masteryPercent,
@@ -1015,7 +1029,7 @@ async function saveRoundProgress(round, choice, outcome, reflection, correct) {
     .from("assessment_evidence")
     .insert({
       student_id: studentLogin.id,
-      class_id: classroom.id,
+      class_id: classId,
       module_id: MODULE_ID,
       evidence_type: round.evidenceType,
       prompt: round.prompt,
@@ -1131,6 +1145,7 @@ async function hydrateFromSupabase() {
 async function init() {
   state.student = await getLoggedInStudent();
   await hydrateFromSupabase();
+  registerLeaveWarning();
   renderHero();
   renderMetrics();
   renderResourceBoard();
