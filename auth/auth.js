@@ -85,6 +85,33 @@ function generateStudentPassword() {
   return Math.random().toString(36).slice(2, 8).toUpperCase();
 }
 
+function generateStudentUsernameSuggestions(displayName) {
+  const cleaned = String(displayName || "").replace(/[^A-Za-z\s]/g, " ").trim();
+  if (!cleaned) return [];
+  const parts = cleaned.split(/\s+/).filter(Boolean);
+  const first = (parts[0] || "").slice(0, 12);
+  const second = (parts[1] || "").slice(0, 4);
+  const suggestions = new Set();
+  if (!first) return [];
+
+  suggestions.add(first);
+  if (second) {
+    suggestions.add(`${first}${second.slice(0, 1)}`);
+    suggestions.add(`${first}${second.slice(0, 2)}`);
+    suggestions.add(`${first}${second.slice(0, 2)}1`);
+    suggestions.add(`${first}${second.slice(0, 3)}`);
+  } else {
+    suggestions.add(`${first}1`);
+    suggestions.add(`${first}2`);
+  }
+
+  return [...suggestions]
+    .map(item => item.replace(/[^A-Za-z0-9]/g, "").slice(0, 24))
+    .filter(item => item.length >= 2)
+    .filter(isValidStudentUsername)
+    .slice(0, 4);
+}
+
 async function hashValue(value) {
   const data = new TextEncoder().encode(value);
   const hashBuffer = await crypto.subtle.digest("SHA-256", data);
@@ -281,15 +308,24 @@ async function getTeacherProfileByEmail(supabase, email) {
   return data;
 }
 
-async function getStudentProfileByUsername(supabase, username) {
+async function findStudentProfilesByUsername(supabase, username) {
+  const normalized = String(username || "").trim();
   const { data, error } = await supabase
     .from("students")
     .select("id, display_name, username, password_hash, school_id, class_id, created_by_teacher_id, is_active, classes(class_code, name), schools(name)")
-    .eq("username", username)
-    .maybeSingle();
+    .ilike("username", normalized)
+    .limit(2);
 
   if (error) throw error;
-  return data;
+  return data || [];
+}
+
+async function getStudentProfileByUsername(supabase, username) {
+  const matches = await findStudentProfilesByUsername(supabase, username);
+  if (matches.length > 1) {
+    throw new Error("Duplicate username detected. Please ask your teacher to assign a unique username.");
+  }
+  return matches[0] || null;
 }
 
 async function requireLoggedInTeacher(supabase) {
@@ -574,13 +610,16 @@ function initStudentLogin() {
 
     try {
       const student = await getStudentProfileByUsername(supabase, username);
-      if (!student || !student.is_active) {
-        throw new Error("Student account not found or inactive.");
+      if (!student) {
+        throw new Error("Incorrect username.");
+      }
+      if (!student.is_active) {
+        throw new Error("This student account is inactive.");
       }
 
       const candidateHash = await hashValue(password);
       if (candidateHash !== student.password_hash) {
-        throw new Error("Incorrect username or password.");
+        throw new Error("Incorrect password.");
       }
 
       await ensurePlayerProfile(supabase, student.id);
@@ -683,11 +722,13 @@ function initCreateClass() {
 
 function initAddStudents() {
   const form = document.getElementById("add-student-form");
+  const displayNameInput = document.getElementById("new-student-display-name");
   const usernameInput = document.getElementById("new-student-username");
   const feedback = document.getElementById("new-student-feedback");
+  const suggestionBox = document.getElementById("new-student-username-suggestions");
   const list = document.getElementById("generated-students");
   const generatedCredentials = document.getElementById("generated-student-credentials");
-  if (!form || !usernameInput || !list) return;
+  if (!form || !displayNameInput || !usernameInput || !list) return;
 
   const render = async () => {
     const supabase = await getSupabaseClientOrNull();
@@ -739,6 +780,19 @@ function initAddStudents() {
     }
   });
 
+  const renderUsernameSuggestions = () => {
+    if (!suggestionBox) return;
+    const suggestions = generateStudentUsernameSuggestions(displayNameInput.value.trim());
+    if (!suggestions.length) {
+      suggestionBox.textContent = "Suggested pattern: Firstname + surname initial or extra surname letters, for example MarkT or MarkTh1.";
+      return;
+    }
+    suggestionBox.innerHTML = `Suggestions: ${suggestions.map(item => `<strong>${item}</strong>`).join(" · ")}`;
+  };
+
+  displayNameInput.addEventListener("input", renderUsernameSuggestions);
+  renderUsernameSuggestions();
+
   form.addEventListener("submit", async (event) => {
     event.preventDefault();
     const displayName = document.getElementById("new-student-display-name").value.trim();
@@ -762,6 +816,11 @@ function initAddStudents() {
       const { teacher } = await requireLoggedInTeacher(supabase);
       if (!state.classroom?.id) {
         throw new Error("Create a class before adding students.");
+      }
+
+      const existingMatches = await findStudentProfilesByUsername(supabase, username);
+      if (existingMatches.length) {
+        throw new Error(`Username "${username}" is already in use. Please choose a different student username.`);
       }
 
       const passwordHash = await hashValue(password);
