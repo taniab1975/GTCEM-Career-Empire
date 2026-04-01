@@ -363,6 +363,18 @@ function writePlayerSession(patch) {
   return next;
 }
 
+function shouldWarnBeforeLeaving() {
+  return Boolean(state.selectedStageId || Object.keys(state.completed).length || state.evidenceLog.length);
+}
+
+function registerLeaveWarning() {
+  window.addEventListener("beforeunload", event => {
+    if (!shouldWarnBeforeLeaving()) return;
+    event.preventDefault();
+    event.returnValue = "";
+  });
+}
+
 async function getSupabaseClientOrNull() {
   if (!window.CareerEmpireSupabase || typeof window.CareerEmpireSupabase.getClient !== "function") {
     return null;
@@ -2262,6 +2274,56 @@ async function saveProgress(checkpoint, evidenceType = "artifact", evidenceText 
   }
 }
 
+function inferStageFromEvidence(row) {
+  const type = String(row?.evidence_type || "").toLowerCase();
+  const prompt = String(row?.prompt || "").toLowerCase();
+  if (type === "revision-check" || prompt.includes("revision-arena")) return "content";
+  if (type === "glossary-check" || prompt.includes("glossary-lock-in")) return "glossary";
+  if (type === "decoder-breakdown" || prompt.includes("decoder-drill")) return "decoder";
+  if (type === "est-response" || prompt.includes("boss-round")) return "boss";
+  return null;
+}
+
+function getEvidencePreview(row) {
+  try {
+    const parsed = JSON.parse(row?.response_text || "");
+    return parsed.response_text || parsed.prompt_text || row?.prompt || "Saved response";
+  } catch (_) {
+    return String(row?.response_text || row?.prompt || "Saved response");
+  }
+}
+
+async function hydrateFromSupabase() {
+  const student = state.student;
+  if (!student?.id) return;
+
+  const supabase = await getSupabaseClientOrNull();
+  if (!supabase) return;
+
+  const { data: evidenceRows, error: evidenceError } = await supabase
+    .from("assessment_evidence")
+    .select("evidence_type, prompt, response_text, created_at")
+    .eq("student_id", student.id)
+    .eq("module_id", MODULE_ID)
+    .order("created_at", { ascending: true });
+
+  if (evidenceError) {
+    console.error(evidenceError);
+    return;
+  }
+
+  if (Array.isArray(evidenceRows) && evidenceRows.length) {
+    state.evidenceLog = evidenceRows.map(row => {
+      const stageId = inferStageFromEvidence(row);
+      if (stageId) state.completed[stageId] = true;
+      return {
+        title: stageId ? `${STAGES.find(stage => stage.id === stageId)?.title || "Saved stage"} saved` : "Saved EST progress",
+        detail: getEvidencePreview(row).slice(0, 160)
+      };
+    });
+  }
+}
+
 function showFeedbackBox(type, lines, extraHtml = "") {
   renderStageRoot(`
     <div class="feedback-box ${type}">
@@ -2646,6 +2708,8 @@ function returnToTrack() {
 
 async function init() {
   state.student = getLoggedInStudent();
+  registerLeaveWarning();
+  await hydrateFromSupabase();
   const [bank, contentStageConfig] = await Promise.all([
     loadBank(),
     loadContentStageConfig()
