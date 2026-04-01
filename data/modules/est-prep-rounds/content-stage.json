@@ -3,6 +3,15 @@
     {
       "id": "initiative",
       "title": "Enterprise Behaviours - Initiative",
+      "introTitle": "Initiative In Action",
+      "introSummary": "This strand focuses on acting early, improving work, helping others, and stepping up before being told.",
+      "introImage": "../../remotion-est-scenes/public/est-assets/game-images/Siena.png",
+      "introVideo": "../../Assets/videos/est-intros/initiative.mp4",
+      "introHighlights": [
+        "Be proactive",
+        "Improve work practices",
+        "Help fellow workers"
+      ],
       "topics": [
         "Initiative",
         "Being proactive",
@@ -16,6 +25,14 @@
     {
       "id": "time-management",
       "title": "Time Management Skills - Plan and prioritise tasks to meet deadlines",
+      "introTitle": "Plan, Prioritise, Deliver",
+      "introSummary": "This strand is about ordering tasks clearly, using tools well, and adjusting when deadlines shift.",
+      "introImage": "../../Assets/employability-logos/main/time-management.png",
+      "introHighlights": [
+        "Plan ahead",
+        "Use productivity tools",
+        "Adjust when priorities change"
+      ],
       "topics": [
         "Time management",
         "Time-management tools",
@@ -27,6 +44,14 @@
     {
       "id": "personal-finance",
       "title": "Managing personal finance, budgeting, seeking assistance, unexpected financial events inc changes to financial circumstance",
+      "introTitle": "Money Decisions Under Pressure",
+      "introSummary": "This strand trains budgeting, seeking support, and responding to financial changes without panic.",
+      "introImage": "../../Assets/employability-logos/main/problem-solving.png",
+      "introHighlights": [
+        "Balance income and expenses",
+        "Seek reliable assistance",
+        "Respond to life events"
+      ],
       "topics": [
         "Budgeting",
         "Tracking money in and out",
@@ -40,6 +65,14 @@
     {
       "id": "job-application",
       "title": "Cover Letters, STAR and Addressing Selection Criteria",
+      "introTitle": "Build Stronger Applications",
+      "introSummary": "This strand focuses on cover letters, STAR responses, and evidence-rich answers to selection criteria.",
+      "introImage": "../../Assets/employability-logos/main/critical-thinking.png",
+      "introHighlights": [
+        "Target the role",
+        "Use STAR clearly",
+        "Show your evidence"
+      ],
       "topics": [
         "Cover letter purpose",
         "Selection criteria",
@@ -51,6 +84,15 @@
     {
       "id": "communication",
       "title": "Communication Skills",
+      "introTitle": "Communication That Moves Work Forward",
+      "introSummary": "This strand focuses on clear messages, active listening, and communication that suits the audience and situation.",
+      "introImage": "../../remotion-est-scenes/public/est-assets/game-images/Teresa.png",
+      "introVideo": "../../Assets/employability-logos/ECC_Communications Skills (4).mp4",
+      "introHighlights": [
+        "Listen actively",
+        "Check understanding",
+        "Use clear language"
+      ],
       "topics": [
         "Communication skills",
         "Non-verbal communication",

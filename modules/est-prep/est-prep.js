@@ -308,6 +308,7 @@ const state = {
   answers: {},
   lastBossReview: null,
   contentGroupIndex: -1,
+  contentView: "menu",
   contentGroupStartedAt: 0,
   contentGroupDurations: {},
   glossaryBoard: [],
@@ -458,7 +459,7 @@ function renderFocusNav() {
           <button
             type="button"
             class="content-track-button ${index === state.contentGroupIndex ? "active" : ""}"
-            onclick="window.ESTPrep.jumpToContentGroup(${index})"
+            onclick="window.ESTPrep.openContentGroupIntro(${index})"
           >
             <strong>${index + 1}. ${escapeHtml(group.title)}</strong>
           </button>
@@ -1449,11 +1450,45 @@ function renderGlossaryStudyDeck(batch) {
   `;
 }
 
+function renderContentTopicIntro(group) {
+  const highlights = group.introHighlights || [];
+  const hasVideo = Boolean(group.introVideo);
+  return `
+    <div class="topic-intro-grid">
+      <div class="topic-intro-copy panel">
+        <div class="kicker">Topic intro</div>
+        <h3>${escapeHtml(group.introTitle || group.title)}</h3>
+        <p class="small-copy">${escapeHtml(group.introSummary || group.writePrompt)}</p>
+        ${highlights.length ? `
+          <div class="badge-row" style="margin-top:18px;">
+            ${highlights.map(item => `<span class="badge">${escapeHtml(item)}</span>`).join("")}
+          </div>
+        ` : ""}
+        <div class="written-stage" style="margin-top:18px;">
+          <div style="display:flex;gap:12px;flex-wrap:wrap;">
+            <button class="submit-button" type="button" onclick="window.ESTPrep.openStage('content')">Back to topic menu</button>
+            <button class="submit-button" type="button" onclick="window.ESTPrep.startContentGroup()">Start content check</button>
+          </div>
+        </div>
+      </div>
+      <div class="topic-media-card">
+        ${hasVideo ? `
+          <video class="topic-media" autoplay muted loop playsinline poster="${escapeHtml(group.introImage || "")}">
+            <source src="${escapeHtml(group.introVideo)}" type="video/mp4">
+          </video>
+        ` : `
+          <img class="topic-media topic-media-image" src="${escapeHtml(group.introImage || "")}" alt="${escapeHtml(group.title)}">
+        `}
+      </div>
+    </div>
+  `;
+}
+
 function renderContentStage() {
   const groups = state.stageDeck?.contentGroups || [];
   const currentGroup = groups[state.contentGroupIndex];
   renderFocusNav();
-  if (!currentGroup) {
+  if (state.contentView === "menu" || !currentGroup) {
     setStageMenuMode(true);
     setText("stage-title", "");
     setText("stage-subtitle", "");
@@ -1462,6 +1497,13 @@ function renderContentStage() {
         <p class="small-copy">Select one curriculum area from the topic menu above to open that focused EST content module.</p>
       </div>
     `);
+    return;
+  }
+  if (state.contentView === "intro") {
+    setStageMenuMode(false);
+    setText("stage-title", "EST Content Check");
+    setText("stage-subtitle", `${currentGroup.title}`);
+    renderStageRoot(renderContentTopicIntro(currentGroup));
     return;
   }
   setStageMenuMode(false);
@@ -1899,16 +1941,31 @@ function bankCurrentContentDuration() {
 }
 
 function jumpToContentGroup(index) {
+  openContentGroupIntro(index);
+}
+
+function openContentGroupIntro(index) {
   const groups = state.stageDeck?.contentGroups || [];
   if (!groups.length) return;
   const nextIndex = Math.max(0, Math.min(index, groups.length - 1));
-  if (state.contentGroupIndex >= 0) {
+  if (state.contentView === "lesson" && state.contentGroupIndex >= 0) {
     persistCurrentContentNote();
     bankCurrentContentDuration();
   }
   state.contentGroupIndex = nextIndex;
+  state.contentView = "intro";
   state.selectedStageId = "content";
   setLabMode(true);
+  renderContentStage();
+  scrollToTopSmooth();
+}
+
+function startContentGroup() {
+  const groups = state.stageDeck?.contentGroups || [];
+  const currentGroup = groups[state.contentGroupIndex];
+  if (!currentGroup) return;
+  state.contentView = "lesson";
+  state.contentGroupStartedAt = Date.now();
   renderContentStage();
   scrollToTopSmooth();
 }
@@ -1929,11 +1986,12 @@ function openStage(stageId) {
   state.lastBossReview = null;
   state.stageStartedAt = Date.now();
   if (stageId === "content") {
-    if (previousStageId === "content" && state.contentGroupIndex >= 0) {
+    if (previousStageId === "content" && state.contentView === "lesson" && state.contentGroupIndex >= 0) {
       persistCurrentContentNote();
       bankCurrentContentDuration();
     }
     state.contentGroupIndex = -1;
+    state.contentView = "menu";
     if (previousStageId !== "content") {
       state.contentGroupStartedAt = Date.now();
       state.contentGroupDurations = {};
@@ -2577,6 +2635,7 @@ function returnToTrack() {
   state.selectedStageId = null;
   state.lastBossReview = null;
   state.contentGroupIndex = -1;
+  state.contentView = "menu";
   renderFocusNav();
   renderMap();
   setText("stage-title", "Choose your next challenge");
@@ -2594,6 +2653,7 @@ async function init() {
   state.bank = bank;
   state.contentStageConfig = contentStageConfig;
   state.stageDeck = buildStageDeck(state.bank);
+  state.contentView = "menu";
   setLabMode(false);
   setStageMenuMode(false);
   renderFocusNav();
@@ -2608,6 +2668,8 @@ async function init() {
 
 window.ESTPrep = {
   openStage,
+  openContentGroupIntro,
+  startContentGroup,
   nextContentGroup: () => moveContentGroup(1),
   prevContentGroup: () => moveContentGroup(-1),
   jumpToContentGroup,
