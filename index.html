@@ -242,6 +242,85 @@
     .choice-outcome-stat p { margin: 0; }
     .choice-outcome-vote { padding: 18px; border-radius: 16px; border: 1px solid rgba(59, 130, 246, 0.22); background: rgba(8, 20, 36, 0.72); }
     .choice-outcome-vote p { margin: 0; }
+    .overseas-scenario-shell {
+      position: relative;
+      overflow: hidden;
+      border-radius: 28px;
+      border: 1px solid rgba(96, 165, 250, 0.16);
+      background:
+        linear-gradient(180deg, rgba(2, 6, 23, 0.6), rgba(2, 6, 23, 0.86)),
+        radial-gradient(circle at top left, rgba(56, 189, 248, 0.18), transparent 28%),
+        radial-gradient(circle at bottom right, rgba(250, 204, 21, 0.14), transparent 25%),
+        #07111f;
+      box-shadow: 0 32px 80px rgba(2, 6, 23, 0.5);
+    }
+    .overseas-scenario-shell::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background:
+        linear-gradient(180deg, rgba(2, 6, 23, 0.62), rgba(2, 6, 23, 0.88)),
+        url('./Assets/landing-screenshots/global-shop.png') center/cover no-repeat;
+      filter: blur(3px) brightness(0.68);
+      transform: scale(1.03);
+      z-index: 0;
+    }
+    .overseas-scenario-shell > * {
+      position: relative;
+      z-index: 1;
+    }
+    .overseas-glass {
+      background: rgba(7, 17, 33, 0.72);
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      box-shadow: 0 24px 60px rgba(0, 0, 0, 0.24);
+      backdrop-filter: blur(18px);
+    }
+    .overseas-choice-card {
+      border-radius: 22px;
+      padding: 18px;
+      cursor: pointer;
+      transition: transform 0.24s ease, border-color 0.24s ease, box-shadow 0.24s ease, background 0.24s ease;
+    }
+    .overseas-choice-card:hover {
+      transform: translateY(-4px);
+      border-color: rgba(125, 211, 252, 0.42);
+      box-shadow: 0 18px 40px rgba(8, 47, 73, 0.28);
+      background: rgba(9, 27, 51, 0.82);
+    }
+    .overseas-choice-card.selected {
+      border-color: rgba(250, 204, 21, 0.55);
+      background: rgba(22, 46, 74, 0.92);
+      box-shadow: 0 20px 46px rgba(15, 23, 42, 0.42);
+    }
+    .overseas-option-icon {
+      width: 46px;
+      height: 46px;
+      display: grid;
+      place-items: center;
+      border-radius: 14px;
+      font-size: 24px;
+      font-weight: 900;
+      flex-shrink: 0;
+    }
+    .overseas-tag-list {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+    }
+    .overseas-tag {
+      padding: 7px 12px;
+      border-radius: 999px;
+      border: 1px solid rgba(147, 197, 253, 0.2);
+      background: rgba(15, 23, 42, 0.54);
+      color: #dbeafe;
+      font-size: 13px;
+      font-weight: 700;
+    }
+    @media (max-width: 900px) {
+      .overseas-hero-grid {
+        grid-template-columns: 1fr !important;
+      }
+    }
     .community-vote-button {
       width: 100%;
       text-align: left;
@@ -1917,6 +1996,11 @@
     function displayScenario(scenario) {
       startMegatrendsTask('Scenario Choice', `${scenario.megatrend}: ${scenario.title}`);
       const container = document.getElementById('scenario-container');
+      if (scenario.megatrend === 'Economic Power Shifts' && scenario.title === 'International Project Opportunity') {
+        container.innerHTML = renderOverseasOpportunityScenario(scenario);
+        selectedChoiceIdx = null;
+        return;
+      }
       let badgeClass = 'tech-badge';
       let bgClass = 'bg-purple-900 bg-opacity-30 border-l-4 border-purple-400';
       if (scenario.megatrend === 'Climate Change') {
@@ -1970,6 +2054,102 @@
       `;
       container.innerHTML = html;
       selectedChoiceIdx = null;
+    }
+
+    function renderOverseasOpportunityScenario(scenario) {
+      const optionMeta = [
+        {
+          emoji: '✈️',
+          accent: '#fde68a',
+          detail: 'Spend four weeks on-site leading the project and building face-to-face trust with the global team.',
+          tradeoff: 'Highest visibility and strongest global experience, but more time away from home and a bigger work-life impact.'
+        },
+        {
+          emoji: '🌐',
+          accent: '#93c5fd',
+          detail: 'Join from home, contribute online, and keep your routine more stable while still supporting the project.',
+          tradeoff: 'Better balance and less disruption, but fewer networking opportunities and less in-person influence.'
+        },
+        {
+          emoji: '🏡',
+          accent: '#86efac',
+          detail: 'Remain in your current role and avoid the disruption of travel or cross-time-zone collaboration.',
+          tradeoff: 'Most familiar and comfortable option, but it may limit international growth and future progression.'
+        }
+      ];
+
+      let choicesHtml = '';
+      scenario.choices.forEach((choice, idx) => {
+        const meta = optionMeta[idx] || optionMeta[0];
+        const security = choice.security_impact !== undefined ? `${choice.security_impact > 0 ? '+' : ''}${choice.security_impact}%` : '0%';
+        const balance = choice.balance_impact !== undefined ? `${choice.balance_impact > 0 ? '+' : ''}${choice.balance_impact}%` : '0%';
+        choicesHtml += `
+          <div class="overseas-glass overseas-choice-card" onclick="selectChoice(${idx})">
+            <div class="flex items-start gap-4">
+              <div class="overseas-option-icon" style="background:${meta.accent}24;border:1px solid ${meta.accent}66;color:${meta.accent};">${meta.emoji}</div>
+              <div class="flex-1 min-w-0">
+                <div class="text-xs font-extrabold uppercase mb-2" style="color:${meta.accent};letter-spacing:0.18em;">Option ${idx + 1}</div>
+                <p class="text-white text-2xl font-black leading-tight mb-2">${choice.text}</p>
+                <p class="text-sm text-slate-200 leading-relaxed mb-3">${meta.detail}</p>
+                <div class="rounded-2xl px-4 py-3 text-sm text-slate-200 leading-relaxed" style="background:rgba(2,6,23,0.45);border:1px solid rgba(255,255,255,0.08);">
+                  <p class="m-0">${meta.tradeoff}</p>
+                  <div class="mt-3 pt-3 flex flex-wrap gap-4 text-xs font-bold uppercase text-slate-400" style="border-top:1px solid rgba(255,255,255,0.10);letter-spacing:0.14em;">
+                    <span>Security ${security}</span>
+                    <span>Balance ${balance}</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        `;
+      });
+
+      return `
+        <div class="overseas-scenario-shell p-5 md:p-6 mb-8">
+          <div class="overseas-glass px-5 py-4 mb-5 flex items-center justify-between gap-4" style="border-radius:24px;">
+            <div class="flex items-center gap-3 flex-wrap">
+              <span class="megatrend-badge economic-badge">Gameplay Scenario</span>
+              <p class="m-0 text-sm md:text-base font-bold text-slate-200">${scenario.megatrend} • ${scenario.title}</p>
+            </div>
+            <div class="w-12 h-12 grid place-items-center text-2xl" style="border-radius:16px;border:1px solid rgba(255,255,255,0.10);background:rgba(255,255,255,0.05);">✈️</div>
+          </div>
+
+          <div class="overseas-glass p-6 mb-5 max-w-4xl" style="border-radius:26px;">
+            <p class="m-0 text-xs font-extrabold uppercase text-amber-200 mb-3" style="letter-spacing:0.18em;">Decision Point</p>
+            <h2 class="text-4xl md:text-5xl font-black leading-none text-white mb-4">An Overseas Project Offer Changes Everything</h2>
+            <p class="text-base md:text-lg text-slate-200 leading-relaxed m-0">${scenario.description} This could expand your career, but it also affects family time, routine, and how visible you are to the wider global team.</p>
+          </div>
+
+          <div class="grid overseas-hero-grid gap-4 md:gap-5 mb-5" style="grid-template-columns:minmax(0,0.95fr) minmax(0,1.05fr);">
+            <div class="overseas-glass p-5 flex flex-col justify-between" style="border-radius:26px;min-height:240px;">
+              <div>
+                <p class="m-0 text-xs font-extrabold uppercase text-sky-200 mb-2" style="letter-spacing:0.18em;">Project Brief</p>
+                <h3 class="text-3xl font-black text-white leading-tight mb-3">Global Experience Can Accelerate Your Career</h3>
+                <p class="text-sm text-slate-200 leading-relaxed m-0">Economic power is shifting across the world. International experience, cross-cultural communication, and global confidence make workers more adaptable and more valuable.</p>
+              </div>
+              <div class="overseas-tag-list mt-5">
+                <span class="overseas-tag">Build global confidence</span>
+                <span class="overseas-tag">Strengthen problem-solving</span>
+                <span class="overseas-tag">Balance career and life</span>
+              </div>
+            </div>
+
+            <div id="choices-section" class="grid gap-4">
+              ${choicesHtml}
+            </div>
+          </div>
+
+          <div id="submit-section" class="hidden">
+            <button onclick="submitChoice()" class="btn-primary text-white font-bold py-4 px-6 rounded-2xl w-full text-lg">✓ Submit Your Choice</button>
+          </div>
+          <div id="feedback-section" class="mt-8 hidden">
+            <div class="card-glow p-6 rounded-xl border-l-4 border-blue-400">
+              <p id="feedback-text" class="text-lg text-gray-200 mb-4"></p>
+              <button onclick="showConceptChallenge()" class="btn-primary text-white font-bold py-2 px-6 rounded-lg w-full">Learn the Concept</button>
+            </div>
+          </div>
+        </div>
+      `;
     }
 
     function selectChoice(idx) {
