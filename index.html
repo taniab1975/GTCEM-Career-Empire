@@ -19,6 +19,22 @@
     @keyframes confettiFall { to { transform: translateY(100vh) rotate(360deg); opacity: 0; } }
     @keyframes levelUpPulse { 0% { transform: scale(1); } 50% { transform: scale(1.2); } 100% { transform: scale(1); } }
     @keyframes floatUp { 0% { opacity: 1; transform: translateY(0) scale(1); } 100% { opacity: 0; transform: translateY(-60px) scale(1.5); } }
+    @keyframes stageRise {
+      from { opacity: 0; transform: translateY(28px) scale(0.98); }
+      to { opacity: 1; transform: translateY(0) scale(1); }
+    }
+    @keyframes driftGlow {
+      0%, 100% { transform: translate3d(0, 0, 0) scale(1); opacity: 0.55; }
+      50% { transform: translate3d(0, -10px, 0) scale(1.03); opacity: 0.9; }
+    }
+    @keyframes cardFloat {
+      0%, 100% { transform: translateY(0); }
+      50% { transform: translateY(-6px); }
+    }
+    @keyframes iconPulse {
+      0%, 100% { transform: scale(1); box-shadow: 0 0 0 rgba(255,255,255,0); }
+      50% { transform: scale(1.08); box-shadow: 0 0 18px rgba(255,255,255,0.08); }
+    }
 
     .card-glow { background: rgba(30, 41, 59, 0.6); border: 1px solid rgba(59, 130, 246, 0.2); backdrop-filter: blur(10px); transition: all 0.3s ease; }
     .card-glow:hover { border-color: rgba(59, 130, 246, 0.4); box-shadow: 0 0 30px rgba(59, 130, 246, 0.2); }
@@ -264,6 +280,7 @@
       filter: blur(3px) brightness(0.68);
       transform: scale(1.03);
       z-index: 0;
+      animation: driftGlow 10s ease-in-out infinite;
     }
     .overseas-scenario-shell > * {
       position: relative;
@@ -280,6 +297,7 @@
       padding: 18px;
       cursor: pointer;
       transition: transform 0.24s ease, border-color 0.24s ease, box-shadow 0.24s ease, background 0.24s ease;
+      animation: stageRise 0.75s ease both;
     }
     .overseas-choice-card:hover {
       transform: translateY(-4px);
@@ -301,6 +319,7 @@
       font-size: 24px;
       font-weight: 900;
       flex-shrink: 0;
+      animation: iconPulse 3.2s ease-in-out infinite;
     }
     .overseas-tag-list {
       display: flex;
@@ -315,6 +334,13 @@
       color: #dbeafe;
       font-size: 13px;
       font-weight: 700;
+      animation: stageRise 0.6s ease both;
+    }
+    .overseas-animated-panel {
+      animation: stageRise 0.75s ease both;
+    }
+    .overseas-brief-card {
+      animation: stageRise 0.85s ease both, cardFloat 6.5s ease-in-out infinite 1s;
     }
     @media (max-width: 900px) {
       .overseas-hero-grid {
@@ -2084,7 +2110,7 @@
         const security = choice.security_impact !== undefined ? `${choice.security_impact > 0 ? '+' : ''}${choice.security_impact}%` : '0%';
         const balance = choice.balance_impact !== undefined ? `${choice.balance_impact > 0 ? '+' : ''}${choice.balance_impact}%` : '0%';
         choicesHtml += `
-          <div class="overseas-glass overseas-choice-card" onclick="selectChoice(${idx})">
+          <div class="overseas-glass overseas-choice-card" onclick="selectChoice(${idx})" style="animation-delay:${0.18 + (idx * 0.12)}s;">
             <div class="flex items-start gap-4">
               <div class="overseas-option-icon" style="background:${meta.accent}24;border:1px solid ${meta.accent}66;color:${meta.accent};">${meta.emoji}</div>
               <div class="flex-1 min-w-0">
@@ -2106,7 +2132,7 @@
 
       return `
         <div class="overseas-scenario-shell p-5 md:p-6 mb-8">
-          <div class="overseas-glass px-5 py-4 mb-5 flex items-center justify-between gap-4" style="border-radius:24px;">
+          <div class="overseas-glass overseas-animated-panel px-5 py-4 mb-5 flex items-center justify-between gap-4" style="border-radius:24px;animation-delay:0.04s;">
             <div class="flex items-center gap-3 flex-wrap">
               <span class="megatrend-badge economic-badge">Gameplay Scenario</span>
               <p class="m-0 text-sm md:text-base font-bold text-slate-200">${scenario.megatrend} • ${scenario.title}</p>
@@ -2114,23 +2140,23 @@
             <div class="w-12 h-12 grid place-items-center text-2xl" style="border-radius:16px;border:1px solid rgba(255,255,255,0.10);background:rgba(255,255,255,0.05);">✈️</div>
           </div>
 
-          <div class="overseas-glass p-6 mb-5 max-w-4xl" style="border-radius:26px;">
+          <div class="overseas-glass overseas-animated-panel p-6 mb-5 max-w-4xl" style="border-radius:26px;animation-delay:0.12s;">
             <p class="m-0 text-xs font-extrabold uppercase text-amber-200 mb-3" style="letter-spacing:0.18em;">Decision Point</p>
             <h2 class="text-4xl md:text-5xl font-black leading-none text-white mb-4">An Overseas Project Offer Changes Everything</h2>
             <p class="text-base md:text-lg text-slate-200 leading-relaxed m-0">${scenario.description} This could expand your career, but it also affects family time, routine, and how visible you are to the wider global team.</p>
           </div>
 
           <div class="grid overseas-hero-grid gap-4 md:gap-5 mb-5" style="grid-template-columns:minmax(0,0.95fr) minmax(0,1.05fr);">
-            <div class="overseas-glass p-5 flex flex-col justify-between" style="border-radius:26px;min-height:240px;">
+            <div class="overseas-glass overseas-brief-card p-5 flex flex-col justify-between" style="border-radius:26px;min-height:240px;">
               <div>
                 <p class="m-0 text-xs font-extrabold uppercase text-sky-200 mb-2" style="letter-spacing:0.18em;">Project Brief</p>
                 <h3 class="text-3xl font-black text-white leading-tight mb-3">Global Experience Can Accelerate Your Career</h3>
                 <p class="text-sm text-slate-200 leading-relaxed m-0">Economic power is shifting across the world. International experience, cross-cultural communication, and global confidence make workers more adaptable and more valuable.</p>
               </div>
               <div class="overseas-tag-list mt-5">
-                <span class="overseas-tag">Build global confidence</span>
-                <span class="overseas-tag">Strengthen problem-solving</span>
-                <span class="overseas-tag">Balance career and life</span>
+                <span class="overseas-tag" style="animation-delay:0.32s;">Build global confidence</span>
+                <span class="overseas-tag" style="animation-delay:0.42s;">Strengthen problem-solving</span>
+                <span class="overseas-tag" style="animation-delay:0.52s;">Balance career and life</span>
               </div>
             </div>
 
