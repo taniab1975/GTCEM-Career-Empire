@@ -38,7 +38,8 @@
           </div>
           <div class="field">
             <label for="teacher-school">School name</label>
-            <input id="teacher-school" type="text" placeholder="Start typing your school name" autocomplete="off" required>
+            <input id="teacher-school" type="text" placeholder="Start typing your school name" autocomplete="off" list="teacher-school-list" required>
+            <datalist id="teacher-school-list"></datalist>
             <div id="teacher-school-results" class="search-results"></div>
             <div id="teacher-school-feedback" class="feedback"></div>
             <div class="helper">Start typing the first few letters of your school name to filter the approved school list.</div>

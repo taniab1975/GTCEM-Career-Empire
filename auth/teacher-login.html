@@ -66,7 +66,8 @@
           </div>
           <div class="field">
             <label for="teacher-login-school">School name</label>
-            <input id="teacher-login-school" type="text" placeholder="Only needed if profile recovery is required" autocomplete="off">
+            <input id="teacher-login-school" type="text" placeholder="Only needed if profile recovery is required" autocomplete="off" list="teacher-login-school-list">
+            <datalist id="teacher-login-school-list"></datalist>
             <div id="teacher-login-school-results" class="search-results"></div>
             <div id="teacher-login-school-feedback" class="feedback"></div>
             <div class="helper">If your teacher profile is missing, choose your school here so it can be recreated.</div>
@@ -107,6 +108,7 @@
   </main>
 
   <script src="../config/supabase-config.js"></script>
+  <script src="../data/schools-list.js"></script>
   <script src="../src/services/supabase-browser.js"></script>
   <script src="./auth.js"></script>
   <script src="../src/services/feedback-widget.js"></script>

@@ -138,34 +138,18 @@ async function loadSchoolOptions() {
     {
       input: document.getElementById("teacher-school"),
       results: document.getElementById("teacher-school-results"),
-      feedback: document.getElementById("teacher-school-feedback")
+      feedback: document.getElementById("teacher-school-feedback"),
+      datalist: document.getElementById("teacher-school-list")
     },
     {
       input: document.getElementById("teacher-login-school"),
       results: document.getElementById("teacher-login-school-results"),
-      feedback: document.getElementById("teacher-login-school-feedback")
+      feedback: document.getElementById("teacher-login-school-feedback"),
+      datalist: document.getElementById("teacher-login-school-list")
     }
   ].filter(target => target.input && target.results);
   if (!targets.length) return;
-  const supabase = await getSupabaseClientOrNull();
-  let schoolNames = [];
-
-  try {
-    if (supabase) {
-      const { data, error } = await supabase
-        .from("schools")
-        .select("id, name")
-        .order("name", { ascending: true });
-      if (error) throw error;
-      schoolNames = (data || []).map(school => school.name);
-    }
-  } catch (error) {
-    console.error("Failed to load schools from Supabase:", error);
-  }
-
-  if (!schoolNames.length) {
-    schoolNames = Array.isArray(window.CAREER_EMPIRE_SCHOOLS) ? window.CAREER_EMPIRE_SCHOOLS : [];
-  }
+  let schoolNames = Array.isArray(window.CAREER_EMPIRE_SCHOOLS) ? [...window.CAREER_EMPIRE_SCHOOLS] : [];
 
   try {
     if (!schoolNames.length) {
@@ -201,8 +185,22 @@ async function loadSchoolOptions() {
       });
     }
 
-    targets.forEach(({ input, results, feedback }) => {
-      input.dataset.validSchools = JSON.stringify(schoolNames);
+    targets.forEach(({ input, results, feedback, datalist }) => {
+      const syncSchoolDataset = (names) => {
+        input.dataset.validSchools = JSON.stringify(names);
+        if (datalist) {
+          datalist.innerHTML = names
+            .slice(0, 330)
+            .map(name => `<option value="${name}"></option>`)
+            .join("");
+        }
+        if (feedback) {
+          feedback.className = "feedback good";
+          feedback.textContent = `${names.length} approved schools loaded.`;
+        }
+      };
+
+      syncSchoolDataset(schoolNames);
       if (feedback) {
         feedback.className = "feedback good";
         feedback.textContent = `${schoolNames.length} approved schools loaded.`;
@@ -240,8 +238,26 @@ async function loadSchoolOptions() {
       input.addEventListener("focus", () => {
         const validSchools = JSON.parse(input.dataset.validSchools || "[]");
         const query = input.value.trim().toLowerCase();
-        if (!query) return;
-        renderResults(results, input, feedback, validSchools.filter(name => name.toLowerCase().includes(query)));
+        const matches = query
+          ? validSchools.filter(name => name.toLowerCase().includes(query))
+          : validSchools.slice(0, 12);
+        renderResults(results, input, feedback, matches);
+      });
+
+      input.addEventListener("change", () => {
+        const validSchools = JSON.parse(input.dataset.validSchools || "[]");
+        const exactMatch = validSchools.includes(input.value.trim());
+        if (!feedback) return;
+        if (exactMatch) {
+          feedback.className = "feedback good";
+          feedback.textContent = "Approved school selected.";
+        } else if (input.value.trim()) {
+          feedback.className = "feedback warn";
+          feedback.textContent = "Choose an approved school from the list.";
+        } else {
+          feedback.className = "feedback";
+          feedback.textContent = `${validSchools.length} approved schools loaded.`;
+        }
       });
 
       document.addEventListener("click", (event) => {
@@ -250,12 +266,43 @@ async function loadSchoolOptions() {
         }
       });
     });
+
+    const supabase = await getSupabaseClientOrNull();
+    if (!supabase) return;
+
+    try {
+      const { data, error } = await supabase
+        .from("schools")
+        .select("id, name")
+        .order("name", { ascending: true });
+      if (error) throw error;
+
+      const remoteSchoolNames = (data || []).map(school => school.name).filter(Boolean);
+      if (!remoteSchoolNames.length) return;
+
+      schoolNames = remoteSchoolNames;
+      targets.forEach(({ input, feedback, datalist }) => {
+        input.dataset.validSchools = JSON.stringify(schoolNames);
+        if (datalist) {
+          datalist.innerHTML = schoolNames
+            .slice(0, 330)
+            .map(name => `<option value="${name}"></option>`)
+            .join("");
+        }
+        if (!feedback) return;
+        feedback.className = "feedback good";
+        feedback.textContent = `${schoolNames.length} approved schools loaded.`;
+      });
+    } catch (error) {
+      console.error("Failed to refresh schools from Supabase:", error);
+    }
   } catch (error) {
     console.error("Failed to initialize school picker:", error);
-    if (feedback) {
+    targets.forEach(({ feedback }) => {
+      if (!feedback) return;
       feedback.className = "feedback bad";
       feedback.textContent = "The approved school list could not be loaded.";
-    }
+    });
   }
 }
 

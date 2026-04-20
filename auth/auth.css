@@ -160,6 +160,7 @@ body {
   border-radius: 26px;
   box-shadow: var(--shadow);
   backdrop-filter: blur(18px);
+  overflow: visible;
 }
 
 .panel,
@@ -256,6 +257,11 @@ label {
 .field {
   position: relative;
   margin-bottom: 16px;
+  z-index: 1;
+}
+
+.field:focus-within {
+  z-index: 40;
 }
 
 input,
@@ -325,13 +331,14 @@ button,
   top: calc(100% - 2px);
   left: 0;
   right: 0;
-  z-index: 20;
+  z-index: 999;
   max-height: 240px;
   overflow-y: auto;
   border-radius: 16px;
   border: 1px solid var(--line);
   background: rgba(8, 18, 31, 0.98);
   box-shadow: 0 22px 50px rgba(0, 0, 0, 0.28);
+  margin-top: 6px;
 }
 
 .search-results.open {
