@@ -112,6 +112,23 @@ function generateStudentUsernameSuggestions(displayName) {
     .slice(0, 4);
 }
 
+function buildTeacherResetUrl() {
+  const current = new URL(window.location.href);
+  current.pathname = current.pathname.replace(/\/[^/]*$/, "/teacher-reset-password.html");
+  current.search = "";
+  current.hash = "";
+  return current.toString();
+}
+
+function hasRecoveryTokensInUrl() {
+  const searchParams = new URLSearchParams(window.location.search);
+  const hashParams = new URLSearchParams(window.location.hash.replace(/^#/, ""));
+  return searchParams.get("type") === "recovery"
+    || hashParams.get("type") === "recovery"
+    || hashParams.has("access_token")
+    || searchParams.has("access_token");
+}
+
 async function hashValue(value) {
   const data = new TextEncoder().encode(value);
   const hashBuffer = await crypto.subtle.digest("SHA-256", data);
@@ -599,6 +616,118 @@ function initTeacherLogin() {
   });
 }
 
+async function initTeacherPasswordReset() {
+  const requestForm = document.getElementById("teacher-reset-request-form");
+  const completeForm = document.getElementById("teacher-reset-complete-form");
+  if (!requestForm && !completeForm) return;
+
+  const requestFeedback = document.getElementById("teacher-reset-request-feedback");
+  const completeFeedback = document.getElementById("teacher-reset-complete-feedback");
+  const supabase = await getSupabaseClientOrNull();
+
+  if (!supabase) {
+    if (requestFeedback) {
+      requestFeedback.className = "feedback bad";
+      requestFeedback.textContent = "Supabase is not configured yet.";
+    }
+    if (completeFeedback) {
+      completeFeedback.className = "feedback bad";
+      completeFeedback.textContent = "Supabase is not configured yet.";
+    }
+    return;
+  }
+
+  const syncRecoveryView = async () => {
+    const recoveryFromUrl = hasRecoveryTokensInUrl();
+    let hasRecoverySession = false;
+
+    try {
+      const { data } = await supabase.auth.getSession();
+      hasRecoverySession = Boolean(data?.session);
+    } catch (error) {
+      console.error("Unable to inspect reset session:", error);
+    }
+
+    const showComplete = recoveryFromUrl || hasRecoverySession;
+    if (requestForm) {
+      requestForm.style.display = showComplete ? "none" : "";
+    }
+    if (completeForm) {
+      completeForm.style.display = showComplete ? "" : "none";
+    }
+
+    if (showComplete && completeFeedback) {
+      completeFeedback.className = "feedback warn";
+      completeFeedback.textContent = "Recovery link detected. Set your new password below.";
+    }
+  };
+
+  await syncRecoveryView();
+
+  if (requestForm) {
+    requestForm.addEventListener("submit", async (event) => {
+      event.preventDefault();
+      const email = document.getElementById("teacher-reset-email").value.trim().toLowerCase();
+      if (!requestFeedback) return;
+      if (!isAllowedTeacherEmail(email)) {
+        requestFeedback.className = "feedback bad";
+        requestFeedback.textContent = "Use your approved school email address.";
+        return;
+      }
+
+      try {
+        requestFeedback.className = "feedback warn";
+        requestFeedback.textContent = "Sending reset email...";
+        const { error } = await supabase.auth.resetPasswordForEmail(email, {
+          redirectTo: buildTeacherResetUrl()
+        });
+        if (error) throw error;
+        requestFeedback.className = "feedback good";
+        requestFeedback.textContent = "Reset email sent. Open the link in your inbox, then return here to set a new password.";
+      } catch (error) {
+        requestFeedback.className = "feedback bad";
+        requestFeedback.textContent = error.message || "Password reset email could not be sent.";
+      }
+    });
+  }
+
+  if (completeForm) {
+    completeForm.addEventListener("submit", async (event) => {
+      event.preventDefault();
+      const password = document.getElementById("teacher-new-password").value;
+      const confirmPassword = document.getElementById("teacher-confirm-password").value;
+      if (!completeFeedback) return;
+
+      if (password.length < 8) {
+        completeFeedback.className = "feedback bad";
+        completeFeedback.textContent = "Use a password with at least 8 characters.";
+        return;
+      }
+      if (password !== confirmPassword) {
+        completeFeedback.className = "feedback bad";
+        completeFeedback.textContent = "The two password fields do not match.";
+        return;
+      }
+
+      try {
+        completeFeedback.className = "feedback warn";
+        completeFeedback.textContent = "Saving your new password...";
+        const { error } = await supabase.auth.updateUser({ password });
+        if (error) throw error;
+        completeFeedback.className = "feedback good";
+        completeFeedback.textContent = "Password updated successfully. You can now return to teacher login.";
+        completeForm.reset();
+        window.setTimeout(() => {
+          window.location.href = "./teacher-login.html";
+        }, 1200);
+      } catch (error) {
+        completeFeedback.className = "feedback bad";
+        completeFeedback.textContent = error.message || "Could not update password from this reset link.";
+      }
+    });
+  }
+}
+
 function initStudentLogin() {
   const usernameInput = document.getElementById("student-username");
   const feedback = document.getElementById("student-username-feedback");
@@ -1043,6 +1172,9 @@ document.addEventListener("DOMContentLoaded", () => {
   loadSchoolOptions();
   initTeacherSignup();
   initTeacherLogin();
+  initTeacherPasswordReset().catch(error => {
+    console.error("Teacher password reset could not initialize:", error);
+  });
   initStudentLogin();
   initCreateClass();
   initAddStudents();
