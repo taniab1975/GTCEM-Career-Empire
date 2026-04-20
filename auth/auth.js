@@ -1,6 +1,11 @@
 const ALLOWED_TEACHER_DOMAINS = ["cewa.edu.au", "education.wa.edu.au"];
 const AUTH_DEMO_STATE_KEY = "career-empire-auth-demo";
 const PLAYER_SESSION_KEY = "career-empire-session";
+const TEACHER_TEST_STUDENT = {
+  username: "TeacherPreview",
+  displayName: "Teacher Test Student",
+  preview: true
+};
 
 async function getSupabaseClientOrNull() {
   if (!window.CareerEmpireSupabase || typeof window.CareerEmpireSupabase.getClient !== "function") {
@@ -26,6 +31,108 @@ function writeState(patch) {
   const next = { ...readState(), ...patch };
   localStorage.setItem(AUTH_DEMO_STATE_KEY, JSON.stringify(next));
   return next;
+}
+
+function buildTeacherNavConfig() {
+  const isDashboardPage = window.location.pathname.includes("/dashboards/");
+  return isDashboardPage ? {
+    teacherHub: "../auth/teacher-login.html",
+    createClass: "../auth/create-class.html",
+    addStudents: "../auth/add-students.html",
+    manageStudents: "../auth/manage-students.html",
+    teacherDashboard: "./teacher.html"
+  } : {
+    teacherHub: "./teacher-login.html",
+    createClass: "./create-class.html",
+    addStudents: "./add-students.html",
+    manageStudents: "./manage-students.html",
+    teacherDashboard: "../dashboards/teacher.html"
+  };
+}
+
+function buildTeacherNavMarkup(activeKey) {
+  const paths = buildTeacherNavConfig();
+  const items = [
+    { key: "teacher-hub", label: "Teacher Hub", href: paths.teacherHub },
+    { key: "create-class", label: "Create Class", href: paths.createClass },
+    { key: "add-students", label: "Add Students", href: paths.addStudents },
+    { key: "manage-students", label: "Manage Students", href: paths.manageStudents },
+    { key: "teacher-dashboard", label: "Teacher Dashboard", href: paths.teacherDashboard },
+    { key: "test-student", label: "Play as Test Student", href: "#", testLaunch: true }
+  ];
+
+  return items.map(item => {
+    const activeClass = item.key === activeKey ? "active" : "";
+    if (item.testLaunch) {
+      return `<a class="teacher-nav-item ${activeClass}" href="#" data-teacher-test-student="true">${item.label}</a>`;
+    }
+    return `<a class="teacher-nav-item ${activeClass}" href="${item.href}">${item.label}</a>`;
+  }).join("");
+}
+
+function launchTeacherTestStudentPreview() {
+  const state = readState();
+  const classroom = state.classroom || {};
+  const teacher = state.teacher || {};
+  const studentLogin = {
+    id: null,
+    username: TEACHER_TEST_STUDENT.username,
+    displayName: TEACHER_TEST_STUDENT.displayName,
+    schoolName: teacher.schoolName || "Teacher Preview School",
+    classId: classroom.id || null,
+    classCode: classroom.classCode || "PREVIEW",
+    className: classroom.className || "Teacher Preview Class",
+    preview: true
+  };
+
+  writeState({ studentLogin });
+
+  let existing = {};
+  try {
+    existing = JSON.parse(localStorage.getItem(PLAYER_SESSION_KEY) || "{}");
+  } catch (_) {
+    existing = {};
+  }
+
+  localStorage.setItem(PLAYER_SESSION_KEY, JSON.stringify({
+    ...existing,
+    studentId: null,
+    username: studentLogin.username,
+    playerName: studentLogin.displayName,
+    schoolName: studentLogin.schoolName,
+    classId: studentLogin.classId,
+    classCode: studentLogin.classCode,
+    className: studentLogin.className,
+    careerTitle: existing.careerTitle || "Preview Explorer",
+    annualSalary: Number(existing.annualSalary || 25000),
+    cumulativeNetWorth: Number(existing.cumulativeNetWorth || 0),
+    jobSecurity: Number(existing.jobSecurity || 70),
+    workLifeBalance: Number(existing.workLifeBalance || 68),
+    checkpoint: "teacher-test-student-preview",
+    updatedAt: new Date().toISOString()
+  }));
+
+  window.location.href = "../dashboards/student.html";
+}
+
+function applyTeacherNavigation() {
+  const activeKey = document.body?.dataset?.teacherNavActive;
+  if (!activeKey) return;
+
+  document.querySelectorAll(".workflow-links").forEach(container => {
+    container.innerHTML = buildTeacherNavMarkup(activeKey).replaceAll("teacher-nav-item", "workflow-link");
+  });
+
+  document.querySelectorAll(".dashboard-nav").forEach(container => {
+    container.innerHTML = buildTeacherNavMarkup(activeKey).replaceAll("teacher-nav-item", "dashboard-nav-link");
+  });
+
+  document.querySelectorAll("[data-teacher-test-student='true']").forEach(link => {
+    link.addEventListener("click", event => {
+      event.preventDefault();
+      launchTeacherTestStudentPreview();
+    });
+  });
 }
 
 function syncStudentPlayerSession(student) {
@@ -1168,6 +1275,7 @@ async function initManageStudents() {
 }
 
 document.addEventListener("DOMContentLoaded", () => {
+  applyTeacherNavigation();
   initAuthContext();
   loadSchoolOptions();
   initTeacherSignup();

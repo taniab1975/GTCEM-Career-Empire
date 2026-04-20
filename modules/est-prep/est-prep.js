@@ -304,7 +304,9 @@ const state = {
   confidence: 40,
   streak: 1,
   salaryBoost: 0,
+  creditedSalaryBoost: 0,
   taxContribution: 0,
+  creditedTaxContribution: 0,
   answers: {},
   lastBossReview: null,
   contentGroupIndex: -1,
@@ -2148,10 +2150,14 @@ function addEvidence(title, detail) {
 async function saveProgress(checkpoint, evidenceType = "artifact", evidenceText = "", autoScore = null, meta = {}) {
   const student = state.student;
   const session = getPlayerSession();
-  const nextSalary = Number(session.annualSalary || 25000) + state.salaryBoost;
-  const nextNetWorth = Number(session.cumulativeNetWorth || 0) + state.salaryBoost;
+  const earnedDelta = Math.max(0, Number(state.salaryBoost || 0) - Number(state.creditedSalaryBoost || 0));
+  const taxDelta = Math.max(0, Number(state.taxContribution || 0) - Number(state.creditedTaxContribution || 0));
+  const nextSalary = Number(session.annualSalary || 25000) + earnedDelta;
+  const nextNetWorth = Number(session.cumulativeNetWorth || 0) + earnedDelta;
   const nextWorkLife = Math.max(45, Math.min(100, Number(session.workLifeBalance || 60) + (state.streak > 1 ? 3 : 0)));
   const nextSecurity = Math.max(45, Math.min(100, Number(session.jobSecurity || 75) + Math.round(state.readiness / 20)));
+  const nextSavings = Math.max(0, Number(session.savings || 0) + Math.max(0, Math.round(earnedDelta * 0.25)));
+  const nextTaxPaid = Math.max(0, Number(session.taxPaid || 0) + taxDelta);
 
   writePlayerSession({
     studentId: student?.id || session.studentId || null,
@@ -2163,10 +2169,14 @@ async function saveProgress(checkpoint, evidenceType = "artifact", evidenceText 
     className: student?.className || session.className || "",
     annualSalary: nextSalary,
     cumulativeNetWorth: nextNetWorth,
+    savings: nextSavings,
+    taxPaid: nextTaxPaid,
     jobSecurity: nextSecurity,
     workLifeBalance: nextWorkLife,
     checkpoint
   });
+  state.creditedSalaryBoost = Number(state.salaryBoost || 0);
+  state.creditedTaxContribution = Number(state.taxContribution || 0);
 
   if (!student?.id) return;
 
@@ -2247,11 +2257,19 @@ async function saveProgress(checkpoint, evidenceType = "artifact", evidenceText 
     await supabase.from("assessment_evidence").insert(additionalRows);
   }
 
+  const { data: existingProfile } = await supabase
+    .from("player_profiles")
+    .select("student_id, savings, tax_paid")
+    .eq("student_id", student.id)
+    .maybeSingle();
+
   await supabase.from("player_profiles").upsert({
     student_id: student.id,
     career_title: session.careerTitle || "Exam Strategist",
     annual_salary: nextSalary,
     cumulative_net_worth: nextNetWorth,
+    savings: Math.max(0, Number(existingProfile?.savings || session.savings || 0) + Math.max(0, Math.round(earnedDelta * 0.25))),
+    tax_paid: Math.max(0, Number(existingProfile?.tax_paid || session.taxPaid || 0) + taxDelta),
     career_level: Number(session.careerLevel || 1),
     job_security: nextSecurity,
     work_life_balance: nextWorkLife,

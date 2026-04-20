@@ -109,6 +109,30 @@ async function getCurrentStudentAssetCount() {
   return typeof count === "number" ? count : null;
 }
 
+async function getCurrentStudentModuleProgress() {
+  const authState = getAuthPrototypeState();
+  const studentId = authState?.studentLogin?.id;
+  if (!studentId) return {};
+
+  const supabase = await getSupabaseClientOrNull();
+  if (!supabase) return {};
+
+  const { data, error } = await supabase
+    .from("student_module_progress")
+    .select("module_id, completion_percent, mastery_percent, completed")
+    .eq("student_id", studentId);
+
+  if (error) {
+    console.error(error);
+    return {};
+  }
+
+  return (data || []).reduce((acc, row) => {
+    acc[row.module_id] = row;
+    return acc;
+  }, {});
+}
+
 function getCurrentPlayerSession() {
   return readJsonStorage("career-empire-session", null);
 }
@@ -124,7 +148,7 @@ function getTeacherDashboardFilter() {
 function requireStudentHubAccess() {
   if (!document.getElementById("student-hero-title")) return true;
   const authState = getAuthPrototypeState();
-  if (authState?.studentLogin?.id) return true;
+  if (authState?.studentLogin?.id || authState?.studentLogin?.preview) return true;
   sessionStorage.setItem("student-login-error", "Please log in before opening the Student Hub.");
   window.location.href = "../auth/student-login.html";
   return false;
@@ -1511,7 +1535,17 @@ async function renderStudentLiveData(players, skillsData) {
   const moduleCompletion = Math.min(100, Number(record?.years_played || 0) * 18);
   const taxPaid = Math.floor(Number(record?.cumulative_net_worth || 0) * 0.1);
   const assetCount = await getCurrentStudentAssetCount();
+  const moduleProgressById = await getCurrentStudentModuleProgress();
   const assetsOwned = assetCount ?? Math.max(0, Math.floor(Number(record?.cumulative_net_worth || 0) / 25000));
+  const lifelongProgress = Number(moduleProgressById["lifelong-learning"]?.completion_percent || 0);
+  const lifelongMastery = Number(moduleProgressById["lifelong-learning"]?.mastery_percent || 0);
+  const estProgress = Number(moduleProgressById["est-prep"]?.completion_percent || 0);
+  const estMastery = Number(moduleProgressById["est-prep"]?.mastery_percent || 0);
+  const overallModuleCompletion = Math.round(average([
+    moduleCompletion,
+    lifelongProgress,
+    estProgress
+  ]));
 
   setText("student-hero-title", record ? `${record.player_name}'s Career Empire` : "Build your future, not just your score.");
   if (!record && authState?.studentLogin?.displayName) {
@@ -1522,7 +1556,9 @@ async function renderStudentLiveData(players, skillsData) {
     record
       ? `${record.career_title || "Professional"} from ${record.school_name || "your class"} with ${overallMastery}% overall megatrend mastery and ${record.years_played || 0} years played.`
       : authState?.studentLogin?.username
-        ? `Signed in as ${authState.studentLogin.username}. Launch the game to begin building live module progress and shared career stats.`
+        ? authState?.studentLogin?.preview
+          ? `Teacher preview mode is active for ${authState.studentLogin.displayName || authState.studentLogin.username}. Explore the student experience without affecting live student records.`
+          : `Signed in as ${authState.studentLogin.username}. Launch the game to begin building live module progress and shared career stats.`
         : "Launch the Megatrends game first, then come back here to see your live player profile."
   );
 
@@ -1539,7 +1575,7 @@ async function renderStudentLiveData(players, skillsData) {
       ? [
         renderBadge(`Student: ${authState.studentLogin.displayName || authState.studentLogin.username}`),
         renderBadge(`Username: ${authState.studentLogin.username}`),
-        renderBadge("Live gameplay stats will appear after the first saved session")
+        renderBadge(authState?.studentLogin?.preview ? "Teacher test-student preview" : "Live gameplay stats will appear after the first saved session")
       ].join("")
       : '<span class="badge">No active student session yet</span>';
   }
@@ -1548,8 +1584,8 @@ async function renderStudentLiveData(players, skillsData) {
   if (document.getElementById("student-focus-text") && !record) {
     setText("student-focus-text", "EST Prep is ready next. Use it to train command verbs, glossary terms, and short-answer structure before the assessment.");
   }
-  setText("student-overall-completion", `${moduleCompletion}%`);
-  setText("student-overall-completion-note", record ? `${record.years_played || 0} completed rounds currently recorded` : "No gameplay recorded yet");
+  setText("student-overall-completion", `${overallModuleCompletion}%`);
+  setText("student-overall-completion-note", record ? `${record.years_played || 0} Megatrends rounds recorded, with live module sync across the platform.` : "No gameplay recorded yet");
   setText("student-employability-score", `${employabilityScore}%`);
   setText("student-tax-paid", formatCurrency(taxPaid));
   setText("student-assets-owned", String(assetsOwned));
@@ -1599,10 +1635,10 @@ async function renderStudentLiveData(players, skillsData) {
     },
     {
       title: "Lifelong Learning",
-      state: "Prototype live",
+      state: lifelongProgress ? "Progress saved" : "Prototype live",
       summary: "Build pathway flexibility, training choices, and professional growth through the first playable Lifelong Learning prototype.",
-      progress: 0,
-      mastery: 0,
+      progress: lifelongProgress,
+      mastery: lifelongMastery,
       variant: "green",
       spotlight: false,
       logoPath: skillsData.categories.find(category => category.id === "time-management")?.logoPath,
@@ -1613,10 +1649,10 @@ async function renderStudentLiveData(players, skillsData) {
     },
     {
       title: "EST Prep",
-      state: "Prototype live",
+      state: estProgress ? "Progress saved" : "Prototype live",
       summary: "Train for the upcoming EST by decoding questions, locking in glossary terms, and building mark-worthy responses.",
-      progress: 0,
-      mastery: 0,
+      progress: estProgress,
+      mastery: estMastery,
       variant: "",
       spotlight: false,
       logoPath: skillsData.categories.find(category => category.id === "critical-thinking")?.logoPath,

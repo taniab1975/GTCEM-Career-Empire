@@ -1,5 +1,6 @@
 const AUTH_DEMO_STATE_KEY = "career-empire-auth-demo";
 const FEEDBACK_FALLBACK_KEY = "career-empire-feedback-fallback";
+const PLAYER_SESSION_KEY = "career-empire-session";
 
 const GLOBAL_ASSET_CATALOG = [
   { code: "study-desk", name: "Focused Study Desk", category: "study", cost: 900, icon: "🪑", benefit: "Supports planning-heavy tasks and a more stable learning setup." },
@@ -54,6 +55,12 @@ function readJsonStorage(key, fallback) {
   } catch (_) {
     return fallback;
   }
+}
+
+function writePlayerSession(patch) {
+  const next = { ...readJsonStorage(PLAYER_SESSION_KEY, {}), ...patch };
+  localStorage.setItem(PLAYER_SESSION_KEY, JSON.stringify(next));
+  return next;
 }
 
 async function getSupabaseClientOrNull() {
@@ -275,6 +282,16 @@ async function buyGlobalAsset(asset, context) {
     console.error(profileError);
     alert("Your purchase saved, but the profile balance update needs checking.");
   }
+
+  writePlayerSession({
+    studentId: context.studentId,
+    annualSalary: Number(context.profile.annual_salary || 0),
+    cumulativeNetWorth: Math.max(0, currentWorth - asset.cost),
+    savings: Math.max(0, Number(context.profile.savings || 0) - asset.cost),
+    workLifeBalance: Number(context.profile.work_life_balance || 0),
+    jobSecurity: Number(context.profile.job_security || 0),
+    checkpoint: "shop-purchase"
+  });
 
   window.location.reload();
 }

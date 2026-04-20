@@ -290,18 +290,19 @@ function registerLeaveWarning() {
 async function getLoggedInStudent() {
   const authState = getAuthState();
   const studentLogin = authState.studentLogin;
-  if (!studentLogin?.id) return null;
+  const session = getPlayerSession();
+  if (!studentLogin?.id && !studentLogin?.username && !session.studentId && !session.playerName) return null;
 
   const supabase = await getSupabaseClientOrNull();
   const fallback = {
-    id: studentLogin.id,
-    display_name: studentLogin.displayName || studentLogin.username || "Student",
-    username: studentLogin.username || "",
-    classes: studentLogin.classCode ? { class_code: studentLogin.classCode } : null,
-    schools: studentLogin.schoolName ? { name: studentLogin.schoolName } : null
+    id: studentLogin?.id || session.studentId || null,
+    display_name: studentLogin?.displayName || session.playerName || studentLogin?.username || "Student",
+    username: studentLogin?.username || session.username || "",
+    classes: (studentLogin?.classCode || session.classCode) ? { class_code: studentLogin?.classCode || session.classCode } : null,
+    schools: (studentLogin?.schoolName || session.schoolName) ? { name: studentLogin?.schoolName || session.schoolName } : null
   };
 
-  if (!supabase) return fallback;
+  if (!supabase || !studentLogin?.id) return fallback;
 
   const { data, error } = await supabase
     .from("students")
@@ -990,6 +991,10 @@ async function saveRoundProgress(round, choice, outcome, reflection, correct) {
   const classroom = authState.classroom;
   const classId = classroom?.id || studentLogin?.classId || null;
   if (!supabase || !studentLogin?.id) return;
+  const session = getPlayerSession();
+  const earnedDelta = Math.max(0, Number(outcome?.rewards?.salaryPotential || 0));
+  const taxDelta = Math.max(0, Math.round(earnedDelta * 0.1));
+  const savingsDelta = Math.max(0, Math.round(earnedDelta * 0.25));
 
   const roundsCompleted = Object.keys(state.completed).length;
   const completionPercent = Math.round((roundsCompleted / ROUNDS.length) * 100);
@@ -1041,7 +1046,7 @@ async function saveRoundProgress(round, choice, outcome, reflection, correct) {
 
   const { data: existingProfile, error: profileReadError } = await supabase
     .from("player_profiles")
-    .select("student_id, annual_salary, cumulative_net_worth, career_success, job_security, work_life_balance, resilience")
+    .select("student_id, annual_salary, cumulative_net_worth, savings, tax_paid, career_success, job_security, work_life_balance, resilience")
     .eq("student_id", studentLogin.id)
     .maybeSingle();
 
@@ -1050,17 +1055,43 @@ async function saveRoundProgress(round, choice, outcome, reflection, correct) {
   const current = existingProfile || {
     annual_salary: 0,
     cumulative_net_worth: 0,
+    savings: 0,
+    tax_paid: 0,
     career_success: 0,
     job_security: 0,
     work_life_balance: 0,
     resilience: 0
   };
 
+  const nextNetWorth = Math.max(0, Number(session.cumulativeNetWorth ?? current.cumulative_net_worth ?? 0) + earnedDelta);
+  const nextSavings = Math.max(0, Number(session.savings ?? current.savings ?? 0) + savingsDelta);
+  const nextTaxPaid = Math.max(0, Number(session.taxPaid ?? current.tax_paid ?? 0) + taxDelta);
+
+  writePlayerSession({
+    studentId: studentLogin.id,
+    username: studentLogin.username || session.username || "",
+    playerName: studentLogin.displayName || session.playerName || studentLogin.username || "Student",
+    schoolName: studentLogin.schoolName || session.schoolName || "",
+    classId,
+    classCode: studentLogin.classCode || session.classCode || "",
+    className: studentLogin.className || session.className || "",
+    careerTitle: "Lifelong Learner",
+    annualSalary: state.resources.salaryPotential,
+    cumulativeNetWorth: nextNetWorth,
+    savings: nextSavings,
+    taxPaid: nextTaxPaid,
+    jobSecurity: state.resources.jobSecurity,
+    workLifeBalance: state.resources.workLifeBalance,
+    checkpoint: round.id
+  });
+
   const updatePayload = {
     student_id: studentLogin.id,
     updated_at: new Date().toISOString(),
     annual_salary: state.resources.salaryPotential,
-    cumulative_net_worth: Number(current.cumulative_net_worth || 0) + Math.max(0, Math.round(state.resources.salaryPotential * 0.08)),
+    cumulative_net_worth: nextNetWorth,
+    savings: nextSavings,
+    tax_paid: nextTaxPaid,
     career_success: Number(current.career_success || 0) + Number(outcome.rewards.careerSuccess || 0),
     job_security: clamp(Number(current.job_security || 0) + Number(outcome.rewards.jobSecurity || 0), 0, 100),
     work_life_balance: clamp(Number(current.work_life_balance || 0) + Number(outcome.rewards.workLifeBalance || 0), 0, 100),
