@@ -1151,12 +1151,19 @@ function buildGlossaryChallengeOptions(roundId, item, batch = getCurrentGlossary
 
   if (roundId === "shape-only") {
     const distractors = pickRandom(
-      glossarySource.filter(candidate => candidate.id !== item.id).map(candidate => clampText(candidate.definition, 110)),
+      glossarySource.filter(candidate => candidate.id !== item.id),
       3
     );
-    return shuffle([clampText(item.definition, 110), ...distractors]).map(option => ({
-      value: option,
-      title: option,
+    return shuffle([
+      { id: `${item.id}-correct`, text: clampText(item.definition, 110), isCorrect: true },
+      ...distractors.map(candidate => ({
+        id: `${candidate.id}-distractor`,
+        text: clampText(candidate.definition, 110),
+        isCorrect: false
+      }))
+    ]).map(option => ({
+      value: option.id,
+      title: option.text,
       detail: "Definition fragment"
     }));
   }
@@ -1175,7 +1182,7 @@ function buildGlossaryChallengeOptions(roundId, item, batch = getCurrentGlossary
 function isGlossaryChoiceCorrect(roundId, item, value) {
   if (!item) return false;
   if (roundId === "shape-only") {
-    return normaliseGlossaryTermText(value) === normaliseGlossaryTermText(clampText(item.definition, 110));
+    return value === `${item.id}-correct`;
   }
   return normaliseGlossaryTermText(value) === normaliseGlossaryTermText(item.term);
 }
