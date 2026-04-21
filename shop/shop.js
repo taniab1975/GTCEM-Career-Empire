@@ -1,7 +1,6 @@
 const AUTH_DEMO_STATE_KEY = "career-empire-auth-demo";
 const FEEDBACK_FALLBACK_KEY = "career-empire-feedback-fallback";
 const PLAYER_SESSION_KEY = "career-empire-session";
-const ECONOMY_LOG_LIMIT = 60;
 
 const GLOBAL_ASSET_CATALOG = [
   { code: "study-desk", name: "Focused Study Desk", category: "study", cost: 900, icon: "🪑", benefit: "Supports planning-heavy tasks and a more stable learning setup." },
@@ -64,20 +63,9 @@ function writePlayerSession(patch) {
   return next;
 }
 
-function buildEconomyLogEntry(entry = {}) {
-  return {
-    id: entry.id || `eco-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
-    timestamp: entry.timestamp || new Date().toISOString(),
-    ...entry
-  };
-}
-
 function pushEconomyLog(entry = {}) {
-  const session = readJsonStorage(PLAYER_SESSION_KEY, {});
-  const currentLog = Array.isArray(session.economyLog) ? session.economyLog : [];
-  const nextLog = [buildEconomyLogEntry(entry), ...currentLog].slice(0, ECONOMY_LOG_LIMIT);
-  writePlayerSession({ economyLog: nextLog });
-  return nextLog;
+  if (!window.CareerEmpireEconomy?.appendEvent) return [];
+  return window.CareerEmpireEconomy.appendEvent(entry);
 }
 
 async function getSupabaseClientOrNull() {

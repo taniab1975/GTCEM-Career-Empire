@@ -3,7 +3,6 @@ const PLAYER_SESSION_KEY = "career-empire-session";
 const MODULE_ID = "est-prep";
 const BANK_PATH = "../../data/modules/est-prep-bank.json";
 const CONTENT_STAGE_CONFIG_PATH = "../../data/modules/est-prep-rounds/content-stage.json";
-const ECONOMY_LOG_LIMIT = 60;
 
 const SKILL_LOGOS = {
   communication: "../../Assets/employability-logos/main/communication.png",
@@ -366,21 +365,12 @@ function writePlayerSession(patch) {
   return next;
 }
 
-function buildEconomyLogEntry(entry = {}) {
-  return {
-    id: entry.id || `eco-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
-    timestamp: entry.timestamp || new Date().toISOString(),
+function pushEconomyLog(entry = {}) {
+  if (!window.CareerEmpireEconomy?.appendEvent) return [];
+  return window.CareerEmpireEconomy.appendEvent({
     moduleId: MODULE_ID,
     ...entry
-  };
-}
-
-function pushEconomyLog(entry = {}) {
-  const session = getPlayerSession();
-  const currentLog = Array.isArray(session.economyLog) ? session.economyLog : [];
-  const nextLog = [buildEconomyLogEntry(entry), ...currentLog].slice(0, ECONOMY_LOG_LIMIT);
-  writePlayerSession({ economyLog: nextLog });
-  return nextLog;
+  });
 }
 
 function shouldWarnBeforeLeaving() {

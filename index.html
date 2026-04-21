@@ -1435,7 +1435,6 @@
     const PLAYER_SESSION_KEY = 'career-empire-session';
     const TEACHER_SESSION_KEY = 'career-empire-teacher-session';
     const AUTH_DEMO_STATE_KEY = 'career-empire-auth-demo';
-    const ECONOMY_LOG_LIMIT = 60;
     const EMPLOYABILITY_LOGO_BY_ID = {
       communication: './Assets/employability-logos/main/communication.png',
       'digital-literacy': './Assets/employability-logos/main/digital-literacy.png',
@@ -1541,23 +1540,9 @@
       }
     }
 
-    function buildEconomyLogEntry(entry = {}) {
-      return {
-        id: entry.id || `eco-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
-        timestamp: entry.timestamp || new Date().toISOString(),
-        ...entry
-      };
-    }
-
     function pushEconomyLog(entry = {}) {
-      const session = readJsonStorage(PLAYER_SESSION_KEY, {});
-      const currentLog = Array.isArray(session.economyLog) ? session.economyLog : [];
-      const nextSession = {
-        ...session,
-        economyLog: [buildEconomyLogEntry(entry), ...currentLog].slice(0, ECONOMY_LOG_LIMIT)
-      };
-      localStorage.setItem(PLAYER_SESSION_KEY, JSON.stringify(nextSession));
-      return nextSession;
+      if (!window.CareerEmpireEconomy?.appendEvent) return null;
+      return window.CareerEmpireEconomy.appendEvent(entry);
     }
 
     function getAuthPrototypeState() {
@@ -3703,6 +3688,7 @@
     }
   </script>
   <script src="./config/supabase-config.js"></script>
+  <script src="./src/services/economy-ledger.js"></script>
   <script src="./src/services/supabase-browser.js"></script>
   <script src="./src/services/feedback-widget.js"></script>
 </body>
