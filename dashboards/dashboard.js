@@ -39,6 +39,8 @@ function mapRemotePlayerProfile(row) {
     career_title: row.career_title || "Intern",
     annual_salary: row.annual_salary || 0,
     cumulative_net_worth: row.cumulative_net_worth || 0,
+    savings: row.savings || 0,
+    tax_paid: row.tax_paid || 0,
     career_level: row.career_level || 1,
     job_security: row.job_security || 0,
     work_life_balance: row.work_life_balance || 0,
@@ -63,6 +65,8 @@ async function getPlayers() {
       career_title,
       annual_salary,
       cumulative_net_worth,
+      savings,
+      tax_paid,
       career_level,
       job_security,
       work_life_balance,
@@ -391,6 +395,30 @@ function renderStudentTimeline(items) {
       <p>${item.detail}</p>
     </div>
   `).join("");
+}
+
+function buildEconomyTimelineItems(session) {
+  const entries = Array.isArray(session?.economyLog) ? session.economyLog : [];
+  return entries.slice(0, 6).map(entry => {
+    const incomeParts = [];
+    if (Number(entry.earnedDelta || 0) > 0) incomeParts.push(`Income +${formatCurrency(entry.earnedDelta)}`);
+    if (Number(entry.taxDelta || 0) > 0) incomeParts.push(`Tax +${formatCurrency(entry.taxDelta)}`);
+    if (Number(entry.spendDelta || 0) > 0) incomeParts.push(`Spend -${formatCurrency(entry.spendDelta)}`);
+
+    const totals = [];
+    if (typeof entry.annualSalaryAfter === "number") totals.push(`Salary ${formatCurrency(entry.annualSalaryAfter)}`);
+    if (typeof entry.netWorthAfter === "number") totals.push(`Net worth ${formatCurrency(entry.netWorthAfter)}`);
+    if (typeof entry.taxPaidAfter === "number") totals.push(`Tax paid ${formatCurrency(entry.taxPaidAfter)}`);
+
+    return {
+      title: `${entry.label || entry.checkpoint || "Economy update"} • ${new Date(entry.timestamp).toLocaleString()}`,
+      detail: [
+        entry.detail || `${entry.moduleId || "module"} updated your shared profile.`,
+        incomeParts.join(" • "),
+        totals.join(" • ")
+      ].filter(Boolean).join(" • ")
+    };
+  });
 }
 
 function renderStudentShopPreview(items) {
@@ -1445,6 +1473,8 @@ async function getTeacherDashboardData() {
         career_title,
         annual_salary,
         cumulative_net_worth,
+        savings,
+        tax_paid,
         career_level,
         job_security,
         work_life_balance,
@@ -1533,7 +1563,7 @@ async function renderStudentLiveData(players, skillsData) {
     Number(record?.economic_mastery || 0)
   ) / 4);
   const moduleCompletion = Math.min(100, Number(record?.years_played || 0) * 18);
-  const taxPaid = Math.floor(Number(record?.cumulative_net_worth || 0) * 0.1);
+  const taxPaid = Number(record?.tax_paid ?? session?.taxPaid ?? Math.floor(Number(record?.cumulative_net_worth || 0) * 0.1));
   const assetCount = await getCurrentStudentAssetCount();
   const moduleProgressById = await getCurrentStudentModuleProgress();
   const assetsOwned = assetCount ?? Math.max(0, Math.floor(Number(record?.cumulative_net_worth || 0) / 25000));
@@ -1675,7 +1705,8 @@ async function renderStudentLiveData(players, skillsData) {
       tags: ["Shared inventory", "Cross-module", "Life build"]
     }
   ]);
-  renderStudentTimeline(history.slice(0, 3).map(entry => ({
+  const economyTimeline = buildEconomyTimelineItems(session);
+  renderStudentTimeline(economyTimeline.length ? economyTimeline : history.slice(0, 3).map(entry => ({
     title: `${entry.checkpoint || "checkpoint"} • ${new Date(entry.timestamp).toLocaleString()}`,
     detail: `Salary ${formatCurrency(entry.annual_salary)}, net worth ${formatCurrency(entry.cumulative_net_worth)}, mastery ${average([
       Number(entry.tech_mastery || 0),

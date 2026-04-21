@@ -1,6 +1,7 @@
 const AUTH_DEMO_STATE_KEY = "career-empire-auth-demo";
 const FEEDBACK_FALLBACK_KEY = "career-empire-feedback-fallback";
 const PLAYER_SESSION_KEY = "career-empire-session";
+const ECONOMY_LOG_LIMIT = 60;
 
 const GLOBAL_ASSET_CATALOG = [
   { code: "study-desk", name: "Focused Study Desk", category: "study", cost: 900, icon: "🪑", benefit: "Supports planning-heavy tasks and a more stable learning setup." },
@@ -61,6 +62,22 @@ function writePlayerSession(patch) {
   const next = { ...readJsonStorage(PLAYER_SESSION_KEY, {}), ...patch };
   localStorage.setItem(PLAYER_SESSION_KEY, JSON.stringify(next));
   return next;
+}
+
+function buildEconomyLogEntry(entry = {}) {
+  return {
+    id: entry.id || `eco-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
+    timestamp: entry.timestamp || new Date().toISOString(),
+    ...entry
+  };
+}
+
+function pushEconomyLog(entry = {}) {
+  const session = readJsonStorage(PLAYER_SESSION_KEY, {});
+  const currentLog = Array.isArray(session.economyLog) ? session.economyLog : [];
+  const nextLog = [buildEconomyLogEntry(entry), ...currentLog].slice(0, ECONOMY_LOG_LIMIT);
+  writePlayerSession({ economyLog: nextLog });
+  return nextLog;
 }
 
 async function getSupabaseClientOrNull() {
@@ -291,6 +308,19 @@ async function buyGlobalAsset(asset, context) {
     workLifeBalance: Number(context.profile.work_life_balance || 0),
     jobSecurity: Number(context.profile.job_security || 0),
     checkpoint: "shop-purchase"
+  });
+  pushEconomyLog({
+    eventType: "purchase",
+    moduleId: "global-shop",
+    checkpoint: "shop-purchase",
+    label: asset.name,
+    detail: `Purchased from the global shop for ${formatCurrency(asset.cost)}`,
+    earnedDelta: 0,
+    taxDelta: 0,
+    spendDelta: asset.cost,
+    annualSalaryAfter: Number(context.profile.annual_salary || 0),
+    netWorthAfter: Math.max(0, currentWorth - asset.cost),
+    savingsAfter: Math.max(0, Number(context.profile.savings || 0) - asset.cost)
   });
 
   window.location.reload();

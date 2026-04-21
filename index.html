@@ -1435,6 +1435,7 @@
     const PLAYER_SESSION_KEY = 'career-empire-session';
     const TEACHER_SESSION_KEY = 'career-empire-teacher-session';
     const AUTH_DEMO_STATE_KEY = 'career-empire-auth-demo';
+    const ECONOMY_LOG_LIMIT = 60;
     const EMPLOYABILITY_LOGO_BY_ID = {
       communication: './Assets/employability-logos/main/communication.png',
       'digital-literacy': './Assets/employability-logos/main/digital-literacy.png',
@@ -1538,6 +1539,25 @@
       } catch (_) {
         return fallback;
       }
+    }
+
+    function buildEconomyLogEntry(entry = {}) {
+      return {
+        id: entry.id || `eco-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
+        timestamp: entry.timestamp || new Date().toISOString(),
+        ...entry
+      };
+    }
+
+    function pushEconomyLog(entry = {}) {
+      const session = readJsonStorage(PLAYER_SESSION_KEY, {});
+      const currentLog = Array.isArray(session.economyLog) ? session.economyLog : [];
+      const nextSession = {
+        ...session,
+        economyLog: [buildEconomyLogEntry(entry), ...currentLog].slice(0, ECONOMY_LOG_LIMIT)
+      };
+      localStorage.setItem(PLAYER_SESSION_KEY, JSON.stringify(nextSession));
+      return nextSession;
     }
 
     function getAuthPrototypeState() {
@@ -2208,6 +2228,17 @@
         else if (choice.masteryBoost === 'demo') gameState.demoMastery += 15;
         else if (choice.masteryBoost === 'economic') gameState.economicMastery += 15;
       }
+      pushEconomyLog({
+        eventType: 'scenario-choice',
+        moduleId: 'megatrends',
+        checkpoint: currentScenario.megatrend,
+        label: currentScenario.title,
+        detail: choice.text,
+        earnedDelta: choice.salary,
+        taxDelta: Math.floor(choice.salary * 0.1),
+        annualSalaryAfter: gameState.annualSalary,
+        netWorthAfter: gameState.cumulativeNetWorth
+      });
       updateStats();
       saveProgress('scenario_choice', taskMeta);
       const communityTax = Math.floor(gameState.annualSalary * 0.1);
@@ -3504,8 +3535,10 @@
     }
 
     function syncActivePlayerSession(source = 'manual') {
+      const currentSession = readJsonStorage(PLAYER_SESSION_KEY, {});
       const overallMastery = Math.round((gameState.techMastery + gameState.climateMastery + gameState.demoMastery + gameState.economicMastery) / 4);
       const session = {
+        ...currentSession,
         playerName: gameState.playerName,
         schoolName: gameState.schoolName,
         classCode: gameState.classCode,

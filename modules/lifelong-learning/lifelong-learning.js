@@ -1,6 +1,7 @@
 const AUTH_DEMO_STATE_KEY = "career-empire-auth-demo";
 const PLAYER_SESSION_KEY = "career-empire-session";
 const MODULE_ID = "lifelong-learning";
+const ECONOMY_LOG_LIMIT = 60;
 
 const SKILL_LOGOS = {
   communication: "../../Assets/employability-logos/main/communication.png",
@@ -273,6 +274,24 @@ function getPlayerSession() {
 function writePlayerSession(patch) {
   const next = { ...getPlayerSession(), ...patch };
   localStorage.setItem(PLAYER_SESSION_KEY, JSON.stringify(next));
+  return next;
+}
+
+function buildEconomyLogEntry(entry = {}) {
+  return {
+    id: entry.id || `eco-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
+    timestamp: entry.timestamp || new Date().toISOString(),
+    moduleId: MODULE_ID,
+    ...entry
+  };
+}
+
+function pushEconomyLog(entry = {}) {
+  const session = getPlayerSession();
+  const currentLog = Array.isArray(session.economyLog) ? session.economyLog : [];
+  const nextLog = [buildEconomyLogEntry(entry), ...currentLog].slice(0, ECONOMY_LOG_LIMIT);
+  writePlayerSession({ economyLog: nextLog });
+  return nextLog;
 }
 
 function shouldWarnBeforeLeaving() {
@@ -1083,6 +1102,19 @@ async function saveRoundProgress(round, choice, outcome, reflection, correct) {
     jobSecurity: state.resources.jobSecurity,
     workLifeBalance: state.resources.workLifeBalance,
     checkpoint: round.id
+  });
+  pushEconomyLog({
+    eventType: "progress-saved",
+    checkpoint: round.id,
+    label: round.title,
+    detail: choice.title,
+    earnedDelta,
+    taxDelta,
+    savingsDelta,
+    annualSalaryAfter: state.resources.salaryPotential,
+    netWorthAfter: nextNetWorth,
+    savingsAfter: nextSavings,
+    taxPaidAfter: nextTaxPaid
   });
 
   const updatePayload = {
