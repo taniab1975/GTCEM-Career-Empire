@@ -1384,6 +1384,153 @@ function setGlossaryRecallAnswer(key, value) {
   state.glossaryRecallAnswers[key] = value;
 }
 
+function setGlossaryRecallChoiceEncoded(key, encodedValue) {
+  state.glossaryRecallAnswers[key] = decodeURIComponent(encodedValue || "");
+  renderGlossaryStage();
+}
+
+function getGlossaryStabilityPercent() {
+  const completedRounds = Object.keys(state.glossaryRoundRewards || {}).length;
+  const partial = state.glossaryRoundCelebration
+    ? 0
+    : Math.round(((state.glossaryBatchIndex + (isGlossaryBatchMatched() ? 1 : 0)) / Math.max(1, (state.stageDeck?.glossaryBatches || []).length)) * 25);
+  return Math.min(100, (completedRounds * 25) + partial);
+}
+
+function getGlossaryRoundBadge(roundIndex) {
+  const reward = state.glossaryRoundRewards[roundIndex + 1];
+  if (reward) return "Restored";
+  if (state.glossaryRoundIndex === roundIndex) return "Active";
+  if (state.glossaryRoundIndex > roundIndex) return "Unlocked";
+  return "Locked";
+}
+
+function renderGlossaryChamberRail() {
+  return `
+    <div class="glossary-chamber-rail">
+      ${GLOSSARY_ROUND_CONFIGS.map((round, index) => {
+        const status = getGlossaryRoundBadge(index);
+        const active = state.glossaryRoundIndex === index && !state.glossaryRoundCelebration;
+        const complete = Boolean(state.glossaryRoundRewards[index + 1]);
+        return `
+          <article class="glossary-chamber-card ${active ? "active" : ""} ${complete ? "complete" : ""}">
+            <div class="glossary-chamber-index">0${index + 1}</div>
+            <strong>${escapeHtml(round.title.replace(/^Round \d+:\s*/, ""))}</strong>
+            <p>${escapeHtml(round.cue)}</p>
+            <span class="glossary-chamber-status">${status}</span>
+          </article>
+        `;
+      }).join("")}
+    </div>
+  `;
+}
+
+function buildRecallTermOptions(item) {
+  const distractors = pickRandom(
+    buildGlossarySource().filter(candidate => candidate.id !== item.id).map(candidate => candidate.term),
+    3
+  );
+  return shuffle([item.term, ...distractors]);
+}
+
+function buildRecallKeywordOptions(item) {
+  const keywordPool = buildGlossarySource()
+    .filter(candidate => candidate.id !== item.id)
+    .flatMap(candidate => candidate.keywords);
+  const distractors = pickRandom([...new Set(keywordPool.filter(keyword => !item.keywords.includes(keyword)))], 3);
+  return shuffle([item.keywords[0], ...distractors]);
+}
+
+function renderGlossaryRecallForge(batch, batchNumber, totalBatches) {
+  return `
+    <div class="glossary-mission-shell glossary-escape-shell">
+      <div class="glossary-mission-topbar glossary-escape-topbar">
+        <div>
+          <div class="kicker">System Recovery Protocol</div>
+          <h3>Recall Forge</h3>
+          <p class="small-copy">The final chamber turns recognition into retrieval. Restore each term signal, then restore one key concept from memory.</p>
+        </div>
+        <div class="glossary-mission-actions">
+          <span class="badge">Final chamber</span>
+          <span class="badge">Batch ${batchNumber} / ${totalBatches}</span>
+          <span class="badge">Timer <strong id="glossary-round-timer">${formatSecondsAsClock(getGlossaryRoundElapsedSeconds())}</strong></span>
+          <button class="choice-button" type="button" onclick="window.ESTPrep.returnToLab()">Return to EST Lab</button>
+        </div>
+      </div>
+      ${renderGlossaryChamberRail()}
+      <div class="glossary-escape-console">
+        <div class="glossary-stability-card">
+          <div class="kicker">Lab stability</div>
+          <strong>${getGlossaryStabilityPercent()}% restored</strong>
+          <div class="glossary-progress-track" aria-hidden="true">
+            <div class="glossary-progress-bar" style="width:${getGlossaryStabilityPercent()}%;"></div>
+          </div>
+          <p>Every restored signal banks more salary, more tax contribution, and clearer EST vocabulary under pressure.</p>
+        </div>
+        <div class="glossary-signal-feed">
+          <div class="kicker">Forge rules</div>
+          <p>1. Recover the term from its keyword trail.</p>
+          <p>2. Recover one strong keyword from the term.</p>
+          <p>3. Clear the whole batch to bank the final chamber.</p>
+        </div>
+      </div>
+      <div class="glossary-recall-grid">
+        ${batch.map((item, index) => {
+          const termKey = `term-${item.id}`;
+          const keywordKey = `keyword-${item.id}`;
+          const selectedTerm = state.glossaryRecallAnswers[termKey] || "";
+          const selectedKeyword = state.glossaryRecallAnswers[keywordKey] || "";
+          const termOptions = buildRecallTermOptions(item);
+          const keywordOptions = buildRecallKeywordOptions(item);
+          return `
+            <article class="panel glossary-recall-card">
+              <div class="sample-meta">
+                <strong>Signal core ${index + 1}</strong>
+                <span>${escapeHtml(item.term)}</span>
+              </div>
+              <div class="glossary-recall-block">
+                <div class="kicker">Keyword trail</div>
+                <p>${escapeHtml(item.keywords.join(" • "))}</p>
+                <div class="choice-grid">
+                  ${termOptions.map(option => `
+                    <button
+                      type="button"
+                      class="choice-button ${selectedTerm === option ? "selected live-selected" : ""}"
+                      onclick="window.ESTPrep.setGlossaryRecallChoiceEncoded('${termKey}', '${encodeURIComponent(option)}')"
+                    >
+                      <strong>${escapeHtml(option)}</strong>
+                    </button>
+                  `).join("")}
+                </div>
+              </div>
+              <div class="glossary-recall-block">
+                <div class="kicker">Repair token</div>
+                <p>Choose one keyword that belongs with <strong>${escapeHtml(item.term)}</strong>.</p>
+                <div class="choice-grid">
+                  ${keywordOptions.map(option => `
+                    <button
+                      type="button"
+                      class="choice-button ${selectedKeyword === option ? "selected live-selected" : ""}"
+                      onclick="window.ESTPrep.setGlossaryRecallChoiceEncoded('${keywordKey}', '${encodeURIComponent(option)}')"
+                    >
+                      <strong>${escapeHtml(option)}</strong>
+                    </button>
+                  `).join("")}
+                </div>
+              </div>
+            </article>
+          `;
+        }).join("")}
+      </div>
+      <div class="written-stage glossary-finale-stage">
+        <strong>Forge exit</strong>
+        <p class="small-copy">Clear this batch to trigger the final salary bank, tax contribution, and teacher-visible mastery save.</p>
+        <button class="submit-button" type="button" onclick="window.ESTPrep.submitGlossary()">${batchNumber === totalBatches ? "Restore System" : "Lock Next Recall Batch"}</button>
+      </div>
+    </div>
+  `;
+}
+
 function renderGlossaryCelebration() {
   const celebration = state.glossaryRoundCelebration;
   if (!celebration) return "";
@@ -1628,63 +1775,7 @@ function renderGlossaryStage() {
   }
 
   if (round.id === "recall") {
-    renderStageRoot(`
-      <div class="glossary-mission-shell">
-        <div class="glossary-mission-topbar">
-          <div>
-            <div class="kicker">Glossary Mission Access</div>
-            <h3>${escapeHtml(round.title)}</h3>
-            <p class="small-copy">Batch ${batchNumber} of ${totalBatches}. This final round is teacher-visible mastery.</p>
-          </div>
-          <div class="glossary-mission-actions">
-            <span class="badge">Round 4 / 4</span>
-            <span class="badge">Timer <strong id="glossary-round-timer">${formatSecondsAsClock(getGlossaryRoundElapsedSeconds())}</strong></span>
-            <button class="choice-button" type="button" onclick="window.ESTPrep.returnToLab()">Return to EST Lab</button>
-          </div>
-        </div>
-        <div class="question-card glossary-round-banner">
-          <div class="kicker">Recall Forge</div>
-          <h3>${escapeHtml(round.title)}</h3>
-          <p>Use the keyword clues to retrieve the term, then retrieve at least one keyword from the term. Faster accurate recall pays more.</p>
-        </div>
-        <div class="panel">
-          <div class="section-title">
-            <h2>Recall Round</h2>
-            <p>Batch ${batchNumber}/${totalBatches}</p>
-          </div>
-          <div class="badge-row" style="margin-bottom:14px;">
-            <span class="badge">Terms in batch: ${batch.length}</span>
-            <span class="badge">Best streak: x${state.glossaryBestStreak}</span>
-            <span class="badge">Misses: ${state.glossaryMisses}</span>
-          </div>
-          <div class="sample-grid">
-            ${batch.map(item => `
-              <article class="sample-card">
-                <div class="sample-meta">
-                  <strong>${escapeHtml(item.term)}</strong>
-                  <span>Recall pair</span>
-                </div>
-                <p><strong>Keywords to term:</strong> ${escapeHtml(item.keywords.join(", "))}</p>
-                <textarea
-                  placeholder="Type the term..."
-                  oninput="window.ESTPrep.setGlossaryRecallAnswer('term-${item.id}', this.value)"
-                >${escapeHtml(state.glossaryRecallAnswers[`term-${item.id}`] || "")}</textarea>
-                <p style="margin-top:12px;"><strong>Term to keyword:</strong> Give at least one keyword for <em>${escapeHtml(item.term)}</em>.</p>
-                <textarea
-                  placeholder="Type one keyword..."
-                  oninput="window.ESTPrep.setGlossaryRecallAnswer('keyword-${item.id}', this.value)"
-                >${escapeHtml(state.glossaryRecallAnswers[`keyword-${item.id}`] || "")}</textarea>
-              </article>
-            `).join("")}
-          </div>
-        </div>
-        <div class="written-stage">
-          <strong>Round 4 complete</strong>
-          <p class="small-copy">This final mastery round records exactly which terms the student can retrieve, not just recognise.</p>
-          <button class="submit-button" type="button" onclick="window.ESTPrep.submitGlossary()">${batchNumber === totalBatches ? "Finish Recall Forge" : "Next Recall Batch"}</button>
-        </div>
-      </div>
-    `);
+    renderStageRoot(renderGlossaryRecallForge(batch, batchNumber, totalBatches));
     startGlossaryRoundTimer();
     return;
   }
@@ -1696,19 +1787,19 @@ function renderGlossaryStage() {
   const selectedSocketId = state.glossarySelectedSocketId;
   const modeSwitch = `
     <div class="glossary-mode-switch">
-      <button type="button" class="choice-button ${state.glossaryMode === "play" ? "selected live-selected" : ""}" onclick="window.ESTPrep.setGlossaryMode('play')">Play Round</button>
-      <button type="button" class="choice-button ${state.glossaryMode === "study" ? "selected live-selected" : ""}" onclick="window.ESTPrep.setGlossaryMode('study')">Study Deck</button>
+      <button type="button" class="choice-button ${state.glossaryMode === "play" ? "selected live-selected" : ""}" onclick="window.ESTPrep.setGlossaryMode('play')">Restore Chamber</button>
+      <button type="button" class="choice-button ${state.glossaryMode === "study" ? "selected live-selected" : ""}" onclick="window.ESTPrep.setGlossaryMode('study')">Intel Deck</button>
     </div>
   `;
 
   if (state.glossaryMode === "study") {
     renderStageRoot(`
       <div class="glossary-mission-shell">
-        <div class="glossary-mission-topbar">
+        <div class="glossary-mission-topbar glossary-escape-topbar">
           <div>
-            <div class="kicker">Glossary Mission Access</div>
-            <h3>Study before the speed run</h3>
-            <p class="small-copy">Use the deck to learn the batch, then switch back into play mode for points and rewards.</p>
+            <div class="kicker">System Recovery Protocol</div>
+            <h3>Intel Deck</h3>
+            <p class="small-copy">Flip through the signal cards, absorb the language, then jump back into the chamber to restore the glossary wall.</p>
           </div>
           <div class="glossary-mission-actions">
             <span class="badge">Round ${roundNumber} / 4</span>
@@ -1717,6 +1808,7 @@ function renderGlossaryStage() {
             <button class="choice-button" type="button" onclick="window.ESTPrep.returnToLab()">Return to EST Lab</button>
           </div>
         </div>
+        ${renderGlossaryChamberRail()}
         ${modeSwitch}
         ${renderGlossaryStudyDeck(batch)}
       </div>
@@ -1726,12 +1818,12 @@ function renderGlossaryStage() {
   }
 
   renderStageRoot(`
-    <div class="glossary-mission-shell">
-      <div class="glossary-mission-topbar">
+    <div class="glossary-mission-shell glossary-escape-shell">
+      <div class="glossary-mission-topbar glossary-escape-topbar">
         <div>
-          <div class="kicker">Glossary Mission Access</div>
-          <h3>Career Empire Blueprint Wall</h3>
-          <p class="small-copy">Step out of the four-module arena, clear the glossary mission, then return stronger for the next EST battle.</p>
+          <div class="kicker">System Recovery Protocol</div>
+          <h3>Glossary Lockdown</h3>
+          <p class="small-copy">The EST lab vocabulary core has crashed. Clear each chamber to restore system stability before the final recall forge.</p>
         </div>
         <div class="glossary-mission-actions">
           <span class="badge">Round ${roundNumber} / 4</span>
@@ -1740,16 +1832,32 @@ function renderGlossaryStage() {
           <button class="choice-button" type="button" onclick="window.ESTPrep.returnToLab()">Return to EST Lab</button>
         </div>
       </div>
-      <div class="question-card glossary-round-banner">
-        <div class="kicker">Blueprint Wall</div>
+      ${renderGlossaryChamberRail()}
+      <div class="glossary-escape-console">
+        <div class="glossary-stability-card">
+          <div class="kicker">System stability</div>
+          <strong>${getGlossaryStabilityPercent()}% restored</strong>
+          <div class="glossary-progress-track" aria-hidden="true">
+            <div class="glossary-progress-bar" style="width:${getGlossaryStabilityPercent()}%;"></div>
+          </div>
+          <p>Correct matches restore the wall, build streak bonuses, and convert precision language into salary and community tax.</p>
+        </div>
+        <div class="glossary-signal-feed">
+          <div class="kicker">Mission brief</div>
+          <p>${escapeHtml(round.cue)}</p>
+          <p>${matchedCount}/${batch.length} locks restored in this batch. Best streak x${state.glossaryBestStreak}.</p>
+        </div>
+      </div>
+      <div class="question-card glossary-round-banner glossary-escape-banner">
+        <div class="kicker">Blueprint breach</div>
         <h3>${escapeHtml(round.title)}</h3>
-        <p>Match the term pieces to the correct definition sockets. The wall brightens, your streak rises, and faster clean rounds pay better.</p>
+        <p>Match the floating signal pieces to the correct definition sockets. Each clean chamber pushes the EST lab closer to full recovery.</p>
       </div>
       ${modeSwitch}
-      <div class="panel">
+      <div class="panel glossary-command-panel">
         <div class="section-title">
-          <h2>Career Empire Blueprint Wall</h2>
-          <p>Round ${roundNumber}/4 • ${matchedCount}/${batch.length} matched</p>
+          <h2>Recovery chamber ${roundNumber}</h2>
+          <p>${matchedCount}/${batch.length} signal locks restored</p>
         </div>
         <div class="badge-row" style="margin-bottom:14px;">
           <span class="badge">Current streak: x${state.glossaryStreak}</span>
@@ -1760,17 +1868,14 @@ function renderGlossaryStage() {
         <div class="glossary-instructions">
           <div class="glossary-step">
             <span>1</span>
-            <strong>Choose a term card</strong>
+            <strong>Arm a signal piece</strong>
           </div>
           <div class="glossary-step">
             <span>2</span>
-            <strong>Choose its matching definition</strong>
+            <strong>Restore the matching socket</strong>
           </div>
         </div>
         <p class="small-copy glossary-pulse ${state.glossaryPulseType}">${escapeHtml(state.glossaryPulse || round.cue)}</p>
-        <div class="glossary-progress-track" aria-hidden="true">
-          <div class="glossary-progress-bar" style="width:${progressPercent}%;"></div>
-        </div>
         <div class="glossary-blueprint" style="--glossary-progress:${Math.round((matchedCount / Math.max(1, batch.length)) * 100)}%;">
           <div class="glossary-sockets">
             ${batch.map((item, index) => {
@@ -1816,9 +1921,9 @@ function renderGlossaryStage() {
           </div>
         </div>
       </div>
-      <div class="written-stage">
-        <strong>Blueprint feedback</strong>
-        <p class="small-copy">Correct matches glow and bank the wall. Finish the full batch, then clear the whole round to unlock salary, bonuses, and a class community choice.</p>
+      <div class="written-stage glossary-finale-stage">
+        <strong>Chamber exit</strong>
+        <p class="small-copy">Finish the batch to unlock the next breach. Each cleared chamber triggers salary, tax, and a community routing choice before you move on.</p>
         <button class="submit-button" type="button" onclick="window.ESTPrep.nextGlossaryPhase()" ${isGlossaryBatchMatched() ? "" : "disabled"}>${batchNumber === totalBatches ? "Finish Round" : "Next Batch"}</button>
       </div>
     </div>
@@ -2813,6 +2918,7 @@ window.ESTPrep = {
   setGlossaryRoundVote,
   toggleReveal,
   setGlossaryRecallAnswer,
+  setGlossaryRecallChoiceEncoded,
   setBossScaffold,
   setBossShowdownReason,
   buildBossDraft,
