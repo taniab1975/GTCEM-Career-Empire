@@ -1105,7 +1105,7 @@ function initialiseGlossaryBoard() {
   state.glossaryStreak = 0;
   state.glossaryBestStreak = 0;
   state.glossaryMisses = 0;
-  state.glossaryPulse = "Start with colour and shape. Match each term piece to the correct definition socket.";
+  state.glossaryPulse = "System breach detected. Recover the first term signal to begin restoring the EST lab.";
   state.glossaryPulseType = "neutral";
   state.glossaryMissionMode = true;
   state.glossaryHasStarted = true;
@@ -1122,6 +1122,102 @@ function getGlossaryBatchKey() {
 
 function getGlossaryAssignmentsForBatch() {
   return state.glossaryAssignments[getGlossaryBatchKey()] || {};
+}
+
+function getGlossaryPendingItems(batch = getCurrentGlossaryBatch()) {
+  const assignments = getGlossaryAssignmentsForBatch();
+  return batch.filter(item => assignments[item.id] !== item.id);
+}
+
+function getCurrentGlossaryPromptItem(batch = getCurrentGlossaryBatch()) {
+  return getGlossaryPendingItems(batch)[0] || null;
+}
+
+function buildGlossaryChallengeOptions(roundId, item, batch = getCurrentGlossaryBatch()) {
+  const glossarySource = buildGlossarySource();
+  if (!item) return [];
+
+  if (roundId === "colour-shape") {
+    const distractors = pickRandom(
+      glossarySource.filter(candidate => candidate.id !== item.id).map(candidate => candidate.term),
+      3
+    );
+    return shuffle([item.term, ...distractors]).map(option => ({
+      value: option,
+      title: option,
+      detail: option === item.term ? "Correct term signal" : "Possible glossary term"
+    }));
+  }
+
+  if (roundId === "shape-only") {
+    const distractors = pickRandom(
+      glossarySource.filter(candidate => candidate.id !== item.id).map(candidate => clampText(candidate.definition, 110)),
+      3
+    );
+    return shuffle([clampText(item.definition, 110), ...distractors]).map(option => ({
+      value: option,
+      title: option,
+      detail: "Definition fragment"
+    }));
+  }
+
+  const distractors = pickRandom(
+    glossarySource.filter(candidate => candidate.id !== item.id).map(candidate => candidate.term),
+    3
+  );
+  return shuffle([item.term, ...distractors]).map(option => ({
+    value: option,
+    title: option,
+    detail: "Restore the correct term from the definition file"
+  }));
+}
+
+function isGlossaryChoiceCorrect(roundId, item, value) {
+  if (!item) return false;
+  if (roundId === "shape-only") {
+    return normaliseGlossaryTermText(value) === normaliseGlossaryTermText(clampText(item.definition, 110));
+  }
+  return normaliseGlossaryTermText(value) === normaliseGlossaryTermText(item.term);
+}
+
+function submitGlossaryChallengeChoiceEncoded(targetId, encodedValue) {
+  const batch = getCurrentGlossaryBatch();
+  const round = getCurrentGlossaryRound();
+  const item = batch.find(entry => entry.id === targetId);
+  if (!item) return;
+
+  const answer = decodeURIComponent(encodedValue || "");
+  const assignments = { ...getGlossaryAssignmentsForBatch() };
+  if (assignments[targetId]) return;
+
+  if (isGlossaryChoiceCorrect(round.id, item, answer)) {
+    assignments[targetId] = targetId;
+    state.glossaryAssignments[getGlossaryBatchKey()] = assignments;
+    state.glossaryStreak += 1;
+    state.glossaryBestStreak = Math.max(state.glossaryBestStreak, state.glossaryStreak);
+    state.glossaryPulse = `${item.term} restored. Another glossary signal is back online.`;
+    state.glossaryPulseType = "good";
+    state.recentReward = {
+      type: "positive",
+      title: "Signal restored",
+      detail: `${item.term} is back in the system. Keep the chamber stable and chain the streak.`
+    };
+  } else {
+    state.glossaryMisses += 1;
+    state.glossaryStreak = 0;
+    state.glossaryPulse = round.id === "shape-only"
+      ? "Definition mismatch. Re-read the meaning and try again."
+      : "Signal mismatch. Use the clue feed and restore the right glossary term.";
+    state.glossaryPulseType = "warn";
+    state.recentReward = {
+      type: "warning",
+      title: "Signal unstable",
+      detail: `${answer || "That choice"} did not restore the correct glossary entry.`
+    };
+  }
+
+  renderRewardPulse();
+  renderGlossaryStage();
 }
 
 function setGlossarySelectedTerm(termId) {
@@ -1531,6 +1627,94 @@ function renderGlossaryRecallForge(batch, batchNumber, totalBatches) {
   `;
 }
 
+function renderGlossaryChallengeArena(round, batch, batchNumber, totalBatches, matchedCount, roundScore) {
+  const promptItem = getCurrentGlossaryPromptItem(batch);
+  const progressPercent = Math.round((matchedCount / Math.max(1, batch.length)) * 100);
+
+  if (!promptItem) {
+    return `
+      <div class="panel glossary-command-panel">
+        <div class="section-title">
+          <h2>Chamber cleared</h2>
+          <p>All ${batch.length} glossary signals restored in this batch.</p>
+        </div>
+        <p class="small-copy glossary-pulse good">The chamber is stable. Move to the next batch or bank the round reward.</p>
+      </div>
+      <div class="written-stage glossary-finale-stage">
+        <strong>Chamber exit</strong>
+        <p class="small-copy">You restored every glossary signal in this batch. Advance to keep the run going.</p>
+        <button class="submit-button" type="button" onclick="window.ESTPrep.nextGlossaryPhase()">${batchNumber === totalBatches ? "Finish Round" : "Next Batch"}</button>
+      </div>
+    `;
+  }
+
+  const optionSet = buildGlossaryChallengeOptions(round.id, promptItem, batch);
+  const challengeCopy = round.id === "colour-shape"
+    ? {
+        kicker: "Signal scan",
+        title: "Recover the correct term from the clue trail",
+        prompt: `Keyword trail: ${promptItem.keywords.join(" • ")}`,
+        support: "Choose the glossary term that best matches the signal feed."
+      }
+    : round.id === "shape-only"
+      ? {
+          kicker: "Definition repair",
+          title: "Restore the correct definition file",
+          prompt: promptItem.term,
+          support: "Choose the definition fragment that correctly restores this term."
+        }
+      : {
+          kicker: "Corruption sweep",
+          title: "Match the definition back to the correct term",
+          prompt: clampText(promptItem.definition, 180),
+          support: "The visual scaffolds are gone. Recover the right term from meaning alone."
+        };
+
+  return `
+    <div class="panel glossary-command-panel glossary-arcade-shell">
+      <div class="section-title">
+        <h2>Recovery chamber ${state.glossaryRoundIndex + 1}</h2>
+        <p>${matchedCount}/${batch.length} signal locks restored</p>
+      </div>
+      <div class="badge-row" style="margin-bottom:14px;">
+        <span class="badge">Current streak: x${state.glossaryStreak}</span>
+        <span class="badge">Best streak: x${state.glossaryBestStreak}</span>
+        <span class="badge">Misses: ${state.glossaryMisses}</span>
+        <span class="badge">Score: ${roundScore}</span>
+      </div>
+      <p class="small-copy glossary-pulse ${state.glossaryPulseType}">${escapeHtml(state.glossaryPulse || round.cue)}</p>
+      <div class="glossary-progress-track" aria-hidden="true">
+        <div class="glossary-progress-bar" style="width:${progressPercent}%;"></div>
+      </div>
+      <div class="glossary-arcade-grid">
+        <article class="glossary-arcade-prompt">
+          <div class="kicker">${escapeHtml(challengeCopy.kicker)}</div>
+          <h3>${escapeHtml(challengeCopy.title)}</h3>
+          <div class="glossary-arcade-signal">${escapeHtml(challengeCopy.prompt)}</div>
+          <p>${escapeHtml(challengeCopy.support)}</p>
+        </article>
+        <div class="glossary-arcade-options">
+          ${optionSet.map(option => `
+            <button
+              type="button"
+              class="choice-button glossary-arcade-option"
+              onclick="window.ESTPrep.submitGlossaryChallengeChoiceEncoded('${promptItem.id}', '${encodeURIComponent(option.value)}')"
+            >
+              <span class="kicker">${escapeHtml(option.detail)}</span>
+              <strong>${escapeHtml(option.title)}</strong>
+            </button>
+          `).join("")}
+        </div>
+      </div>
+    </div>
+    <div class="written-stage glossary-finale-stage">
+      <strong>Chamber exit</strong>
+      <p class="small-copy">Restore all ${batch.length} signals in this batch to unlock the next breach and bank the round reward.</p>
+      <button class="submit-button" type="button" onclick="window.ESTPrep.nextGlossaryPhase()" ${isGlossaryBatchMatched() ? "" : "disabled"}>${batchNumber === totalBatches ? "Finish Round" : "Next Batch"}</button>
+    </div>
+  `;
+}
+
 function renderGlossaryCelebration() {
   const celebration = state.glossaryRoundCelebration;
   if (!celebration) return "";
@@ -1780,11 +1964,7 @@ function renderGlossaryStage() {
     return;
   }
 
-  const progressPercent = Math.round((matchedCount / Math.max(1, batch.length)) * 100);
   const roundScore = Math.max(0, (matchedCount * 100) - (state.glossaryMisses * 25));
-  const showColour = round.id === "colour-shape";
-  const selectedTermId = state.glossarySelectedTermId;
-  const selectedSocketId = state.glossarySelectedSocketId;
   const modeSwitch = `
     <div class="glossary-mode-switch">
       <button type="button" class="choice-button ${state.glossaryMode === "play" ? "selected live-selected" : ""}" onclick="window.ESTPrep.setGlossaryMode('play')">Restore Chamber</button>
@@ -1851,81 +2031,10 @@ function renderGlossaryStage() {
       <div class="question-card glossary-round-banner glossary-escape-banner">
         <div class="kicker">Blueprint breach</div>
         <h3>${escapeHtml(round.title)}</h3>
-        <p>Match the floating signal pieces to the correct definition sockets. Each clean chamber pushes the EST lab closer to full recovery.</p>
+        <p>Each chamber now has its own repair mechanic. Read the signal, make the recovery choice, and stabilise the EST glossary core.</p>
       </div>
       ${modeSwitch}
-      <div class="panel glossary-command-panel">
-        <div class="section-title">
-          <h2>Recovery chamber ${roundNumber}</h2>
-          <p>${matchedCount}/${batch.length} signal locks restored</p>
-        </div>
-        <div class="badge-row" style="margin-bottom:14px;">
-          <span class="badge">Current streak: x${state.glossaryStreak}</span>
-          <span class="badge">Best streak: x${state.glossaryBestStreak}</span>
-          <span class="badge">Misses: ${state.glossaryMisses}</span>
-          <span class="badge">Score: ${roundScore}</span>
-        </div>
-        <div class="glossary-instructions">
-          <div class="glossary-step">
-            <span>1</span>
-            <strong>Arm a signal piece</strong>
-          </div>
-          <div class="glossary-step">
-            <span>2</span>
-            <strong>Restore the matching socket</strong>
-          </div>
-        </div>
-        <p class="small-copy glossary-pulse ${state.glossaryPulseType}">${escapeHtml(state.glossaryPulse || round.cue)}</p>
-        <div class="glossary-blueprint" style="--glossary-progress:${Math.round((matchedCount / Math.max(1, batch.length)) * 100)}%;">
-          <div class="glossary-sockets">
-            ${batch.map((item, index) => {
-              const visual = getGlossaryVisual(index);
-              const assigned = assignments[item.id];
-              const shapeClass = `shape-${visual.shape}`;
-              const selected = selectedSocketId === item.id;
-              return `
-                <button
-                  type="button"
-                  class="glossary-socket ${shapeClass} ${assigned ? "matched" : ""} ${selected ? "selected live-selected" : ""} ${showColour ? "colour-cued" : ""}"
-                  style="${showColour ? `--socket-colour:${visual.color};` : ""}"
-                  onclick="window.ESTPrep.handleGlossarySocketClick('${item.id}')"
-                >
-                  <span class="kicker">${showColour ? "Shape + colour" : round.id === "shape-only" ? "Shape only" : "Definition only"}</span>
-                  <strong>${escapeHtml(clampText(item.definition, 120))}</strong>
-                  <span class="small-copy">Tap to lock this definition</span>
-                  ${assigned ? '<span class="glossary-mark good">✓</span><span class="glossary-float-success">Nice lock-in!</span>' : ""}
-                </button>
-              `;
-            }).join("")}
-          </div>
-          <div class="glossary-term-pool">
-            ${batch.map((item, index) => {
-              const visual = getGlossaryVisual(index);
-              const shapeClass = `shape-${visual.shape}`;
-              const used = Object.values(assignments).includes(item.id);
-              const selected = selectedTermId === item.id;
-              return `
-                <button
-                  type="button"
-                  class="choice-button glossary-piece ${shapeClass} ${used ? "matched" : ""} ${selected ? "selected live-selected" : ""} ${showColour ? "colour-cued" : ""}"
-                  style="${showColour ? `--socket-colour:${visual.color};` : ""}"
-                  ${used ? "disabled" : ""}
-                  onclick="window.ESTPrep.setGlossarySelectedTerm('${item.id}')"
-                >
-                  <span class="kicker">${showColour ? "Piece" : round.id === "shape-only" ? "Shape piece" : "Term piece"}</span>
-                  <strong>${escapeHtml(item.term)}</strong>
-                  <span class="small-copy">Tap to arm this card</span>
-                </button>
-              `;
-            }).join("")}
-          </div>
-        </div>
-      </div>
-      <div class="written-stage glossary-finale-stage">
-        <strong>Chamber exit</strong>
-        <p class="small-copy">Finish the batch to unlock the next breach. Each cleared chamber triggers salary, tax, and a community routing choice before you move on.</p>
-        <button class="submit-button" type="button" onclick="window.ESTPrep.nextGlossaryPhase()" ${isGlossaryBatchMatched() ? "" : "disabled"}>${batchNumber === totalBatches ? "Finish Round" : "Next Batch"}</button>
-      </div>
+      ${renderGlossaryChallengeArena(round, batch, batchNumber, totalBatches, matchedCount, roundScore)}
     </div>
   `);
   startGlossaryRoundTimer();
@@ -2919,6 +3028,7 @@ window.ESTPrep = {
   toggleReveal,
   setGlossaryRecallAnswer,
   setGlossaryRecallChoiceEncoded,
+  submitGlossaryChallengeChoiceEncoded,
   setBossScaffold,
   setBossShowdownReason,
   buildBossDraft,
