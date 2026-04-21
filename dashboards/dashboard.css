@@ -488,6 +488,23 @@ textarea {
   padding: 16px 18px;
 }
 
+.timeline-item.timeline-income {
+  border-left: 3px solid rgba(74, 222, 128, 0.75);
+}
+
+.timeline-item.timeline-spend {
+  border-left: 3px solid rgba(248, 113, 113, 0.75);
+}
+
+.timeline-kicker {
+  font-size: 0.72rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: #8cc8ff;
+  margin-bottom: 8px;
+  font-weight: 700;
+}
+
 .timeline-item strong {
   display: block;
   margin-bottom: 6px;

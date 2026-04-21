@@ -390,7 +390,8 @@ function renderStudentTimeline(items) {
   if (!container) return;
 
   container.innerHTML = items.map(item => `
-    <div class="timeline-item">
+    <div class="timeline-item ${item.variant || ""}">
+      ${item.kicker ? `<div class="timeline-kicker">${item.kicker}</div>` : ""}
       <strong>${item.title}</strong>
       <p>${item.detail}</p>
     </div>
@@ -410,8 +411,23 @@ function buildEconomyTimelineItems(session) {
     if (typeof entry.netWorthAfter === "number") totals.push(`Net worth ${formatCurrency(entry.netWorthAfter)}`);
     if (typeof entry.taxPaidAfter === "number") totals.push(`Tax paid ${formatCurrency(entry.taxPaidAfter)}`);
 
+    const moduleLabel =
+      entry.moduleId === "est-prep" ? "EST" :
+      entry.moduleId === "lifelong-learning" ? "Lifelong Learning" :
+      entry.moduleId === "megatrends" ? "Megatrends" :
+      entry.moduleId === "global-shop" ? "Shop" :
+      "Platform";
+
+    const eventLabel =
+      entry.eventType === "purchase" ? "Spend event" :
+      entry.eventType === "reward-awarded" ? "Reward awarded" :
+      entry.eventType === "scenario-choice" ? "Scenario reward" :
+      "Profile saved";
+
     return {
       title: `${entry.label || entry.checkpoint || "Economy update"} • ${new Date(entry.timestamp).toLocaleString()}`,
+      kicker: `${moduleLabel} • ${eventLabel}`,
+      variant: entry.eventType === "purchase" ? "timeline-spend" : "timeline-income",
       detail: [
         entry.detail || `${entry.moduleId || "module"} updated your shared profile.`,
         incomeParts.join(" • "),
