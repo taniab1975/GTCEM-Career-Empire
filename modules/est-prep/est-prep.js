@@ -1116,6 +1116,24 @@ function initialiseGlossaryBoard() {
   startGlossaryRoundTimer(true);
 }
 
+function clearGlossaryRoundState(roundIndex) {
+  const roundBatchKey = `glossary-r${roundIndex}-b0`;
+  delete state.glossaryAssignments[roundBatchKey];
+
+  const batch = (state.stageDeck?.glossaryBatches || [])[roundIndex] || [];
+  batch.forEach(item => {
+    delete state.glossaryRecallAnswers[`term-${item.id}`];
+    delete state.glossaryRecallAnswers[`keyword-${item.id}`];
+    delete state.glossaryRecallResults[item.id];
+  });
+
+  state.glossarySelectedTermId = "";
+  state.glossarySelectedSocketId = "";
+  state.glossaryDraggedTermId = "";
+  state.glossaryStreak = 0;
+  state.glossaryMisses = 0;
+}
+
 function getGlossaryBatchKey() {
   return `glossary-r${state.glossaryRoundIndex}-b${state.glossaryBatchIndex}`;
 }
@@ -1493,8 +1511,15 @@ function getGlossaryRoundBadge(roundIndex) {
   const reward = state.glossaryRoundRewards[roundIndex + 1];
   if (reward) return "Restored";
   if (state.glossaryRoundIndex === roundIndex) return "Active";
+  if (state.completed.glossary) return "Replay";
   if (state.glossaryRoundIndex > roundIndex) return "Unlocked";
   return "Locked";
+}
+
+function isGlossaryRoundUnlocked(roundIndex) {
+  if (state.completed.glossary) return true;
+  const unlockedCount = Object.keys(state.glossaryRoundRewards || {}).length;
+  return roundIndex <= unlockedCount || state.glossaryRoundIndex === roundIndex;
 }
 
 function renderGlossaryChamberRail() {
@@ -1504,7 +1529,7 @@ function renderGlossaryChamberRail() {
         const status = getGlossaryRoundBadge(index);
         const active = state.glossaryRoundIndex === index && !state.glossaryRoundCelebration;
         const complete = Boolean(state.glossaryRoundRewards[index + 1]);
-        const unlocked = index <= Object.keys(state.glossaryRoundRewards || {}).length || active;
+        const unlocked = isGlossaryRoundUnlocked(index);
         return `
           <button
             type="button"
@@ -1523,10 +1548,12 @@ function renderGlossaryChamberRail() {
 }
 
 function jumpToGlossaryRound(roundIndex) {
-  const unlockedCount = Object.keys(state.glossaryRoundRewards || {}).length;
-  if (roundIndex > unlockedCount) return;
+  if (!isGlossaryRoundUnlocked(roundIndex)) return;
+  if (state.glossaryRoundIndex === roundIndex && !state.glossaryRoundCelebration) return;
+  clearGlossaryRoundState(roundIndex);
   state.glossaryRoundIndex = roundIndex;
   state.glossaryBatchIndex = 0;
+  state.glossaryRoundCelebration = null;
   state.glossaryPulse = GLOSSARY_ROUND_CONFIGS[roundIndex]?.cue || "";
   state.glossaryPulseType = "neutral";
   state.glossaryMode = "play";
@@ -1551,6 +1578,11 @@ function buildRecallKeywordOptions(item) {
 }
 
 function renderGlossaryRecallForge(batch, batchNumber, totalBatches) {
+  const readyCores = batch.filter(item => {
+    const termKey = `term-${item.id}`;
+    const keywordKey = `keyword-${item.id}`;
+    return Boolean(state.glossaryRecallAnswers[termKey] && state.glossaryRecallAnswers[keywordKey]);
+  }).length;
   return `
     <div class="glossary-mission-shell glossary-escape-shell">
       <div class="glossary-mission-topbar glossary-escape-topbar">
@@ -1578,10 +1610,17 @@ function renderGlossaryRecallForge(batch, batchNumber, totalBatches) {
         </div>
         <div class="glossary-signal-feed">
           <div class="kicker">Forge rules</div>
-          <p>1. Recover the term from its keyword trail.</p>
-          <p>2. Recover one strong keyword from the term.</p>
-          <p>3. Clear the whole batch to bank the final chamber.</p>
+          <p><strong>Step 1:</strong> Read the keyword trail and choose the correct term.</p>
+          <p><strong>Step 2:</strong> Once the term is chosen, pick one keyword that genuinely belongs to that term.</p>
+          <p><strong>Step 3:</strong> Do both steps on all 4 signal cores, then press Restore System.</p>
         </div>
+      </div>
+      <div class="panel glossary-command-panel">
+        <div class="section-title">
+          <h2>How to clear Recall Forge</h2>
+          <p>${readyCores}/${batch.length} signal cores fully locked</p>
+        </div>
+        <p class="small-copy">Each card needs two clicks to count as complete: one term choice and one keyword choice. The second step unlocks after you choose a term.</p>
       </div>
       <div class="glossary-recall-grid">
         ${batch.map((item, index) => {
@@ -1589,16 +1628,19 @@ function renderGlossaryRecallForge(batch, batchNumber, totalBatches) {
           const keywordKey = `keyword-${item.id}`;
           const selectedTerm = state.glossaryRecallAnswers[termKey] || "";
           const selectedKeyword = state.glossaryRecallAnswers[keywordKey] || "";
+          const termSelected = Boolean(selectedTerm);
+          const keywordSelected = Boolean(selectedKeyword);
+          const coreReady = termSelected && keywordSelected;
           const termOptions = buildRecallTermOptions(item);
           const keywordOptions = buildRecallKeywordOptions(item);
           return `
             <article class="panel glossary-recall-card">
               <div class="sample-meta">
                 <strong>Signal core ${index + 1}</strong>
-                <span>${escapeHtml(item.term)}</span>
+                <span>${coreReady ? "Ready to forge" : "Waiting for both steps"}</span>
               </div>
               <div class="glossary-recall-block">
-                <div class="kicker">Keyword trail</div>
+                <div class="kicker">Step 1: keyword trail</div>
                 <p>${escapeHtml(item.keywords.join(" • "))}</p>
                 <div class="choice-grid">
                   ${termOptions.map(option => `
@@ -1613,13 +1655,16 @@ function renderGlossaryRecallForge(batch, batchNumber, totalBatches) {
                 </div>
               </div>
               <div class="glossary-recall-block">
-                <div class="kicker">Repair token</div>
-                <p>Choose one keyword that belongs with <strong>${escapeHtml(item.term)}</strong>.</p>
+                <div class="kicker">Step 2: repair token</div>
+                <p>${termSelected
+                  ? `Choose one keyword that belongs with <strong>${escapeHtml(selectedTerm)}</strong>.`
+                  : "Choose the term first. Then this second step becomes active."}</p>
                 <div class="choice-grid">
                   ${keywordOptions.map(option => `
                     <button
                       type="button"
                       class="choice-button ${selectedKeyword === option ? "selected live-selected" : ""}"
+                      ${termSelected ? "" : "disabled"}
                       onclick="window.ESTPrep.setGlossaryRecallChoiceEncoded('${keywordKey}', '${encodeURIComponent(option)}')"
                     >
                       <strong>${escapeHtml(option)}</strong>
@@ -1627,14 +1672,18 @@ function renderGlossaryRecallForge(batch, batchNumber, totalBatches) {
                   `).join("")}
                 </div>
               </div>
+              <div class="badge-row">
+                <span class="badge">${termSelected ? "Step 1 locked" : "Choose a term"}</span>
+                <span class="badge">${keywordSelected ? "Step 2 locked" : "Choose a keyword"}</span>
+              </div>
             </article>
           `;
         }).join("")}
       </div>
       <div class="written-stage glossary-finale-stage">
         <strong>Forge exit</strong>
-        <p class="small-copy">Clear this batch to trigger the final salary bank, tax contribution, and teacher-visible mastery save.</p>
-        <button class="submit-button" type="button" onclick="window.ESTPrep.submitGlossary()">${batchNumber === totalBatches ? "Restore System" : "Lock Next Recall Batch"}</button>
+        <p class="small-copy">When all 4 cards have both choices locked, restore the system to bank the final salary, tax contribution, and mastery save.</p>
+        <button class="submit-button" type="button" onclick="window.ESTPrep.submitGlossary()" ${readyCores === batch.length ? "" : "disabled"}>${batchNumber === totalBatches ? "Restore System" : "Lock Next Recall Batch"}</button>
       </div>
     </div>
   `;
@@ -1953,7 +2002,7 @@ function renderGlossaryStage() {
   const batchNumber = 1;
   const matchedCount = Object.keys(assignments).length;
   setText("stage-title", "Glossary Mission");
-  setText("stage-subtitle", "Leave the lab, lock in the language, then return stronger.");
+  setText("stage-subtitle", "Replay any unlocked chamber to sharpen vocabulary without resetting the whole glossary lab.");
 
   if (state.glossaryRoundCelebration) {
     renderStageRoot(`
@@ -2259,7 +2308,7 @@ function openStage(stageId) {
   if (stageId === "glossary") {
     state.glossaryMissionMode = true;
     syncMissionMode();
-    if (!state.glossaryHasStarted || state.completed.glossary) {
+    if (!state.glossaryHasStarted) {
       initialiseGlossaryBoard();
     } else if (!state.glossaryRoundCelebration) {
       startGlossaryRoundTimer();
