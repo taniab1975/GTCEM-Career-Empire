@@ -338,7 +338,8 @@ const state = {
   glossaryRoundStartedAt: 0,
   glossaryHasStarted: false,
   glossaryMode: "play",
-  glossaryStudyIndex: 0
+  glossaryStudyIndex: 0,
+  stageBestScores: {}
 };
 
 let glossaryTimerInterval = null;
@@ -2419,6 +2420,7 @@ function awardStage(stageId, outcome) {
   state.salaryBoost += credits;
   state.taxContribution += tax;
   state.completed[stageId] = true;
+  state.stageBestScores[stageId] = Math.max(Number(state.stageBestScores[stageId] || 0), Number(outcome.scoreRatio || 0));
   state.streak = outcome.scoreRatio >= 0.75 ? Math.min(5, state.streak + 1) : 1;
   state.recentReward = {
     type: outcome.scoreRatio >= 0.75 ? "positive" : outcome.scoreRatio >= 0.5 ? "warning" : "bad",
@@ -2434,6 +2436,52 @@ function awardStage(stageId, outcome) {
     checkpoint: stageId,
     label: stage.title,
     detail: `${earnedMarks}/${stage.marks} marks • ${Math.round(stage.readiness * outcome.scoreRatio)} readiness`,
+    earnedDelta: credits,
+    taxDelta: tax,
+    salaryBoostTotal: Number(state.salaryBoost || 0),
+    taxContributionTotal: Number(state.taxContribution || 0)
+  });
+  renderMetrics();
+  renderResources();
+  renderRewardPulse();
+  renderMap();
+  renderDebrief();
+}
+
+function awardStageImprovement(stageId, previousRatio, nextRatio) {
+  const stage = STAGES.find(item => item.id === stageId);
+  if (!stage) return;
+  const prior = Math.max(0, Number(previousRatio || 0));
+  const next = Math.max(prior, Number(nextRatio || 0));
+  const deltaRatio = Math.max(0, next - prior);
+  if (!deltaRatio) return;
+
+  const earnedMarks = Math.max(0, Math.round(stage.marks * next) - Math.round(stage.marks * prior));
+  const readinessGain = Math.max(0, Math.round(stage.readiness * next) - Math.round(stage.readiness * prior));
+  const credits = Math.max(0, Math.round(stage.credits * deltaRatio));
+  const tax = Math.max(0, Math.round(credits * stage.taxRate));
+
+  state.marksBanked += earnedMarks;
+  state.readiness = Math.min(100, state.readiness + readinessGain);
+  state.confidence = Math.max(0, Math.min(100, state.confidence + 2));
+  state.salaryBoost += credits;
+  state.taxContribution += tax;
+  state.completed[stageId] = true;
+  state.stageBestScores[stageId] = next;
+  state.recentReward = {
+    type: "positive",
+    title: `${stage.title} best result improved`,
+    detail: `Best score lifted from ${Math.round(prior * 100)}% to ${Math.round(next * 100)}% • +${earnedMarks} marks • +${formatCurrency(credits)} salary • +${formatCurrency(tax)} class contribution`
+  };
+  state.debriefLog.push({
+    title: `${stage.title} improved`,
+    detail: `Best score raised from ${Math.round(prior * 100)}% to ${Math.round(next * 100)}% • ${formatCurrency(credits)} salary added`
+  });
+  pushEconomyLog({
+    eventType: "reward-awarded",
+    checkpoint: `${stageId}-improvement`,
+    label: `${stage.title} improvement`,
+    detail: `Best score improved from ${Math.round(prior * 100)}% to ${Math.round(next * 100)}%`,
     earnedDelta: credits,
     taxDelta: tax,
     salaryBoostTotal: Number(state.salaryBoost || 0),
@@ -2638,7 +2686,7 @@ async function hydrateFromSupabase() {
 
   const { data: evidenceRows, error: evidenceError } = await supabase
     .from("assessment_evidence")
-    .select("evidence_type, prompt, response_text, created_at")
+    .select("evidence_type, prompt, response_text, created_at, auto_score")
     .eq("student_id", student.id)
     .eq("module_id", MODULE_ID)
     .order("created_at", { ascending: true });
@@ -2652,6 +2700,10 @@ async function hydrateFromSupabase() {
     state.evidenceLog = evidenceRows.map(row => {
       const stageId = inferStageFromEvidence(row);
       if (stageId) state.completed[stageId] = true;
+      const autoScore = Number(row?.auto_score);
+      if (stageId && Number.isFinite(autoScore)) {
+        state.stageBestScores[stageId] = Math.max(Number(state.stageBestScores[stageId] || 0), autoScore / 100);
+      }
       return {
         title: stageId ? `${STAGES.find(stage => stage.id === stageId)?.title || "Saved stage"} saved` : "Saved EST progress",
         detail: getEvidencePreview(row).slice(0, 160)
@@ -2921,7 +2973,24 @@ async function bankGlossaryResults() {
   const total = allResults.length * 2;
   const scoreRatio = total ? overallCorrect / total : 0;
   const scorePercent = Math.round(scoreRatio * 100);
-  awardStage("glossary", { scoreRatio });
+  const previousBestRatio = Math.max(0, Number(state.stageBestScores.glossary || 0));
+  const firstGlossaryClear = !state.completed.glossary && previousBestRatio === 0;
+  const improvedBest = scoreRatio > previousBestRatio;
+
+  if (firstGlossaryClear) {
+    awardStage("glossary", { scoreRatio });
+  } else if (improvedBest) {
+    awardStageImprovement("glossary", previousBestRatio, scoreRatio);
+  } else {
+    state.recentReward = {
+      type: "warning",
+      title: "Glossary replay saved",
+      detail: `This attempt scored ${scorePercent}%. Your best glossary result remains ${Math.round(previousBestRatio * 100)}%, so no extra salary or tax was added.`
+    };
+    renderRewardPulse();
+  }
+
+  state.stageBestScores.glossary = Math.max(previousBestRatio, scoreRatio);
   addEvidence("Glossary mastery run", `${overallCorrect}/${total} final recall checks correct • Best streak x${state.glossaryBestStreak} • Misses ${state.glossaryMisses}`);
   await saveProgress("glossary-lock-in", "glossary-check", `Glossary final recall: ${overallCorrect}/${total}`, scorePercent, {
     taskName: "Glossary Check",
@@ -2945,6 +3014,9 @@ async function bankGlossaryResults() {
   syncMissionMode();
   showFeedbackBox(scoreRatio >= 0.8 ? "good" : scoreRatio >= 0.5 ? "warn" : "bad", [
     `<strong>Glossary score:</strong> ${overallCorrect}/${total} final recall checks correct.`,
+    `${improvedBest || firstGlossaryClear
+      ? `Best glossary result is now ${Math.round(state.stageBestScores.glossary * 100)}%.`
+      : `Best glossary result remains ${Math.round(previousBestRatio * 100)}%. This replay was saved but did not overwrite your best run.`}`,
     `Best streak: x${state.glossaryBestStreak}. Misses: ${state.glossaryMisses}.`,
     "Teachers can now inspect which terms were mastered or missed in the final recall round."
   ]);
