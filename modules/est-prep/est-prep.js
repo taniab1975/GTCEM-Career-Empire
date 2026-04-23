@@ -14,7 +14,7 @@ const DEFAULT_CONTENT_TOPIC_GROUPS = [
   {
     id: "initiative",
     title: "Enterprise Behaviours - Initiative",
-    topics: ["Initiative", "Being proactive", "Improving work practices", "Helping fellow workers", "Seeking more responsibilities"],
+    topics: ["Initiative", "Being proactive", "Improving work practices", "Vocalising opinions", "Helping fellow workers", "Seeking more responsibilities"],
     writePrompt: "Write one or two EST-ready sentences explaining how initiative can be shown in a workplace situation.",
     sampleResponse: "Initiative can be shown when a worker acts proactively, suggests improvements, helps colleagues, or volunteers for extra responsibilities before being told. This matters because it improves productivity and shows the worker can contribute positively to the workplace."
   },
@@ -50,35 +50,131 @@ const DEFAULT_CONTENT_TOPIC_GROUPS = [
 
 const DEFAULT_CONTENT_TRAINING_BAYS = {
   initiative: {
-    type: "sort",
-    title: "Signal Sort",
-    subtitle: "Sort the workplace moves into strong initiative or weak initiative.",
-    leftLabel: "Shows initiative",
-    rightLabel: "Needs more initiative",
-    cards: [
+    type: "initiative-arc",
+    title: "Initiative Reactor",
+    subtitle: "Spot the move, name the type, fix the workplace, then upgrade the EST answer.",
+    memoryHook: "PIVHS: Proactive, Improve work practices, Vocalise opinions, Help fellow workers, Seek more responsibilities",
+    steps: [
       {
-        id: "initiative-stock",
-        text: "A worker notices stock is running low and restocks before customers complain.",
-        correctBucket: "left",
-        feedback: "This is proactive. The worker spots a problem early and acts without being told."
+        id: "spot",
+        title: "Step 1: Spot the Initiative",
+        instruction: "Decide whether each workplace move shows strong initiative.",
+        items: [
+          {
+            id: "initiative-stock",
+            prompt: "A worker notices stock is running low and restocks before customers complain.",
+            options: ["Shows initiative", "Needs more initiative", "Only follows instructions"],
+            correct: "Shows initiative",
+            feedback: "This is proactive. The worker spots a problem early and acts without being told."
+          },
+          {
+            id: "initiative-wait",
+            prompt: "A worker sees a spill but leaves it until a supervisor gives exact instructions.",
+            options: ["Shows initiative", "Needs more initiative", "Strong teamwork"],
+            correct: "Needs more initiative",
+            feedback: "This is passive, not initiative. Waiting creates risk and delays."
+          },
+          {
+            id: "initiative-display",
+            prompt: "A worker fixes a messy display before customers start avoiding the area.",
+            options: ["Shows initiative", "Needs more initiative", "Just luck"],
+            correct: "Shows initiative",
+            feedback: "This is initiative because the worker acts before the issue affects customers."
+          }
+        ]
       },
       {
-        id: "initiative-wait",
-        text: "A worker sees a spill but leaves it until a supervisor gives exact instructions.",
-        correctBucket: "right",
-        feedback: "This is passive, not initiative. Waiting can create safety issues and delays."
+        id: "classify",
+        title: "Step 2: Name the Initiative Type",
+        instruction: "Match each workplace action to the correct type of initiative.",
+        items: [
+          {
+            id: "initiative-proactive",
+            prompt: "Restocking shelves before products run out.",
+            options: ["Being proactive", "Vocalising opinions", "Seeking more responsibilities"],
+            correct: "Being proactive",
+            feedback: "This is proactive because the worker anticipates a need before it becomes a problem."
+          },
+          {
+            id: "initiative-opinion",
+            prompt: "Telling a supervisor that clearer shelf signs would help customers find items faster.",
+            options: ["Helping fellow workers", "Vocalising opinions", "Being proactive"],
+            correct: "Vocalising opinions",
+            feedback: "This is vocalising opinions because the worker shares an improvement idea constructively."
+          },
+          {
+            id: "initiative-help",
+            prompt: "Helping a new team member complete a task safely during a busy shift.",
+            options: ["Helping fellow workers", "Improving work practices", "Seeking more responsibilities"],
+            correct: "Helping fellow workers",
+            feedback: "This is helping fellow workers because the action supports teamwork and productivity."
+          },
+          {
+            id: "initiative-responsibility",
+            prompt: "Volunteering to learn the new e-register system.",
+            options: ["Being proactive", "Seeking more responsibilities", "Vocalising opinions"],
+            correct: "Seeking more responsibilities",
+            feedback: "This shows initiative through willingness to take on more and develop new skills."
+          }
+        ]
       },
       {
-        id: "initiative-improve",
-        text: "A worker suggests a faster way to label items so the whole team saves time.",
-        correctBucket: "left",
-        feedback: "Improving work practices is a clear sign of initiative and problem-solving."
+        id: "fix",
+        title: "Step 3: Fix the Workplace",
+        instruction: "Choose the strongest initiative response for each workplace problem.",
+        items: [
+          {
+            id: "initiative-new-worker",
+            prompt: "Packing tools are often missing, which wastes time for the team. What is the strongest initiative move for a new worker?",
+            options: [
+              "Suggest setting up supply stations at each bench so tools are always nearby.",
+              "Keep searching quietly because improving systems is not a new worker's job.",
+              "Wait until a manager gets frustrated enough to notice the problem."
+            ],
+            correct: "Suggest setting up supply stations at each bench so tools are always nearby.",
+            feedback: "Strong move. This improves work practices and shows even a new worker can contribute useful ideas."
+          },
+          {
+            id: "initiative-supervisor",
+            prompt: "A junior supervisor notices customer queues are longest on Thursday evenings. What is the strongest initiative move?",
+            options: [
+              "Propose moving more staff into peak periods based on sales patterns.",
+              "Leave the roster unchanged because busy times are just part of retail.",
+              "Tell workers to move faster without changing staffing levels."
+            ],
+            correct: "Propose moving more staff into peak periods based on sales patterns.",
+            feedback: "Strong move. This shows initiative at supervisor level by improving systems before service drops."
+          }
+        ]
       },
       {
-        id: "initiative-avoid",
-        text: "A worker avoids new tasks because they might make a mistake.",
-        correctBucket: "right",
-        feedback: "Avoiding responsibility limits learning and does not show initiative."
+        id: "upgrade",
+        title: "Step 4: Upgrade the Answer",
+        instruction: "Choose the sentence that sounds most like a stronger EST answer.",
+        items: [
+          {
+            id: "initiative-sentence-1",
+            prompt: "Which sentence best explains initiative in an EST-style answer?",
+            options: [
+              "I showed initiative by suggesting a safer system for restocking, which improved efficiency and helped the team work more effectively.",
+              "I did my job and everything was fine.",
+              "Initiative is when things happen at work."
+            ],
+            correct: "I showed initiative by suggesting a safer system for restocking, which improved efficiency and helped the team work more effectively.",
+            feedback: "This is strongest because it names the action, shows initiative clearly, and explains the workplace effect."
+          },
+          {
+            id: "initiative-sentence-2",
+            prompt: "Which sentence best links initiative with teamwork?",
+            options: [
+              "Initiative can support teamwork when a worker notices a colleague struggling and steps in to help without being told.",
+              "Initiative means working alone and not needing anyone else.",
+              "Teamwork and initiative are unrelated."
+            ],
+            correct: "Initiative can support teamwork when a worker notices a colleague struggling and steps in to help without being told.",
+            feedback: "This is strongest because it connects initiative to a real workplace example and explains how the team benefits."
+          }
+        ]
       }
     ]
   },
@@ -813,6 +909,12 @@ function getContentTrainingConfig(groupId) {
 
 function getTrainingScore(config) {
   if (!config) return { correct: 0, total: 0, percent: 0 };
+  if (config.type === "initiative-arc") {
+    const items = (config.steps || []).flatMap(step => step.items || []);
+    const total = items.length;
+    const correct = items.filter(item => state.answers[`training-initiative-arc-${item.id}`] === item.correct).length;
+    return { correct, total, percent: total ? Math.round((correct / total) * 100) : 0 };
+  }
   if (config.type === "sort") {
     const total = config.cards.length;
     const correct = config.cards.filter(card => state.answers[`training-${config.type}-${card.id}`] === card.correctBucket).length;
@@ -829,6 +931,53 @@ function getTrainingScore(config) {
     return { correct, total, percent: total ? Math.round((correct / total) * 100) : 0 };
   }
   return { correct: 0, total: 0, percent: 0 };
+}
+
+function renderInitiativeArcTrainingBay(config, score) {
+  return `
+    <div class="panel training-bay training-campaign">
+      <div class="section-title">
+        <h2>${escapeHtml(config.title)}</h2>
+        <p>${score.correct}/${score.total} initiative decisions locked</p>
+      </div>
+      <p class="small-copy">${escapeHtml(config.subtitle)}</p>
+      ${config.memoryHook ? `<div class="badge-row" style="margin-top:14px;"><span class="badge">${escapeHtml(config.memoryHook)}</span></div>` : ""}
+      <div class="training-campaign-grid">
+        ${(config.steps || []).map((step, stepIndex) => `
+          <section class="training-step">
+            <div class="section-title">
+              <h2>${escapeHtml(step.title)}</h2>
+              <p>${escapeHtml(step.instruction || "Choose the strongest initiative move.")}</p>
+            </div>
+            <div class="training-stack">
+              ${(step.items || []).map(item => {
+                const answer = state.answers[`training-initiative-arc-${item.id}`];
+                const isCorrect = answer && answer === item.correct;
+                return `
+                  <article class="training-card ${answer ? (isCorrect ? "good" : "bad") : ""}">
+                    <div class="kicker">Initiative level ${stepIndex + 1}</div>
+                    <strong>${escapeHtml(item.prompt)}</strong>
+                    <div class="training-stack">
+                      ${item.options.map(option => `
+                        <button
+                          type="button"
+                          class="choice-button ${answer === option ? "selected live-selected" : ""}"
+                          onclick="window.ESTPrep.setTrainingChoiceEncoded('training-initiative-arc-${item.id}', '${encodeURIComponent(option)}')"
+                        >
+                          <strong>${escapeHtml(option)}</strong>
+                        </button>
+                      `).join("")}
+                    </div>
+                    <p class="training-feedback">${answer ? `${isCorrect ? "Strong initiative call." : "Try the stronger move mentally."} ${escapeHtml(item.feedback)}` : "Choose the answer that best demonstrates initiative in this situation."}</p>
+                  </article>
+                `;
+              }).join("")}
+            </div>
+          </section>
+        `).join("")}
+      </div>
+    </div>
+  `;
 }
 
 function renderSortTrainingBay(config, score) {
@@ -940,10 +1089,45 @@ function renderTrainingBay(group) {
   const config = getContentTrainingConfig(group.id);
   if (!config) return "";
   const score = getTrainingScore(config);
+  if (config.type === "initiative-arc") return renderInitiativeArcTrainingBay(config, score);
   if (config.type === "sort") return renderSortTrainingBay(config, score);
   if (config.type === "scenario") return renderScenarioTrainingBay(config, score);
   if (config.type === "builder") return renderBuilderTrainingBay(config, score);
   return "";
+}
+
+function getTrainingInteractions(config) {
+  if (!config) return [];
+  if (config.type === "initiative-arc") {
+    return (config.steps || []).flatMap(step => (step.items || []).map(item => ({
+      item: item.prompt,
+      selected: state.answers[`training-initiative-arc-${item.id}`] || "",
+      correct_answer: item.correct,
+      step: step.title
+    })));
+  }
+  if (config.type === "sort") {
+    return config.cards.map(card => ({
+      item: card.text,
+      selected: state.answers[`training-sort-${card.id}`] || "",
+      correct_bucket: card.correctBucket
+    }));
+  }
+  if (config.type === "scenario") {
+    return config.scenarios.map(scenario => ({
+      item: scenario.prompt,
+      selected: state.answers[`training-scenario-${scenario.id}`] || "",
+      correct_answer: scenario.correct
+    }));
+  }
+  if (config.type === "builder") {
+    return config.rounds.map(round => ({
+      item: round.prompt,
+      selected: state.answers[`training-builder-${round.id}`] || "",
+      correct_answer: round.correct
+    }));
+  }
+  return [];
 }
 
 function toggleReveal(key) {
@@ -3000,23 +3184,7 @@ async function submitContent() {
             title: trainingConfig.title,
             type: trainingConfig.type,
             ...getTrainingScore(trainingConfig),
-            interactions: trainingConfig.type === "sort"
-              ? trainingConfig.cards.map(card => ({
-                  item: card.text,
-                  selected: state.answers[`training-sort-${card.id}`] || "",
-                  correct_bucket: card.correctBucket
-                }))
-              : trainingConfig.type === "scenario"
-                ? trainingConfig.scenarios.map(scenario => ({
-                    item: scenario.prompt,
-                    selected: state.answers[`training-scenario-${scenario.id}`] || "",
-                    correct_answer: scenario.correct
-                  }))
-                : trainingConfig.rounds.map(round => ({
-                    item: round.prompt,
-                    selected: state.answers[`training-builder-${round.id}`] || "",
-                    correct_answer: round.correct
-                  }))
+            interactions: getTrainingInteractions(trainingConfig)
           }
         : null,
       response: state.answers[`content-note-${group.id}`] || "",
