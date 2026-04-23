@@ -2654,7 +2654,9 @@ function openStage(stageId) {
   if (stageId === "glossary") {
     state.glossaryMissionMode = true;
     syncMissionMode();
-    if (!state.glossaryHasStarted) {
+    if (!state.glossaryHasStarted && state.completed.glossary) {
+      restoreGlossaryReplayBoard();
+    } else if (!state.glossaryHasStarted) {
       initialiseGlossaryBoard();
     } else if (!state.glossaryRoundCelebration) {
       startGlossaryRoundTimer();
@@ -3022,6 +3024,61 @@ function getEvidencePreview(row) {
   }
 }
 
+function parseEvidencePayload(row) {
+  try {
+    return JSON.parse(row?.response_text || "");
+  } catch (_) {
+    return null;
+  }
+}
+
+function hydrateGlossarySummaryFromPayload(payload) {
+  const summary = payload?.round_summary;
+  if (!summary) return;
+
+  state.glossaryHasStarted = true;
+  state.glossaryMissionMode = false;
+  state.glossaryRoundCelebration = null;
+  state.glossaryRoundRewards = summary.round_rewards && typeof summary.round_rewards === "object"
+    ? { ...summary.round_rewards }
+    : state.glossaryRoundRewards;
+  state.glossaryRoundVotes = summary.round_votes && typeof summary.round_votes === "object"
+    ? { ...summary.round_votes }
+    : state.glossaryRoundVotes;
+  state.glossaryBestStreak = Math.max(Number(state.glossaryBestStreak || 0), Number(summary.best_streak || 0));
+  state.glossaryMisses = Number(summary.misses || 0);
+  state.glossaryRoundIndex = 0;
+  state.glossaryBatchIndex = 0;
+  state.glossaryMode = "play";
+  state.glossaryPulse = state.completed.glossary
+    ? "Best glossary result loaded. Replay any chamber to improve your mastery without losing the banked result."
+    : (state.glossaryPulse || "");
+  state.glossaryPulseType = state.completed.glossary ? "good" : state.glossaryPulseType;
+}
+
+function restoreGlossaryReplayBoard() {
+  clearGlossaryRecallAdvanceTimeout();
+  clearGlossaryTimer();
+  state.glossaryMissionMode = true;
+  state.glossaryHasStarted = true;
+  state.glossaryRoundCelebration = null;
+  state.glossaryRoundIndex = 0;
+  state.glossaryBatchIndex = 0;
+  state.glossarySelectedTermId = "";
+  state.glossarySelectedSocketId = "";
+  state.glossaryDraggedTermId = "";
+  state.glossaryRecallIndex = 0;
+  state.glossaryRecallTransition = null;
+  state.glossaryMode = "play";
+  state.glossaryStudyIndex = 0;
+  state.glossaryPulse = state.completed.glossary
+    ? "Best glossary result loaded. Replay any chamber to improve your mastery without losing the banked result."
+    : "Glossary lab restored. Pick up where you left off.";
+  state.glossaryPulseType = "good";
+  syncMissionMode();
+  startGlossaryRoundTimer(true);
+}
+
 async function hydrateFromSupabase() {
   const student = state.student;
   if (!student?.id) return;
@@ -3042,6 +3099,7 @@ async function hydrateFromSupabase() {
   }
 
   if (Array.isArray(evidenceRows) && evidenceRows.length) {
+    let latestGlossaryPayload = null;
     state.evidenceLog = evidenceRows.map(row => {
       const stageId = inferStageFromEvidence(row);
       if (stageId) state.completed[stageId] = true;
@@ -3049,11 +3107,17 @@ async function hydrateFromSupabase() {
       if (stageId && Number.isFinite(autoScore)) {
         state.stageBestScores[stageId] = Math.max(Number(state.stageBestScores[stageId] || 0), autoScore / 100);
       }
+      if (stageId === "glossary") {
+        latestGlossaryPayload = parseEvidencePayload(row) || latestGlossaryPayload;
+      }
       return {
         title: stageId ? `${STAGES.find(stage => stage.id === stageId)?.title || "Saved stage"} saved` : "Saved EST progress",
         detail: getEvidencePreview(row).slice(0, 160)
       };
     });
+    if (latestGlossaryPayload) {
+      hydrateGlossarySummaryFromPayload(latestGlossaryPayload);
+    }
   }
 }
 
