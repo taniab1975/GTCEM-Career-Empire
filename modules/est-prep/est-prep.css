@@ -1156,6 +1156,7 @@ body.est-lab-mode #stage-section {
 .glossary-recall-card {
   padding: 18px;
   box-shadow: 0 18px 34px rgba(4, 10, 30, 0.24);
+  animation: recallCardIn 0.35s ease;
 }
 
 .glossary-recall-block {
@@ -1168,6 +1169,11 @@ body.est-lab-mode #stage-section {
 
 .glossary-recall-block .choice-grid {
   margin-top: 12px;
+}
+
+.glossary-recall-celebration {
+  animation: recallPulseCelebrate 0.7s ease;
+  border-width: 2px;
 }
 
 .glossary-arcade-shell {
@@ -1224,6 +1230,35 @@ body.est-lab-mode #stage-section {
   transform: translateY(-2px);
   border-color: rgba(97, 240, 255, 0.46);
   box-shadow: 0 16px 30px rgba(4, 10, 30, 0.26);
+}
+
+@keyframes recallCardIn {
+  from {
+    opacity: 0;
+    transform: translateY(14px) scale(0.985);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@keyframes recallPulseCelebrate {
+  0% {
+    opacity: 0;
+    transform: translateY(10px) scale(0.98);
+    box-shadow: 0 0 0 rgba(114, 247, 184, 0);
+  }
+  55% {
+    opacity: 1;
+    transform: translateY(0) scale(1.01);
+    box-shadow: 0 0 28px rgba(114, 247, 184, 0.22);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+    box-shadow: 0 0 0 rgba(114, 247, 184, 0);
+  }
 }
 
 .glossary-finale-stage {

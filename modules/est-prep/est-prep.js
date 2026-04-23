@@ -327,6 +327,7 @@ const state = {
   glossaryRecallAnswers: {},
   glossaryRecallResults: {},
   glossaryRecallIndex: 0,
+  glossaryRecallTransition: null,
   glossaryStreak: 0,
   glossaryBestStreak: 0,
   glossaryMisses: 0,
@@ -344,6 +345,14 @@ const state = {
 };
 
 let glossaryTimerInterval = null;
+let glossaryRecallAdvanceTimeout = null;
+
+function clearGlossaryRecallAdvanceTimeout() {
+  if (glossaryRecallAdvanceTimeout) {
+    clearTimeout(glossaryRecallAdvanceTimeout);
+    glossaryRecallAdvanceTimeout = null;
+  }
+}
 
 function readJsonStorage(key, fallback) {
   try {
@@ -1096,6 +1105,7 @@ function resetGlossaryRewardLoop() {
 }
 
 function initialiseGlossaryBoard() {
+  clearGlossaryRecallAdvanceTimeout();
   state.glossaryRoundIndex = 0;
   state.glossaryBatchIndex = 0;
   state.glossaryAssignments = {};
@@ -1105,6 +1115,7 @@ function initialiseGlossaryBoard() {
   state.glossaryRecallAnswers = {};
   state.glossaryRecallResults = {};
   state.glossaryRecallIndex = 0;
+  state.glossaryRecallTransition = null;
   state.glossaryStreak = 0;
   state.glossaryBestStreak = 0;
   state.glossaryMisses = 0;
@@ -1120,6 +1131,7 @@ function initialiseGlossaryBoard() {
 }
 
 function clearGlossaryRoundState(roundIndex) {
+  clearGlossaryRecallAdvanceTimeout();
   const roundBatchKey = `glossary-r${roundIndex}-b0`;
   delete state.glossaryAssignments[roundBatchKey];
 
@@ -1131,6 +1143,7 @@ function clearGlossaryRoundState(roundIndex) {
   });
 
   state.glossaryRecallIndex = 0;
+  state.glossaryRecallTransition = null;
   state.glossarySelectedTermId = "";
   state.glossarySelectedSocketId = "";
   state.glossaryDraggedTermId = "";
@@ -1514,7 +1527,25 @@ function setGlossaryRecallChoiceEncoded(key, encodedValue) {
   renderGlossaryStage();
 }
 
+function triggerGlossaryRecallAdvance(item, selectedKeyword, batch) {
+  clearGlossaryRecallAdvanceTimeout();
+  state.glossaryRecallTransition = {
+    itemId: item.id,
+    title: item.term,
+    keyword: selectedKeyword,
+    nextIndex: Math.min(batch.length - 1, state.glossaryRecallIndex + 1),
+    finished: batch.every(entry => entry.id === item.id || state.glossaryRecallResults[entry.id]?.overallCorrect)
+  };
+  renderGlossaryStage();
+  glossaryRecallAdvanceTimeout = setTimeout(() => {
+    state.glossaryRecallIndex = state.glossaryRecallTransition?.nextIndex ?? state.glossaryRecallIndex;
+    state.glossaryRecallTransition = null;
+    renderGlossaryStage();
+  }, 950);
+}
+
 function setGlossaryRecallTermChoiceEncoded(itemId, encodedValue) {
+  clearGlossaryRecallAdvanceTimeout();
   const batch = getCurrentGlossaryBatch();
   const item = batch.find(entry => entry.id === itemId);
   if (!item) return;
@@ -1559,6 +1590,7 @@ function setGlossaryRecallTermChoiceEncoded(itemId, encodedValue) {
 }
 
 function setGlossaryRecallKeywordChoiceEncoded(itemId, encodedValue) {
+  clearGlossaryRecallAdvanceTimeout();
   const batch = getCurrentGlossaryBatch();
   const item = batch.find(entry => entry.id === itemId);
   if (!item) return;
@@ -1593,7 +1625,7 @@ function setGlossaryRecallKeywordChoiceEncoded(itemId, encodedValue) {
       title: "Signal restored",
       detail: "Both steps are correct. Move to the next signal core."
     };
-    state.glossaryRecallIndex = Math.min(batch.length - 1, state.glossaryRecallIndex + 1);
+    triggerGlossaryRecallAdvance(item, selectedKeyword, batch);
   } else {
     state.glossaryPulse = `${selectedKeyword} does not belong with ${item.term}. Try a different repair token.`;
     state.glossaryPulseType = "warn";
@@ -1707,6 +1739,8 @@ function renderGlossaryRecallForge(batch, batchNumber, totalBatches) {
   const keywordCorrect = Boolean(recallResult.keywordCorrect);
   const termOptions = buildRecallTermOptions(item);
   const keywordOptions = buildRecallKeywordOptions(item);
+  const transition = state.glossaryRecallTransition;
+  const showingTransition = Boolean(transition && transition.itemId === item.id);
   return `
     <div class="glossary-mission-shell glossary-escape-shell">
       <div class="glossary-mission-topbar glossary-escape-topbar">
@@ -1746,6 +1780,12 @@ function renderGlossaryRecallForge(batch, batchNumber, totalBatches) {
         </div>
         <p class="small-copy">Work one signal at a time. A wrong term stops the sequence. A correct term unlocks the repair token step.</p>
       </div>
+      ${showingTransition ? `
+        <div class="feedback-box good glossary-recall-celebration">
+          <p><strong>Signal restored:</strong> ${escapeHtml(transition.title)}</p>
+          <p>${escapeHtml(transition.keyword)} locked in. ${transition.finished ? "All signal cores are online. Restore the system when you're ready." : "Advancing to the next signal core..."}</p>
+        </div>
+      ` : ""}
       <div class="glossary-recall-grid">
         <article class="panel glossary-recall-card">
           <div class="sample-meta">
@@ -1759,8 +1799,9 @@ function renderGlossaryRecallForge(batch, batchNumber, totalBatches) {
               ${termOptions.map(option => `
                 <button
                   type="button"
-                  class="choice-button ${selectedTerm === option ? "selected live-selected" : ""}"
+                  class="choice-button ${selectedTerm === option ? `selected live-selected ${termCorrect ? "correct" : "incorrect"}` : ""}"
                   onclick="window.ESTPrep.setGlossaryRecallTermChoiceEncoded('${item.id}', '${encodeURIComponent(option)}')"
+                  ${showingTransition ? "disabled" : ""}
                 >
                   <strong>${escapeHtml(option)}</strong>
                 </button>
@@ -1778,8 +1819,8 @@ function renderGlossaryRecallForge(batch, batchNumber, totalBatches) {
               ${keywordOptions.map(option => `
                 <button
                   type="button"
-                  class="choice-button ${selectedKeyword === option ? "selected live-selected" : ""}"
-                  ${termCorrect ? "" : "disabled"}
+                  class="choice-button ${selectedKeyword === option ? `selected live-selected ${keywordCorrect ? "correct" : "incorrect"}` : ""}"
+                  ${(termCorrect && !showingTransition) ? "" : "disabled"}
                   onclick="window.ESTPrep.setGlossaryRecallKeywordChoiceEncoded('${item.id}', '${encodeURIComponent(option)}')"
                 >
                   <strong>${escapeHtml(option)}</strong>
