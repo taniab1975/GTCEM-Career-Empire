@@ -1164,7 +1164,7 @@ function buildGlossaryChallengeOptions(roundId, item, batch = getCurrentGlossary
     return shuffle([item.term, ...distractors]).map(option => ({
       value: option,
       title: option,
-      detail: option === item.term ? "Correct term signal" : "Possible glossary term"
+      detail: "Glossary term option"
     }));
   }
 
