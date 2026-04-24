@@ -179,35 +179,159 @@ const DEFAULT_CONTENT_TRAINING_BAYS = {
     ]
   },
   "time-management": {
-    type: "sort",
-    title: "Deadline Dash",
-    subtitle: "Sort each move into strong planning or weak planning.",
-    leftLabel: "Strong planning",
-    rightLabel: "Weak planning",
-    cards: [
+    type: "time-management-arc",
+    title: "Time Management Control Room",
+    subtitle: "Triage the task list, build the best order, rescue the deadline, then upgrade the EST answer.",
+    memoryHook: "Plan • Prioritise • Track • Adjust",
+    steps: [
       {
-        id: "time-plan",
-        text: "A student lists tasks, prioritises the urgent ones, and sets reminders.",
-        correctBucket: "left",
-        feedback: "This shows planning and prioritising, which is the heart of time management."
+        id: "triage",
+        title: "Step 1: Triage the Task List",
+        instruction: "Choose which task should move first because the deadline pressure is highest.",
+        items: [
+          {
+            id: "time-triage-burst-pipe",
+            prompt: "An apprentice plumber has four jobs today. Which task should be the immediate priority?",
+            options: [
+              "Urgent repair on a burst pipe",
+              "Paperwork and logbook",
+              "Tidying the vehicle first"
+            ],
+            correct: "Urgent repair on a burst pipe",
+            feedback: "Urgent repair comes first because it has the highest immediate consequence and deadline pressure."
+          },
+          {
+            id: "time-triage-school",
+            prompt: "A student has a test tomorrow, a shift on Saturday, and a message about a party tonight. What should be prioritised first?",
+            options: [
+              "Study for the test and lock in the shift time",
+              "Answer the party message first",
+              "Do whichever task feels easiest"
+            ],
+            correct: "Study for the test and lock in the shift time",
+            feedback: "Strong time management starts with urgent commitments, not the least demanding task."
+          },
+          {
+            id: "time-triage-tools",
+            prompt: "Before leaving for the first job, what is the strongest planning move?",
+            options: [
+              "Check the schedule, tools, materials, and travel route",
+              "Start driving and hope everything needed is already in the ute",
+              "Ignore the schedule because the supervisor will fix problems later"
+            ],
+            correct: "Check the schedule, tools, materials, and travel route",
+            feedback: "Planning before the task begins reduces delays and makes the whole day easier to manage."
+          }
+        ]
       },
       {
-        id: "time-easiest",
-        text: "A worker does the easiest task first and ignores the deadline order.",
-        correctBucket: "right",
-        feedback: "Doing easy tasks first can create bigger problems if urgent tasks are ignored."
+        id: "sequence",
+        title: "Step 2: Build the Best Order",
+        instruction: "Choose the sequence that shows the strongest planning process.",
+        items: [
+          {
+            id: "time-sequence-day",
+            prompt: "Which sequence shows the strongest start-of-day time management process?",
+            options: [
+              "Review the schedule, prepare tools/materials, travel to the urgent job, then complete lower-priority tasks later",
+              "Travel first, check the schedule after arriving, then work out what tools are needed",
+              "Start the easiest task, then decide whether the urgent job still matters"
+            ],
+            correct: "Review the schedule, prepare tools/materials, travel to the urgent job, then complete lower-priority tasks later",
+            feedback: "This is strongest because it plans ahead, prepares resources, and sequences urgent work before less urgent tasks."
+          },
+          {
+            id: "time-sequence-grouping",
+            prompt: "Which move best shows efficient task sequencing?",
+            options: [
+              "Pick up supplies on the way to the next job instead of making a separate trip later",
+              "Drive back across town twice because it feels more familiar",
+              "Leave all materials collection until the end of the day"
+            ],
+            correct: "Pick up supplies on the way to the next job instead of making a separate trip later",
+            feedback: "Grouping related tasks saves time and keeps the day moving more efficiently."
+          },
+          {
+            id: "time-sequence-tools",
+            prompt: "Which tool use best supports sequencing and deadline control?",
+            options: [
+              "Using a planner, checklist, or calendar to map tasks and times clearly",
+              "Keeping all deadlines in your head so planning stays flexible",
+              "Waiting until something is overdue before writing it down"
+            ],
+            correct: "Using a planner, checklist, or calendar to map tasks and times clearly",
+            feedback: "Tools matter because they make the sequence visible and easier to track."
+          }
+        ]
       },
       {
-        id: "time-adjust",
-        text: "A worker checks progress and adjusts the plan when a delivery is delayed.",
-        correctBucket: "left",
-        feedback: "Good time management is flexible. Monitoring and adjusting helps meet deadlines."
+        id: "rescue",
+        title: "Step 3: Rescue the Deadline",
+        instruction: "Choose the strongest response when the original plan starts to break down.",
+        items: [
+          {
+            id: "time-rescue-delay",
+            prompt: "A job is taking longer than expected and will push the rest of the schedule back. What is the strongest next move?",
+            options: [
+              "Inform the supervisor, adjust the schedule, and contact the next client about the delay",
+              "Say nothing and hope the next job somehow still fits",
+              "Abandon the current job without telling anyone"
+            ],
+            correct: "Inform the supervisor, adjust the schedule, and contact the next client about the delay",
+            feedback: "Strong time management includes monitoring progress and adjusting early when delays occur."
+          },
+          {
+            id: "time-rescue-emergency",
+            prompt: "An emergency task comes in after the day has already been planned. What shows the strongest time management?",
+            options: [
+              "Reprioritise the day so the emergency is handled and lower-priority tasks shift accordingly",
+              "Ignore the emergency because the original list was already written",
+              "Keep all tasks in the same order even if deadlines are now unrealistic"
+            ],
+            correct: "Reprioritise the day so the emergency is handled and lower-priority tasks shift accordingly",
+            feedback: "Good time management is not rigid. It adjusts when workplace conditions change."
+          },
+          {
+            id: "time-rescue-balance",
+            prompt: "A Year 12 student is struggling to balance school, work, sport, and family commitments. What is the strongest advice?",
+            options: [
+              "Write commitments into a planner, review priorities weekly, and allow buffer time when things change",
+              "Take on every commitment and hope it works out",
+              "Avoid planning because plans make life feel too controlled"
+            ],
+            correct: "Write commitments into a planner, review priorities weekly, and allow buffer time when things change",
+            feedback: "This is strongest because it combines tools, review habits, and flexibility."
+          }
+        ]
       },
       {
-        id: "time-memory",
-        text: "A student keeps everything in their head and does not write deadlines down.",
-        correctBucket: "right",
-        feedback: "Relying only on memory makes it easier to miss tasks and deadlines."
+        id: "upgrade",
+        title: "Step 4: Upgrade the Answer",
+        instruction: "Choose the sentence that sounds most like a stronger EST answer.",
+        items: [
+          {
+            id: "time-sentence-1",
+            prompt: "Which sentence best explains time management in an EST-style answer?",
+            options: [
+              "Time management involves planning tasks, prioritising urgent work, and adjusting schedules so deadlines can still be met.",
+              "Time management means being busy all the time.",
+              "Time management is when work happens eventually."
+            ],
+            correct: "Time management involves planning tasks, prioritising urgent work, and adjusting schedules so deadlines can still be met.",
+            feedback: "This is strongest because it names the process clearly and explains the goal of meeting deadlines."
+          },
+          {
+            id: "time-sentence-2",
+            prompt: "Which sentence best links tools with effective time management?",
+            options: [
+              "Tools such as planners, calendars, reminders, and checklists help workers organise tasks, monitor progress, and stay on schedule.",
+              "Tools are not important if someone just works harder.",
+              "A good worker should rely on memory instead of using planning tools."
+            ],
+            correct: "Tools such as planners, calendars, reminders, and checklists help workers organise tasks, monitor progress, and stay on schedule.",
+            feedback: "This is strongest because it explains both the tools and why they improve deadline control."
+          }
+        ]
       }
     ]
   },
@@ -907,12 +1031,20 @@ function getContentTrainingConfig(groupId) {
   return trainingBays[groupId] || null;
 }
 
+function isArcTrainingType(type) {
+  return type === "initiative-arc" || type === "time-management-arc";
+}
+
+function getArcTrainingAnswerKey(configType, itemId) {
+  return `training-${configType}-${itemId}`;
+}
+
 function getTrainingScore(config) {
   if (!config) return { correct: 0, total: 0, percent: 0 };
-  if (config.type === "initiative-arc") {
+  if (isArcTrainingType(config.type)) {
     const items = (config.steps || []).flatMap(step => step.items || []);
     const total = items.length;
-    const correct = items.filter(item => state.answers[`training-initiative-arc-${item.id}`] === item.correct).length;
+    const correct = items.filter(item => state.answers[getArcTrainingAnswerKey(config.type, item.id)] === item.correct).length;
     return { correct, total, percent: total ? Math.round((correct / total) * 100) : 0 };
   }
   if (config.type === "sort") {
@@ -933,12 +1065,12 @@ function getTrainingScore(config) {
   return { correct: 0, total: 0, percent: 0 };
 }
 
-function renderInitiativeArcTrainingBay(config, score) {
+function renderArcTrainingBay(config, score) {
   return `
     <div class="panel training-bay training-campaign">
       <div class="section-title">
         <h2>${escapeHtml(config.title)}</h2>
-        <p>${score.correct}/${score.total} initiative decisions locked</p>
+        <p>${score.correct}/${score.total} training decisions locked</p>
       </div>
       <p class="small-copy">${escapeHtml(config.subtitle)}</p>
       ${config.memoryHook ? `<div class="badge-row" style="margin-top:14px;"><span class="badge">${escapeHtml(config.memoryHook)}</span></div>` : ""}
@@ -951,7 +1083,7 @@ function renderInitiativeArcTrainingBay(config, score) {
             </div>
             <div class="training-stack">
               ${(step.items || []).map(item => {
-                const answer = state.answers[`training-initiative-arc-${item.id}`];
+                const answer = state.answers[getArcTrainingAnswerKey(config.type, item.id)];
                 const isCorrect = answer && answer === item.correct;
                 return `
                   <article class="training-card ${answer ? (isCorrect ? "good" : "bad") : ""}">
@@ -962,7 +1094,7 @@ function renderInitiativeArcTrainingBay(config, score) {
                         <button
                           type="button"
                           class="choice-button ${answer === option ? "selected live-selected" : ""}"
-                          onclick="window.ESTPrep.setTrainingChoiceEncoded('training-initiative-arc-${item.id}', '${encodeURIComponent(option)}')"
+                          onclick="window.ESTPrep.setTrainingChoiceEncoded('${getArcTrainingAnswerKey(config.type, item.id)}', '${encodeURIComponent(option)}')"
                         >
                           <strong>${escapeHtml(option)}</strong>
                         </button>
@@ -1089,7 +1221,7 @@ function renderTrainingBay(group) {
   const config = getContentTrainingConfig(group.id);
   if (!config) return "";
   const score = getTrainingScore(config);
-  if (config.type === "initiative-arc") return renderInitiativeArcTrainingBay(config, score);
+  if (isArcTrainingType(config.type)) return renderArcTrainingBay(config, score);
   if (config.type === "sort") return renderSortTrainingBay(config, score);
   if (config.type === "scenario") return renderScenarioTrainingBay(config, score);
   if (config.type === "builder") return renderBuilderTrainingBay(config, score);
@@ -1098,10 +1230,10 @@ function renderTrainingBay(group) {
 
 function getTrainingInteractions(config) {
   if (!config) return [];
-  if (config.type === "initiative-arc") {
+  if (isArcTrainingType(config.type)) {
     return (config.steps || []).flatMap(step => (step.items || []).map(item => ({
       item: item.prompt,
-      selected: state.answers[`training-initiative-arc-${item.id}`] || "",
+      selected: state.answers[getArcTrainingAnswerKey(config.type, item.id)] || "",
       correct_answer: item.correct,
       step: step.title
     })));
