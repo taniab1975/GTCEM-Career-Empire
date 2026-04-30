@@ -45,6 +45,13 @@ const DEFAULT_CONTENT_TOPIC_GROUPS = [
     topics: ["Communication skills", "Non-verbal communication", "Active listening"],
     writePrompt: "Write one or two EST-ready sentences explaining how communication skills can be applied in a workplace or interview situation.",
     sampleResponse: "Communication skills can be applied by using clear verbal language, active listening, and appropriate non-verbal communication for the audience and purpose. This is important because it reduces misunderstandings, builds rapport, and helps tasks or interviews run more effectively."
+  },
+  {
+    id: "future-of-work",
+    title: "Megatrends, Growth Industries and Labour Market Information",
+    topics: ["Megatrends", "Growth industry", "Labour market information", "Emerging industry", "Green industry"],
+    writePrompt: "Write one or two EST-ready sentences explaining how megatrends, growth industries, or labour market information can influence future career opportunities.",
+    sampleResponse: "Megatrends shape the future of work by changing industries, jobs, and skill needs over time. Labour market information and knowledge of growth industries help people make better career decisions because they show where demand is increasing, what qualifications may be needed, and which opportunities are emerging."
   }
 ];
 
@@ -166,6 +173,30 @@ const DEFAULT_CONTENT_RESPONSE_SCAFFOLDS = {
         label: "Sentence starter 3",
         starter: "This matters because ",
         placeholder: "it reduces misunderstandings, builds rapport, and helps tasks run effectively..."
+      }
+    ]
+  },
+  "future-of-work": {
+    title: "Response Forge",
+    subtitle: "Explain the long-term change, then the evidence or opportunity, then why it matters for careers.",
+    segments: [
+      {
+        id: "concept",
+        label: "Sentence starter 1",
+        starter: "Megatrends and labour market information show ",
+        placeholder: "how industries, jobs, and skill needs change over time..."
+      },
+      {
+        id: "example",
+        label: "Sentence starter 2",
+        starter: "For example, growth industries or data might show ",
+        placeholder: "rising demand in health care, technology, renewable energy, or other expanding areas..."
+      },
+      {
+        id: "impact",
+        label: "Sentence starter 3",
+        starter: "This matters for career planning because ",
+        placeholder: "people can use the evidence to identify opportunities, training needs, and future pathways..."
       }
     ]
   }
@@ -453,6 +484,174 @@ const DEFAULT_CONTENT_TRAINING_BAYS = {
             ],
             correct: "Tools such as planners, calendars, reminders, and checklists help workers organise tasks, monitor progress, and stay on schedule.",
             feedback: "This is strongest because it explains both the tools and why they improve deadline control."
+          }
+        ]
+      }
+    ]
+  },
+  "future-of-work": {
+    type: "future-of-work-arc",
+    title: "Future Signals Scanner",
+    subtitle: "Spot the shift, read the industry signal, use the data, then upgrade the EST answer.",
+    memoryHook: "Shift • Signal • Evidence • Opportunity",
+    steps: [
+      {
+        id: "shift",
+        title: "Step 1: Spot the Shift",
+        instruction: "Choose the statement that best shows how megatrends change work over time.",
+        items: [
+          {
+            id: "future-shift-jobs",
+            prompt: "Which statement best explains the impact of megatrends on jobs?",
+            options: [
+              "Megatrends can create emerging jobs and change existing ones, so workers may need new skills.",
+              "Megatrends only affect jobs in one industry at a time.",
+              "Megatrends mean all existing jobs disappear completely."
+            ],
+            correct: "Megatrends can create emerging jobs and change existing ones, so workers may need new skills.",
+            feedback: "Strong call. The future of work is usually about jobs changing, evolving, or emerging rather than simply disappearing."
+          },
+          {
+            id: "future-shift-routine",
+            prompt: "Which type of work is most likely to be reduced or reshaped by automation and more efficient processes?",
+            options: [
+              "Routine or repetitive tasks",
+              "Every specialised role equally",
+              "Only outdoor work"
+            ],
+            correct: "Routine or repetitive tasks",
+            feedback: "Correct. Lower-skill, repetitive, or routine tasks are often the most exposed to automation."
+          },
+          {
+            id: "future-shift-evolve",
+            prompt: "A job now uses online systems, digital communication, and new technology tools. What does this show?",
+            options: [
+              "The role is evolving as work changes",
+              "The industry no longer matters",
+              "Technology has no impact on work"
+            ],
+            correct: "The role is evolving as work changes",
+            feedback: "Strong move. Many roles stay, but their tasks, tools, and expectations evolve."
+          }
+        ]
+      },
+      {
+        id: "signal",
+        title: "Step 2: Read the Industry Signal",
+        instruction: "Choose the label that best fits each future-of-work idea.",
+        items: [
+          {
+            id: "future-growth",
+            prompt: "An industry is expanding over time and creating increased demand for workers.",
+            options: [
+              "Growth industry",
+              "Green industry",
+              "Labour market information"
+            ],
+            correct: "Growth industry",
+            feedback: "A growth industry expands over time and can create more employment opportunities."
+          },
+          {
+            id: "future-emerging",
+            prompt: "An industry is new, developing, or becoming more important because of technology or changing needs.",
+            options: [
+              "Emerging industry",
+              "Declining job",
+              "Participation rate"
+            ],
+            correct: "Emerging industry",
+            feedback: "Emerging industries are new or developing and often linked to megatrends."
+          },
+          {
+            id: "future-green",
+            prompt: "An industry reduces environmental harm or supports cleaner and more sustainable ways of working.",
+            options: [
+              "Green industry",
+              "Growth industry",
+              "Employment level"
+            ],
+            correct: "Green industry",
+            feedback: "Green industries support sustainability and can include both new and changing roles."
+          },
+          {
+            id: "future-lmi",
+            prompt: "Data about wages, job vacancies, industry growth, and employment trends is called:",
+            options: [
+              "Labour market information",
+              "Customer feedback",
+              "Selection criteria"
+            ],
+            correct: "Labour market information",
+            feedback: "Labour market information helps people make career decisions using evidence about jobs and industries."
+          }
+        ]
+      },
+      {
+        id: "evidence",
+        title: "Step 3: Use the Data",
+        instruction: "Choose the strongest interpretation of the labour market evidence.",
+        items: [
+          {
+            id: "future-data-health",
+            prompt: "Employment data shows Health Care and Social Assistance grew strongly, while Manufacturing declined. What is the best interpretation?",
+            options: [
+              "Growth is uneven across industries, so some areas create more opportunities than others.",
+              "Every industry is growing at the same rate.",
+              "Industry data is useless for career decisions."
+            ],
+            correct: "Growth is uneven across industries, so some areas create more opportunities than others.",
+            feedback: "This is the strongest interpretation because labour market growth is not spread evenly."
+          },
+          {
+            id: "future-data-local",
+            prompt: "National data shows an industry is growing, but there are few local opportunities where you live. What is the strongest conclusion?",
+            options: [
+              "Macro data still needs to be interpreted in relation to local opportunities and your own situation.",
+              "National growth guarantees a job for everyone locally.",
+              "Location never affects employment opportunities."
+            ],
+            correct: "Macro data still needs to be interpreted in relation to local opportunities and your own situation.",
+            feedback: "Strong move. Labour market information is useful, but it has to be interpreted at the micro level too."
+          },
+          {
+            id: "future-data-skills",
+            prompt: "Projected employment growth is strongest in higher-skill occupations. What does that suggest?",
+            options: [
+              "Training, qualifications, and adaptable skills may be increasingly important for future opportunities.",
+              "Skill level has no effect on future job growth.",
+              "Only entry-level roles will expand."
+            ],
+            correct: "Training, qualifications, and adaptable skills may be increasingly important for future opportunities.",
+            feedback: "Correct. The strongest growth is often linked to roles requiring post-secondary skills or specialised knowledge."
+          }
+        ]
+      },
+      {
+        id: "upgrade",
+        title: "Step 4: Upgrade the Answer",
+        instruction: "Choose the sentence that sounds most like a stronger EST answer.",
+        items: [
+          {
+            id: "future-sentence-1",
+            prompt: "Which sentence best explains how megatrends influence the future of work?",
+            options: [
+              "Megatrends influence the future of work by changing industries, creating emerging jobs, and reshaping the skills workers need over time.",
+              "Megatrends are just interesting ideas with no effect on careers.",
+              "Megatrends only matter to government, not workers."
+            ],
+            correct: "Megatrends influence the future of work by changing industries, creating emerging jobs, and reshaping the skills workers need over time.",
+            feedback: "This is strongest because it explains both the change and its impact on workers."
+          },
+          {
+            id: "future-sentence-2",
+            prompt: "Which sentence best explains why labour market information matters?",
+            options: [
+              "Labour market information helps people compare growth areas, wages, job demand, and skill needs so they can make better career decisions.",
+              "Labour market information is only useful after someone already has a permanent job.",
+              "Labour market information mainly tells you what subjects to like."
+            ],
+            correct: "Labour market information helps people compare growth areas, wages, job demand, and skill needs so they can make better career decisions.",
+            feedback: "This is strongest because it links the evidence directly to career planning."
           }
         ]
       }
@@ -1155,7 +1354,7 @@ function getContentTrainingConfig(groupId) {
 }
 
 function isArcTrainingType(type) {
-  return type === "initiative-arc" || type === "time-management-arc";
+  return /-arc$/.test(String(type || ""));
 }
 
 function getArcTrainingAnswerKey(configType, itemId) {
@@ -1348,6 +1547,87 @@ function getContentResponseSegmentKey(groupId, segmentId) {
   return `content-scaffold-${groupId}-${segmentId}`;
 }
 
+function normaliseCoachText(value) {
+  return String(value || "")
+    .toLowerCase()
+    .replace(/[^a-z0-9\s]/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+function getContentResponseCoachChecks(group, scaffold = getContentResponseScaffold(group)) {
+  const defaultChecks = {
+    initiative: [
+      { id: "concept", label: "Names initiative clearly", keywords: ["initiative", "proactive", "improvement", "responsib", "help"] },
+      { id: "example", label: "Uses a workplace action or example", keywords: ["restock", "suggest", "help", "volunteer", "system", "colleague"] },
+      { id: "impact", label: "Explains the workplace effect", keywords: ["because", "productiv", "team", "safety", "efficient", "workplace"] }
+    ],
+    "time-management": [
+      { id: "concept", label: "Explains planning and prioritising", keywords: ["plan", "prioritis", "deadline", "schedule", "organis"] },
+      { id: "example", label: "Uses a tool or process example", keywords: ["planner", "calendar", "checklist", "reminder", "task", "sequence"] },
+      { id: "impact", label: "Explains how deadlines are met", keywords: ["because", "deadline", "order", "adjust", "progress", "manage"] }
+    ],
+    "personal-finance": [
+      { id: "concept", label: "Explains budgeting or financial management", keywords: ["budget", "income", "expense", "finance", "spending"] },
+      { id: "example", label: "Uses a support or decision example", keywords: ["seek", "assistance", "review", "essential", "support", "adjust"] },
+      { id: "impact", label: "Explains why the action helps", keywords: ["because", "stress", "decision", "informed", "manage", "stability"] }
+    ],
+    "job-application": [
+      { id: "concept", label: "Explains STAR or the application method", keywords: ["star", "situation", "task", "action", "result", "criteria"] },
+      { id: "example", label: "Shows evidence or structure", keywords: ["example", "evidence", "criteria", "clear", "response", "structure"] },
+      { id: "impact", label: "Explains the employer benefit", keywords: ["because", "employer", "suitable", "show", "understand", "clear"] }
+    ],
+    communication: [
+      { id: "concept", label: "Explains the communication skill", keywords: ["communic", "listen", "verbal", "non verbal", "clear"] },
+      { id: "example", label: "Uses a workplace or interview action", keywords: ["clarify", "audience", "interview", "workplace", "understand"] },
+      { id: "impact", label: "Explains the effect on others or tasks", keywords: ["because", "misunderstanding", "rapport", "effective", "task", "clear"] }
+    ],
+    "future-of-work": [
+      { id: "concept", label: "Explains megatrends or labour market change", keywords: ["megatrend", "future of work", "industry", "change", "labour market"] },
+      { id: "example", label: "Uses evidence, a growth area, or industry example", keywords: ["growth", "health", "technology", "renewable", "data", "industry"] },
+      { id: "impact", label: "Explains why it matters for career pathways", keywords: ["because", "opportunit", "career", "skills", "training", "pathway"] }
+    ]
+  };
+  return scaffold?.coachChecks || defaultChecks[group?.id] || [];
+}
+
+function evaluateContentResponse(group) {
+  const scaffold = getContentResponseScaffold(group);
+  const checks = getContentResponseCoachChecks(group, scaffold);
+  const builtResponse = buildContentResponseText(group);
+  const normalizedBuilt = normaliseCoachText(builtResponse);
+  const segmentResults = (scaffold?.segments || []).map(segment => {
+    const value = String(state.answers[getContentResponseSegmentKey(group.id, segment.id)] || "").trim();
+    const normalized = normaliseCoachText(value);
+    const coachCheck = checks.find(item => item.id === segment.id);
+    const lengthPass = normalized.split(" ").filter(Boolean).length >= 3;
+    const keywordPass = !coachCheck?.keywords?.length || coachCheck.keywords.some(keyword => normalized.includes(normaliseCoachText(keyword)));
+    return {
+      id: segment.id,
+      label: coachCheck?.label || segment.label,
+      passed: Boolean(value) && lengthPass && keywordPass,
+      value
+    };
+  });
+  const builtHasReasoning = /(^|\s)(because|so|which|therefore|helps|shows)\b/.test(normalizedBuilt);
+  const passedCount = segmentResults.filter(item => item.passed).length + (builtHasReasoning ? 1 : 0);
+  const totalChecks = segmentResults.length + 1;
+  const level = passedCount >= totalChecks ? "strong" : passedCount >= Math.max(2, totalChecks - 1) ? "developing" : "needs-work";
+  const summary = level === "strong"
+    ? "This reads like a stronger EST-ready response: clear idea, useful example, and a reasoned effect."
+    : level === "developing"
+      ? "This is moving in the right direction, but one part is still too vague or underdeveloped."
+      : "This still needs more clarity. Add a sharper content point, a more specific example, and a stronger why-it-matters explanation.";
+
+  return {
+    builtResponse,
+    segmentResults,
+    builtHasReasoning,
+    level,
+    summary
+  };
+}
+
 function setContentResponseSegment(groupId, segmentId, value) {
   state.answers[getContentResponseSegmentKey(groupId, segmentId)] = value;
 }
@@ -1400,6 +1680,7 @@ function renderContentResponseForge(group) {
   }
 
   const builtResponse = state.answers[`content-note-${group.id}`] || buildContentResponseText(group);
+  const responseCoach = evaluateContentResponse(group);
   const segments = scaffold.segments || [];
 
   return `
@@ -1431,6 +1712,27 @@ function renderContentResponseForge(group) {
       <p class="small-copy">This final paragraph is assembled from your sentence starters. You can still edit it before banking the lab.</p>
       <textarea id="content-note" placeholder="Your built EST response will appear here...">${escapeHtml(builtResponse)}</textarea>
     </div>
+    ${builtResponse ? `
+      <div class="panel">
+        <div class="section-title">
+          <h2>EST-ready coach</h2>
+          <p>${responseCoach.level === "strong" ? "Strong sentence signal" : responseCoach.level === "developing" ? "Developing sentence signal" : "Needs sharpening"}</p>
+        </div>
+        <p class="small-copy">${escapeHtml(responseCoach.summary)}</p>
+        <div class="training-stack" style="margin-top:14px;">
+          ${responseCoach.segmentResults.map(result => `
+            <div class="training-card ${result.passed ? "good" : "bad"}">
+              <strong>${escapeHtml(result.label)}</strong>
+              <p class="training-feedback">${result.passed ? "Locked in." : "Needs a clearer EST phrase or more specific language."}</p>
+            </div>
+          `).join("")}
+          <div class="training-card ${responseCoach.builtHasReasoning ? "good" : "bad"}">
+            <strong>Explains why the point matters</strong>
+            <p class="training-feedback">${responseCoach.builtHasReasoning ? "Your built paragraph includes causal or explanatory language." : "Add a stronger because/how/why explanation so the response sounds more analytical."}</p>
+          </div>
+        </div>
+      </div>
+    ` : ""}
   `;
 }
 
@@ -3676,7 +3978,7 @@ async function submitContent() {
   `;
   showFeedbackBox(scoreRatio === 1 ? "good" : scoreRatio >= 0.5 ? "warn" : "bad", [
     `<strong>Content check:</strong> ${correctCount}/${scoredRounds.length} strongest answer points selected.`,
-    "This stage is now grouped into the five core EST revision strands, so students and teachers can see which content area was strongest and where the most time was spent.",
+    `This stage is now grouped into the ${groups.length} core EST revision strands, so students and teachers can see which content area was strongest and where the most time was spent.`,
     "Those content points and written explanations are what later feed the decoder and boss-round responses."
   ], sampleReviewHtml);
 }
