@@ -48,6 +48,129 @@ const DEFAULT_CONTENT_TOPIC_GROUPS = [
   }
 ];
 
+const DEFAULT_CONTENT_RESPONSE_SCAFFOLDS = {
+  initiative: {
+    title: "Response Forge",
+    subtitle: "Build the key idea first, then the example, then the impact.",
+    segments: [
+      {
+        id: "concept",
+        label: "Sentence starter 1",
+        starter: "Initiative can be shown when a worker ",
+        placeholder: "acts proactively, suggests an improvement, or steps in to help..."
+      },
+      {
+        id: "example",
+        label: "Sentence starter 2",
+        starter: "For example, they might ",
+        placeholder: "restock early, suggest a safer system, or support a teammate..."
+      },
+      {
+        id: "impact",
+        label: "Sentence starter 3",
+        starter: "This is effective because ",
+        placeholder: "it improves productivity, safety, teamwork, or workplace reliability..."
+      }
+    ]
+  },
+  "time-management": {
+    title: "Response Forge",
+    subtitle: "Build the process, then the tools or example, then the reason it works.",
+    segments: [
+      {
+        id: "concept",
+        label: "Sentence starter 1",
+        starter: "Time management involves ",
+        placeholder: "planning tasks, prioritising urgent work, and adjusting when deadlines change..."
+      },
+      {
+        id: "example",
+        label: "Sentence starter 2",
+        starter: "A student or worker can use ",
+        placeholder: "planners, reminders, checklists, schedules, or clear task sequencing..."
+      },
+      {
+        id: "impact",
+        label: "Sentence starter 3",
+        starter: "This helps because ",
+        placeholder: "deadlines stay visible, tasks are completed in the right order, and delays can be managed..."
+      }
+    ]
+  },
+  "personal-finance": {
+    title: "Response Forge",
+    subtitle: "Explain the money strategy, then the support move, then the benefit.",
+    segments: [
+      {
+        id: "concept",
+        label: "Sentence starter 1",
+        starter: "Managing personal finance involves ",
+        placeholder: "tracking income and expenses, budgeting carefully, and preparing for change..."
+      },
+      {
+        id: "example",
+        label: "Sentence starter 2",
+        starter: "If circumstances change, a person should ",
+        placeholder: "review essentials, adjust spending, and seek reliable assistance early..."
+      },
+      {
+        id: "impact",
+        label: "Sentence starter 3",
+        starter: "This is important because ",
+        placeholder: "it reduces financial stress and helps people make informed decisions..."
+      }
+    ]
+  },
+  "job-application": {
+    title: "Response Forge",
+    subtitle: "Explain the method, then the evidence move, then the employer benefit.",
+    segments: [
+      {
+        id: "concept",
+        label: "Sentence starter 1",
+        starter: "STAR helps an applicant by ",
+        placeholder: "structuring a response into Situation, Task, Action, and Result..."
+      },
+      {
+        id: "example",
+        label: "Sentence starter 2",
+        starter: "This allows the applicant to ",
+        placeholder: "give a clear example that directly addresses the selection criteria..."
+      },
+      {
+        id: "impact",
+        label: "Sentence starter 3",
+        starter: "As a result, the employer can ",
+        placeholder: "see what the applicant actually did and why they are suitable..."
+      }
+    ]
+  },
+  communication: {
+    title: "Response Forge",
+    subtitle: "Explain the skill, then the action, then the workplace effect.",
+    segments: [
+      {
+        id: "concept",
+        label: "Sentence starter 1",
+        starter: "Communication skills involve ",
+        placeholder: "clear verbal language, active listening, and appropriate non-verbal signals..."
+      },
+      {
+        id: "example",
+        label: "Sentence starter 2",
+        starter: "In a workplace or interview, a person can ",
+        placeholder: "listen carefully, clarify understanding, and adapt the message to the audience..."
+      },
+      {
+        id: "impact",
+        label: "Sentence starter 3",
+        starter: "This matters because ",
+        placeholder: "it reduces misunderstandings, builds rapport, and helps tasks run effectively..."
+      }
+    ]
+  }
+};
+
 const DEFAULT_CONTENT_TRAINING_BAYS = {
   initiative: {
     type: "initiative-arc",
@@ -1213,6 +1336,100 @@ function renderBuilderTrainingBay(config, score) {
           `;
         }).join("")}
       </div>
+    </div>
+  `;
+}
+
+function getContentResponseScaffold(group) {
+  return group?.responseScaffold || DEFAULT_CONTENT_RESPONSE_SCAFFOLDS[group?.id] || null;
+}
+
+function getContentResponseSegmentKey(groupId, segmentId) {
+  return `content-scaffold-${groupId}-${segmentId}`;
+}
+
+function setContentResponseSegment(groupId, segmentId, value) {
+  state.answers[getContentResponseSegmentKey(groupId, segmentId)] = value;
+}
+
+function setContentNoteValue(groupId, value) {
+  state.answers[`content-note-${groupId}`] = value;
+}
+
+function buildContentResponseText(group) {
+  const scaffold = getContentResponseScaffold(group);
+  if (!scaffold) return state.answers[`content-note-${group.id}`] || "";
+  return (scaffold.segments || [])
+    .map(segment => {
+      const value = String(state.answers[getContentResponseSegmentKey(group.id, segment.id)] || "").trim();
+      if (!value) return "";
+      const sentence = `${segment.starter}${value}`.trim();
+      return /[.!?]$/.test(sentence) ? sentence : `${sentence}.`;
+    })
+    .filter(Boolean)
+    .join(" ");
+}
+
+function buildContentResponse(groupId) {
+  const groups = state.stageDeck?.contentGroups || [];
+  const group = groups.find(item => item.id === groupId);
+  if (!group) return;
+  const built = buildContentResponseText(group);
+  state.answers[`content-note-${groupId}`] = built;
+  const textarea = document.getElementById("content-note");
+  if (textarea) textarea.value = built;
+  state.recentReward = {
+    type: "positive",
+    title: "Response built",
+    detail: "Your scaffold segments have been combined into a short EST-ready paragraph you can refine."
+  };
+  renderRewardPulse();
+  renderContentStage();
+}
+
+function renderContentResponseForge(group) {
+  const scaffold = getContentResponseScaffold(group);
+  if (!scaffold) {
+    return `
+      <div class="written-stage">
+        <strong>Quick EST response</strong>
+        <p class="small-copy">Write a short response so teachers can see how well you can explain this content area, not just select the right option. Students can compare this with a model answer after submission.</p>
+        <textarea id="content-note" placeholder="Write one or two EST-ready sentences for this content strand...">${escapeHtml(state.answers[`content-note-${group.id}`] || "")}</textarea>
+      </div>
+    `;
+  }
+
+  const builtResponse = state.answers[`content-note-${group.id}`] || buildContentResponseText(group);
+  const segments = scaffold.segments || [];
+
+  return `
+    <div class="panel">
+      <div class="section-title">
+        <h2>${escapeHtml(scaffold.title || "Quick EST response")}</h2>
+        <p>${escapeHtml(scaffold.subtitle || "Build the response in small steps, then combine it.")}</p>
+      </div>
+      <p class="small-copy">${escapeHtml(group.writePrompt)}</p>
+      <div class="builder-grid" style="margin-top:14px;">
+        ${segments.map((segment, index) => `
+          <div class="written-stage">
+            <strong>${escapeHtml(segment.label || `Sentence starter ${index + 1}`)}</strong>
+            <p class="small-copy"><strong>${escapeHtml(segment.starter)}</strong></p>
+            <textarea
+              id="content-scaffold-${group.id}-${segment.id}"
+              placeholder="${escapeHtml(segment.placeholder || "Add your idea here...")}"
+              oninput="window.ESTPrep.setContentResponseSegmentEncoded('${group.id}', '${segment.id}', this.value)"
+            >${escapeHtml(state.answers[getContentResponseSegmentKey(group.id, segment.id)] || "")}</textarea>
+          </div>
+        `).join("")}
+      </div>
+      <div class="builder-actions">
+        <button class="submit-button" type="button" onclick="window.ESTPrep.buildContentResponse('${group.id}')">Build Response Paragraph</button>
+      </div>
+    </div>
+    <div class="written-stage">
+      <strong>Built EST response</strong>
+      <p class="small-copy">This final paragraph is assembled from your sentence starters. You can still edit it before banking the lab.</p>
+      <textarea id="content-note" placeholder="Your built EST response will appear here...">${escapeHtml(builtResponse)}</textarea>
     </div>
   `;
 }
@@ -2451,11 +2668,7 @@ function renderContentStage() {
         </div>
       </div>
     `).join("")}
-    <div class="written-stage">
-      <strong>Quick EST response</strong>
-      <p class="small-copy">Write a short response so teachers can see how well you can explain this content area, not just select the right option. Students can compare this with a model answer after submission.</p>
-      <textarea id="content-note" placeholder="Write one or two EST-ready sentences for this content strand...">${escapeHtml(state.answers[`content-note-${currentGroup.id}`] || "")}</textarea>
-    </div>
+    ${renderContentResponseForge(currentGroup)}
     <div class="written-stage">
       <div style="display:flex;gap:12px;flex-wrap:wrap;">
         <button class="submit-button" type="button" onclick="window.ESTPrep.openStage('content')">Back to topic menu</button>
@@ -2830,6 +3043,10 @@ function setTrainingChoice(groupKey, option) {
 
 function setTrainingChoiceEncoded(groupKey, encodedOption) {
   setTrainingChoice(groupKey, decodeURIComponent(encodedOption));
+}
+
+function setContentResponseSegmentEncoded(groupId, segmentId, value) {
+  setContentResponseSegment(groupId, segmentId, value);
 }
 
 function setBossScaffold(index, value) {
@@ -3663,6 +3880,8 @@ window.ESTPrep = {
   jumpToContentGroup,
   setTrainingChoice,
   setTrainingChoiceEncoded,
+  setContentResponseSegmentEncoded,
+  buildContentResponse,
   setGlossarySelectedTerm,
   setGlossarySelectedSocket,
   setGlossaryMode,
