@@ -815,81 +815,316 @@ const DEFAULT_CONTENT_TRAINING_BAYS = {
     ]
   },
   "job-application": {
-    type: "builder",
-    title: "Application Forge",
-    subtitle: "Build stronger job application responses by choosing the move that earns more marks.",
-    rounds: [
+    type: "job-application-arc",
+    title: "Application Control Room",
+    subtitle: "Read the ad, match the criteria, structure the evidence, then upgrade the EST answer.",
+    memoryHook: "Target • Match • STAR • Strengthen",
+    steps: [
       {
-        id: "job-cover-letter",
-        title: "Cover letter purpose",
-        prompt: "You are applying for a retail role. What makes the cover letter strongest?",
-        options: [
-          "Mention the specific job advertisement, explain why you are applying, and highlight your suitability briefly.",
-          "Write a generic note that never names the role because it can be reused anywhere.",
-          "Repeat the resume word for word without linking it to the employer."
-        ],
-        correct: "Mention the specific job advertisement, explain why you are applying, and highlight your suitability briefly.",
-        feedback: "Strong response. A cover letter should target the specific role and make a positive first impression.",
-        builderLabel: "Best opening move"
+        id: "target",
+        title: "Step 1: Read the Job Ad",
+        instruction: "Choose the move that best targets the role instead of writing a generic application.",
+        items: [
+          {
+            id: "job-target-1",
+            prompt: "What makes the opening of a cover letter strongest?",
+            options: [
+              "It names the specific job advertisement and briefly explains why the applicant suits that role.",
+              "It avoids naming the role so the same letter can be sent everywhere.",
+              "It repeats the resume word for word."
+            ],
+            correct: "It names the specific job advertisement and briefly explains why the applicant suits that role.",
+            feedback: "Correct. A strong cover letter responds directly to the advertised role and employer."
+          },
+          {
+            id: "job-target-2",
+            prompt: "Why should a cover letter be tailored rather than generic?",
+            options: [
+              "Because it shows understanding of the employer's needs and links skills directly to the role.",
+              "Because employers prefer long personal stories unrelated to the job.",
+              "Because grammar and structure do not matter if enthusiasm is high."
+            ],
+            correct: "Because it shows understanding of the employer's needs and links skills directly to the role.",
+            feedback: "Correct. Tailoring makes the application relevant and persuasive."
+          },
+          {
+            id: "job-target-3",
+            prompt: "Which language choice best suits a cover letter?",
+            options: [
+              "Clear, concise, professional language appropriate to the employer and industry.",
+              "Slang and jokes to sound relaxed.",
+              "Vague language that avoids describing any real skills."
+            ],
+            correct: "Clear, concise, professional language appropriate to the employer and industry.",
+            feedback: "Correct. Effective written communication helps the employer quickly understand suitability."
+          }
+        ]
       },
       {
-        id: "job-star",
-        title: "Selection criteria",
-        prompt: "You need to respond to teamwork selection criteria in an interview. What should you do?",
-        options: [
-          "Use STAR so the employer can see the situation, task, action, and result clearly.",
-          "Give a vague answer because details might sound like bragging.",
-          "Talk only about what the team did and leave out your own action."
-        ],
-        correct: "Use STAR so the employer can see the situation, task, action, and result clearly.",
-        feedback: "Strong response. STAR helps structure evidence so the response is clear and relevant.",
-        builderLabel: "Best response structure"
+        id: "criteria",
+        title: "Step 2: Match the Selection Criteria",
+        instruction: "Choose the response that best shows how to address what the employer is asking for.",
+        items: [
+          {
+            id: "job-criteria-1",
+            prompt: "What are selection criteria?",
+            options: [
+              "The skills, attributes, experience, and abilities an employer uses to judge suitability for the role.",
+              "Optional details that applicants can ignore if their resume is strong.",
+              "Only technical qualifications and nothing else."
+            ],
+            correct: "The skills, attributes, experience, and abilities an employer uses to judge suitability for the role.",
+            feedback: "Correct. Selection criteria tell the applicant exactly what the employer wants demonstrated."
+          },
+          {
+            id: "job-criteria-2",
+            prompt: "What makes a response to selection criteria stronger?",
+            options: [
+              "Using a clear example from school, work, or volunteering that demonstrates the required skill in action.",
+              "Making broad claims without evidence.",
+              "Listing personality traits with no example."
+            ],
+            correct: "Using a clear example from school, work, or volunteering that demonstrates the required skill in action.",
+            feedback: "Correct. Employers need evidence, not just claims."
+          },
+          {
+            id: "job-criteria-3",
+            prompt: "Which criterion response is strongest for teamwork?",
+            options: [
+              "Explaining a specific time you worked with others, what you did, and what result was achieved.",
+              "Saying you are a team player because everyone says that about themselves.",
+              "Talking only about what the team did and not your own contribution."
+            ],
+            correct: "Explaining a specific time you worked with others, what you did, and what result was achieved.",
+            feedback: "Correct. Specific evidence makes the criterion believable and relevant."
+          }
+        ]
       },
       {
-        id: "job-interview",
-        title: "Interview communication",
-        prompt: "The interviewer asks a question you did not fully understand. What is the best move?",
-        options: [
-          "Ask politely for clarification so you can answer the actual question well.",
-          "Guess what they meant and answer quickly so you sound confident.",
-          "Stay silent and hope they move to the next question."
-        ],
-        correct: "Ask politely for clarification so you can answer the actual question well.",
-        feedback: "Strong response. Clarifying shows active listening and improves answer accuracy.",
-        builderLabel: "Best interview move"
+        id: "star",
+        title: "Step 3: Structure It with STAR",
+        instruction: "Choose the move that best uses Situation, Task, Action, and Result.",
+        items: [
+          {
+            id: "job-star-1",
+            prompt: "Why is STAR useful when responding to selection criteria?",
+            options: [
+              "It organises the example logically so the employer can clearly see the context, action, and result.",
+              "It makes answers longer, even if they become less clear.",
+              "It replaces the need for an actual example."
+            ],
+            correct: "It organises the example logically so the employer can clearly see the context, action, and result.",
+            feedback: "Correct. STAR improves clarity and keeps the evidence focused."
+          },
+          {
+            id: "job-star-2",
+            prompt: "Which part of STAR should show what you personally did?",
+            options: [
+              "Action",
+              "Situation only",
+              "Result only"
+            ],
+            correct: "Action",
+            feedback: "Correct. The Action section is where the applicant shows the steps they personally took."
+          },
+          {
+            id: "job-star-3",
+            prompt: "What makes the Result section effective?",
+            options: [
+              "It shows the outcome or impact of the applicant's actions.",
+              "It repeats the job advertisement.",
+              "It adds unrelated background details."
+            ],
+            correct: "It shows the outcome or impact of the applicant's actions.",
+            feedback: "Correct. The result proves why the example matters."
+          }
+        ]
+      },
+      {
+        id: "upgrade",
+        title: "Step 4: Upgrade the Answer",
+        instruction: "Choose the sentence that sounds most like a stronger EST answer.",
+        items: [
+          {
+            id: "job-sentence-1",
+            prompt: "Which sentence best explains the purpose of a cover letter?",
+            options: [
+              "A cover letter introduces the applicant, responds to a specific job advertisement, and highlights why their skills and experience suit the role.",
+              "A cover letter is just a longer version of the resume.",
+              "A cover letter should stay generic so it can be sent to every employer."
+            ],
+            correct: "A cover letter introduces the applicant, responds to a specific job advertisement, and highlights why their skills and experience suit the role.",
+            feedback: "This is strongest because it explains both the purpose and how the document should function."
+          },
+          {
+            id: "job-sentence-2",
+            prompt: "Which sentence best explains why STAR improves a response?",
+            options: [
+              "STAR strengthens a response by organising evidence into situation, task, action, and result so the employer can clearly assess suitability.",
+              "STAR is useful because it makes answers sound complicated.",
+              "STAR only matters if the employer asks for exactly four sentences."
+            ],
+            correct: "STAR strengthens a response by organising evidence into situation, task, action, and result so the employer can clearly assess suitability.",
+            feedback: "This is strongest because it links structure directly to employer judgement."
+          }
+        ]
       }
     ]
   },
   communication: {
-    type: "sort",
-    title: "Communication Radar",
-    subtitle: "Sort the behaviours into effective communication or weak communication.",
-    leftLabel: "Effective communication",
-    rightLabel: "Weak communication",
-    cards: [
+    type: "communication-arc",
+    title: "Communication Signal Lab",
+    subtitle: "Read the audience, listen actively, use non-verbal cues well, then upgrade the EST answer.",
+    memoryHook: "Audience • Listen • Non-verbal • Respond",
+    steps: [
       {
-        id: "comm-listen",
-        text: "A worker listens fully, nods, and asks, 'Do you mean these arranged by size?'",
-        correctBucket: "left",
-        feedback: "This shows active listening because the worker checks understanding before acting."
+        id: "audience",
+        title: "Step 1: Read the Audience",
+        instruction: "Choose the communication move that best suits the purpose, audience, and situation.",
+        items: [
+          {
+            id: "comm-audience-1",
+            prompt: "A worker is helping a confused customer find an item. Which response is strongest?",
+            options: [
+              "Use clear, polite language and explain the information at a level that suits the customer.",
+              "Use slang and assume the customer already understands the store layout.",
+              "Give the shortest possible answer and walk away."
+            ],
+            correct: "Use clear, polite language and explain the information at a level that suits the customer.",
+            feedback: "Correct. Effective communication adapts the message to the audience and purpose."
+          },
+          {
+            id: "comm-audience-2",
+            prompt: "Why is adapting communication important?",
+            options: [
+              "Because different audiences and situations need different language, tone, and detail.",
+              "Because the same communication style works perfectly everywhere.",
+              "Because tone and format have no effect on understanding."
+            ],
+            correct: "Because different audiences and situations need different language, tone, and detail.",
+            feedback: "Correct. Good communicators adjust the message instead of using one fixed style."
+          },
+          {
+            id: "comm-audience-3",
+            prompt: "Which workplace message is the clearest and most appropriate?",
+            options: [
+              "We're nearly out of drinks at the front, so can someone restock before the rush gets worse?",
+              "Stuff is gone. Someone deal with it.",
+              "Nothing needs to be said because people should notice for themselves."
+            ],
+            correct: "We're nearly out of drinks at the front, so can someone restock before the rush gets worse?",
+            feedback: "Correct. It is specific, respectful, and helps the team act quickly."
+          }
+        ]
       },
       {
-        id: "comm-phone",
-        text: "A team member checks their phone while a customer explains the issue.",
-        correctBucket: "right",
-        feedback: "This weakens communication because it suggests poor listening and low respect."
+        id: "listen",
+        title: "Step 2: Use Active Listening",
+        instruction: "Choose the response that best shows real listening, not passive hearing.",
+        items: [
+          {
+            id: "comm-listen-1",
+            prompt: "A supervisor gives instructions for a display setup. What is the strongest listening move?",
+            options: [
+              "Ask a clarifying question like, 'Do you want these arranged by size?' before starting.",
+              "Pretend to understand and guess the rest later.",
+              "Interrupt halfway through because you already know enough."
+            ],
+            correct: "Ask a clarifying question like, 'Do you want these arranged by size?' before starting.",
+            feedback: "Correct. Active listening includes checking understanding before acting."
+          },
+          {
+            id: "comm-listen-2",
+            prompt: "Which behaviour best shows active listening to a customer complaint?",
+            options: [
+              "Listen without interrupting, focus on the speaker, and respond calmly to what was actually said.",
+              "Look at your phone while they explain the issue.",
+              "Start defending yourself before they finish speaking."
+            ],
+            correct: "Listen without interrupting, focus on the speaker, and respond calmly to what was actually said.",
+            feedback: "Correct. Active listening reduces misunderstandings and shows respect."
+          },
+          {
+            id: "comm-listen-3",
+            prompt: "Why is paraphrasing useful in workplace communication?",
+            options: [
+              "It confirms understanding by checking that the message was received correctly.",
+              "It makes conversations longer for no reason.",
+              "It replaces the need to pay attention in the first place."
+            ],
+            correct: "It confirms understanding by checking that the message was received correctly.",
+            feedback: "Correct. Paraphrasing helps ensure the task or message is understood accurately."
+          }
+        ]
       },
       {
-        id: "comm-tone",
-        text: "An applicant uses calm tone, eye contact, and clear language in an interview.",
-        correctBucket: "left",
-        feedback: "This combines verbal and non-verbal communication to build rapport and clarity."
+        id: "nonverbal",
+        title: "Step 3: Use Non-verbal Signals Well",
+        instruction: "Choose the move that best uses tone, body language, and facial expression to support the message.",
+        items: [
+          {
+            id: "comm-nonverbal-1",
+            prompt: "A worker is dealing with a busy queue and an impatient customer. Which non-verbal response is strongest?",
+            options: [
+              "Maintain eye contact, face the customer, and keep a calm, respectful tone.",
+              "Roll your eyes and keep scanning the room while they speak.",
+              "Cross your arms and use a sharp voice to end the conversation faster."
+            ],
+            correct: "Maintain eye contact, face the customer, and keep a calm, respectful tone.",
+            feedback: "Correct. Positive non-verbal communication reinforces respect and helps de-escalate pressure."
+          },
+          {
+            id: "comm-nonverbal-2",
+            prompt: "Why does non-verbal communication matter?",
+            options: [
+              "It supports meaning, builds connection, and can reduce misunderstandings.",
+              "It only matters in acting, not real workplaces.",
+              "It is less important than the words in every situation."
+            ],
+            correct: "It supports meaning, builds connection, and can reduce misunderstandings.",
+            feedback: "Correct. Tone, posture, and facial expression shape how messages are received."
+          },
+          {
+            id: "comm-nonverbal-3",
+            prompt: "Which interview behaviour best supports a positive first impression?",
+            options: [
+              "Sit upright, maintain appropriate eye contact, and use a calm, confident tone.",
+              "Avoid eye contact and answer in a rushed monotone.",
+              "Check your phone while the interviewer explains the role."
+            ],
+            correct: "Sit upright, maintain appropriate eye contact, and use a calm, confident tone.",
+            feedback: "Correct. Employers judge communication through both verbal and non-verbal signals."
+          }
+        ]
       },
       {
-        id: "comm-slang",
-        text: "A worker uses slang and rushed explanations with a confused customer.",
-        correctBucket: "right",
-        feedback: "Messages should suit the audience. Unclear language creates misunderstandings."
+        id: "upgrade",
+        title: "Step 4: Upgrade the Answer",
+        instruction: "Choose the sentence that sounds most like a stronger EST answer.",
+        items: [
+          {
+            id: "comm-sentence-1",
+            prompt: "Which sentence best explains communication skills in the workplace?",
+            options: [
+              "Communication skills involve using clear verbal language, active listening, and appropriate non-verbal cues so messages are understood in different situations.",
+              "Communication means talking a lot so people know you are involved.",
+              "Communication skills only matter in formal interviews."
+            ],
+            correct: "Communication skills involve using clear verbal language, active listening, and appropriate non-verbal cues so messages are understood in different situations.",
+            feedback: "This is strongest because it names the main communication elements and explains the goal clearly."
+          },
+          {
+            id: "comm-sentence-2",
+            prompt: "Which sentence best explains why communication matters in an interview?",
+            options: [
+              "Strong communication helps an applicant listen carefully, answer clearly, and build a positive impression that matches the workplace culture.",
+              "Interviews are mostly about luck, not communication.",
+              "Only the words matter; listening and body language make no difference."
+            ],
+            correct: "Strong communication helps an applicant listen carefully, answer clearly, and build a positive impression that matches the workplace culture.",
+            feedback: "This is strongest because it links communication directly to interview success and workplace fit."
+          }
+        ]
       }
     ]
   }
