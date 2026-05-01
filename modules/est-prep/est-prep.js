@@ -658,45 +658,159 @@ const DEFAULT_CONTENT_TRAINING_BAYS = {
     ]
   },
   "personal-finance": {
-    type: "scenario",
-    title: "Scenario Rescue",
-    subtitle: "Choose the strongest next move when life events affect money and planning.",
-    scenarios: [
+    type: "personal-finance-arc",
+    title: "Finance Stability Lab",
+    subtitle: "Track the money, protect the essentials, seek support, then upgrade the EST answer.",
+    memoryHook: "Track • Prioritise • Seek support • Adapt",
+    steps: [
       {
-        id: "finance-shifts",
-        title: "Reduced shifts",
-        prompt: "Your work hours are cut suddenly and your phone bill plus transport costs are due next week.",
-        options: [
-          "Review the budget, prioritise essentials, and cut non-essential spending straight away.",
-          "Keep spending normally and hope the next roster fixes the problem.",
-          "Ignore the bills until a family member notices."
-        ],
-        correct: "Review the budget, prioritise essentials, and cut non-essential spending straight away.",
-        feedback: "Strong response. The first move is to review income and expenses so the situation is clear."
+        id: "track",
+        title: "Step 1: Track the Money Signal",
+        instruction: "Identify the strongest budgeting or tracking move in each situation.",
+        items: [
+          {
+            id: "finance-track-1",
+            prompt: "A student wants to understand why they keep running short before payday.",
+            options: [
+              "Track money in and money out so spending patterns and problem areas become visible.",
+              "Keep guessing because writing it down takes too long.",
+              "Only check the account balance when it is already low."
+            ],
+            correct: "Track money in and money out so spending patterns and problem areas become visible.",
+            feedback: "Correct. Tracking income and expenses is the first move because it shows where money is actually going."
+          },
+          {
+            id: "finance-track-2",
+            prompt: "Which action best shows budgeting discipline rather than wishful thinking?",
+            options: [
+              "List regular and irregular expenses, then compare them against income for the week.",
+              "Assume there will be enough money because there usually is.",
+              "Spend first and work out the totals later."
+            ],
+            correct: "List regular and irregular expenses, then compare them against income for the week.",
+            feedback: "Correct. Budgets work when both predictable and less predictable costs are visible."
+          },
+          {
+            id: "finance-track-3",
+            prompt: "A worker's hours change from week to week. What is the strongest money-management move?",
+            options: [
+              "Review income records regularly so the budget can adjust when earnings rise or fall.",
+              "Use the highest earning week as the budget for every week.",
+              "Ignore the variation and hope it evens out."
+            ],
+            correct: "Review income records regularly so the budget can adjust when earnings rise or fall.",
+            feedback: "Correct. Tracking helps people respond quickly when income becomes irregular."
+          }
+        ]
       },
       {
-        id: "finance-support",
-        title: "Unexpected expense",
-        prompt: "Your car needs urgent repairs and you are unsure how to cover the cost without missing rent.",
-        options: [
-          "Seek reliable assistance early and look at payment options, support services, or temporary income.",
-          "Use random advice from social media and avoid asking for help.",
-          "Spend more on non-essential items to feel better before dealing with it."
-        ],
-        correct: "Seek reliable assistance early and look at payment options, support services, or temporary income.",
-        feedback: "Strong response. Seeking assistance helps avoid bigger mistakes and opens up practical support."
+        id: "prioritise",
+        title: "Step 2: Protect the Essentials",
+        instruction: "Choose the response that best protects financial stability when pressure hits.",
+        items: [
+          {
+            id: "finance-priority-1",
+            prompt: "Sami's hours drop, creating a weekly deficit. What should be reviewed first?",
+            options: [
+              "Essential costs such as transport, food, rent, bills, and other obligations that must still be covered.",
+              "Only entertainment spending because it is the most fun to keep.",
+              "Nothing yet, because changing the budget too early is overreacting."
+            ],
+            correct: "Essential costs such as transport, food, rent, bills, and other obligations that must still be covered.",
+            feedback: "Correct. Strong budgeting starts by protecting essentials before optional spending."
+          },
+          {
+            id: "finance-priority-2",
+            prompt: "A person needs to cut spending after an unexpected bill. Which move is strongest?",
+            options: [
+              "Reduce non-essential spending first and keep reviewing the budget until the situation stabilises.",
+              "Ignore the bill and keep all normal spending the same.",
+              "Cancel all food and transport costs immediately."
+            ],
+            correct: "Reduce non-essential spending first and keep reviewing the budget until the situation stabilises.",
+            feedback: "Correct. The strongest move is to protect essentials and reduce optional costs first."
+          },
+          {
+            id: "finance-priority-3",
+            prompt: "Why is maintaining an emergency fund useful?",
+            options: [
+              "It provides a buffer when income drops or unexpected expenses appear.",
+              "It removes the need to budget at all.",
+              "It should only be used for impulse purchases."
+            ],
+            correct: "It provides a buffer when income drops or unexpected expenses appear.",
+            feedback: "Correct. Emergency savings improve preparedness when circumstances change unexpectedly."
+          }
+        ]
       },
       {
-        id: "finance-life-event",
-        title: "Life event disruption",
-        prompt: "A family change means you may need to move and adjust your work or study plans quickly.",
-        options: [
-          "Adapt goals, review finances, and change timelines or work arrangements to suit the new situation.",
-          "Pretend nothing has changed because changing plans looks like failure.",
-          "Stop planning completely because the future feels uncertain."
-        ],
-        correct: "Adapt goals, review finances, and change timelines or work arrangements to suit the new situation.",
-        feedback: "Strong response. Unexpected life events often require revised timelines, goals, and financial choices."
+        id: "support",
+        title: "Step 3: Seek the Right Support",
+        instruction: "Decide which assistance source or response is most reliable and effective.",
+        items: [
+          {
+            id: "finance-support-1",
+            prompt: "A young worker is confused about managing debt and urgent bills. What is the strongest first support option?",
+            options: [
+              "Use a trusted service such as MoneySmart, a financial counsellor, or the National Debt Helpline.",
+              "Follow a random influencer who promises instant money hacks.",
+              "Avoid seeking advice because support means failure."
+            ],
+            correct: "Use a trusted service such as MoneySmart, a financial counsellor, or the National Debt Helpline.",
+            feedback: "Correct. Assistance should come from reliable, trustworthy sources rather than pressure or guesswork."
+          },
+          {
+            id: "finance-support-2",
+            prompt: "A student's shifts fall and they may miss payments. Which action best shows effective support-seeking?",
+            options: [
+              "Contact the bank, employer, or relevant support service early to discuss options and changed circumstances.",
+              "Wait until everything becomes unmanageable before saying anything.",
+              "Hide the problem and stop checking messages."
+            ],
+            correct: "Contact the bank, employer, or relevant support service early to discuss options and changed circumstances.",
+            feedback: "Correct. Early communication often creates more options, such as payment plans or extra shifts."
+          },
+          {
+            id: "finance-support-3",
+            prompt: "Why is reliable advice important in financial situations?",
+            options: [
+              "Reliable advice helps people avoid scams, bad decisions, and unnecessary financial risk.",
+              "Any advice is fine if it sounds confident.",
+              "Good financial choices should always be made quickly without checking."
+            ],
+            correct: "Reliable advice helps people avoid scams, bad decisions, and unnecessary financial risk.",
+            feedback: "Correct. Trusted advice improves confidence and reduces the chance of costly mistakes."
+          }
+        ]
+      },
+      {
+        id: "upgrade",
+        title: "Step 4: Upgrade the Answer",
+        instruction: "Choose the sentence that sounds most like a stronger EST answer.",
+        items: [
+          {
+            id: "finance-sentence-1",
+            prompt: "Which sentence best explains why budgeting matters?",
+            options: [
+              "Budgeting helps a person balance income and expenses, identify unnecessary spending, and prepare for future costs or financial change.",
+              "Budgeting is just writing numbers down with no real purpose.",
+              "Budgeting only matters if someone earns a very high income."
+            ],
+            correct: "Budgeting helps a person balance income and expenses, identify unnecessary spending, and prepare for future costs or financial change.",
+            feedback: "This is strongest because it explains both the process and why it supports financial control."
+          },
+          {
+            id: "finance-sentence-2",
+            prompt: "Which sentence best explains how people should respond to unexpected financial events?",
+            options: [
+              "Unexpected financial events should be managed by reviewing the budget, prioritising essentials, seeking reliable assistance, and adjusting plans where needed.",
+              "Unexpected events mean planning is pointless.",
+              "The best response is to keep spending the same and hope the issue disappears."
+            ],
+            correct: "Unexpected financial events should be managed by reviewing the budget, prioritising essentials, seeking reliable assistance, and adjusting plans where needed.",
+            feedback: "This is strongest because it combines practical action with adaptability and support-seeking."
+          }
+        ]
       }
     ]
   },
