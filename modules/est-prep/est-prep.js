@@ -10,6 +10,32 @@ const SKILL_LOGOS = {
   "time-management": "../../Assets/employability-logos/main/time-management.png"
 };
 
+const EST_GUIDE_CHARACTERS = {
+  romero: {
+    welcome: "../../Assets/Images and Animations/Emmanuel Student Characters/Romero/Romero Welcome.png",
+    pointing: "../../Assets/Images and Animations/Emmanuel Student Characters/Romero/Romero Pointing.png",
+    thinking: "../../Assets/Images and Animations/Emmanuel Student Characters/Romero/Romero Thinking.png",
+    encouraging: "../../Assets/Images and Animations/Emmanuel Student Characters/Romero/Romero Encouraging.png",
+    celebrating: "../../Assets/Images and Animations/Emmanuel Student Characters/Romero/Romero Celebrating.png"
+  },
+  mackillop: {
+    welcome: "../../Assets/Images and Animations/Emmanuel Student Characters/MacKillop/MacKillop Welcome.png",
+    pointing: "../../Assets/Images and Animations/Emmanuel Student Characters/MacKillop/MacKillop Pointing.png",
+    thinking: "../../Assets/Images and Animations/Emmanuel Student Characters/MacKillop/MacKillop Thinking.png",
+    encouraging: "../../Assets/Images and Animations/Emmanuel Student Characters/MacKillop/MacKillop Encouraging.png",
+    celebrating: "../../Assets/Images and Animations/Emmanuel Student Characters/MacKillop/MacKillop Celebrating.png"
+  }
+};
+
+const EST_GUIDE_ASSIGNMENTS = {
+  initiative: "romero",
+  "time-management": "mackillop",
+  "personal-finance": "mackillop",
+  "job-application": "romero",
+  communication: "mackillop",
+  "future-of-work": "romero"
+};
+
 const DEFAULT_CONTENT_TOPIC_GROUPS = [
   {
     id: "initiative",
@@ -1737,6 +1763,8 @@ function getTrainingScore(config) {
 }
 
 function renderArcTrainingBay(config, score) {
+  const groupId = getGroupIdForTrainingType(config.type);
+  const guide = groupId ? renderESTGuidePanel(groupId, "challenge") : "";
   return `
     <div class="panel training-bay training-campaign">
       <div class="section-title">
@@ -1745,6 +1773,7 @@ function renderArcTrainingBay(config, score) {
       </div>
       <p class="small-copy">${escapeHtml(config.subtitle)}</p>
       ${config.memoryHook ? `<div class="badge-row" style="margin-top:14px;"><span class="badge">${escapeHtml(config.memoryHook)}</span></div>` : ""}
+      ${guide}
       <div class="training-campaign-grid">
         ${(config.steps || []).map((step, stepIndex) => `
           <section class="training-step">
@@ -2039,6 +2068,7 @@ function renderContentResponseForge(group) {
         <p>${escapeHtml(scaffold.subtitle || "Build the response in small steps, then combine it.")}</p>
       </div>
       <p class="small-copy">${escapeHtml(group.writePrompt)}</p>
+      ${renderESTGuidePanel(group.id, "forge")}
       <div class="builder-grid" style="margin-top:14px;">
         ${segments.map((segment, index) => `
           <div class="written-stage">
@@ -3239,6 +3269,7 @@ function renderContentTopicIntro(group) {
         <div class="kicker">Topic intro</div>
         <h3>${escapeHtml(group.introTitle || group.title)}</h3>
         <p class="small-copy">${escapeHtml(group.introSummary || group.writePrompt)}</p>
+        ${renderESTGuidePanel(group.id, "intro")}
         ${highlights.length ? `
           <div class="badge-row topic-intro-highlights">
             ${highlights.map(item => `<span class="badge">${escapeHtml(item)}</span>`).join("")}
@@ -3330,6 +3361,67 @@ function renderContentStage() {
       </div>
     </div>
   `);
+}
+
+function getGroupIdForTrainingType(type) {
+  const { trainingBays } = getContentStageConfig();
+  return Object.entries(trainingBays).find(([, config]) => config.type === type)?.[0] || "";
+}
+
+function getESTGuideCharacter(groupId) {
+  const key = EST_GUIDE_ASSIGNMENTS[groupId] || "romero";
+  return EST_GUIDE_CHARACTERS[key] || EST_GUIDE_CHARACTERS.romero;
+}
+
+function getESTGuideCopy(groupId, context) {
+  const byContext = {
+    intro: {
+      initiative: "We’ll move through this like a mission: spot the behaviour, name the type, then sharpen the EST answer.",
+      "time-management": "Take one planning move at a time. We’re looking for the best order, not the busiest schedule.",
+      "personal-finance": "Think like a calm decision-maker here: track it, protect essentials, then seek the right support.",
+      "job-application": "We’re not writing generic answers here. We’re targeting the role, the criteria, and the evidence.",
+      communication: "This strand is all about reading the situation well, not just saying more words.",
+      "future-of-work": "We’re scanning for change, evidence, and opportunity. That’s what makes this strand feel future-focused."
+    },
+    challenge: {
+      initiative: "Choose the strongest move in each situation. If it feels vague or passive, it probably isn’t the best initiative call.",
+      "time-management": "Look for the response that controls the workload, not the one that just sounds busy.",
+      "personal-finance": "Choose the move that creates financial control and adaptability, not panic or avoidance.",
+      "job-application": "Pick the response that gives the employer clear evidence, structure, and relevance.",
+      communication: "Choose the action that makes the message clearer, more respectful, and easier to act on.",
+      "future-of-work": "Look for the answer that uses evidence about change, demand, and opportunity."
+    },
+    forge: {
+      initiative: "Build the sentence in parts first. Strong EST answers explain the behaviour, the example, and why it matters.",
+      "time-management": "Aim for a response that names the process, the tool, and the reason it works.",
+      "personal-finance": "A strong finance answer should mention budgeting, support, and how the strategy protects stability.",
+      "job-application": "Keep it employer-facing. The best paragraph explains the method, the evidence, and why it proves suitability.",
+      communication: "Try to include the skill, the action, and the effect on understanding or workplace relationships.",
+      "future-of-work": "A stronger answer links the trend, the evidence, and the career impact in one clear paragraph."
+    }
+  };
+  return byContext[context]?.[groupId] || "Take this one step at a time. A strong EST answer is built through clear choices, not rushing.";
+}
+
+function renderESTGuidePanel(groupId, context) {
+  const character = getESTGuideCharacter(groupId);
+  const pose = context === "intro"
+    ? character.welcome
+    : context === "forge"
+      ? character.thinking
+      : character.pointing;
+  const label = groupId === "job-application"
+    ? "Mission guide"
+    : "EST guide";
+  return `
+    <div class="est-guide-panel est-guide-${escapeHtml(context)}">
+      <img class="est-guide-image" src="${escapeHtml(pose)}" alt="EST guide character">
+      <div class="est-guide-copy">
+        <div class="kicker">${label}</div>
+        <p>${escapeHtml(getESTGuideCopy(groupId, context))}</p>
+      </div>
+    </div>
+  `;
 }
 
 function renderGlossaryStage() {
