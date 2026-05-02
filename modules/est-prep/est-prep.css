@@ -434,6 +434,11 @@ body.est-lab-mode #stage-section[data-scene="success"] {
   align-items: center;
 }
 
+.focus-toolbar--lesson {
+  justify-content: space-between;
+  align-items: center;
+}
+
 .focus-back {
   display: inline-flex;
   align-items: center;
@@ -450,6 +455,25 @@ body.est-lab-mode #stage-section[data-scene="success"] {
 .focus-label {
   color: var(--muted);
   font-size: 0.92rem;
+}
+
+.focus-lesson-pill {
+  display: inline-grid;
+  gap: 2px;
+  padding: 10px 14px;
+  border-radius: 16px;
+  border: 1px solid rgba(129, 166, 255, 0.18);
+  background: rgba(12, 20, 40, 0.58);
+  text-align: right;
+}
+
+.focus-lesson-pill strong {
+  font-size: 0.95rem;
+}
+
+.focus-lesson-pill small {
+  color: var(--muted);
+  font-size: 0.78rem;
 }
 
 .focus-track-button,

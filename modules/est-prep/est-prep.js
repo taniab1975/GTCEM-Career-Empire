@@ -1449,6 +1449,10 @@ function getContentGroupStatus(group, index) {
   return isContentGroupDone(group) ? "complete" : "pending";
 }
 
+function isContentLessonActive() {
+  return state.selectedStageId === "content" && state.contentView === "lesson" && state.contentGroupIndex >= 0;
+}
+
 function renderFocusNav() {
   const container = document.getElementById("focus-nav");
   if (!container) return;
@@ -1477,6 +1481,19 @@ function renderFocusNav() {
       </button>
     `;
   }).join("");
+  if (isContentLessonActive() && currentGroup) {
+    const status = isContentGroupDone(currentGroup) ? "Done" : "In progress";
+    container.innerHTML = `
+      <div class="focus-toolbar focus-toolbar--lesson">
+        <button type="button" class="focus-back" onclick="window.ESTPrep.openStage('content')">← Topic menu</button>
+        <div class="focus-lesson-pill">
+          <strong>${escapeHtml(getContentGroupShortLabel(currentGroup.id))}</strong>
+          <small>${escapeHtml(status)}</small>
+        </div>
+      </div>
+    `;
+    return;
+  }
   container.innerHTML = `
     <div class="focus-toolbar">
       <button type="button" class="focus-back" onclick="window.ESTPrep.returnToTrack()">← Back to EST Hub</button>
@@ -3668,8 +3685,8 @@ function renderContentStage() {
   const trainingIsArc = trainingConfig && isArcTrainingType(trainingConfig.type);
   const trainingComplete = trainingScore.total > 0 && trainingScore.correct === trainingScore.total;
   setStageScene(trainingScore.total > 0 && trainingScore.correct === trainingScore.total ? "restored" : "challenge");
-  setText("stage-title", "EST Content Check");
-  setText("stage-subtitle", "Train one content strand at a time with a clean, distraction-light interface.");
+  setText("stage-title", trainingIsArc && !trainingComplete ? "" : "EST Content Check");
+  setText("stage-subtitle", trainingIsArc && !trainingComplete ? "" : "Train one content strand at a time with a clean, distraction-light interface.");
   if (trainingIsArc && !trainingComplete) {
     renderStageRoot(`
       ${renderTrainingBay(currentGroup)}
@@ -4184,7 +4201,6 @@ function setTrainingChoice(groupKey, option) {
         lastOutcome: option === item.correct ? "correct" : "wrong"
       };
       renderContentStage();
-      scrollToTopSmooth();
       return;
     }
   }
@@ -4235,7 +4251,6 @@ function advanceArcCard(configType) {
     };
   }
   renderContentStage();
-  scrollToTopSmooth();
 }
 
 function startArcStep(configType) {
@@ -4250,7 +4265,6 @@ function startArcStep(configType) {
     lastOutcome: null
   };
   renderContentStage();
-  scrollToTopSmooth();
 }
 
 function setContentResponseSegmentEncoded(groupId, segmentId, value) {
