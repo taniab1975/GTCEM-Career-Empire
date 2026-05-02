@@ -42,6 +42,15 @@ const EST_SCENE_BACKGROUNDS = {
   restored: "../../Assets/Images and Animations/EST backgrounds/Background restored.png"
 };
 
+const EST_PROGRESS_RAILS = {
+  none: "../../Assets/Images and Animations/Progress Bar/No progress yet.png",
+  step1: "../../Assets/Images and Animations/Progress Bar/Step 1 active.png",
+  step2: "../../Assets/Images and Animations/Progress Bar/Step 2 Active.png",
+  step3: "../../Assets/Images and Animations/Progress Bar/Step 3 Active.png",
+  step4: "../../Assets/Images and Animations/Progress Bar/Step 4 Active.png",
+  complete: "../../Assets/Images and Animations/Progress Bar/All steps complete.png"
+};
+
 const DEFAULT_CONTENT_TOPIC_GROUPS = [
   {
     id: "initiative",
@@ -1394,6 +1403,32 @@ function setStageScene(scene = "neutral") {
   stageSection.style.setProperty("--est-stage-background", `url("${getESTSceneBackground(scene)}")`);
 }
 
+function getContentGroupShortLabel(groupId) {
+  const labels = {
+    initiative: "Initiative",
+    "time-management": "Time",
+    "personal-finance": "Finance",
+    "job-application": "Cover Letters",
+    communication: "Comms",
+    "future-of-work": "Megatrends"
+  };
+  return labels[groupId] || "Topic";
+}
+
+function isContentGroupDone(group) {
+  if (!group) return false;
+  const response = String(state.answers[`content-note-${group.id}`] || "").trim();
+  const answeredChecks = (group.rounds || []).every((_, index) => Boolean(state.answers[`content-${group.id}-${index}`]));
+  const trainingConfig = getContentTrainingConfig(group.id);
+  const trainingScore = getTrainingScore(trainingConfig);
+  return answeredChecks && Boolean(response) && trainingScore.percent >= 70;
+}
+
+function getContentGroupStatus(group, index) {
+  if (index === state.contentGroupIndex && state.contentView !== "menu") return "active";
+  return isContentGroupDone(group) ? "complete" : "pending";
+}
+
 function renderFocusNav() {
   const container = document.getElementById("focus-nav");
   if (!container) return;
@@ -1405,6 +1440,23 @@ function renderFocusNav() {
   const groups = state.stageDeck?.contentGroups || [];
   const currentGroup = groups[state.contentGroupIndex];
   const contentMenuPrompt = "Choose an EST curriculum content area below";
+  const contentTrackButtons = groups.map((group, index) => {
+    const status = getContentGroupStatus(group, index);
+    const statusLabel = status === "active" ? "Current" : status === "complete" ? "Done" : "Not started";
+    return `
+      <button
+        type="button"
+        class="content-track-button compact ${status} ${index === state.contentGroupIndex ? "active" : ""}"
+        onclick="window.ESTPrep.openContentGroupIntro(${index})"
+      >
+        <span class="content-track-index">${String(index + 1).padStart(2, "0")}</span>
+        <span class="content-track-copy">
+          <strong>${escapeHtml(getContentGroupShortLabel(group.id))}</strong>
+          <small>${escapeHtml(statusLabel)}</small>
+        </span>
+      </button>
+    `;
+  }).join("");
   container.innerHTML = `
     <div class="focus-toolbar">
       <button type="button" class="focus-back" onclick="window.ESTPrep.returnToTrack()">← Back to EST Hub</button>
@@ -1425,18 +1477,10 @@ function renderFocusNav() {
     ${state.selectedStageId === "content" ? `
       <div class="content-track-title-row">
         <div class="content-track-title">Topic Menu</div>
-        <div class="content-track-subtitle">${escapeHtml(currentGroup ? currentGroup.title : contentMenuPrompt)}</div>
+        <div class="content-track-subtitle">${escapeHtml(currentGroup ? currentGroup.title : `${groups.length} EST strands ready. Choose one to enter its reactor.`)}</div>
       </div>
       <div class="content-track content-track-menu ${currentGroup ? "has-selection" : ""}">
-        ${groups.map((group, index) => `
-          <button
-            type="button"
-            class="content-track-button ${index === state.contentGroupIndex ? "active" : ""}"
-            onclick="window.ESTPrep.openContentGroupIntro(${index})"
-          >
-            <strong>${index + 1}. ${escapeHtml(group.title)}</strong>
-          </button>
-        `).join("")}
+        ${contentTrackButtons}
       </div>
     ` : ""}
   `;
@@ -1785,6 +1829,49 @@ function getTrainingScore(config) {
   return { correct: 0, total: 0, percent: 0 };
 }
 
+function getArcStepProgress(config) {
+  const steps = config?.steps || [];
+  const stepStates = steps.map(step => {
+    const items = step.items || [];
+    const total = items.length;
+    const correct = items.filter(item => state.answers[getArcTrainingAnswerKey(config.type, item.id)] === item.correct).length;
+    return {
+      title: step.title,
+      correct,
+      total,
+      complete: total > 0 && correct === total
+    };
+  });
+  const completedSteps = stepStates.filter(step => step.complete).length;
+  const nextStep = stepStates.findIndex(step => !step.complete);
+  const activeStep = nextStep === -1 ? stepStates.length : nextStep + 1;
+  return { stepStates, completedSteps, activeStep };
+}
+
+function getArcProgressRailAsset(config) {
+  const { completedSteps } = getArcStepProgress(config);
+  if (completedSteps === 0) return EST_PROGRESS_RAILS.step1;
+  if (completedSteps === 1) return EST_PROGRESS_RAILS.step2;
+  if (completedSteps === 2) return EST_PROGRESS_RAILS.step3;
+  if (completedSteps === 3) return EST_PROGRESS_RAILS.step4;
+  return EST_PROGRESS_RAILS.complete;
+}
+
+function renderArcProgressRail(config) {
+  const { completedSteps, activeStep, stepStates } = getArcStepProgress(config);
+  const asset = getArcProgressRailAsset(config);
+  const totalSteps = stepStates.length || 4;
+  const caption = completedSteps === totalSteps
+    ? "All reactor steps complete"
+    : `Step ${activeStep} active • ${completedSteps}/${totalSteps} complete`;
+  return `
+    <div class="arc-progress-rail">
+      <img class="arc-progress-image" src="${escapeHtml(asset)}" alt="${escapeHtml(caption)}">
+      <div class="arc-progress-caption">${escapeHtml(caption)}</div>
+    </div>
+  `;
+}
+
 function renderArcTrainingBay(config, score) {
   const groupId = getGroupIdForTrainingType(config.type);
   const guide = groupId ? renderESTGuidePanel(groupId, "challenge") : "";
@@ -1798,6 +1885,7 @@ function renderArcTrainingBay(config, score) {
         </div>
         <p class="small-copy">${escapeHtml(config.subtitle)}</p>
         ${config.memoryHook ? `<div class="badge-row" style="margin-top:14px;"><span class="badge">${escapeHtml(config.memoryHook)}</span></div>` : ""}
+        ${renderArcProgressRail(config)}
         ${guide}
         <div class="training-campaign-grid">
           ${(config.steps || []).map((step, stepIndex) => `

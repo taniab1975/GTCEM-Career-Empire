@@ -465,6 +465,50 @@ body.est-lab-mode #stage-section[data-scene="success"] {
   transition: transform 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
 }
 
+.content-track-button.compact {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+  padding: 10px 12px;
+  border-radius: 18px;
+}
+
+.content-track-index {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 40px;
+  min-height: 40px;
+  padding: 0 10px;
+  border-radius: 999px;
+  background: rgba(26, 40, 82, 0.9);
+  border: 1px solid rgba(129, 166, 255, 0.2);
+  color: #d9e9ff;
+  font-size: 0.86rem;
+  font-weight: 800;
+}
+
+.content-track-copy {
+  display: grid;
+  gap: 2px;
+  min-width: 0;
+}
+
+.content-track-copy strong,
+.content-track-copy small {
+  display: block;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.content-track-copy small {
+  color: var(--muted);
+  font-size: 0.78rem;
+}
+
 .focus-track-button:hover,
 .content-track-button:hover {
   transform: translateY(-1px);
@@ -482,6 +526,24 @@ body.est-lab-mode #stage-section[data-scene="success"] {
 .focus-track-button.active strong,
 .content-track-button.active strong {
   color: #ffffff;
+}
+
+.content-track-button.complete {
+  border-color: rgba(114, 247, 184, 0.34);
+  background: rgba(16, 53, 49, 0.42);
+}
+
+.content-track-button.complete .content-track-index {
+  background: rgba(22, 112, 80, 0.92);
+  border-color: rgba(114, 247, 184, 0.34);
+}
+
+.content-track-button.pending {
+  opacity: 0.92;
+}
+
+.content-track-button.pending .content-track-index {
+  background: rgba(19, 28, 58, 0.84);
 }
 
 .content-track-title-row {
@@ -510,7 +572,8 @@ body.est-lab-mode #stage-section[data-scene="success"] {
 
 .content-track-menu {
   display: grid;
-  gap: 12px;
+  gap: 10px;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
 }
 
 .content-track-menu .content-track-button {
@@ -821,6 +884,30 @@ body.est-lab-mode #stage-section[data-scene="success"] {
 
 .training-campaign-grid {
   margin-top: 18px;
+}
+
+.arc-progress-rail {
+  display: grid;
+  gap: 8px;
+  margin-top: 16px;
+  margin-bottom: 18px;
+}
+
+.arc-progress-image {
+  width: 100%;
+  height: auto;
+  display: block;
+  border-radius: 22px;
+  box-shadow: 0 18px 36px rgba(5, 10, 28, 0.28);
+}
+
+.arc-progress-caption {
+  color: #d7e9ff;
+  font-size: 0.86rem;
+  font-weight: 700;
+  text-align: center;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
 }
 
 .training-step {
@@ -1771,6 +1858,10 @@ body.glossary-mission-active #stage-root {
   .focus-track,
   .content-track {
     flex-direction: column;
+  }
+
+  .content-track-menu {
+    grid-template-columns: 1fr;
   }
 
   .topic-intro-grid {
