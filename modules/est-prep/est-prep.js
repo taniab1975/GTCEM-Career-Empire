@@ -22,8 +22,8 @@ const EST_GUIDE_CHARACTERS = {
     welcome: "../../Assets/Images and Animations/Emmanuel Student Characters/MacKillop/MacKillop Welcome.png",
     pointing: "../../Assets/Images and Animations/Emmanuel Student Characters/MacKillop/MacKillop Pointing.png",
     thinking: "../../Assets/Images and Animations/Emmanuel Student Characters/MacKillop/MacKillop Thinking.png",
-    encouraging: "../../Assets/Images and Animations/Emmanuel Student Characters/MacKillop/MacKillop encouraging.png",
-    celebrating: "../../Assets/Images and Animations/Emmanuel Student Characters/MacKillop/Mackillop Celebrating.png"
+    encouraging: "../../Assets/Images and Animations/Emmanuel Student Characters/MacKillop/MacKillop Encouraging.png",
+    celebrating: "../../Assets/Images and Animations/Emmanuel Student Characters/MacKillop/MacKillop Celebrating.png"
   }
 };
 
@@ -53,12 +53,21 @@ const EST_PROGRESS_RAILS = {
 
 const EST_ANIMATED_ASSETS = {
   next: "../../Assets/Images and Animations/Animated Buttons/animated_next_button.gif",
+  progress: "../../Assets/Images and Animations/Animated Buttons/animated_progress_bar_fill.gif",
   tick: "../../Assets/Images and Animations/Animated Buttons/animated_tick_success.gif",
   unlock: "../../Assets/Images and Animations/Animated Buttons/animated_unlock.gif",
   transition: "../../Assets/Images and Animations/Animated Buttons/step_transition.gif",
   wrong: "../../Assets/Images and Animations/Animated Buttons/wrong_answer_glitch.gif",
   hint: "../../Assets/Images and Animations/Animated Buttons/hint_nearly_there.gif",
   chamber: "../../Assets/Images and Animations/Animated Buttons/chamber_complete.gif"
+};
+
+const EST_TOPIC_SCENES = {
+  initiative: {
+    neutral: "../../Assets/Images and Animations/Initiative Scenes/Initiative topic scene neutral.png",
+    challenge: "../../Assets/Images and Animations/Initiative Scenes/Initiative problem.png",
+    success: "../../Assets/Images and Animations/Initiative Scenes/Initiative scene success.png"
+  }
 };
 
 const DEFAULT_CONTENT_TOPIC_GROUPS = [
@@ -1859,6 +1868,23 @@ function getArcStepProgress(config) {
   return { stepStates, completedSteps, activeStep };
 }
 
+function getArcStepQuestionProgress(config, stepIndex) {
+  const step = config?.steps?.[stepIndex];
+  const items = step?.items || [];
+  const total = items.length;
+  const correct = items.filter(item => getArcItemAnswer(config, item) === item.correct).length;
+  const percent = total ? Math.round((correct / total) * 100) : 0;
+  return { total, correct, percent };
+}
+
+function getArcSceneImage(groupId, scene) {
+  const groupScenes = EST_TOPIC_SCENES[groupId];
+  if (!groupScenes) return "";
+  if (scene === "restored" || scene === "success") return groupScenes.success || groupScenes.neutral || "";
+  if (scene === "challenge" || scene === "warning") return groupScenes.challenge || groupScenes.neutral || "";
+  return groupScenes.neutral || "";
+}
+
 function getTrainingConfigByType(type) {
   const { trainingBays } = getContentStageConfig();
   return Object.values(trainingBays || {}).find(config => config?.type === type) || null;
@@ -1971,7 +1997,6 @@ function renderArcTrainingBay(config, score) {
   const flow = getArcFlow(config);
   const scene = flow?.phase === "complete" || flow?.phase === "transition" ? "restored" : "challenge";
   const guideContext = flow?.phase === "feedback" && flow?.lastOutcome === "wrong" ? "forge" : "challenge";
-  const guide = groupId ? renderESTGuidePanel(groupId, guideContext) : "";
   const steps = config.steps || [];
   const currentStep = steps[flow?.stepIndex || 0] || steps[0];
   const currentItem = currentStep?.items?.[flow?.itemIndex || 0] || null;
@@ -1983,18 +2008,46 @@ function renderArcTrainingBay(config, score) {
   const stepNumber = Math.min(steps.length || 1, (flow?.stepIndex || 0) + 1);
   const completedAll = flow?.phase === "complete";
   const transitionStepNumber = Math.min(steps.length || 1, ((flow?.stepIndex || 0) + 2));
+  const stepProgress = getArcStepQuestionProgress(config, flow?.stepIndex || 0);
+  const totalStepCount = steps.length || 4;
+  const completedSteps = getArcStepProgress(config).completedSteps;
+  const sceneImage = getArcSceneImage(groupId, scene);
+  const guideCharacter = groupId ? getESTGuideCharacter(groupId) : null;
+  const guidePose = guideCharacter
+    ? guideContext === "forge"
+      ? guideCharacter.thinking
+      : scene === "restored"
+        ? guideCharacter.celebrating
+        : guideCharacter.pointing
+    : "";
+  const microReward = isCorrect
+    ? `Correct call locked. Salary and tax bank when this strand is completed or improved.`
+    : `No salary banks on this card yet. Lock the strongest answer to move forward.`;
   return `
     <section class="est-scene-shell est-scene-shell--${scene}" ${buildESTSceneStyle(scene)}>
-      <div class="panel training-bay training-campaign">
-        <div class="section-title">
-          <h2>${escapeHtml(config.title)}</h2>
-          <p>${score.correct}/${score.total} training decisions locked</p>
-        </div>
-        <p class="small-copy">${escapeHtml(config.subtitle)}</p>
-        ${config.memoryHook ? `<div class="badge-row" style="margin-top:14px;"><span class="badge">${escapeHtml(config.memoryHook)}</span></div>` : ""}
-        ${renderArcProgressRail(config)}
-        ${guide}
-        <div class="training-campaign-grid training-campaign-grid--flash">
+      <div class="panel training-bay training-campaign training-campaign--focus">
+        <div class="training-focus-shell">
+          <aside class="training-focus-aside">
+            <div class="training-focus-summary">
+              <div class="kicker">Reactor summary</div>
+              <h3>${escapeHtml(config.title)}</h3>
+              <p>${completedSteps}/${totalStepCount} steps complete</p>
+            </div>
+            ${renderArcProgressRail(config)}
+            ${config.memoryHook ? `<div class="training-memory-hook">${escapeHtml(config.memoryHook)}</div>` : ""}
+            ${sceneImage ? `<div class="training-scene-preview"><img src="${escapeHtml(sceneImage)}" alt="${escapeHtml(config.title)} scene preview"></div>` : ""}
+            ${guideCharacter ? `
+              <div class="training-guide-mini">
+                <img class="training-guide-mini-image" src="${escapeHtml(guidePose)}" alt="EST guide character">
+                <div class="training-guide-mini-copy">
+                  <div class="kicker">EST guide</div>
+                  <p>${escapeHtml(getESTGuideCopy(groupId, guideContext))}</p>
+                </div>
+              </div>
+            ` : ""}
+          </aside>
+          <div class="training-focus-main">
+            <div class="training-campaign-grid training-campaign-grid--flash">
           ${completedAll ? `
             <section class="training-step training-step--transition">
               <div class="training-flash-media">
@@ -2026,16 +2079,22 @@ function renderArcTrainingBay(config, score) {
             </section>
           ` : currentItem ? `
             <section class="training-step training-step--flash">
-              <div class="section-title">
-                <h2>${escapeHtml(currentStep.title)}</h2>
-                <p>${escapeHtml(currentStep.instruction || "Choose the strongest initiative move.")}</p>
-              </div>
-              <div class="training-flash-meta">
-                <span class="badge">Step ${stepNumber} of ${steps.length}</span>
-                <span class="badge">Question ${questionNumber} of ${questionCount}</span>
+              <div class="training-main-header">
+                <div class="training-main-copy">
+                  <div class="kicker">Current challenge</div>
+                  <h2>${escapeHtml(currentStep.title)}</h2>
+                  <p>${escapeHtml(currentStep.instruction || "Choose the strongest initiative move.")}</p>
+                </div>
+                <div class="training-step-meter">
+                  <strong>${escapeHtml(`${stepProgress.correct}/${stepProgress.total} restored in this step`)}</strong>
+                  <div class="training-step-bar">
+                    <div class="training-step-fill" style="width:${stepProgress.percent}%"></div>
+                  </div>
+                  <small>${escapeHtml(`Card ${questionNumber} of ${questionCount}`)}</small>
+                </div>
               </div>
               <article class="training-card training-card--flash ${currentAnswer ? (isCorrect ? "good" : "bad") : ""}">
-                <div class="kicker">${escapeHtml(currentStep.title)}</div>
+                <div class="kicker">Flash card ${questionNumber}</div>
                 <strong>${escapeHtml(currentItem.prompt)}</strong>
                 <div class="training-stack">
                   ${currentItem.options.map(option => `
@@ -2054,6 +2113,10 @@ function renderArcTrainingBay(config, score) {
                       <img src="${escapeHtml(isCorrect ? EST_ANIMATED_ASSETS.tick : EST_ANIMATED_ASSETS.wrong)}" alt="${escapeHtml(isCorrect ? "Correct answer animation" : "Wrong answer animation")}">
                     </div>
                     <p class="training-feedback">${escapeHtml(`${isCorrect ? "Strong initiative call." : "Not quite yet."} ${currentItem.feedback}`)}</p>
+                    <div class="training-economy-note ${isCorrect ? "good" : "bad"}">
+                      <strong>${isCorrect ? "Micro reward signal" : "Banking rule"}</strong>
+                      <span>${escapeHtml(microReward)}</span>
+                    </div>
                     ${isCorrect ? `
                       <div class="arc-action-row">
                         ${renderArcActionButton({
@@ -2075,6 +2138,8 @@ function renderArcTrainingBay(config, score) {
               </article>
             </section>
           ` : ""}
+            </div>
+          </div>
         </div>
       </div>
     </section>
@@ -3584,24 +3649,51 @@ function renderContentStage() {
   setStageMenuMode(false);
   const trainingConfig = getContentTrainingConfig(currentGroup.id);
   const trainingScore = getTrainingScore(trainingConfig);
+  const trainingIsArc = trainingConfig && isArcTrainingType(trainingConfig.type);
+  const trainingComplete = trainingScore.total > 0 && trainingScore.correct === trainingScore.total;
   setStageScene(trainingScore.total > 0 && trainingScore.correct === trainingScore.total ? "restored" : "challenge");
   setText("stage-title", "EST Content Check");
   setText("stage-subtitle", "Train one content strand at a time with a clean, distraction-light interface.");
-  renderStageRoot(`
-    <div class="question-card">
-      <div class="kicker">Focused revision</div>
-      <h3>${escapeHtml(currentGroup.title)}</h3>
-      <p>This lab is dedicated to one revision strand only: briefing, practice, knowledge check, then a short EST response.</p>
-    </div>
+  if (trainingIsArc && !trainingComplete) {
+    renderStageRoot(`
+      ${renderTrainingBay(currentGroup)}
+      <div class="written-stage" style="margin-top: 16px;">
+        <div style="display:flex;gap:12px;flex-wrap:wrap;justify-content:center;">
+          <button class="submit-button" type="button" onclick="window.ESTPrep.openStage('content')">Back to topic menu</button>
+        </div>
+      </div>
+    `);
+    return;
+  }
+
+  const completionUnlock = trainingIsArc ? `
     <div class="panel">
       <div class="section-title">
-        <h2>Module briefing</h2>
-        <p>EST content strand ${state.contentGroupIndex + 1} of ${groups.length}</p>
+        <h2>Reactor cleared</h2>
+        <p>Now unlock the EST explanation layer.</p>
       </div>
-      <p class="small-copy">${escapeHtml(currentGroup.writePrompt)}</p>
-      ${trainingConfig ? `<div class="badge-row" style="margin-top:14px;"><span class="badge">Practice Bay: ${escapeHtml(trainingConfig.title)}</span><span class="badge">Training score: ${trainingScore.percent}%</span></div>` : ""}
+      <p class="small-copy">You’ve cleared the interactive reactor. The answer builder and knowledge check now open below so you can turn the practice into EST-ready writing.</p>
     </div>
+  ` : "";
+
+  renderStageRoot(`
+    ${trainingIsArc ? "" : `
+      <div class="question-card">
+        <div class="kicker">Focused revision</div>
+        <h3>${escapeHtml(currentGroup.title)}</h3>
+        <p>This lab is dedicated to one revision strand only: briefing, practice, knowledge check, then a short EST response.</p>
+      </div>
+      <div class="panel">
+        <div class="section-title">
+          <h2>Module briefing</h2>
+          <p>EST content strand ${state.contentGroupIndex + 1} of ${groups.length}</p>
+        </div>
+        <p class="small-copy">${escapeHtml(currentGroup.writePrompt)}</p>
+        ${trainingConfig ? `<div class="badge-row" style="margin-top:14px;"><span class="badge">Practice Bay: ${escapeHtml(trainingConfig.title)}</span><span class="badge">Training score: ${trainingScore.percent}%</span></div>` : ""}
+      </div>
+    `}
     ${renderTrainingBay(currentGroup)}
+    ${completionUnlock}
     ${currentGroup.rounds.map((round, index) => `
       <div class="panel">
         <div class="section-title">
