@@ -12,7 +12,7 @@ const SKILL_LOGOS = {
 
 const EST_GUIDE_CHARACTERS = {
   romero: {
-    welcome: "../../Assets/Images and Animations/Emmanuel Student Characters/Romero/Romero Welcome.png",
+    welcome: "../../Assets/Images and Animations/Emmanuel Student Characters/Romero/Romero Welcoming.png",
     pointing: "../../Assets/Images and Animations/Emmanuel Student Characters/Romero/Romero Pointing.png",
     thinking: "../../Assets/Images and Animations/Emmanuel Student Characters/Romero/Romero Thinking.png",
     encouraging: "../../Assets/Images and Animations/Emmanuel Student Characters/Romero/Romero Encouraging.png",
@@ -22,8 +22,8 @@ const EST_GUIDE_CHARACTERS = {
     welcome: "../../Assets/Images and Animations/Emmanuel Student Characters/MacKillop/MacKillop Welcome.png",
     pointing: "../../Assets/Images and Animations/Emmanuel Student Characters/MacKillop/MacKillop Pointing.png",
     thinking: "../../Assets/Images and Animations/Emmanuel Student Characters/MacKillop/MacKillop Thinking.png",
-    encouraging: "../../Assets/Images and Animations/Emmanuel Student Characters/MacKillop/MacKillop Encouraging.png",
-    celebrating: "../../Assets/Images and Animations/Emmanuel Student Characters/MacKillop/MacKillop Celebrating.png"
+    encouraging: "../../Assets/Images and Animations/Emmanuel Student Characters/MacKillop/MacKillop encouraging.png",
+    celebrating: "../../Assets/Images and Animations/Emmanuel Student Characters/MacKillop/Mackillop Celebrating.png"
   }
 };
 
@@ -49,6 +49,16 @@ const EST_PROGRESS_RAILS = {
   step3: "../../Assets/Images and Animations/Progress Bar/Step 3 Active.png",
   step4: "../../Assets/Images and Animations/Progress Bar/Step 4 Active.png",
   complete: "../../Assets/Images and Animations/Progress Bar/All steps complete.png"
+};
+
+const EST_ANIMATED_ASSETS = {
+  next: "../../Assets/Images and Animations/Animated Buttons/animated_next_button.gif",
+  tick: "../../Assets/Images and Animations/Animated Buttons/animated_tick_success.gif",
+  unlock: "../../Assets/Images and Animations/Animated Buttons/animated_unlock.gif",
+  transition: "../../Assets/Images and Animations/Animated Buttons/step_transition.gif",
+  wrong: "../../Assets/Images and Animations/Animated Buttons/wrong_answer_glitch.gif",
+  hint: "../../Assets/Images and Animations/Animated Buttons/hint_nearly_there.gif",
+  chamber: "../../Assets/Images and Animations/Animated Buttons/chamber_complete.gif"
 };
 
 const DEFAULT_CONTENT_TOPIC_GROUPS = [
@@ -1273,7 +1283,8 @@ const state = {
   glossaryHasStarted: false,
   glossaryMode: "play",
   glossaryStudyIndex: 0,
-  stageBestScores: {}
+  stageBestScores: {},
+  arcFlows: {}
 };
 
 let glossaryTimerInterval = null;
@@ -1848,6 +1859,79 @@ function getArcStepProgress(config) {
   return { stepStates, completedSteps, activeStep };
 }
 
+function getTrainingConfigByType(type) {
+  const { trainingBays } = getContentStageConfig();
+  return Object.values(trainingBays || {}).find(config => config?.type === type) || null;
+}
+
+function getArcItemAnswer(config, item) {
+  return state.answers[getArcTrainingAnswerKey(config.type, item.id)];
+}
+
+function getFirstPendingArcPosition(config) {
+  const steps = config?.steps || [];
+  for (let stepIndex = 0; stepIndex < steps.length; stepIndex += 1) {
+    const items = steps[stepIndex]?.items || [];
+    for (let itemIndex = 0; itemIndex < items.length; itemIndex += 1) {
+      if (getArcItemAnswer(config, items[itemIndex]) !== items[itemIndex].correct) {
+        return { phase: "question", stepIndex, itemIndex, lastOutcome: null };
+      }
+    }
+  }
+  return { phase: "complete", stepIndex: steps.length - 1, itemIndex: 0, lastOutcome: "correct" };
+}
+
+function getArcFlow(config) {
+  if (!config) return null;
+  const inferred = getFirstPendingArcPosition(config);
+  const existing = state.arcFlows[config.type];
+  if (!existing) {
+    state.arcFlows[config.type] = inferred;
+    return state.arcFlows[config.type];
+  }
+
+  if (existing.phase === "complete") {
+    if (inferred.phase !== "complete") {
+      state.arcFlows[config.type] = inferred;
+    }
+    return state.arcFlows[config.type];
+  }
+
+  const steps = config.steps || [];
+  const step = steps[existing.stepIndex];
+  const item = step?.items?.[existing.itemIndex];
+  if (!step || !item) {
+    state.arcFlows[config.type] = inferred;
+    return state.arcFlows[config.type];
+  }
+
+  if (existing.phase === "transition") {
+    const priorStepComplete = (steps[existing.stepIndex]?.items || []).every(entry => getArcItemAnswer(config, entry) === entry.correct);
+    if (!priorStepComplete) {
+      state.arcFlows[config.type] = inferred;
+    }
+    return state.arcFlows[config.type];
+  }
+
+  if (existing.phase === "feedback") {
+    const answer = getArcItemAnswer(config, item);
+    if (!answer) {
+      state.arcFlows[config.type] = inferred;
+    }
+    return state.arcFlows[config.type];
+  }
+
+  if (existing.phase === "question" && getArcItemAnswer(config, item) === item.correct) {
+    state.arcFlows[config.type] = {
+      phase: "feedback",
+      stepIndex: existing.stepIndex,
+      itemIndex: existing.itemIndex,
+      lastOutcome: "correct"
+    };
+  }
+  return state.arcFlows[config.type];
+}
+
 function getArcProgressRailAsset(config) {
   const { completedSteps } = getArcStepProgress(config);
   if (completedSteps === 0) return EST_PROGRESS_RAILS.step1;
@@ -1872,10 +1956,33 @@ function renderArcProgressRail(config) {
   `;
 }
 
+function renderArcActionButton({ label, onclick, asset, className = "" }) {
+  const classes = ["arc-action-button", className].filter(Boolean).join(" ");
+  return `
+    <button type="button" class="${escapeHtml(classes)}" onclick="${onclick}">
+      <span>${escapeHtml(label)}</span>
+      ${asset ? `<img src="${escapeHtml(asset)}" alt="">` : ""}
+    </button>
+  `;
+}
+
 function renderArcTrainingBay(config, score) {
   const groupId = getGroupIdForTrainingType(config.type);
-  const guide = groupId ? renderESTGuidePanel(groupId, "challenge") : "";
-  const scene = score.total > 0 && score.correct === score.total ? "restored" : "challenge";
+  const flow = getArcFlow(config);
+  const scene = flow?.phase === "complete" || flow?.phase === "transition" ? "restored" : "challenge";
+  const guideContext = flow?.phase === "feedback" && flow?.lastOutcome === "wrong" ? "forge" : "challenge";
+  const guide = groupId ? renderESTGuidePanel(groupId, guideContext) : "";
+  const steps = config.steps || [];
+  const currentStep = steps[flow?.stepIndex || 0] || steps[0];
+  const currentItem = currentStep?.items?.[flow?.itemIndex || 0] || null;
+  const answerKey = currentItem ? getArcTrainingAnswerKey(config.type, currentItem.id) : "";
+  const currentAnswer = currentItem ? state.answers[answerKey] : "";
+  const isCorrect = currentItem ? currentAnswer === currentItem.correct : false;
+  const questionCount = currentStep?.items?.length || 0;
+  const questionNumber = Math.min(questionCount || 1, (flow?.itemIndex || 0) + 1);
+  const stepNumber = Math.min(steps.length || 1, (flow?.stepIndex || 0) + 1);
+  const completedAll = flow?.phase === "complete";
+  const transitionStepNumber = Math.min(steps.length || 1, ((flow?.stepIndex || 0) + 2));
   return `
     <section class="est-scene-shell est-scene-shell--${scene}" ${buildESTSceneStyle(scene)}>
       <div class="panel training-bay training-campaign">
@@ -1887,39 +1994,87 @@ function renderArcTrainingBay(config, score) {
         ${config.memoryHook ? `<div class="badge-row" style="margin-top:14px;"><span class="badge">${escapeHtml(config.memoryHook)}</span></div>` : ""}
         ${renderArcProgressRail(config)}
         ${guide}
-        <div class="training-campaign-grid">
-          ${(config.steps || []).map((step, stepIndex) => `
-            <section class="training-step">
-              <div class="section-title">
-                <h2>${escapeHtml(step.title)}</h2>
-                <p>${escapeHtml(step.instruction || "Choose the strongest initiative move.")}</p>
+        <div class="training-campaign-grid training-campaign-grid--flash">
+          ${completedAll ? `
+            <section class="training-step training-step--transition">
+              <div class="training-flash-media">
+                <img src="${escapeHtml(EST_ANIMATED_ASSETS.chamber)}" alt="Chamber complete animation">
               </div>
-              <div class="training-stack">
-                ${(step.items || []).map(item => {
-                  const answer = state.answers[getArcTrainingAnswerKey(config.type, item.id)];
-                  const isCorrect = answer && answer === item.correct;
-                  return `
-                    <article class="training-card ${answer ? (isCorrect ? "good" : "bad") : ""}">
-                      <div class="kicker">Initiative level ${stepIndex + 1}</div>
-                      <strong>${escapeHtml(item.prompt)}</strong>
-                      <div class="training-stack">
-                        ${item.options.map(option => `
-                          <button
-                            type="button"
-                            class="choice-button ${answer === option ? "selected live-selected" : ""}"
-                            onclick="window.ESTPrep.setTrainingChoiceEncoded('${getArcTrainingAnswerKey(config.type, item.id)}', '${encodeURIComponent(option)}')"
-                          >
-                            <strong>${escapeHtml(option)}</strong>
-                          </button>
-                        `).join("")}
-                      </div>
-                      <p class="training-feedback">${answer ? `${isCorrect ? "Strong initiative call." : "Try the stronger move mentally."} ${escapeHtml(item.feedback)}` : "Choose the answer that best demonstrates initiative in this situation."}</p>
-                    </article>
-                  `;
-                }).join("")}
+              <div class="section-title">
+                <h2>All reactor steps complete</h2>
+                <p>${score.correct}/${score.total} decisions locked in. The practice bay is ready for your EST response build.</p>
+              </div>
+              <p class="training-feedback">Great work. You’ve cleared the initiative reactor and can now move into the written response with the content fresh in mind.</p>
+            </section>
+          ` : flow?.phase === "transition" ? `
+            <section class="training-step training-step--transition">
+              <div class="training-flash-media">
+                <img src="${escapeHtml(EST_ANIMATED_ASSETS.transition)}" alt="Step transition animation">
+              </div>
+              <div class="section-title">
+                <h2>${escapeHtml(steps[flow.stepIndex + 1]?.title || currentStep?.title || "Next step unlocked")}</h2>
+                <p>Step ${transitionStepNumber} is unlocked. Take the next challenge one card at a time.</p>
+              </div>
+              <p class="training-feedback">Step ${stepNumber} is banked. The next flash card will open when you continue.</p>
+              <div class="arc-action-row">
+                ${renderArcActionButton({
+                  label: `Start Step ${transitionStepNumber}`,
+                  onclick: `window.ESTPrep.startArcStep('${config.type}')`,
+                  asset: EST_ANIMATED_ASSETS.next
+                })}
               </div>
             </section>
-          `).join("")}
+          ` : currentItem ? `
+            <section class="training-step training-step--flash">
+              <div class="section-title">
+                <h2>${escapeHtml(currentStep.title)}</h2>
+                <p>${escapeHtml(currentStep.instruction || "Choose the strongest initiative move.")}</p>
+              </div>
+              <div class="training-flash-meta">
+                <span class="badge">Step ${stepNumber} of ${steps.length}</span>
+                <span class="badge">Question ${questionNumber} of ${questionCount}</span>
+              </div>
+              <article class="training-card training-card--flash ${currentAnswer ? (isCorrect ? "good" : "bad") : ""}">
+                <div class="kicker">${escapeHtml(currentStep.title)}</div>
+                <strong>${escapeHtml(currentItem.prompt)}</strong>
+                <div class="training-stack">
+                  ${currentItem.options.map(option => `
+                    <button
+                      type="button"
+                      class="choice-button ${currentAnswer === option ? "selected live-selected" : ""} ${currentAnswer && option === currentItem.correct ? "correct" : ""} ${currentAnswer === option && !isCorrect ? "incorrect" : ""}"
+                      onclick="window.ESTPrep.setTrainingChoiceEncoded('${answerKey}', '${encodeURIComponent(option)}')"
+                    >
+                      <strong>${escapeHtml(option)}</strong>
+                    </button>
+                  `).join("")}
+                </div>
+                ${currentAnswer ? `
+                  <div class="training-feedback-block ${isCorrect ? "good" : "bad"}">
+                    <div class="training-flash-media training-flash-media--feedback">
+                      <img src="${escapeHtml(isCorrect ? EST_ANIMATED_ASSETS.tick : EST_ANIMATED_ASSETS.wrong)}" alt="${escapeHtml(isCorrect ? "Correct answer animation" : "Wrong answer animation")}">
+                    </div>
+                    <p class="training-feedback">${escapeHtml(`${isCorrect ? "Strong initiative call." : "Not quite yet."} ${currentItem.feedback}`)}</p>
+                    ${isCorrect ? `
+                      <div class="arc-action-row">
+                        ${renderArcActionButton({
+                          label: questionNumber === questionCount ? `Finish Step ${stepNumber}` : "Next flash card",
+                          onclick: `window.ESTPrep.advanceArcCard('${config.type}')`,
+                          asset: EST_ANIMATED_ASSETS.next
+                        })}
+                      </div>
+                    ` : `
+                      <div class="training-hint-inline">
+                        <img src="${escapeHtml(EST_ANIMATED_ASSETS.hint)}" alt="Hint animation">
+                        <span>Try another choice. You’ll stay on this card until you lock the strongest move.</span>
+                      </div>
+                    `}
+                  </div>
+                ` : `
+                  <p class="training-feedback">Pick the strongest move, get instant feedback, then move to the next flash card.</p>
+                `}
+              </article>
+            </section>
+          ` : ""}
         </div>
       </div>
     </section>
@@ -3817,6 +3972,11 @@ function openContentGroupIntro(index) {
     bankCurrentContentDuration();
   }
   state.contentGroupIndex = nextIndex;
+  const nextGroup = groups[nextIndex];
+  const nextTrainingConfig = nextGroup ? getContentTrainingConfig(nextGroup.id) : null;
+  if (nextTrainingConfig && isArcTrainingType(nextTrainingConfig.type)) {
+    delete state.arcFlows[nextTrainingConfig.type];
+  }
   state.contentView = "intro";
   state.selectedStageId = "content";
   setLabMode(true);
@@ -3828,6 +3988,10 @@ function startContentGroup() {
   const groups = state.stageDeck?.contentGroups || [];
   const currentGroup = groups[state.contentGroupIndex];
   if (!currentGroup) return;
+  const trainingConfig = getContentTrainingConfig(currentGroup.id);
+  if (trainingConfig && isArcTrainingType(trainingConfig.type)) {
+    delete state.arcFlows[trainingConfig.type];
+  }
   state.contentView = "lesson";
   state.contentGroupStartedAt = Date.now();
   renderContentStage();
@@ -3897,6 +4061,25 @@ function setChoiceEncoded(groupKey, encodedOption) {
 
 function setTrainingChoice(groupKey, option) {
   state.answers[groupKey] = option;
+  const currentGroup = (state.stageDeck?.contentGroups || [])[state.contentGroupIndex];
+  const trainingConfig = currentGroup ? getContentTrainingConfig(currentGroup.id) : null;
+  if (trainingConfig && isArcTrainingType(trainingConfig.type) && groupKey.startsWith(`training-${trainingConfig.type}-`)) {
+    const itemId = groupKey.slice(`training-${trainingConfig.type}-`.length);
+    const flow = getArcFlow(trainingConfig);
+    const step = trainingConfig.steps?.[flow?.stepIndex || 0];
+    const item = step?.items?.find(entry => entry.id === itemId);
+    if (item) {
+      state.arcFlows[trainingConfig.type] = {
+        phase: "feedback",
+        stepIndex: flow?.stepIndex || 0,
+        itemIndex: flow?.itemIndex || 0,
+        lastOutcome: option === item.correct ? "correct" : "wrong"
+      };
+      renderContentStage();
+      scrollToTopSmooth();
+      return;
+    }
+  }
   renderContentStage();
   state.recentReward = {
     type: "positive",
@@ -3908,6 +4091,58 @@ function setTrainingChoice(groupKey, option) {
 
 function setTrainingChoiceEncoded(groupKey, encodedOption) {
   setTrainingChoice(groupKey, decodeURIComponent(encodedOption));
+}
+
+function advanceArcCard(configType) {
+  const config = getTrainingConfigByType(configType);
+  if (!config) return;
+  const flow = getArcFlow(config);
+  if (!flow || flow.phase !== "feedback") return;
+  const currentStep = config.steps?.[flow.stepIndex];
+  const currentItem = currentStep?.items?.[flow.itemIndex];
+  if (!currentStep || !currentItem) return;
+  if (getArcItemAnswer(config, currentItem) !== currentItem.correct) return;
+
+  const nextItemIndex = flow.itemIndex + 1;
+  if (nextItemIndex < (currentStep.items || []).length) {
+    state.arcFlows[config.type] = {
+      phase: "question",
+      stepIndex: flow.stepIndex,
+      itemIndex: nextItemIndex,
+      lastOutcome: null
+    };
+  } else if (flow.stepIndex + 1 < (config.steps || []).length) {
+    state.arcFlows[config.type] = {
+      phase: "transition",
+      stepIndex: flow.stepIndex,
+      itemIndex: flow.itemIndex,
+      lastOutcome: "correct"
+    };
+  } else {
+    state.arcFlows[config.type] = {
+      phase: "complete",
+      stepIndex: flow.stepIndex,
+      itemIndex: flow.itemIndex,
+      lastOutcome: "correct"
+    };
+  }
+  renderContentStage();
+  scrollToTopSmooth();
+}
+
+function startArcStep(configType) {
+  const config = getTrainingConfigByType(configType);
+  if (!config) return;
+  const flow = getArcFlow(config);
+  if (!flow || flow.phase !== "transition") return;
+  state.arcFlows[config.type] = {
+    phase: "question",
+    stepIndex: Math.min((config.steps || []).length - 1, flow.stepIndex + 1),
+    itemIndex: 0,
+    lastOutcome: null
+  };
+  renderContentStage();
+  scrollToTopSmooth();
 }
 
 function setContentResponseSegmentEncoded(groupId, segmentId, value) {
@@ -4751,6 +4986,8 @@ window.ESTPrep = {
   jumpToContentGroup,
   setTrainingChoice,
   setTrainingChoiceEncoded,
+  advanceArcCard,
+  startArcStep,
   setContentResponseSegmentEncoded,
   buildContentResponse,
   setGlossarySelectedTerm,
