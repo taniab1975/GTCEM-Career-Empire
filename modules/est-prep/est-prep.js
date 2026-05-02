@@ -2026,15 +2026,30 @@ function renderArcTrainingBay(config, score) {
   return `
     <section class="est-scene-shell est-scene-shell--${scene}" ${buildESTSceneStyle(scene)}>
       <div class="panel training-bay training-campaign training-campaign--focus">
+        <div class="training-hud">
+          <div class="training-hud-copy">
+            <div class="kicker">Knowledge reactor</div>
+            <h2>${escapeHtml(config.title)}</h2>
+          </div>
+          <div class="training-hud-status">
+            <strong>${escapeHtml(currentStep?.title || "Reactor step")}</strong>
+            <small>${escapeHtml(completedAll ? `All ${totalStepCount} steps cleared` : `${stepProgress.correct}/${stepProgress.total} cleared in this step • ${completedSteps}/${totalStepCount} steps done`)}</small>
+          </div>
+        </div>
         <div class="training-focus-shell">
           <aside class="training-focus-aside">
             <div class="training-focus-summary">
-              <div class="kicker">Reactor summary</div>
-              <h3>${escapeHtml(config.title)}</h3>
-              <p>${completedSteps}/${totalStepCount} steps complete</p>
+              <div class="kicker">Current mission</div>
+              <h3>${escapeHtml(currentStep?.title || config.title)}</h3>
+              <p>${escapeHtml(currentStep?.instruction || config.subtitle)}</p>
             </div>
             ${renderArcProgressRail(config)}
-            ${config.memoryHook ? `<div class="training-memory-hook">${escapeHtml(config.memoryHook)}</div>` : ""}
+            ${config.memoryHook ? `
+              <details class="training-memory-hook">
+                <summary>Memory clue</summary>
+                <p>${escapeHtml(config.memoryHook)}</p>
+              </details>
+            ` : ""}
             ${sceneImage ? `<div class="training-scene-preview"><img src="${escapeHtml(sceneImage)}" alt="${escapeHtml(config.title)} scene preview"></div>` : ""}
             ${guideCharacter ? `
               <div class="training-guide-mini">
@@ -2079,23 +2094,24 @@ function renderArcTrainingBay(config, score) {
             </section>
           ` : currentItem ? `
             <section class="training-step training-step--flash">
-              <div class="training-main-header">
+              <div class="training-main-header compact">
                 <div class="training-main-copy">
-                  <div class="kicker">Current challenge</div>
-                  <h2>${escapeHtml(currentStep.title)}</h2>
-                  <p>${escapeHtml(currentStep.instruction || "Choose the strongest initiative move.")}</p>
+                  <div class="kicker">Central task</div>
+                  <h2>${escapeHtml(currentItem.prompt)}</h2>
                 </div>
                 <div class="training-step-meter">
-                  <strong>${escapeHtml(`${stepProgress.correct}/${stepProgress.total} restored in this step`)}</strong>
+                  <strong>${escapeHtml(`${stepProgress.correct}/${stepProgress.total} restored`)}</strong>
                   <div class="training-step-bar">
                     <div class="training-step-fill" style="width:${stepProgress.percent}%"></div>
                   </div>
-                  <small>${escapeHtml(`Card ${questionNumber} of ${questionCount}`)}</small>
+                  <small>${escapeHtml(`Flash card ${questionNumber} of ${questionCount}`)}</small>
                 </div>
               </div>
               <article class="training-card training-card--flash ${currentAnswer ? (isCorrect ? "good" : "bad") : ""}">
-                <div class="kicker">Flash card ${questionNumber}</div>
-                <strong>${escapeHtml(currentItem.prompt)}</strong>
+                <div class="training-card-lead">
+                  <div class="kicker">${escapeHtml(currentStep.title)}</div>
+                  <p>${escapeHtml(currentStep.instruction || "Choose the strongest initiative move.")}</p>
+                </div>
                 <div class="training-stack">
                   ${currentItem.options.map(option => `
                     <button
