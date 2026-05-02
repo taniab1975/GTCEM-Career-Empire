@@ -36,6 +36,12 @@ const EST_GUIDE_ASSIGNMENTS = {
   "future-of-work": "romero"
 };
 
+const EST_SCENE_BACKGROUNDS = {
+  neutral: "../../Assets/Images and Animations/EST backgrounds/Background Neutral.png",
+  challenge: "../../Assets/Images and Animations/EST backgrounds/Background Broken.png",
+  restored: "../../Assets/Images and Animations/EST backgrounds/Background restored.png"
+};
+
 const DEFAULT_CONTENT_TOPIC_GROUPS = [
   {
     id: "initiative",
@@ -1371,6 +1377,23 @@ function setStageMenuMode(active) {
   if (stageSection) stageSection.classList.toggle("menu-mode", active);
 }
 
+function getESTSceneBackground(scene) {
+  if (scene === "challenge" || scene === "warning") return EST_SCENE_BACKGROUNDS.challenge;
+  if (scene === "restored" || scene === "success") return EST_SCENE_BACKGROUNDS.restored;
+  return EST_SCENE_BACKGROUNDS.neutral;
+}
+
+function buildESTSceneStyle(scene) {
+  return `style="--est-scene-image:url('${escapeHtml(getESTSceneBackground(scene))}')"`;
+}
+
+function setStageScene(scene = "neutral") {
+  const stageSection = document.getElementById("stage-section");
+  if (!stageSection) return;
+  stageSection.dataset.scene = scene;
+  stageSection.style.setProperty("--est-stage-background", `url("${getESTSceneBackground(scene)}")`);
+}
+
 function renderFocusNav() {
   const container = document.getElementById("focus-nav");
   if (!container) return;
@@ -1765,50 +1788,53 @@ function getTrainingScore(config) {
 function renderArcTrainingBay(config, score) {
   const groupId = getGroupIdForTrainingType(config.type);
   const guide = groupId ? renderESTGuidePanel(groupId, "challenge") : "";
+  const scene = score.total > 0 && score.correct === score.total ? "restored" : "challenge";
   return `
-    <div class="panel training-bay training-campaign">
-      <div class="section-title">
-        <h2>${escapeHtml(config.title)}</h2>
-        <p>${score.correct}/${score.total} training decisions locked</p>
+    <section class="est-scene-shell est-scene-shell--${scene}" ${buildESTSceneStyle(scene)}>
+      <div class="panel training-bay training-campaign">
+        <div class="section-title">
+          <h2>${escapeHtml(config.title)}</h2>
+          <p>${score.correct}/${score.total} training decisions locked</p>
+        </div>
+        <p class="small-copy">${escapeHtml(config.subtitle)}</p>
+        ${config.memoryHook ? `<div class="badge-row" style="margin-top:14px;"><span class="badge">${escapeHtml(config.memoryHook)}</span></div>` : ""}
+        ${guide}
+        <div class="training-campaign-grid">
+          ${(config.steps || []).map((step, stepIndex) => `
+            <section class="training-step">
+              <div class="section-title">
+                <h2>${escapeHtml(step.title)}</h2>
+                <p>${escapeHtml(step.instruction || "Choose the strongest initiative move.")}</p>
+              </div>
+              <div class="training-stack">
+                ${(step.items || []).map(item => {
+                  const answer = state.answers[getArcTrainingAnswerKey(config.type, item.id)];
+                  const isCorrect = answer && answer === item.correct;
+                  return `
+                    <article class="training-card ${answer ? (isCorrect ? "good" : "bad") : ""}">
+                      <div class="kicker">Initiative level ${stepIndex + 1}</div>
+                      <strong>${escapeHtml(item.prompt)}</strong>
+                      <div class="training-stack">
+                        ${item.options.map(option => `
+                          <button
+                            type="button"
+                            class="choice-button ${answer === option ? "selected live-selected" : ""}"
+                            onclick="window.ESTPrep.setTrainingChoiceEncoded('${getArcTrainingAnswerKey(config.type, item.id)}', '${encodeURIComponent(option)}')"
+                          >
+                            <strong>${escapeHtml(option)}</strong>
+                          </button>
+                        `).join("")}
+                      </div>
+                      <p class="training-feedback">${answer ? `${isCorrect ? "Strong initiative call." : "Try the stronger move mentally."} ${escapeHtml(item.feedback)}` : "Choose the answer that best demonstrates initiative in this situation."}</p>
+                    </article>
+                  `;
+                }).join("")}
+              </div>
+            </section>
+          `).join("")}
+        </div>
       </div>
-      <p class="small-copy">${escapeHtml(config.subtitle)}</p>
-      ${config.memoryHook ? `<div class="badge-row" style="margin-top:14px;"><span class="badge">${escapeHtml(config.memoryHook)}</span></div>` : ""}
-      ${guide}
-      <div class="training-campaign-grid">
-        ${(config.steps || []).map((step, stepIndex) => `
-          <section class="training-step">
-            <div class="section-title">
-              <h2>${escapeHtml(step.title)}</h2>
-              <p>${escapeHtml(step.instruction || "Choose the strongest initiative move.")}</p>
-            </div>
-            <div class="training-stack">
-              ${(step.items || []).map(item => {
-                const answer = state.answers[getArcTrainingAnswerKey(config.type, item.id)];
-                const isCorrect = answer && answer === item.correct;
-                return `
-                  <article class="training-card ${answer ? (isCorrect ? "good" : "bad") : ""}">
-                    <div class="kicker">Initiative level ${stepIndex + 1}</div>
-                    <strong>${escapeHtml(item.prompt)}</strong>
-                    <div class="training-stack">
-                      ${item.options.map(option => `
-                        <button
-                          type="button"
-                          class="choice-button ${answer === option ? "selected live-selected" : ""}"
-                          onclick="window.ESTPrep.setTrainingChoiceEncoded('${getArcTrainingAnswerKey(config.type, item.id)}', '${encodeURIComponent(option)}')"
-                        >
-                          <strong>${escapeHtml(option)}</strong>
-                        </button>
-                      `).join("")}
-                    </div>
-                    <p class="training-feedback">${answer ? `${isCorrect ? "Strong initiative call." : "Try the stronger move mentally."} ${escapeHtml(item.feedback)}` : "Choose the answer that best demonstrates initiative in this situation."}</p>
-                  </article>
-                `;
-              }).join("")}
-            </div>
-          </section>
-        `).join("")}
-      </div>
-    </div>
+    </section>
   `;
 }
 
@@ -3255,34 +3281,36 @@ function renderContentTopicIntro(group) {
   const highlights = group.introHighlights || [];
   const hasVideo = Boolean(group.introVideo);
   return `
-    <div class="topic-intro-grid">
-      <div class="topic-media-card">
-        ${hasVideo ? `
-          <video class="topic-media" autoplay muted loop playsinline poster="${escapeHtml(group.introImage || "")}">
-            <source src="${escapeHtml(group.introVideo)}" type="video/mp4">
-          </video>
-        ` : `
-          <img class="topic-media topic-media-image" src="${escapeHtml(group.introImage || "")}" alt="${escapeHtml(group.title)}">
-        `}
-      </div>
-      <div class="topic-intro-copy panel">
-        <div class="kicker">Topic intro</div>
-        <h3>${escapeHtml(group.introTitle || group.title)}</h3>
-        <p class="small-copy">${escapeHtml(group.introSummary || group.writePrompt)}</p>
-        ${renderESTGuidePanel(group.id, "intro")}
-        ${highlights.length ? `
-          <div class="badge-row topic-intro-highlights">
-            ${highlights.map(item => `<span class="badge">${escapeHtml(item)}</span>`).join("")}
-          </div>
-        ` : ""}
-        <div class="written-stage topic-intro-actions">
-          <div class="topic-intro-button-row">
-            <button class="submit-button" type="button" onclick="window.ESTPrep.openStage('content')">Back to topic menu</button>
-            <button class="submit-button" type="button" onclick="window.ESTPrep.startContentGroup()">Start content check</button>
+    <section class="est-scene-shell est-scene-shell--intro" ${buildESTSceneStyle("neutral")}>
+      <div class="topic-intro-grid">
+        <div class="topic-media-card">
+          ${hasVideo ? `
+            <video class="topic-media" autoplay muted loop playsinline poster="${escapeHtml(group.introImage || "")}">
+              <source src="${escapeHtml(group.introVideo)}" type="video/mp4">
+            </video>
+          ` : `
+            <img class="topic-media topic-media-image" src="${escapeHtml(group.introImage || "")}" alt="${escapeHtml(group.title)}">
+          `}
+        </div>
+        <div class="topic-intro-copy panel">
+          <div class="kicker">Topic intro</div>
+          <h3>${escapeHtml(group.introTitle || group.title)}</h3>
+          <p class="small-copy">${escapeHtml(group.introSummary || group.writePrompt)}</p>
+          ${renderESTGuidePanel(group.id, "intro")}
+          ${highlights.length ? `
+            <div class="badge-row topic-intro-highlights">
+              ${highlights.map(item => `<span class="badge">${escapeHtml(item)}</span>`).join("")}
+            </div>
+          ` : ""}
+          <div class="written-stage topic-intro-actions">
+            <div class="topic-intro-button-row">
+              <button class="submit-button" type="button" onclick="window.ESTPrep.openStage('content')">Back to topic menu</button>
+              <button class="submit-button" type="button" onclick="window.ESTPrep.startContentGroup()">Start content check</button>
+            </div>
           </div>
         </div>
       </div>
-    </div>
+    </section>
   `;
 }
 
@@ -3291,6 +3319,7 @@ function renderContentStage() {
   const currentGroup = groups[state.contentGroupIndex];
   renderFocusNav();
   if (state.contentView === "menu" || !currentGroup) {
+    setStageScene("neutral");
     setStageMenuMode(true);
     setText("stage-title", "");
     setText("stage-subtitle", "");
@@ -3302,6 +3331,7 @@ function renderContentStage() {
     return;
   }
   if (state.contentView === "intro") {
+    setStageScene("neutral");
     setStageMenuMode(false);
     setText("stage-title", "EST Content Check");
     setText("stage-subtitle", `${currentGroup.title}`);
@@ -3311,6 +3341,7 @@ function renderContentStage() {
   setStageMenuMode(false);
   const trainingConfig = getContentTrainingConfig(currentGroup.id);
   const trainingScore = getTrainingScore(trainingConfig);
+  setStageScene(trainingScore.total > 0 && trainingScore.correct === trainingScore.total ? "restored" : "challenge");
   setText("stage-title", "EST Content Check");
   setText("stage-subtitle", "Train one content strand at a time with a clean, distraction-light interface.");
   renderStageRoot(`
@@ -3428,6 +3459,7 @@ function renderGlossaryStage() {
   setStageMenuMode(false);
   renderFocusNav();
   syncMissionMode();
+  setStageScene(state.glossaryRoundCelebration ? "restored" : "challenge");
   const batch = getCurrentGlossaryBatch();
   const round = getCurrentGlossaryRound();
   const assignments = getGlossaryAssignmentsForBatch();
@@ -3538,6 +3570,7 @@ function renderGlossaryStage() {
 
 function renderDecoderStage() {
   setStageMenuMode(false);
+  setStageScene("challenge");
   renderFocusNav();
   const round = state.stageDeck?.decoderRound;
   if (!round) return;
@@ -3588,6 +3621,7 @@ function renderDecoderStage() {
 
 function renderBossStage() {
   setStageMenuMode(false);
+  setStageScene("challenge");
   renderFocusNav();
   const round = state.stageDeck?.bossRound;
   if (!round) return;
@@ -4214,12 +4248,16 @@ async function hydrateFromSupabase() {
 }
 
 function showFeedbackBox(type, lines, extraHtml = "") {
+  const scene = type === "good" ? "restored" : "challenge";
+  setStageScene(scene);
   renderStageRoot(`
-    <div class="feedback-box ${type}">
-      ${lines.map(line => `<p>${line}</p>`).join("")}
-      ${extraHtml}
-      <p><button class="submit-button" type="button" onclick="window.ESTPrep.returnToTrack()">Back to EST Lab Track</button></p>
-    </div>
+    <section class="est-scene-shell est-scene-shell--${scene}" ${buildESTSceneStyle(scene)}>
+      <div class="feedback-box ${type}">
+        ${lines.map(line => `<p>${line}</p>`).join("")}
+        ${extraHtml}
+        <p><button class="submit-button" type="button" onclick="window.ESTPrep.returnToTrack()">Back to EST Lab Track</button></p>
+      </div>
+    </section>
   `);
 }
 
@@ -4578,6 +4616,7 @@ async function submitBoss() {
 function returnToTrack() {
   setLabMode(false);
   setStageMenuMode(false);
+  setStageScene("neutral");
   state.selectedStageId = null;
   state.lastBossReview = null;
   state.contentGroupIndex = -1;
@@ -4604,6 +4643,7 @@ async function init() {
   state.contentView = "menu";
   setLabMode(false);
   setStageMenuMode(false);
+  setStageScene("neutral");
   renderFocusNav();
   renderHero();
   renderMetrics();

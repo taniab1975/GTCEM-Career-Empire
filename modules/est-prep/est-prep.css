@@ -188,6 +188,7 @@ h1 {
 
 #stage-section {
   margin-top: 18px;
+  --est-stage-background: none;
 }
 
 body.est-lab-mode .dashboard-nav,
@@ -204,9 +205,23 @@ body.est-lab-mode #stage-section {
   max-width: 980px;
   margin: 18px auto 0;
   background:
+    linear-gradient(180deg, rgba(7, 14, 30, 0.28), rgba(7, 14, 30, 0.6)),
+    var(--est-stage-background) center/cover no-repeat,
     linear-gradient(180deg, rgba(15, 26, 51, 0.96), rgba(10, 18, 37, 0.98)),
     radial-gradient(circle at top right, rgba(97, 240, 255, 0.08), transparent 30%);
   border-color: rgba(130, 168, 255, 0.28);
+  overflow: hidden;
+}
+
+body.est-lab-mode #stage-section[data-scene="challenge"] {
+  border-color: rgba(126, 188, 255, 0.3);
+  box-shadow: 0 22px 48px rgba(4, 9, 25, 0.34);
+}
+
+body.est-lab-mode #stage-section[data-scene="restored"],
+body.est-lab-mode #stage-section[data-scene="success"] {
+  border-color: rgba(114, 247, 184, 0.3);
+  box-shadow: 0 24px 52px rgba(6, 18, 20, 0.32);
 }
 
 .section-title {
@@ -555,6 +570,28 @@ body.est-lab-mode #stage-section {
   grid-template-columns: 1fr;
   gap: 20px;
   align-items: stretch;
+}
+
+.est-scene-shell {
+  position: relative;
+  padding: 18px;
+  border-radius: 28px;
+  border: 1px solid rgba(129, 166, 255, 0.18);
+  background:
+    linear-gradient(180deg, rgba(6, 12, 28, 0.26), rgba(6, 12, 28, 0.68)),
+    var(--est-scene-image) center/cover no-repeat,
+    linear-gradient(180deg, rgba(10, 19, 40, 0.9), rgba(10, 19, 40, 0.96));
+  box-shadow: 0 20px 42px rgba(0, 0, 0, 0.22);
+  overflow: hidden;
+}
+
+.est-scene-shell--challenge {
+  border-color: rgba(126, 188, 255, 0.24);
+}
+
+.est-scene-shell--restored,
+.est-scene-shell--success {
+  border-color: rgba(114, 247, 184, 0.24);
 }
 
 .topic-intro-copy h3 {
