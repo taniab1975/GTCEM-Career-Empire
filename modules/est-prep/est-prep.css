@@ -113,6 +113,18 @@ body.est-lab-mode {
   box-shadow: 0 12px 26px rgba(18, 31, 63, 0.38);
 }
 
+.submit-button.compact {
+  min-height: 44px;
+  padding: 9px 14px;
+  border-radius: 12px;
+  font-size: 0.92rem;
+}
+
+.submit-button.ghost {
+  background: rgba(13, 23, 44, 0.58);
+  border-color: rgba(129, 166, 255, 0.2);
+}
+
 .hero {
   grid-template-columns: minmax(0, 1.4fr) minmax(320px, 0.8fr);
   margin-bottom: 18px;
@@ -660,12 +672,12 @@ body.est-lab-mode #stage-section[data-scene="success"] {
 }
 
 .topic-intro-grid--compact {
-  grid-template-columns: minmax(380px, 1.15fr) minmax(320px, 0.85fr);
+  grid-template-columns: minmax(520px, 1.45fr) minmax(300px, 0.75fr);
   align-items: center;
 }
 
 .topic-intro-grid--visual {
-  gap: 14px;
+  gap: 10px;
 }
 
 .est-scene-shell {
@@ -691,8 +703,8 @@ body.est-lab-mode #stage-section[data-scene="success"] {
 }
 
 .topic-intro-copy h3 {
-  margin-top: 8px;
-  font-size: clamp(1.65rem, 2.25vw, 2.35rem);
+  margin-top: 4px;
+  font-size: clamp(1.55rem, 2.1vw, 2.15rem);
 }
 
 .topic-intro-highlights {
@@ -709,13 +721,13 @@ body.est-lab-mode #stage-section[data-scene="success"] {
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 18px;
+  padding: 12px;
   box-shadow: 0 18px 36px rgba(0, 0, 0, 0.22);
 }
 
 .topic-intro-grid--compact .topic-media-card {
   aspect-ratio: 16 / 9;
-  max-height: 420px;
+  max-height: 460px;
 }
 
 .topic-media {
@@ -736,17 +748,21 @@ body.est-lab-mode #stage-section[data-scene="success"] {
 }
 
 .topic-intro-actions {
-  margin-top: 20px;
+  margin-top: 14px;
 }
 
 .topic-intro-copy.panel {
-  padding: 18px 20px;
+  padding: 16px 18px;
 }
 
 .topic-intro-button-row {
   display: flex;
-  gap: 12px;
+  gap: 10px;
   flex-wrap: wrap;
+}
+
+.topic-intro-status {
+  margin-top: 8px;
 }
 
 #stage-section.menu-mode .section-title,
@@ -1175,7 +1191,7 @@ body.est-gameplay-viewport {
 
 .training-main-header {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) 240px;
+  grid-template-columns: minmax(0, 1fr) 210px;
   gap: 16px;
   align-items: end;
   margin-bottom: 14px;
@@ -1192,8 +1208,8 @@ body.est-gameplay-viewport {
 
 .training-main-copy h2 {
   max-width: none;
-  font-size: clamp(1.02rem, 1.42vw, 1.46rem);
-  line-height: 1.08;
+  font-size: clamp(0.98rem, 1.2vw, 1.28rem);
+  line-height: 1.04;
   letter-spacing: -0.02em;
 }
 
@@ -1207,7 +1223,7 @@ body.est-gameplay-viewport {
   display: grid;
   gap: 6px;
   justify-items: start;
-  padding: 12px 14px;
+  padding: 10px 12px;
   border-radius: 18px;
   border: 1px solid rgba(129, 166, 255, 0.18);
   background: rgba(9, 16, 35, 0.72);
@@ -1271,7 +1287,7 @@ body.est-gameplay-viewport {
 .training-card--flash {
   max-width: none;
   margin: 0 auto;
-  padding: 18px;
+  padding: 16px;
   border-radius: 24px;
   background:
     linear-gradient(180deg, rgba(11, 21, 49, 0.96), rgba(13, 21, 48, 0.94)),
@@ -1280,7 +1296,7 @@ body.est-gameplay-viewport {
 }
 
 .training-answer-state {
-  min-height: clamp(220px, 28vh, 320px);
+  min-height: clamp(180px, 23vh, 260px);
   display: grid;
   align-content: start;
   justify-items: center;
@@ -1309,8 +1325,16 @@ body.est-gameplay-viewport {
 
 .training-card-lead {
   display: grid;
-  gap: 8px;
+  gap: 6px;
   margin-bottom: 6px;
+}
+
+.training-card-prompt {
+  color: #f2f7ff;
+  font-size: clamp(1.18rem, 1.7vw, 1.62rem);
+  line-height: 1.16;
+  font-weight: 800;
+  letter-spacing: -0.02em;
 }
 
 .training-card-lead p {
@@ -1389,11 +1413,11 @@ body.est-gameplay-viewport {
 }
 
 .training-flash-media--feedback img {
-  width: min(120px, 100%);
+  width: min(96px, 100%);
 }
 
 .training-flash-media--state img {
-  width: min(84px, 12vw);
+  width: min(72px, 10vw);
 }
 
 .arc-action-row {
@@ -1441,8 +1465,8 @@ body.est-gameplay-viewport {
 
 .arc-action-button--overlay {
   position: relative;
-  min-width: 260px;
-  min-height: 64px;
+  min-width: 220px;
+  min-height: 54px;
   padding: 0;
   overflow: hidden;
   border-color: rgba(97, 240, 255, 0.44);
@@ -1468,7 +1492,7 @@ body.est-gameplay-viewport {
   place-items: center;
   padding: 0 22px;
   text-align: center;
-  font-size: 0.86rem;
+  font-size: 0.8rem;
   text-shadow: 0 4px 18px rgba(0, 0, 0, 0.85);
 }
 
@@ -1511,12 +1535,12 @@ body.est-gameplay-viewport {
 
 .training-focus-shell--takeover .training-step--transition,
 .training-focus-shell--takeover .training-step--flash {
-  max-width: 900px;
+  max-width: 780px;
   justify-self: center;
 }
 
 .training-focus-shell--takeover .training-main-header {
-  grid-template-columns: minmax(0, 1fr) 240px;
+  grid-template-columns: minmax(0, 1fr) 210px;
   align-items: start;
 }
 

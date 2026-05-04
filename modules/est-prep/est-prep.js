@@ -1489,11 +1489,18 @@ function getContentGroupShortLabel(groupId) {
 
 function isContentGroupDone(group) {
   if (!group) return false;
+  const bankedPercent = Math.max(0, Number(state.contentTopicBestScores[group.id] || 0));
+  if (bankedPercent > 0) return true;
   const response = String(state.answers[`content-note-${group.id}`] || "").trim();
   const answeredChecks = (group.rounds || []).every((_, index) => Boolean(state.answers[`content-${group.id}-${index}`]));
   const trainingConfig = getContentTrainingConfig(group.id);
   const trainingScore = getTrainingScore(trainingConfig);
   return answeredChecks && Boolean(response) && trainingScore.percent >= 70;
+}
+
+function getCompletedContentTopicCount() {
+  const groups = state.stageDeck?.contentGroups || [];
+  return groups.reduce((count, group) => count + (isContentGroupDone(group) ? 1 : 0), 0);
 }
 
 function getContentGroupStatus(group, index) {
@@ -1516,6 +1523,7 @@ function renderFocusNav() {
   const groups = state.stageDeck?.contentGroups || [];
   const currentGroup = groups[state.contentGroupIndex];
   const contentMenuPrompt = "Choose an EST curriculum content area below";
+  const completedTopicCount = getCompletedContentTopicCount();
   const contentTrackButtons = groups.map((group, index) => {
     const status = getContentGroupStatus(group, index);
     const statusLabel = status === "active" ? "Current" : status === "complete" ? "Done" : "Not started";
@@ -1566,7 +1574,7 @@ function renderFocusNav() {
     ${state.selectedStageId === "content" ? `
       <div class="content-track-title-row">
         <div class="content-track-title">Topic Menu</div>
-        <div class="content-track-subtitle">${escapeHtml(currentGroup ? currentGroup.title : `${groups.length} EST strands ready. Choose one to enter its reactor.`)}</div>
+        <div class="content-track-subtitle">${escapeHtml(currentGroup ? currentGroup.title : `${completedTopicCount}/${groups.length || 0} topics banked. Choose one to enter its reactor.`)}</div>
       </div>
       <div class="content-track content-track-menu ${currentGroup ? "has-selection" : ""}">
         ${contentTrackButtons}
@@ -1799,16 +1807,18 @@ function renderMetrics() {
 function renderMap() {
   const container = document.getElementById("challenge-map");
   if (!container) return;
+  const totalContentTopics = Math.max(1, (state.stageDeck?.contentGroups || []).length);
+  const completedContentTopics = getCompletedContentTopicCount();
   container.innerHTML = STAGES.map(stage => `
     <article class="challenge-tile ${state.completed[stage.id] ? "completed" : ""} ${state.selectedStageId === stage.id ? "active" : ""}">
       <div class="kicker">${escapeHtml(stage.state)}</div>
       <h3>${escapeHtml(stage.title)}</h3>
-      <p>${escapeHtml(stage.summary)}</p>
+      <p>${escapeHtml(stage.id === "content" && completedContentTopics > 0 ? `${completedContentTopics}/${totalContentTopics} topics banked in the knowledge reactor.` : stage.summary)}</p>
       <div class="challenge-meta">
-        <span>${stage.marks} marks</span>
-        <span>${stage.readiness}% readiness</span>
+        <span>${stage.id === "content" ? `${completedContentTopics}/${totalContentTopics} topics` : `${stage.marks} marks`}</span>
+        <span>${stage.id === "content" ? `${formatCurrency(state.salaryBoost)} salary banked` : `${stage.readiness}% readiness`}</span>
       </div>
-      <button type="button" onclick="window.ESTPrep.openStage('${stage.id}')">${state.completed[stage.id] ? "Review lab" : "Open lab"}</button>
+      <button type="button" onclick="window.ESTPrep.openStage('${stage.id}')">${stage.id === "content" && completedContentTopics > 0 ? "Resume lab" : state.completed[stage.id] ? "Review lab" : "Open lab"}</button>
     </article>
   `).join("");
 }
@@ -2137,6 +2147,7 @@ function renderArcTrainingBay(config, score) {
                   asset: EST_ANIMATED_ASSETS.progress,
                   className: "arc-action-button--overlay"
                 })}
+                <button type="button" class="submit-button compact ghost" onclick="window.ESTPrep.resetCurrentContentTopic()">Reset reactor</button>
               </div>
             </section>
           ` : flow?.phase === "transition" ? `
@@ -2153,6 +2164,7 @@ function renderArcTrainingBay(config, score) {
                   asset: EST_ANIMATED_ASSETS.progress,
                   className: "arc-action-button--overlay"
                 })}
+                <button type="button" class="submit-button compact ghost" onclick="window.ESTPrep.resetCurrentContentTopic()">Reset reactor</button>
               </div>
             </section>
           ` : currentItem ? `
@@ -2160,9 +2172,7 @@ function renderArcTrainingBay(config, score) {
               <div class="training-main-header compact">
                 <div class="training-main-copy">
                   <div class="kicker">Central task</div>
-                  ${currentAnswer
-                    ? `<h2>${escapeHtml(currentStep?.title || "Central task")}</h2>`
-                    : `<h2>${escapeHtml(currentItem?.prompt || "")}</h2>`}
+                  <h2>${escapeHtml(currentStep?.title || "Central task")}</h2>
                 </div>
                 <div class="training-step-meter">
                   <strong>${escapeHtml(`${stepProgress.correct}/${stepProgress.total} restored`)}</strong>
@@ -2214,7 +2224,7 @@ function renderArcTrainingBay(config, score) {
                   </div>
                 ` : `
                   <div class="training-card-lead">
-                    <div class="kicker">${escapeHtml(currentStep.title)}</div>
+                    <p class="training-card-prompt">${escapeHtml(currentItem?.prompt || "")}</p>
                     <p>${escapeHtml(currentStep.instruction || "Choose the strongest initiative move.")}</p>
                   </div>
                   <div class="training-stack">
@@ -3879,6 +3889,8 @@ function renderContentTopicIntro(group) {
   const highlights = group.introHighlights || [];
   const hasVideo = Boolean(group.introVideo);
   const rewardPreview = getContentTopicRewardPreview();
+  const bankedPercent = Math.max(0, Number(state.contentTopicBestScores[group.id] || 0));
+  const hasBankedResult = bankedPercent > 0;
   return `
     <section class="est-scene-shell est-scene-shell--intro" ${buildESTSceneStyle("neutral")}>
       <div class="topic-intro-grid topic-intro-grid--compact topic-intro-grid--visual">
@@ -3906,9 +3918,11 @@ function renderContentTopicIntro(group) {
           ` : ""}
           <div class="written-stage topic-intro-actions">
             <div class="topic-intro-button-row">
-              <button class="submit-button" type="button" onclick="window.ESTPrep.openStage('content')">Back</button>
-              <button class="submit-button" type="button" onclick="window.ESTPrep.startContentGroup()">Start content check</button>
+              <button class="submit-button compact" type="button" onclick="window.ESTPrep.openStage('content')">Back</button>
+              <button class="submit-button compact" type="button" onclick="window.ESTPrep.startContentGroup()">${hasBankedResult ? "Resume topic" : "Start content check"}</button>
+              ${hasBankedResult ? '<button class="submit-button compact ghost" type="button" onclick="window.ESTPrep.resetCurrentContentTopic()">Reset topic</button>' : ""}
             </div>
+            ${hasBankedResult ? `<p class="small-copy topic-intro-status">Best banked result: ${bankedPercent}% • reopen to improve or reset to replay from the start.</p>` : ""}
           </div>
         </div>
       </div>
@@ -4364,6 +4378,30 @@ function bankCurrentContentDuration() {
   state.contentGroupStartedAt = Date.now();
 }
 
+function resetCurrentContentTopic() {
+  const groups = state.stageDeck?.contentGroups || [];
+  const currentGroup = groups[state.contentGroupIndex];
+  if (!currentGroup) return;
+  const trainingConfig = getContentTrainingConfig(currentGroup.id);
+  (currentGroup.rounds || []).forEach((_, index) => {
+    delete state.answers[`content-${currentGroup.id}-${index}`];
+  });
+  delete state.answers[`content-note-${currentGroup.id}`];
+  delete state.responseForgeDrafts[currentGroup.id];
+  delete state.contentResponseBuilds[currentGroup.id];
+  delete state.contentGroupDurations[currentGroup.id];
+  if (trainingConfig && isArcTrainingType(trainingConfig.type)) {
+    delete state.arcFlows[trainingConfig.type];
+    delete state.arcBanking[trainingConfig.type];
+  }
+  state.lastContentTopicReview = null;
+  state.contentView = "intro";
+  state.contentGroupStartedAt = null;
+  persistESTProgressSnapshot();
+  renderContentStage();
+  scrollToTopSmooth();
+}
+
 function jumpToContentGroup(index) {
   openContentGroupIntro(index);
 }
@@ -4377,11 +4415,6 @@ function openContentGroupIntro(index) {
     bankCurrentContentDuration();
   }
   state.contentGroupIndex = nextIndex;
-  const nextGroup = groups[nextIndex];
-  const nextTrainingConfig = nextGroup ? getContentTrainingConfig(nextGroup.id) : null;
-  if (nextTrainingConfig && isArcTrainingType(nextTrainingConfig.type)) {
-    delete state.arcFlows[nextTrainingConfig.type];
-  }
   state.contentView = "intro";
   state.selectedStageId = "content";
   setLabMode(true);
@@ -4394,10 +4427,6 @@ function startContentGroup() {
   const groups = state.stageDeck?.contentGroups || [];
   const currentGroup = groups[state.contentGroupIndex];
   if (!currentGroup) return;
-  const trainingConfig = getContentTrainingConfig(currentGroup.id);
-  if (trainingConfig && isArcTrainingType(trainingConfig.type)) {
-    delete state.arcFlows[trainingConfig.type];
-  }
   state.contentView = "lesson";
   state.contentGroupStartedAt = Date.now();
   persistESTProgressSnapshot();
@@ -5496,6 +5525,7 @@ window.ESTPrep = {
   openContentResponse,
   submitCurrentContentTopic,
   retryCurrentContentTopic,
+  resetCurrentContentTopic,
   nextContentGroup: () => moveContentGroup(1),
   prevContentGroup: () => moveContentGroup(-1),
   jumpToContentGroup,
