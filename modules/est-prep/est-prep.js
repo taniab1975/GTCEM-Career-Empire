@@ -1337,6 +1337,13 @@ function persistESTProgressSnapshot() {
     estPrepDeck: state.stageDeck,
     estPrepProgress: {
       selectedStageId: state.selectedStageId,
+      marksBanked: state.marksBanked,
+      readiness: state.readiness,
+      confidence: state.confidence,
+      salaryBoost: state.salaryBoost,
+      creditedSalaryBoost: state.creditedSalaryBoost,
+      taxContribution: state.taxContribution,
+      creditedTaxContribution: state.creditedTaxContribution,
       answers: state.answers,
       contentGroupIndex: state.contentGroupIndex,
       contentView: state.contentView,
@@ -1360,6 +1367,13 @@ function hydrateESTProgressSnapshot() {
     state.stageDeck = session.estPrepDeck;
   }
   state.selectedStageId = progress.selectedStageId || null;
+  state.marksBanked = Number(progress.marksBanked || state.marksBanked || 0);
+  state.readiness = Number(progress.readiness || state.readiness || 0);
+  state.confidence = Number(progress.confidence || state.confidence || 40);
+  state.salaryBoost = Number(progress.salaryBoost || state.salaryBoost || 0);
+  state.creditedSalaryBoost = Number(progress.creditedSalaryBoost || state.creditedSalaryBoost || 0);
+  state.taxContribution = Number(progress.taxContribution || state.taxContribution || 0);
+  state.creditedTaxContribution = Number(progress.creditedTaxContribution || state.creditedTaxContribution || 0);
   state.answers = progress.answers || {};
   state.contentGroupIndex = Number.isInteger(progress.contentGroupIndex) ? progress.contentGroupIndex : -1;
   state.contentView = progress.contentView || "menu";
@@ -1501,6 +1515,31 @@ function isContentGroupDone(group) {
 function getCompletedContentTopicCount() {
   const groups = state.stageDeck?.contentGroups || [];
   return groups.reduce((count, group) => count + (isContentGroupDone(group) ? 1 : 0), 0);
+}
+
+function getModuleCompletionPercent() {
+  const contentGroups = state.stageDeck?.contentGroups || [];
+  const contentFraction = contentGroups.length
+    ? getCompletedContentTopicCount() / contentGroups.length
+    : (state.completed.content ? 1 : 0);
+  const completedStageUnits = STAGES.reduce((sum, stage) => {
+    if (stage.id === "content") return sum + contentFraction;
+    return sum + (state.completed[stage.id] ? 1 : 0);
+  }, 0);
+  return Math.max(0, Math.min(100, Math.round((completedStageUnits / STAGES.length) * 100)));
+}
+
+function syncContentCompletionFromTopicScores() {
+  const groups = state.stageDeck?.contentGroups || [];
+  if (!groups.length) return;
+  const allBanked = groups.every(group => Number(state.contentTopicBestScores[group.id] || 0) > 0);
+  if (allBanked) {
+    state.completed.content = true;
+    state.stageBestScores.content = Math.max(
+      Number(state.stageBestScores.content || 0),
+      groups.reduce((sum, group) => sum + Number(state.contentTopicBestScores[group.id] || 0), 0) / (groups.length * 100)
+    );
+  }
 }
 
 function getContentGroupStatus(group, index) {
@@ -4461,6 +4500,7 @@ async function submitCurrentContentTopic() {
   summary.reward = reward;
   state.lastContentTopicReview = summary;
   state.contentView = "review";
+  persistESTProgressSnapshot();
 
   await saveProgress(
     `revision-topic-${currentGroup.id}`,
@@ -4875,7 +4915,7 @@ async function saveProgress(checkpoint, evidenceType = "artifact", evidenceText 
   const supabase = await getSupabaseClientOrNull();
   if (!supabase) return;
 
-  const completionPercent = Math.round((Object.keys(state.completed).length / STAGES.length) * 100);
+  const completionPercent = getModuleCompletionPercent();
   const masteryPercent = Math.min(100, Math.round((state.marksBanked / STAGES.reduce((sum, stage) => sum + stage.marks, 0)) * 100));
 
   const progressPayload = {
@@ -4883,9 +4923,9 @@ async function saveProgress(checkpoint, evidenceType = "artifact", evidenceText 
     module_id: MODULE_ID,
     completion_percent: completionPercent,
     mastery_percent: masteryPercent,
-    attempts: Object.keys(state.completed).length,
+    attempts: Math.max(Object.keys(state.completed).length, getCompletedContentTopicCount()),
     unlocked: true,
-    completed: Object.keys(state.completed).length === STAGES.length,
+    completed: completionPercent >= 100,
     last_played_at: new Date().toISOString(),
     updated_at: new Date().toISOString()
   };
@@ -4987,11 +5027,25 @@ async function saveProgress(checkpoint, evidenceType = "artifact", evidenceText 
 function inferStageFromEvidence(row) {
   const type = String(row?.evidence_type || "").toLowerCase();
   const prompt = String(row?.prompt || "").toLowerCase();
-  if (type === "revision-check" || prompt.includes("revision-arena")) return "content";
+  if (type === "revision-check" || type === "revision-topic-check" || prompt.includes("revision-arena") || prompt.includes("revision-topic-")) return "content";
   if (type === "glossary-check" || prompt.includes("glossary-lock-in")) return "glossary";
   if (type === "decoder-breakdown" || prompt.includes("decoder-drill")) return "decoder";
   if (type === "est-response" || prompt.includes("boss-round")) return "boss";
   return null;
+}
+
+function hydrateContentTopicFromPayload(payload, row) {
+  const topicId = payload?.topic_group_id || String(row?.prompt || "").replace(/^revision-topic-/, "");
+  if (!topicId || topicId === row?.prompt) return;
+  const score = Number(row?.auto_score ?? payload?.score_percent);
+  if (!Number.isFinite(score) || score <= 0) return;
+  state.contentTopicBestScores[topicId] = Math.max(
+    Number(state.contentTopicBestScores[topicId] || 0),
+    Math.round(score)
+  );
+  if (payload?.built_response && !state.answers[`content-note-${topicId}`]) {
+    state.answers[`content-note-${topicId}`] = payload.built_response;
+  }
 }
 
 function getEvidencePreview(row) {
@@ -5081,13 +5135,18 @@ async function hydrateFromSupabase() {
     let latestGlossaryPayload = null;
     state.evidenceLog = evidenceRows.map(row => {
       const stageId = inferStageFromEvidence(row);
-      if (stageId) state.completed[stageId] = true;
+      const payload = parseEvidencePayload(row);
+      const isContentTopicEvidence = row?.evidence_type === "revision-topic-check" || String(row?.prompt || "").startsWith("revision-topic-");
+      if (stageId && !(stageId === "content" && isContentTopicEvidence)) state.completed[stageId] = true;
       const autoScore = Number(row?.auto_score);
       if (stageId && Number.isFinite(autoScore)) {
         state.stageBestScores[stageId] = Math.max(Number(state.stageBestScores[stageId] || 0), autoScore / 100);
       }
+      if (isContentTopicEvidence) {
+        hydrateContentTopicFromPayload(payload, row);
+      }
       if (stageId === "glossary") {
-        latestGlossaryPayload = parseEvidencePayload(row) || latestGlossaryPayload;
+        latestGlossaryPayload = payload || latestGlossaryPayload;
       }
       return {
         title: stageId ? `${STAGES.find(stage => stage.id === stageId)?.title || "Saved stage"} saved` : "Saved EST progress",
@@ -5486,26 +5545,25 @@ function returnToTrack() {
 async function init() {
   state.student = getLoggedInStudent();
   registerLeaveWarning();
-  await hydrateFromSupabase();
+  const session = getPlayerSession();
+  if (session.estPrepDeck || session.estPrepProgress) {
+    hydrateESTProgressSnapshot();
+  }
   const [bank, contentStageConfig] = await Promise.all([
     loadBank(),
     loadContentStageConfig()
   ]);
   state.bank = bank;
   state.contentStageConfig = contentStageConfig;
-  const session = getPlayerSession();
-  if (session.estPrepDeck || session.estPrepProgress) {
-    hydrateESTProgressSnapshot();
-  }
   if (!state.stageDeck || !state.stageDeck?.contentGroups?.length) {
     state.stageDeck = buildStageDeck(state.bank);
   }
+  await hydrateFromSupabase();
+  syncContentCompletionFromTopicScores();
   if (!state.contentView) {
     state.contentView = "menu";
   }
-  if (!(session.estPrepDeck || session.estPrepProgress)) {
-    persistESTProgressSnapshot();
-  }
+  persistESTProgressSnapshot();
   setLabMode(false);
   setStageMenuMode(false);
   setStageScene("neutral");
