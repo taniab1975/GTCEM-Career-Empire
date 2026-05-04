@@ -757,6 +757,11 @@ body.est-gameplay-viewport {
 
 #stage-section.gameplay-viewport {
   min-height: auto;
+  max-width: 1320px;
+  padding: 8px 12px 24px;
+  background: transparent;
+  border: 0;
+  box-shadow: none;
 }
 
 #stage-section.gameplay-viewport .stage-root {
@@ -927,10 +932,14 @@ body.est-gameplay-viewport {
 }
 
 .training-campaign--focus {
+  padding: 16px 18px;
+  border-radius: 30px;
+  border: 1px solid rgba(129, 166, 255, 0.12);
   background:
-    linear-gradient(180deg, rgba(8, 16, 38, 0.34), rgba(8, 16, 38, 0.48)),
-    radial-gradient(circle at top right, rgba(97, 240, 255, 0.08), transparent 28%);
-  backdrop-filter: blur(4px);
+    linear-gradient(180deg, rgba(8, 16, 38, 0.2), rgba(8, 16, 38, 0.38)),
+    radial-gradient(circle at top right, rgba(97, 240, 255, 0.06), transparent 28%);
+  box-shadow: none;
+  backdrop-filter: blur(2px);
 }
 
 .training-hud {
@@ -938,7 +947,7 @@ body.est-gameplay-viewport {
   align-items: end;
   justify-content: space-between;
   gap: 18px;
-  padding-bottom: 14px;
+  padding-bottom: 12px;
   border-bottom: 1px solid rgba(129, 166, 255, 0.14);
 }
 
@@ -948,7 +957,8 @@ body.est-gameplay-viewport {
 }
 
 .training-hud-copy h2 {
-  font-size: clamp(2rem, 3vw, 3rem);
+  font-size: clamp(1.6rem, 2.2vw, 2.45rem);
+  line-height: 1.04;
 }
 
 .training-hud-status {
@@ -959,11 +969,12 @@ body.est-gameplay-viewport {
 }
 
 .training-hud-status strong {
-  font-size: 1rem;
+  font-size: 0.94rem;
 }
 
 .training-hud-status small {
   color: var(--muted);
+  font-size: 0.84rem;
 }
 
 .training-campaign-grid {
@@ -977,10 +988,10 @@ body.est-gameplay-viewport {
 
 .training-focus-shell {
   display: grid;
-  grid-template-columns: minmax(220px, 270px) minmax(0, 1fr);
-  gap: 18px;
+  grid-template-columns: minmax(210px, 240px) minmax(0, 1fr);
+  gap: 16px;
   align-items: start;
-  margin-top: 18px;
+  margin-top: 14px;
   min-height: 100%;
 }
 
@@ -1009,26 +1020,26 @@ body.est-gameplay-viewport {
 }
 
 .training-focus-summary {
-  padding: 18px;
+  padding: 14px 16px;
   display: grid;
-  gap: 8px;
+  gap: 6px;
 }
 
 .training-focus-summary h3 {
-  font-size: 1.1rem;
+  font-size: 1rem;
 }
 
 .training-focus-summary p {
   color: var(--muted);
   line-height: 1.5;
-  font-size: 0.95rem;
+  font-size: 0.9rem;
 }
 
 .training-memory-hook {
-  padding: 14px 16px;
+  padding: 12px 14px;
   color: #dcebff;
   font-weight: 700;
-  line-height: 1.5;
+  line-height: 1.4;
 }
 
 .training-memory-hook summary {
@@ -1041,9 +1052,10 @@ body.est-gameplay-viewport {
 }
 
 .training-memory-hook p {
-  margin-top: 10px;
+  margin-top: 8px;
   color: var(--muted);
   font-weight: 600;
+  font-size: 0.9rem;
 }
 
 .training-scene-preview {
@@ -1059,15 +1071,15 @@ body.est-gameplay-viewport {
 }
 
 .training-guide-mini {
-  padding: 12px 14px;
+  padding: 12px;
   display: grid;
   gap: 12px;
-  grid-template-columns: 88px minmax(0, 1fr);
+  grid-template-columns: 64px minmax(0, 1fr);
   align-items: center;
 }
 
 .training-guide-mini-image {
-  width: 88px;
+  width: 64px;
   height: auto;
   display: block;
   object-fit: contain;
@@ -1084,13 +1096,13 @@ body.est-gameplay-viewport {
 
 .training-guide-mini-copy p {
   color: #eef5ff;
-  line-height: 1.5;
-  font-size: 0.94rem;
+  line-height: 1.45;
+  font-size: 0.86rem;
 }
 
 .arc-progress-rail {
   display: grid;
-  gap: 8px;
+  gap: 6px;
   margin-top: 0;
   margin-bottom: 0;
 }
@@ -1099,13 +1111,13 @@ body.est-gameplay-viewport {
   width: 100%;
   height: auto;
   display: block;
-  border-radius: 22px;
-  box-shadow: 0 18px 36px rgba(5, 10, 28, 0.28);
+  border-radius: 18px;
+  box-shadow: 0 12px 22px rgba(5, 10, 28, 0.22);
 }
 
 .arc-progress-caption {
   color: #d7e9ff;
-  font-size: 0.86rem;
+  font-size: 0.76rem;
   font-weight: 700;
   text-align: center;
   letter-spacing: 0.04em;
@@ -1122,7 +1134,7 @@ body.est-gameplay-viewport {
 
 .training-step--flash,
 .training-step--transition {
-  padding: 24px;
+  padding: 18px;
   background:
     linear-gradient(180deg, rgba(7, 14, 34, 0.88), rgba(12, 22, 48, 0.95)),
     radial-gradient(circle at top right, rgba(97, 240, 255, 0.08), transparent 28%);
@@ -1141,10 +1153,10 @@ body.est-gameplay-viewport {
 
 .training-main-header {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) 260px;
-  gap: 18px;
+  grid-template-columns: minmax(0, 1fr) 210px;
+  gap: 16px;
   align-items: end;
-  margin-bottom: 18px;
+  margin-bottom: 14px;
 }
 
 .training-main-header.compact {
@@ -1153,36 +1165,39 @@ body.est-gameplay-viewport {
 
 .training-main-copy {
   display: grid;
-  gap: 10px;
+  gap: 6px;
 }
 
 .training-main-copy h2 {
-  font-size: clamp(1.7rem, 2.4vw, 2.4rem);
-  line-height: 1.2;
+  max-width: 17ch;
+  font-size: clamp(1.25rem, 1.9vw, 1.9rem);
+  line-height: 1.12;
+  letter-spacing: -0.02em;
 }
 
 .training-main-copy p {
   color: #d7e9ff;
-  font-size: 1.05rem;
-  line-height: 1.6;
+  font-size: 0.95rem;
+  line-height: 1.5;
 }
 
 .training-step-meter {
   display: grid;
-  gap: 8px;
+  gap: 6px;
   justify-items: start;
-  padding: 16px 18px;
+  padding: 14px 16px;
   border-radius: 18px;
   border: 1px solid rgba(129, 166, 255, 0.18);
   background: rgba(9, 16, 35, 0.72);
 }
 
 .training-step-meter strong {
-  font-size: 0.95rem;
+  font-size: 0.92rem;
 }
 
 .training-step-meter small {
   color: var(--muted);
+  font-size: 0.8rem;
 }
 
 .training-step-bar {
@@ -1226,14 +1241,14 @@ body.est-gameplay-viewport {
 }
 
 .training-card--flash {
-  max-width: 1160px;
+  max-width: none;
   margin: 0 auto;
-  padding: 24px;
-  border-radius: 28px;
+  padding: 18px;
+  border-radius: 24px;
   background:
     linear-gradient(180deg, rgba(11, 21, 49, 0.96), rgba(13, 21, 48, 0.94)),
     radial-gradient(circle at top left, rgba(97, 240, 255, 0.1), transparent 24%);
-  box-shadow: 0 24px 48px rgba(4, 9, 24, 0.36), inset 0 0 0 1px rgba(255,255,255,0.03);
+  box-shadow: 0 18px 30px rgba(4, 9, 24, 0.28), inset 0 0 0 1px rgba(255,255,255,0.03);
 }
 
 .training-answer-state {
@@ -1266,13 +1281,13 @@ body.est-gameplay-viewport {
 
 .training-card-lead {
   display: grid;
-  gap: 10px;
-  margin-bottom: 8px;
+  gap: 8px;
+  margin-bottom: 6px;
 }
 
 .training-card-lead p {
   color: #d7e9ff;
-  font-size: 1rem;
+  font-size: 0.92rem;
 }
 
 .training-flash-meta {
@@ -1284,10 +1299,10 @@ body.est-gameplay-viewport {
 
 .training-feedback-block {
   display: grid;
-  gap: 16px;
-  margin-top: 16px;
-  padding: 16px;
-  border-radius: 20px;
+  gap: 14px;
+  margin-top: 14px;
+  padding: 14px;
+  border-radius: 18px;
   border: 1px solid rgba(129, 166, 255, 0.18);
   background: rgba(7, 15, 34, 0.6);
 }
@@ -1398,7 +1413,7 @@ body.est-gameplay-viewport {
 .arc-action-button--overlay {
   position: relative;
   min-width: 320px;
-  min-height: 108px;
+  min-height: 96px;
   padding: 0;
   overflow: hidden;
   border-color: rgba(97, 240, 255, 0.44);
@@ -1423,7 +1438,7 @@ body.est-gameplay-viewport {
   place-items: center;
   padding: 0 22px;
   text-align: center;
-  font-size: 1.1rem;
+  font-size: 1rem;
   text-shadow: 0 4px 18px rgba(0, 0, 0, 0.85);
 }
 
@@ -1450,6 +1465,40 @@ body.est-gameplay-viewport {
 .training-hint-inline--state {
   justify-content: center;
   max-width: 720px;
+}
+
+#stage-section.gameplay-viewport .est-scene-shell {
+  padding: 12px;
+  border-radius: 26px;
+  box-shadow: 0 18px 36px rgba(2, 6, 18, 0.24);
+}
+
+#stage-section.gameplay-viewport .training-scene-preview {
+  display: none;
+}
+
+#stage-section.gameplay-viewport .training-focus-summary {
+  order: 1;
+}
+
+#stage-section.gameplay-viewport .arc-progress-rail {
+  order: 2;
+}
+
+#stage-section.gameplay-viewport .training-memory-hook {
+  order: 3;
+}
+
+#stage-section.gameplay-viewport .training-guide-mini {
+  order: 4;
+}
+
+#stage-section.gameplay-viewport .training-focus-main {
+  min-height: 0;
+}
+
+#stage-section.gameplay-viewport .training-focus-main .training-step--flash {
+  min-height: 100%;
 }
 
 .training-actions {
