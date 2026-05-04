@@ -3888,15 +3888,16 @@ function renderGlossaryStudyDeck(batch) {
 function renderContentTopicIntro(group) {
   const highlights = group.introHighlights || [];
   const hasVideo = Boolean(group.introVideo);
+  const usesPortraitMedia = group.introMediaLayout === "portrait" || /portrait/i.test(group.introVideo || "");
   const rewardPreview = getContentTopicRewardPreview();
   const bankedPercent = Math.max(0, Number(state.contentTopicBestScores[group.id] || 0));
   const hasBankedResult = bankedPercent > 0;
   return `
     <section class="est-scene-shell est-scene-shell--intro" ${buildESTSceneStyle("neutral")}>
-      <div class="topic-intro-grid topic-intro-grid--compact topic-intro-grid--visual">
-        <div class="topic-media-card">
+      <div class="topic-intro-grid topic-intro-grid--compact topic-intro-grid--visual ${usesPortraitMedia ? "topic-intro-grid--portrait" : ""}">
+        <div class="topic-media-card ${usesPortraitMedia ? "topic-media-card--portrait" : ""}">
           ${hasVideo ? `
-            <video class="topic-media" autoplay muted loop playsinline poster="${escapeHtml(group.introImage || "")}">
+            <video class="topic-media ${usesPortraitMedia ? "topic-media--portrait" : ""}" autoplay muted loop playsinline poster="${escapeHtml(group.introImage || "")}">
               <source src="${escapeHtml(group.introVideo)}" type="video/mp4">
             </video>
           ` : `

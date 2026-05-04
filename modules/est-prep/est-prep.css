@@ -680,6 +680,11 @@ body.est-lab-mode #stage-section[data-scene="success"] {
   gap: 10px;
 }
 
+.topic-intro-grid--portrait {
+  grid-template-columns: minmax(280px, 0.74fr) minmax(360px, 1fr);
+  gap: 22px;
+}
+
 .est-scene-shell {
   position: relative;
   padding: 18px;
@@ -730,6 +735,14 @@ body.est-lab-mode #stage-section[data-scene="success"] {
   max-height: 460px;
 }
 
+.topic-intro-grid--compact .topic-media-card--portrait {
+  width: min(390px, 100%);
+  max-height: min(68vh, 640px);
+  aspect-ratio: 9 / 16;
+  justify-self: center;
+  padding: 8px;
+}
+
 .topic-media {
   width: 100%;
   height: 100%;
@@ -740,6 +753,10 @@ body.est-lab-mode #stage-section[data-scene="success"] {
   background:
     radial-gradient(circle at top right, rgba(97, 240, 255, 0.12), transparent 28%),
     linear-gradient(180deg, rgba(18, 31, 61, 0.92), rgba(10, 18, 39, 0.96));
+}
+
+.topic-media--portrait {
+  object-fit: cover;
 }
 
 .topic-media-image {
@@ -2538,6 +2555,11 @@ body.glossary-mission-active #stage-root {
   .topic-media-card {
     aspect-ratio: auto;
     padding: 14px;
+  }
+
+  .topic-intro-grid--compact .topic-media-card--portrait {
+    width: min(300px, 100%);
+    max-height: 520px;
   }
 
   .metrics-grid,
