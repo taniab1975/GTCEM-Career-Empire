@@ -1330,6 +1330,50 @@ function writePlayerSession(patch) {
   return next;
 }
 
+function persistESTProgressSnapshot() {
+  const session = getPlayerSession();
+  writePlayerSession({
+    ...session,
+    estPrepDeck: state.stageDeck,
+    estPrepProgress: {
+      selectedStageId: state.selectedStageId,
+      answers: state.answers,
+      contentGroupIndex: state.contentGroupIndex,
+      contentView: state.contentView,
+      arcFlows: state.arcFlows,
+      contentTopicBestScores: state.contentTopicBestScores,
+      lastContentTopicReview: state.lastContentTopicReview,
+      completed: state.completed,
+      stageBestScores: state.stageBestScores,
+      glossaryBatchIndex: state.glossaryBatchIndex,
+      glossaryRoundIndex: state.glossaryRoundIndex,
+      glossaryRecallAnswers: state.glossaryRecallAnswers,
+      glossaryRecallResults: state.glossaryRecallResults
+    }
+  });
+}
+
+function hydrateESTProgressSnapshot() {
+  const session = getPlayerSession();
+  const progress = session.estPrepProgress || {};
+  if (session.estPrepDeck) {
+    state.stageDeck = session.estPrepDeck;
+  }
+  state.selectedStageId = progress.selectedStageId || null;
+  state.answers = progress.answers || {};
+  state.contentGroupIndex = Number.isInteger(progress.contentGroupIndex) ? progress.contentGroupIndex : -1;
+  state.contentView = progress.contentView || "menu";
+  state.arcFlows = progress.arcFlows || {};
+  state.contentTopicBestScores = progress.contentTopicBestScores || {};
+  state.lastContentTopicReview = progress.lastContentTopicReview || null;
+  state.completed = progress.completed || {};
+  state.stageBestScores = progress.stageBestScores || {};
+  state.glossaryBatchIndex = progress.glossaryBatchIndex || 0;
+  state.glossaryRoundIndex = progress.glossaryRoundIndex || 0;
+  state.glossaryRecallAnswers = progress.glossaryRecallAnswers || {};
+  state.glossaryRecallResults = progress.glossaryRecallResults || {};
+}
+
 function pushEconomyLog(entry = {}) {
   if (!window.CareerEmpireEconomy?.appendEvent) return [];
   return window.CareerEmpireEconomy.appendEvent({
@@ -1737,6 +1781,12 @@ function renderRewardPulse() {
       <p>${escapeHtml(state.recentReward.detail)}</p>
     </div>
   `;
+}
+
+function setStagePulseVisible(visible) {
+  const pulse = document.getElementById("stage-pulse");
+  if (!pulse) return;
+  pulse.style.display = visible ? "" : "none";
 }
 
 function renderMetrics() {
@@ -3831,7 +3881,7 @@ function renderContentTopicIntro(group) {
   const rewardPreview = getContentTopicRewardPreview();
   return `
     <section class="est-scene-shell est-scene-shell--intro" ${buildESTSceneStyle("neutral")}>
-      <div class="topic-intro-grid topic-intro-grid--compact">
+      <div class="topic-intro-grid topic-intro-grid--compact topic-intro-grid--visual">
         <div class="topic-media-card">
           ${hasVideo ? `
             <video class="topic-media" autoplay muted loop playsinline poster="${escapeHtml(group.introImage || "")}">
@@ -3856,7 +3906,7 @@ function renderContentTopicIntro(group) {
           ` : ""}
           <div class="written-stage topic-intro-actions">
             <div class="topic-intro-button-row">
-              <button class="submit-button" type="button" onclick="window.ESTPrep.openStage('content')">Back to topic menu</button>
+              <button class="submit-button" type="button" onclick="window.ESTPrep.openStage('content')">Back</button>
               <button class="submit-button" type="button" onclick="window.ESTPrep.startContentGroup()">Start content check</button>
             </div>
           </div>
@@ -3874,6 +3924,7 @@ function renderContentStage() {
     setGameplayViewportMode(false);
     setStageScene("neutral");
     setStageMenuMode(true);
+    setStagePulseVisible(false);
     setText("stage-title", "");
     setText("stage-subtitle", "");
     renderStageRoot(`
@@ -3887,24 +3938,29 @@ function renderContentStage() {
     setGameplayViewportMode(false);
     setStageScene("neutral");
     setStageMenuMode(false);
+    setStagePulseVisible(false);
     setText("stage-title", "");
     setText("stage-subtitle", "");
     renderStageRoot(renderContentTopicIntro(currentGroup));
+    persistESTProgressSnapshot();
     return;
   }
   if (state.contentView === "review" && currentGroup && state.lastContentTopicReview?.group?.id === currentGroup.id) {
     setGameplayViewportMode(false);
     setStageScene("success");
     setStageMenuMode(false);
+    setStagePulseVisible(false);
     setText("stage-title", "");
     setText("stage-subtitle", "");
     renderStageRoot(renderContentTopicReview(state.lastContentTopicReview));
+    persistESTProgressSnapshot();
     return;
   }
   if (state.contentView === "response") {
     setGameplayViewportMode(false);
     setStageScene("neutral");
     setStageMenuMode(false);
+    setStagePulseVisible(false);
     setText("stage-title", "");
     setText("stage-subtitle", "");
     renderStageRoot(`
@@ -3957,9 +4013,11 @@ function renderContentStage() {
         </div>
       </section>
     `);
+    persistESTProgressSnapshot();
     return;
   }
   setStageMenuMode(false);
+  setStagePulseVisible(false);
   const trainingConfig = getContentTrainingConfig(currentGroup.id);
   const trainingScore = getTrainingScore(trainingConfig);
   const trainingIsArc = trainingConfig && isArcTrainingType(trainingConfig.type);
@@ -3972,11 +4030,13 @@ function renderContentStage() {
     renderStageRoot(`
       ${renderTrainingBay(currentGroup)}
     `);
+    persistESTProgressSnapshot();
     return;
   }
   renderStageRoot(`
     ${renderTrainingBay(currentGroup)}
   `);
+  persistESTProgressSnapshot();
 }
 
 function getGroupIdForTrainingType(type) {
@@ -4325,6 +4385,7 @@ function openContentGroupIntro(index) {
   state.contentView = "intro";
   state.selectedStageId = "content";
   setLabMode(true);
+  persistESTProgressSnapshot();
   renderContentStage();
   scrollToTopSmooth();
 }
@@ -4339,6 +4400,7 @@ function startContentGroup() {
   }
   state.contentView = "lesson";
   state.contentGroupStartedAt = Date.now();
+  persistESTProgressSnapshot();
   renderContentStage();
   scrollToTopSmooth();
 }
@@ -4351,6 +4413,7 @@ function openContentResponse() {
   const trainingScore = getTrainingScore(trainingConfig);
   if (trainingScore.total > 0 && trainingScore.correct === trainingScore.total) {
     state.contentView = "response";
+    persistESTProgressSnapshot();
     renderContentStage();
     scrollToTopSmooth();
   }
@@ -4418,6 +4481,7 @@ function openStage(stageId) {
   const previousStageId = state.selectedStageId;
   setLabMode(true);
   setGameplayViewportMode(false);
+  setStagePulseVisible(stageId !== "content");
   if (stageId !== "glossary") {
     state.glossaryMissionMode = false;
     clearGlossaryTimer();
@@ -4467,6 +4531,7 @@ function setChoice(groupKey, option) {
   state.answers[groupKey] = option;
   updateSelectionButtons(groupKey, option);
   setSelectionPulse(groupKey, option);
+  persistESTProgressSnapshot();
 }
 
 function setChoiceEncoded(groupKey, encodedOption) {
@@ -4489,10 +4554,12 @@ function setTrainingChoice(groupKey, option) {
         itemIndex: flow?.itemIndex || 0,
         lastOutcome: option === item.correct ? "correct" : "wrong"
       };
+      persistESTProgressSnapshot();
       renderContentStage();
       return;
     }
   }
+  persistESTProgressSnapshot();
   renderContentStage();
   state.recentReward = {
     type: "positive",
@@ -4539,6 +4606,7 @@ function advanceArcCard(configType) {
       lastOutcome: "correct"
     };
   }
+  persistESTProgressSnapshot();
   renderContentStage();
 }
 
@@ -4558,6 +4626,7 @@ function retryArcCard(configType) {
     itemIndex: flow.itemIndex,
     lastOutcome: null
   };
+  persistESTProgressSnapshot();
   renderContentStage();
 }
 
@@ -4572,6 +4641,7 @@ function startArcStep(configType) {
     itemIndex: 0,
     lastOutcome: null
   };
+  persistESTProgressSnapshot();
   renderContentStage();
 }
 
@@ -5393,8 +5463,19 @@ async function init() {
   ]);
   state.bank = bank;
   state.contentStageConfig = contentStageConfig;
-  state.stageDeck = buildStageDeck(state.bank);
-  state.contentView = "menu";
+  const session = getPlayerSession();
+  if (session.estPrepDeck || session.estPrepProgress) {
+    hydrateESTProgressSnapshot();
+  }
+  if (!state.stageDeck || !state.stageDeck?.contentGroups?.length) {
+    state.stageDeck = buildStageDeck(state.bank);
+  }
+  if (!state.contentView) {
+    state.contentView = "menu";
+  }
+  if (!(session.estPrepDeck || session.estPrepProgress)) {
+    persistESTProgressSnapshot();
+  }
   setLabMode(false);
   setStageMenuMode(false);
   setStageScene("neutral");

@@ -187,7 +187,7 @@ h1 {
 }
 
 #stage-section {
-  margin-top: 18px;
+  margin-top: 8px;
   --est-stage-background: none;
 }
 
@@ -203,7 +203,7 @@ body.est-lab-mode #logs-section {
 body.est-lab-mode #stage-section {
   display: block;
   max-width: 980px;
-  margin: 18px auto 0;
+  margin: 8px auto 0;
   background:
     linear-gradient(180deg, rgba(7, 14, 30, 0.28), rgba(7, 14, 30, 0.6)),
     var(--est-stage-background) center/cover no-repeat,
@@ -406,13 +406,13 @@ body.est-lab-mode #stage-section[data-scene="success"] {
 
 .stage-root {
   display: grid;
-  gap: 18px;
+  gap: 12px;
 }
 
 .focus-nav {
   display: grid;
-  gap: 14px;
-  margin-bottom: 22px;
+  gap: 8px;
+  margin-bottom: 10px;
 }
 
 .focus-intro {
@@ -660,8 +660,12 @@ body.est-lab-mode #stage-section[data-scene="success"] {
 }
 
 .topic-intro-grid--compact {
-  grid-template-columns: minmax(260px, 420px) minmax(0, 1fr);
+  grid-template-columns: minmax(380px, 1.15fr) minmax(320px, 0.85fr);
   align-items: center;
+}
+
+.topic-intro-grid--visual {
+  gap: 14px;
 }
 
 .est-scene-shell {
@@ -687,8 +691,8 @@ body.est-lab-mode #stage-section[data-scene="success"] {
 }
 
 .topic-intro-copy h3 {
-  margin-top: 10px;
-  font-size: clamp(1.8rem, 2.5vw, 2.6rem);
+  margin-top: 8px;
+  font-size: clamp(1.65rem, 2.25vw, 2.35rem);
 }
 
 .topic-intro-highlights {
@@ -710,8 +714,8 @@ body.est-lab-mode #stage-section[data-scene="success"] {
 }
 
 .topic-intro-grid--compact .topic-media-card {
-  aspect-ratio: 16 / 10;
-  max-height: 320px;
+  aspect-ratio: 16 / 9;
+  max-height: 420px;
 }
 
 .topic-media {
@@ -728,11 +732,15 @@ body.est-lab-mode #stage-section[data-scene="success"] {
 
 .topic-media-image {
   object-fit: contain;
-  padding: 20px;
+  padding: 8px;
 }
 
 .topic-intro-actions {
   margin-top: 20px;
+}
+
+.topic-intro-copy.panel {
+  padding: 18px 20px;
 }
 
 .topic-intro-button-row {
@@ -1167,7 +1175,7 @@ body.est-gameplay-viewport {
 
 .training-main-header {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) 210px;
+  grid-template-columns: minmax(0, 1fr) 240px;
   gap: 16px;
   align-items: end;
   margin-bottom: 14px;
@@ -1183,9 +1191,9 @@ body.est-gameplay-viewport {
 }
 
 .training-main-copy h2 {
-  max-width: 20ch;
-  font-size: clamp(0.98rem, 1.32vw, 1.3rem);
-  line-height: 1.12;
+  max-width: none;
+  font-size: clamp(1.02rem, 1.42vw, 1.46rem);
+  line-height: 1.08;
   letter-spacing: -0.02em;
 }
 
@@ -1199,7 +1207,7 @@ body.est-gameplay-viewport {
   display: grid;
   gap: 6px;
   justify-items: start;
-  padding: 14px 16px;
+  padding: 12px 14px;
   border-radius: 18px;
   border: 1px solid rgba(129, 166, 255, 0.18);
   background: rgba(9, 16, 35, 0.72);
@@ -1272,11 +1280,11 @@ body.est-gameplay-viewport {
 }
 
 .training-answer-state {
-  min-height: clamp(280px, 36vh, 400px);
+  min-height: clamp(220px, 28vh, 320px);
   display: grid;
   align-content: start;
   justify-items: center;
-  gap: 10px;
+  gap: 8px;
   text-align: center;
   padding: 0;
 }
@@ -1288,14 +1296,14 @@ body.est-gameplay-viewport {
 }
 
 .training-answer-copy h3 {
-  font-size: clamp(1.25rem, 1.55vw, 1.7rem);
+  font-size: clamp(1.08rem, 1.35vw, 1.42rem);
   line-height: 1.12;
 }
 
 .training-answer-state .training-feedback {
   margin-top: 0;
   min-height: 0;
-  font-size: 1rem;
+  font-size: 0.95rem;
   color: #e8f2ff;
 }
 
@@ -1340,7 +1348,7 @@ body.est-gameplay-viewport {
 .training-economy-note {
   display: grid;
   gap: 4px;
-  padding: 12px 14px;
+  padding: 10px 12px;
   border-radius: 16px;
   border: 1px solid rgba(129, 166, 255, 0.16);
   background: rgba(8, 16, 38, 0.56);
@@ -1433,8 +1441,8 @@ body.est-gameplay-viewport {
 
 .arc-action-button--overlay {
   position: relative;
-  min-width: 300px;
-  min-height: 72px;
+  min-width: 260px;
+  min-height: 64px;
   padding: 0;
   overflow: hidden;
   border-color: rgba(97, 240, 255, 0.44);
@@ -1448,7 +1456,7 @@ body.est-gameplay-viewport {
 }
 
 .arc-action-button--overlay .arc-action-media img {
-  object-fit: cover;
+  object-fit: contain;
   opacity: 0.95;
   mix-blend-mode: screen;
 }
@@ -1503,17 +1511,18 @@ body.est-gameplay-viewport {
 
 .training-focus-shell--takeover .training-step--transition,
 .training-focus-shell--takeover .training-step--flash {
-  max-width: 780px;
+  max-width: 900px;
   justify-self: center;
 }
 
 .training-focus-shell--takeover .training-main-header {
-  grid-template-columns: minmax(0, 1fr);
+  grid-template-columns: minmax(0, 1fr) 240px;
+  align-items: start;
 }
 
 .training-focus-shell--takeover .training-step-meter {
-  justify-items: center;
-  text-align: center;
+  justify-items: start;
+  text-align: left;
 }
 
 #stage-section.gameplay-viewport .est-scene-shell {
