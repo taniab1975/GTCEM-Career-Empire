@@ -1264,6 +1264,8 @@ const state = {
   contentView: "menu",
   contentGroupStartedAt: 0,
   contentGroupDurations: {},
+  contentTopicBestScores: {},
+  lastContentTopicReview: null,
   glossaryBoard: [],
   glossarySelection: [],
   matchedGlossaryCards: [],
@@ -2046,6 +2048,7 @@ function renderArcTrainingBay(config, score) {
   const microReward = isCorrect
     ? `Correct call locked. Salary and tax bank when this strand is completed or improved.`
     : `No salary banks on this card yet. Lock the strongest answer to move forward.`;
+  const isTakeoverState = completedAll || flow?.phase === "transition" || Boolean(currentAnswer);
   return `
     <section class="est-scene-shell est-scene-shell--${scene}" ${buildESTSceneStyle(scene)}>
       <div class="panel training-bay training-campaign training-campaign--focus">
@@ -2059,31 +2062,33 @@ function renderArcTrainingBay(config, score) {
             <small>${escapeHtml(completedAll ? `All ${totalStepCount} steps cleared` : `${stepProgress.correct}/${stepProgress.total} cleared in this step • ${completedSteps}/${totalStepCount} steps done`)}</small>
           </div>
         </div>
-        <div class="training-focus-shell">
-          <aside class="training-focus-aside">
-            <div class="training-focus-summary">
-              <div class="kicker">Current mission</div>
-              <h3>${escapeHtml(currentStep?.title || config.title)}</h3>
-              <p>${escapeHtml(currentStep?.instruction || config.subtitle)}</p>
-            </div>
-            ${renderArcProgressRail(config)}
-            ${config.memoryHook ? `
-              <details class="training-memory-hook">
-                <summary>Memory clue</summary>
-                <p>${escapeHtml(config.memoryHook)}</p>
-              </details>
-            ` : ""}
-            ${sceneImage ? `<div class="training-scene-preview"><img src="${escapeHtml(sceneImage)}" alt="${escapeHtml(config.title)} scene preview"></div>` : ""}
-            ${guideCharacter ? `
-              <div class="training-guide-mini">
-                <img class="training-guide-mini-image" src="${escapeHtml(guidePose)}" alt="EST guide character">
-                <div class="training-guide-mini-copy">
-                  <div class="kicker">EST guide</div>
-                  <p>${escapeHtml(getESTGuideCopy(groupId, guideContext))}</p>
-                </div>
+        <div class="training-focus-shell ${isTakeoverState ? "training-focus-shell--takeover" : ""}">
+          ${!isTakeoverState ? `
+            <aside class="training-focus-aside">
+              <div class="training-focus-summary">
+                <div class="kicker">Current mission</div>
+                <h3>${escapeHtml(currentStep?.title || config.title)}</h3>
+                <p>${escapeHtml(currentStep?.instruction || config.subtitle)}</p>
               </div>
-            ` : ""}
-          </aside>
+              ${renderArcProgressRail(config)}
+              ${config.memoryHook ? `
+                <details class="training-memory-hook">
+                  <summary>Memory clue</summary>
+                  <p>${escapeHtml(config.memoryHook)}</p>
+                </details>
+              ` : ""}
+              ${sceneImage ? `<div class="training-scene-preview"><img src="${escapeHtml(sceneImage)}" alt="${escapeHtml(config.title)} scene preview"></div>` : ""}
+              ${guideCharacter ? `
+                <div class="training-guide-mini">
+                  <img class="training-guide-mini-image" src="${escapeHtml(guidePose)}" alt="EST guide character">
+                  <div class="training-guide-mini-copy">
+                    <div class="kicker">EST guide</div>
+                    <p>${escapeHtml(getESTGuideCopy(groupId, guideContext))}</p>
+                  </div>
+                </div>
+              ` : ""}
+            </aside>
+          ` : ""}
           <div class="training-focus-main">
             <div class="training-campaign-grid training-campaign-grid--flash">
           ${completedAll ? `
@@ -2121,7 +2126,9 @@ function renderArcTrainingBay(config, score) {
               <div class="training-main-header compact">
                 <div class="training-main-copy">
                   <div class="kicker">Central task</div>
-                  <h2>${escapeHtml(currentItem.prompt)}</h2>
+                  ${currentAnswer
+                    ? `<h2>${escapeHtml(currentStep?.title || "Central task")}</h2>`
+                    : `<h2>${escapeHtml(currentItem?.prompt || "")}</h2>`}
                 </div>
                 <div class="training-step-meter">
                   <strong>${escapeHtml(`${stepProgress.correct}/${stepProgress.total} restored`)}</strong>
@@ -2432,6 +2439,127 @@ function buildContentResponse(groupId) {
   renderContentStage();
 }
 
+function getResponseCoachScorePercent(group) {
+  const responseCoach = evaluateContentResponse(group);
+  const segmentPasses = responseCoach.segmentResults.filter(item => item.passed).length;
+  const reasoningPass = responseCoach.builtHasReasoning ? 1 : 0;
+  const totalChecks = responseCoach.segmentResults.length + 1;
+  if (!totalChecks) return 0;
+  return Math.round(((segmentPasses + reasoningPass) / totalChecks) * 100);
+}
+
+function evaluateContentTopic(group) {
+  const trainingConfig = getContentTrainingConfig(group.id);
+  const trainingScore = trainingConfig ? getTrainingScore(trainingConfig) : { correct: 0, total: 0, percent: 0 };
+  const roundResults = group.rounds.map((round, index) => ({
+    topic: round.topic,
+    question: round.question,
+    selected: state.answers[`content-${group.id}-${index}`] || "not chosen",
+    correctAnswer: round.correct,
+    correct: state.answers[`content-${group.id}-${index}`] === round.correct
+  }));
+  const knowledgeCorrect = roundResults.filter(item => item.correct).length;
+  const knowledgePercent = roundResults.length ? Math.round((knowledgeCorrect / roundResults.length) * 100) : 0;
+  const builtResponse = state.answers[`content-note-${group.id}`] || "";
+  const responseCoach = evaluateContentResponse(group);
+  const responsePercent = builtResponse ? getResponseCoachScorePercent(group) : 0;
+  const overallPercent = Math.round((knowledgePercent * 0.4) + (trainingScore.percent * 0.4) + (responsePercent * 0.2));
+  return {
+    group,
+    trainingConfig,
+    trainingScore,
+    roundResults,
+    knowledgeCorrect,
+    knowledgePercent,
+    responseCoach,
+    responsePercent,
+    builtResponse,
+    overallPercent
+  };
+}
+
+function awardContentTopicImprovement(summary) {
+  const stage = STAGES.find(item => item.id === "content");
+  if (!stage) return { improved: false, firstBank: false, earnedMarks: 0, readinessGain: 0, credits: 0, tax: 0, previousPercent: 0, nextPercent: 0 };
+  const totalTopics = Math.max(1, (state.stageDeck?.contentGroups || []).length);
+  const previousPercent = Math.max(0, Number(state.contentTopicBestScores[summary.group.id] || 0));
+  const nextPercent = Math.max(previousPercent, Number(summary.overallPercent || 0));
+  const deltaRatio = Math.max(0, (nextPercent - previousPercent) / 100);
+  if (!deltaRatio) {
+    return {
+      improved: false,
+      firstBank: false,
+      earnedMarks: 0,
+      readinessGain: 0,
+      credits: 0,
+      tax: 0,
+      previousPercent,
+      nextPercent
+    };
+  }
+
+  const stageMarksShare = stage.marks / totalTopics;
+  const stageReadinessShare = stage.readiness / totalTopics;
+  const stageCreditShare = stage.credits / totalTopics;
+  const earnedMarks = Math.max(0, Math.round(stageMarksShare * deltaRatio));
+  const readinessGain = Math.max(0, Math.round(stageReadinessShare * deltaRatio));
+  const credits = Math.max(0, Math.round(stageCreditShare * deltaRatio));
+  const tax = Math.max(0, Math.round(credits * stage.taxRate));
+
+  state.marksBanked += earnedMarks;
+  state.readiness = Math.min(100, state.readiness + readinessGain);
+  state.confidence = Math.max(0, Math.min(100, state.confidence + (previousPercent ? 2 : 3)));
+  state.salaryBoost += credits;
+  state.taxContribution += tax;
+  state.contentTopicBestScores[summary.group.id] = nextPercent;
+
+  const allGroups = state.stageDeck?.contentGroups || [];
+  const allBanked = allGroups.length > 0 && allGroups.every(group => Number(state.contentTopicBestScores[group.id] || 0) > 0);
+  if (allBanked) {
+    state.completed.content = true;
+    state.stageBestScores.content = Math.max(
+      Number(state.stageBestScores.content || 0),
+      allGroups.reduce((sum, group) => sum + Number(state.contentTopicBestScores[group.id] || 0), 0) / (allGroups.length * 100)
+    );
+  }
+
+  state.recentReward = {
+    type: "positive",
+    title: `${summary.group.title} banked`,
+    detail: `+${earnedMarks} marks • +${readinessGain}% readiness • +${formatCurrency(credits)} salary • +${formatCurrency(tax)} class contribution`
+  };
+  state.debriefLog.push({
+    title: `${summary.group.title} saved`,
+    detail: `${summary.overallPercent}% strand score • ${formatCurrency(credits)} salary • ${formatCurrency(tax)} community tax`
+  });
+  pushEconomyLog({
+    eventType: "reward-awarded",
+    checkpoint: `revision-topic-${summary.group.id}`,
+    label: `EST content topic - ${summary.group.title}`,
+    detail: `${summary.overallPercent}% strand score`,
+    earnedDelta: credits,
+    taxDelta: tax,
+    salaryBoostTotal: Number(state.salaryBoost || 0),
+    taxContributionTotal: Number(state.taxContribution || 0)
+  });
+  renderMetrics();
+  renderResources();
+  renderRewardPulse();
+  renderMap();
+  renderDebrief();
+
+  return {
+    improved: true,
+    firstBank: previousPercent === 0,
+    earnedMarks,
+    readinessGain,
+    credits,
+    tax,
+    previousPercent,
+    nextPercent
+  };
+}
+
 function renderContentResponseForge(group) {
   const scaffold = getContentResponseScaffold(group);
   if (!scaffold) {
@@ -2499,6 +2627,72 @@ function renderContentResponseForge(group) {
         </div>
       </div>
     ` : ""}
+  `;
+}
+
+function renderContentTopicReview(summary) {
+  if (!summary) return "";
+  const coachLabel = summary.responseCoach.level === "strong"
+    ? "Strong sentence signal"
+    : summary.responseCoach.level === "developing"
+      ? "Developing sentence signal"
+      : "Needs sharpening";
+  return `
+    <section class="est-scene-shell est-scene-shell--success" ${buildESTSceneStyle("success")}>
+      <div class="panel training-bay training-campaign training-campaign--focus">
+        <div class="training-hud">
+          <div class="training-hud-copy">
+            <div class="kicker">Topic banked</div>
+            <h2>${escapeHtml(summary.group.title)}</h2>
+          </div>
+          <div class="training-hud-status">
+            <strong>${summary.overallPercent}% strand result</strong>
+            <small>${summary.knowledgeCorrect}/${summary.roundResults.length} knowledge • ${summary.trainingScore.percent}% reactor • ${summary.responsePercent}% response</small>
+          </div>
+        </div>
+        <div class="sample-review" style="margin-top:18px;padding-top:0;border-top:0;">
+          <div class="sample-grid">
+            <article class="sample-card">
+              <div class="sample-meta">
+                <strong>Your EST response</strong>
+                <span>${coachLabel}</span>
+              </div>
+              <p>${escapeHtml(summary.builtResponse || "No EST response entered yet.")}</p>
+              <p class="sample-commentary">${escapeHtml(summary.responseCoach.summary)}</p>
+            </article>
+            <article class="sample-card strong">
+              <div class="sample-meta">
+                <strong>Model answer</strong>
+                <span>Compare + improve</span>
+              </div>
+              <p>${escapeHtml(summary.group.sampleResponse)}</p>
+              <p class="sample-commentary">Use the model to compare specificity, workplace example, and the why-it-matters explanation.</p>
+            </article>
+          </div>
+        </div>
+        <div class="rubric-grid" style="margin-top:16px;">
+          <div class="rubric-chip ${summary.knowledgePercent >= 70 ? "pass" : "fail"}">
+            <strong>Knowledge checks</strong>
+            <span>${summary.knowledgePercent}%</span>
+          </div>
+          <div class="rubric-chip ${summary.trainingScore.percent >= 70 ? "pass" : "fail"}">
+            <strong>Reactor practice</strong>
+            <span>${summary.trainingScore.percent}%</span>
+          </div>
+          <div class="rubric-chip ${summary.responsePercent >= 70 ? "pass" : "fail"}">
+            <strong>EST response</strong>
+            <span>${summary.responsePercent}%</span>
+          </div>
+        </div>
+        <div class="builder-actions" style="margin-top:18px;">
+          <button class="submit-button" type="button" onclick="window.ESTPrep.openStage('content')">Back to topic menu</button>
+          <button class="submit-button" type="button" onclick="window.ESTPrep.retryCurrentContentTopic()">Replay this topic</button>
+          ${state.contentGroupIndex < ((state.stageDeck?.contentGroups || []).length - 1)
+            ? '<button class="submit-button" type="button" onclick="window.ESTPrep.nextContentGroup()">Next Topic</button>'
+            : '<button class="submit-button" type="button" onclick="window.ESTPrep.submitContent()">Bank Full Content Suite</button>'}
+        </div>
+      </div>
+    </section>
   `;
 }
 
@@ -3701,6 +3895,15 @@ function renderContentStage() {
     renderStageRoot(renderContentTopicIntro(currentGroup));
     return;
   }
+  if (state.contentView === "review" && currentGroup && state.lastContentTopicReview?.group?.id === currentGroup.id) {
+    setGameplayViewportMode(false);
+    setStageScene("success");
+    setStageMenuMode(false);
+    setText("stage-title", "EST Content Check");
+    setText("stage-subtitle", `${currentGroup.title} banked. Compare your response before moving on.`);
+    renderStageRoot(renderContentTopicReview(state.lastContentTopicReview));
+    return;
+  }
   setStageMenuMode(false);
   const trainingConfig = getContentTrainingConfig(currentGroup.id);
   const trainingScore = getTrainingScore(trainingConfig);
@@ -3772,9 +3975,10 @@ function renderContentStage() {
       <div style="display:flex;gap:12px;flex-wrap:wrap;">
         <button class="submit-button" type="button" onclick="window.ESTPrep.openStage('content')">Back to topic menu</button>
         ${state.contentGroupIndex > 0 ? '<button class="submit-button" type="button" onclick="window.ESTPrep.prevContentGroup()">Previous Topic</button>' : ""}
-        ${state.contentGroupIndex < groups.length - 1
-          ? '<button class="submit-button" type="button" onclick="window.ESTPrep.nextContentGroup()">Next Topic</button>'
-          : '<button class="submit-button" type="button" onclick="window.ESTPrep.submitContent()">Bank Content Results</button>'}
+        <button class="submit-button" type="button" onclick="window.ESTPrep.submitCurrentContentTopic()">Bank Topic Review</button>
+        ${state.contentGroupIndex === groups.length - 1
+          ? '<button class="submit-button" type="button" onclick="window.ESTPrep.submitContent()">Bank Full Content Suite</button>'
+          : ""}
       </div>
     </div>
   `);
@@ -4144,8 +4348,62 @@ function startContentGroup() {
   scrollToTopSmooth();
 }
 
+async function submitCurrentContentTopic() {
+  const groups = state.stageDeck?.contentGroups || [];
+  const currentGroup = groups[state.contentGroupIndex];
+  if (!currentGroup) return;
+
+  persistCurrentContentNote();
+  bankCurrentContentDuration();
+  const summary = evaluateContentTopic(currentGroup);
+  const reward = awardContentTopicImprovement(summary);
+  summary.reward = reward;
+  state.lastContentTopicReview = summary;
+  state.contentView = "review";
+
+  await saveProgress(
+    `revision-topic-${currentGroup.id}`,
+    "revision-topic-check",
+    `${currentGroup.title}: ${summary.knowledgeCorrect}/${summary.roundResults.length} knowledge checks correct.\nEST response: ${summary.builtResponse || "No response entered."}`,
+    summary.overallPercent,
+    {
+      taskName: `EST Content Topic - ${currentGroup.title}`,
+      durationSeconds: state.contentGroupDurations[currentGroup.id] || 0,
+      promptText: currentGroup.writePrompt,
+      extraPayload: {
+        topic_group_id: currentGroup.id,
+        topic_group: currentGroup.title,
+        knowledge_percent: summary.knowledgePercent,
+        training_percent: summary.trainingScore.percent,
+        response_percent: summary.responsePercent,
+        built_response: summary.builtResponse,
+        sample_response: currentGroup.sampleResponse,
+        round_results: summary.roundResults
+      }
+    }
+  );
+
+  if (!reward.improved) {
+    state.recentReward = {
+      type: "warning",
+      title: `${currentGroup.title} saved`,
+      detail: `This topic has been saved for review. Your best banked result remains ${Math.round(reward.previousPercent)}%, so no extra salary or tax was added this time.`
+    };
+    renderRewardPulse();
+  }
+
+  renderContentStage();
+  scrollToTopSmooth();
+}
+
 function moveContentGroup(step) {
   jumpToContentGroup(state.contentGroupIndex + step);
+}
+
+function retryCurrentContentTopic() {
+  if (state.contentGroupIndex < 0) return;
+  state.lastContentTopicReview = null;
+  openContentGroupIntro(state.contentGroupIndex);
 }
 
 function openStage(stageId) {
@@ -4167,6 +4425,7 @@ function openStage(stageId) {
     }
     state.contentGroupIndex = -1;
     state.contentView = "menu";
+    state.lastContentTopicReview = null;
     if (previousStageId !== "content") {
       state.contentGroupStartedAt = Date.now();
       state.contentGroupDurations = {};
@@ -5145,6 +5404,8 @@ window.ESTPrep = {
   openStage,
   openContentGroupIntro,
   startContentGroup,
+  submitCurrentContentTopic,
+  retryCurrentContentTopic,
   nextContentGroup: () => moveContentGroup(1),
   prevContentGroup: () => moveContentGroup(-1),
   jumpToContentGroup,

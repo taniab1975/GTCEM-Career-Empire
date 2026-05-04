@@ -995,6 +995,10 @@ body.est-gameplay-viewport {
   min-height: 100%;
 }
 
+.training-focus-shell--takeover {
+  grid-template-columns: 1fr;
+}
+
 .training-focus-aside,
 .training-focus-main {
   min-width: 0;
@@ -1169,9 +1173,9 @@ body.est-gameplay-viewport {
 }
 
 .training-main-copy h2 {
-  max-width: 17ch;
-  font-size: clamp(1.25rem, 1.9vw, 1.9rem);
-  line-height: 1.12;
+  max-width: 20ch;
+  font-size: clamp(1.05rem, 1.55vw, 1.55rem);
+  line-height: 1.08;
   letter-spacing: -0.02em;
 }
 
@@ -1252,19 +1256,19 @@ body.est-gameplay-viewport {
 }
 
 .training-answer-state {
-  min-height: clamp(460px, 58vh, 640px);
+  min-height: clamp(320px, 42vh, 460px);
   display: grid;
-  align-content: center;
+  align-content: start;
   justify-items: center;
-  gap: 18px;
+  gap: 14px;
   text-align: center;
-  padding: 8px 12px;
+  padding: 0;
 }
 
 .training-answer-copy {
   display: grid;
-  gap: 10px;
-  max-width: 720px;
+  gap: 8px;
+  max-width: 760px;
 }
 
 .training-answer-copy h3 {
@@ -1275,7 +1279,7 @@ body.est-gameplay-viewport {
 .training-answer-state .training-feedback {
   margin-top: 0;
   min-height: 0;
-  font-size: 1.12rem;
+  font-size: 1rem;
   color: #e8f2ff;
 }
 
@@ -1357,6 +1361,7 @@ body.est-gameplay-viewport {
   display: block;
   object-fit: contain;
   filter: drop-shadow(0 18px 28px rgba(3, 8, 20, 0.38));
+  mix-blend-mode: screen;
 }
 
 .training-flash-media--feedback img {
@@ -1364,7 +1369,7 @@ body.est-gameplay-viewport {
 }
 
 .training-flash-media--state img {
-  width: min(190px, 36vw);
+  width: min(96px, 18vw);
 }
 
 .arc-action-row {
@@ -1413,7 +1418,7 @@ body.est-gameplay-viewport {
 .arc-action-button--overlay {
   position: relative;
   min-width: 320px;
-  min-height: 96px;
+  min-height: 80px;
   padding: 0;
   overflow: hidden;
   border-color: rgba(97, 240, 255, 0.44);
@@ -1427,8 +1432,9 @@ body.est-gameplay-viewport {
 }
 
 .arc-action-button--overlay .arc-action-media img {
-  object-fit: contain;
+  object-fit: cover;
   opacity: 0.95;
+  mix-blend-mode: screen;
 }
 
 .arc-action-button--overlay .arc-action-label {
@@ -1438,7 +1444,7 @@ body.est-gameplay-viewport {
   place-items: center;
   padding: 0 22px;
   text-align: center;
-  font-size: 1rem;
+  font-size: 0.9rem;
   text-shadow: 0 4px 18px rgba(0, 0, 0, 0.85);
 }
 
@@ -1465,6 +1471,33 @@ body.est-gameplay-viewport {
 .training-hint-inline--state {
   justify-content: center;
   max-width: 720px;
+}
+
+.training-answer-state .arc-action-row {
+  margin-top: 2px;
+}
+
+.training-answer-state .training-economy-note {
+  max-width: 760px;
+}
+
+.training-answer-state .training-hint-inline--state {
+  margin-top: 2px;
+}
+
+.training-focus-shell--takeover .training-step--transition,
+.training-focus-shell--takeover .training-step--flash {
+  max-width: 860px;
+  justify-self: center;
+}
+
+.training-focus-shell--takeover .training-main-header {
+  grid-template-columns: minmax(0, 1fr);
+}
+
+.training-focus-shell--takeover .training-step-meter {
+  justify-items: center;
+  text-align: center;
 }
 
 #stage-section.gameplay-viewport .est-scene-shell {
