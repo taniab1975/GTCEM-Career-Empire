@@ -745,6 +745,25 @@ body.est-lab-mode #stage-section[data-scene="success"] {
   gap: 14px;
 }
 
+body.est-gameplay-viewport {
+  overflow: hidden;
+}
+
+#stage-section.gameplay-viewport #stage-pulse,
+#stage-section.gameplay-viewport .section-title {
+  display: none;
+}
+
+#stage-section.gameplay-viewport {
+  min-height: calc(100vh - 170px);
+}
+
+#stage-section.gameplay-viewport .stage-root {
+  min-height: calc(100vh - 250px);
+  display: flex;
+  align-items: stretch;
+}
+
 .stage-pulse {
   margin-bottom: 18px;
 }
@@ -952,6 +971,7 @@ body.est-lab-mode #stage-section[data-scene="success"] {
 
 .training-campaign-grid--flash {
   grid-template-columns: 1fr;
+  width: 100%;
 }
 
 .training-focus-shell {
@@ -960,11 +980,16 @@ body.est-lab-mode #stage-section[data-scene="success"] {
   gap: 18px;
   align-items: start;
   margin-top: 18px;
+  min-height: 100%;
 }
 
 .training-focus-aside,
 .training-focus-main {
   min-width: 0;
+}
+
+.training-focus-main {
+  display: flex;
 }
 
 .training-focus-aside {
@@ -1107,6 +1132,12 @@ body.est-lab-mode #stage-section[data-scene="success"] {
   justify-items: center;
 }
 
+.training-step--flash {
+  min-height: 100%;
+  display: grid;
+  align-content: start;
+}
+
 .training-main-header {
   display: grid;
   grid-template-columns: minmax(0, 1fr) 260px;
@@ -1204,6 +1235,34 @@ body.est-lab-mode #stage-section[data-scene="success"] {
   box-shadow: 0 24px 48px rgba(4, 9, 24, 0.36), inset 0 0 0 1px rgba(255,255,255,0.03);
 }
 
+.training-answer-state {
+  min-height: clamp(460px, 58vh, 640px);
+  display: grid;
+  align-content: center;
+  justify-items: center;
+  gap: 18px;
+  text-align: center;
+  padding: 8px 12px;
+}
+
+.training-answer-copy {
+  display: grid;
+  gap: 10px;
+  max-width: 720px;
+}
+
+.training-answer-copy h3 {
+  font-size: clamp(1.5rem, 2vw, 2.2rem);
+  line-height: 1.15;
+}
+
+.training-answer-state .training-feedback {
+  margin-top: 0;
+  min-height: 0;
+  font-size: 1.12rem;
+  color: #e8f2ff;
+}
+
 .training-card-lead {
   display: grid;
   gap: 10px;
@@ -1288,6 +1347,10 @@ body.est-lab-mode #stage-section[data-scene="success"] {
   width: min(120px, 100%);
 }
 
+.training-flash-media--state img {
+  width: min(190px, 36vw);
+}
+
 .arc-action-row {
   display: flex;
   justify-content: center;
@@ -1319,10 +1382,52 @@ body.est-lab-mode #stage-section[data-scene="success"] {
   box-shadow: 0 20px 38px rgba(3, 8, 20, 0.3);
 }
 
+.arc-action-media {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
 .arc-action-button img {
   width: 70px;
   height: auto;
   display: block;
+}
+
+.arc-action-button--overlay {
+  position: relative;
+  min-width: 320px;
+  min-height: 108px;
+  padding: 0;
+  overflow: hidden;
+  border-color: rgba(97, 240, 255, 0.44);
+  background: linear-gradient(135deg, rgba(8, 16, 38, 0.98), rgba(9, 18, 42, 0.98));
+}
+
+.arc-action-button--overlay .arc-action-media,
+.arc-action-button--overlay .arc-action-media img {
+  width: 100%;
+  height: 100%;
+}
+
+.arc-action-button--overlay .arc-action-media img {
+  object-fit: contain;
+  opacity: 0.95;
+}
+
+.arc-action-button--overlay .arc-action-label {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  padding: 0 22px;
+  text-align: center;
+  font-size: 1.1rem;
+  text-shadow: 0 4px 18px rgba(0, 0, 0, 0.85);
+}
+
+.arc-action-button--retry {
+  border-color: rgba(255, 216, 108, 0.34);
 }
 
 .training-hint-inline {
@@ -1339,6 +1444,11 @@ body.est-lab-mode #stage-section[data-scene="success"] {
   width: 56px;
   height: auto;
   display: block;
+}
+
+.training-hint-inline--state {
+  justify-content: center;
+  max-width: 720px;
 }
 
 .training-actions {

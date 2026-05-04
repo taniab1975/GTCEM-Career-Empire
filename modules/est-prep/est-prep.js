@@ -1406,6 +1406,12 @@ function setStageMenuMode(active) {
   if (stageSection) stageSection.classList.toggle("menu-mode", active);
 }
 
+function setGameplayViewportMode(active) {
+  document.body.classList.toggle("est-gameplay-viewport", active);
+  const stageSection = document.getElementById("stage-section");
+  if (stageSection) stageSection.classList.toggle("gameplay-viewport", active);
+}
+
 function getESTSceneBackground(scene) {
   if (scene === "challenge" || scene === "warning") return EST_SCENE_BACKGROUNDS.challenge;
   if (scene === "restored" || scene === "success") return EST_SCENE_BACKGROUNDS.restored;
@@ -2003,8 +2009,8 @@ function renderArcActionButton({ label, onclick, asset, className = "" }) {
   const classes = ["arc-action-button", className].filter(Boolean).join(" ");
   return `
     <button type="button" class="${escapeHtml(classes)}" onclick="${onclick}">
-      <span>${escapeHtml(label)}</span>
-      ${asset ? `<img src="${escapeHtml(asset)}" alt="">` : ""}
+      ${asset ? `<span class="arc-action-media"><img src="${escapeHtml(asset)}" alt=""></span>` : ""}
+      <span class="arc-action-label">${escapeHtml(label)}</span>
     </button>
   `;
 }
@@ -2105,7 +2111,8 @@ function renderArcTrainingBay(config, score) {
                 ${renderArcActionButton({
                   label: `Start Step ${transitionStepNumber}`,
                   onclick: `window.ESTPrep.startArcStep('${config.type}')`,
-                  asset: EST_ANIMATED_ASSETS.next
+                  asset: EST_ANIMATED_ASSETS.transition,
+                  className: "arc-action-button--overlay"
                 })}
               </div>
             </section>
@@ -2125,27 +2132,16 @@ function renderArcTrainingBay(config, score) {
                 </div>
               </div>
               <article class="training-card training-card--flash ${currentAnswer ? (isCorrect ? "good" : "bad") : ""}">
-                <div class="training-card-lead">
-                  <div class="kicker">${escapeHtml(currentStep.title)}</div>
-                  <p>${escapeHtml(currentStep.instruction || "Choose the strongest initiative move.")}</p>
-                </div>
-                <div class="training-stack">
-                  ${currentItem.options.map(option => `
-                    <button
-                      type="button"
-                      class="choice-button ${currentAnswer === option ? "selected live-selected" : ""} ${currentAnswer && option === currentItem.correct ? "correct" : ""} ${currentAnswer === option && !isCorrect ? "incorrect" : ""}"
-                      onclick="window.ESTPrep.setTrainingChoiceEncoded('${answerKey}', '${encodeURIComponent(option)}')"
-                    >
-                      <strong>${escapeHtml(option)}</strong>
-                    </button>
-                  `).join("")}
-                </div>
                 ${currentAnswer ? `
-                  <div class="training-feedback-block ${isCorrect ? "good" : "bad"}">
-                    <div class="training-flash-media training-flash-media--feedback">
+                  <div class="training-answer-state ${isCorrect ? "good" : "bad"}">
+                    <div class="training-flash-media training-flash-media--state">
                       <img src="${escapeHtml(isCorrect ? EST_ANIMATED_ASSETS.tick : EST_ANIMATED_ASSETS.wrong)}" alt="${escapeHtml(isCorrect ? "Correct answer animation" : "Wrong answer animation")}">
                     </div>
-                    <p class="training-feedback">${escapeHtml(`${isCorrect ? "Strong initiative call." : "Not quite yet."} ${currentItem.feedback}`)}</p>
+                    <div class="training-answer-copy">
+                      <div class="kicker">${escapeHtml(isCorrect ? "Signal restored" : "Try again")}</div>
+                      <h3>${escapeHtml(isCorrect ? "Strong initiative call locked" : "That choice won’t unlock the chamber")}</h3>
+                      <p class="training-feedback">${escapeHtml(`${isCorrect ? "Strong initiative call." : "Not quite yet."} ${currentItem.feedback}`)}</p>
+                    </div>
                     <div class="training-economy-note ${isCorrect ? "good" : "bad"}">
                       <strong>${isCorrect ? "Micro reward signal" : "Banking rule"}</strong>
                       <span>${escapeHtml(microReward)}</span>
@@ -2155,17 +2151,41 @@ function renderArcTrainingBay(config, score) {
                         ${renderArcActionButton({
                           label: questionNumber === questionCount ? `Finish Step ${stepNumber}` : "Next flash card",
                           onclick: `window.ESTPrep.advanceArcCard('${config.type}')`,
-                          asset: EST_ANIMATED_ASSETS.next
+                          asset: EST_ANIMATED_ASSETS.next,
+                          className: "arc-action-button--overlay"
                         })}
                       </div>
                     ` : `
-                      <div class="training-hint-inline">
+                      <div class="training-hint-inline training-hint-inline--state">
                         <img src="${escapeHtml(EST_ANIMATED_ASSETS.hint)}" alt="Hint animation">
-                        <span>Try another choice. You’ll stay on this card until you lock the strongest move.</span>
+                        <span>Try again. You’ll return to this flash card until you lock the strongest move.</span>
+                      </div>
+                      <div class="arc-action-row">
+                        ${renderArcActionButton({
+                          label: "Try again",
+                          onclick: `window.ESTPrep.retryArcCard('${config.type}')`,
+                          asset: EST_ANIMATED_ASSETS.hint,
+                          className: "arc-action-button--overlay arc-action-button--retry"
+                        })}
                       </div>
                     `}
                   </div>
                 ` : `
+                  <div class="training-card-lead">
+                    <div class="kicker">${escapeHtml(currentStep.title)}</div>
+                    <p>${escapeHtml(currentStep.instruction || "Choose the strongest initiative move.")}</p>
+                  </div>
+                  <div class="training-stack">
+                    ${currentItem.options.map(option => `
+                      <button
+                        type="button"
+                        class="choice-button ${currentAnswer === option ? "selected live-selected" : ""} ${currentAnswer && option === currentItem.correct ? "correct" : ""} ${currentAnswer === option && !isCorrect ? "incorrect" : ""}"
+                        onclick="window.ESTPrep.setTrainingChoiceEncoded('${answerKey}', '${encodeURIComponent(option)}')"
+                      >
+                        <strong>${escapeHtml(option)}</strong>
+                      </button>
+                    `).join("")}
+                  </div>
                   <p class="training-feedback">Pick the strongest move, get instant feedback, then move to the next flash card.</p>
                 `}
               </article>
@@ -3660,6 +3680,7 @@ function renderContentStage() {
   const currentGroup = groups[state.contentGroupIndex];
   renderFocusNav();
   if (state.contentView === "menu" || !currentGroup) {
+    setGameplayViewportMode(false);
     setStageScene("neutral");
     setStageMenuMode(true);
     setText("stage-title", "");
@@ -3672,6 +3693,7 @@ function renderContentStage() {
     return;
   }
   if (state.contentView === "intro") {
+    setGameplayViewportMode(false);
     setStageScene("neutral");
     setStageMenuMode(false);
     setText("stage-title", "EST Content Check");
@@ -3684,17 +3706,13 @@ function renderContentStage() {
   const trainingScore = getTrainingScore(trainingConfig);
   const trainingIsArc = trainingConfig && isArcTrainingType(trainingConfig.type);
   const trainingComplete = trainingScore.total > 0 && trainingScore.correct === trainingScore.total;
+  setGameplayViewportMode(trainingIsArc && !trainingComplete);
   setStageScene(trainingScore.total > 0 && trainingScore.correct === trainingScore.total ? "restored" : "challenge");
   setText("stage-title", trainingIsArc && !trainingComplete ? "" : "EST Content Check");
   setText("stage-subtitle", trainingIsArc && !trainingComplete ? "" : "Train one content strand at a time with a clean, distraction-light interface.");
   if (trainingIsArc && !trainingComplete) {
     renderStageRoot(`
       ${renderTrainingBay(currentGroup)}
-      <div class="written-stage" style="margin-top: 16px;">
-        <div style="display:flex;gap:12px;flex-wrap:wrap;justify-content:center;">
-          <button class="submit-button" type="button" onclick="window.ESTPrep.openStage('content')">Back to topic menu</button>
-        </div>
-      </div>
     `);
     return;
   }
@@ -3824,6 +3842,7 @@ function renderESTGuidePanel(groupId, context) {
 }
 
 function renderGlossaryStage() {
+  setGameplayViewportMode(false);
   setStageMenuMode(false);
   renderFocusNav();
   syncMissionMode();
@@ -3937,6 +3956,7 @@ function renderGlossaryStage() {
 }
 
 function renderDecoderStage() {
+  setGameplayViewportMode(false);
   setStageMenuMode(false);
   setStageScene("challenge");
   renderFocusNav();
@@ -3988,6 +4008,7 @@ function renderDecoderStage() {
 }
 
 function renderBossStage() {
+  setGameplayViewportMode(false);
   setStageMenuMode(false);
   setStageScene("challenge");
   renderFocusNav();
@@ -4130,6 +4151,7 @@ function moveContentGroup(step) {
 function openStage(stageId) {
   const previousStageId = state.selectedStageId;
   setLabMode(true);
+  setGameplayViewportMode(false);
   if (stageId !== "glossary") {
     state.glossaryMissionMode = false;
     clearGlossaryTimer();
@@ -4250,6 +4272,25 @@ function advanceArcCard(configType) {
       lastOutcome: "correct"
     };
   }
+  renderContentStage();
+}
+
+function retryArcCard(configType) {
+  const config = getTrainingConfigByType(configType);
+  if (!config) return;
+  const flow = getArcFlow(config);
+  if (!flow || flow.phase !== "feedback" || flow.lastOutcome !== "wrong") return;
+  const currentStep = config.steps?.[flow.stepIndex];
+  const currentItem = currentStep?.items?.[flow.itemIndex];
+  if (!currentItem) return;
+  const answerKey = getArcTrainingAnswerKey(config.type, currentItem.id);
+  delete state.answers[answerKey];
+  state.arcFlows[config.type] = {
+    phase: "question",
+    stepIndex: flow.stepIndex,
+    itemIndex: flow.itemIndex,
+    lastOutcome: null
+  };
   renderContentStage();
 }
 
@@ -5061,6 +5102,7 @@ async function submitBoss() {
 function returnToTrack() {
   setLabMode(false);
   setStageMenuMode(false);
+  setGameplayViewportMode(false);
   setStageScene("neutral");
   state.selectedStageId = null;
   state.lastBossReview = null;
@@ -5109,6 +5151,7 @@ window.ESTPrep = {
   setTrainingChoice,
   setTrainingChoiceEncoded,
   advanceArcCard,
+  retryArcCard,
   startArcStep,
   setContentResponseSegmentEncoded,
   buildContentResponse,
