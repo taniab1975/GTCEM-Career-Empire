@@ -746,7 +746,8 @@ body.est-lab-mode #stage-section[data-scene="success"] {
 }
 
 body.est-gameplay-viewport {
-  overflow: hidden;
+  overflow-x: hidden;
+  overflow-y: auto;
 }
 
 #stage-section.gameplay-viewport #stage-pulse,
@@ -755,11 +756,11 @@ body.est-gameplay-viewport {
 }
 
 #stage-section.gameplay-viewport {
-  min-height: calc(100vh - 170px);
+  min-height: auto;
 }
 
 #stage-section.gameplay-viewport .stage-root {
-  min-height: calc(100vh - 250px);
+  min-height: auto;
   display: flex;
   align-items: stretch;
 }
