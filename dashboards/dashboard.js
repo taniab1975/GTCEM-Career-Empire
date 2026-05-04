@@ -96,7 +96,10 @@ async function getPlayers() {
 async function getCurrentStudentAssetCount() {
   const authState = getAuthPrototypeState();
   const studentId = authState?.studentLogin?.id;
-  if (!studentId) return null;
+  if (!studentId) {
+    const session = getCurrentPlayerSession();
+    return Array.isArray(session?.ownedAssets) ? session.ownedAssets.length : null;
+  }
 
   const supabase = await getSupabaseClientOrNull();
   if (!supabase) return null;
@@ -1602,7 +1605,9 @@ async function renderStudentLiveData(players, skillsData) {
     record
       ? `${record.career_title || "Professional"} from ${record.school_name || "your class"} with ${overallMastery}% overall megatrend mastery and ${record.years_played || 0} years played.`
       : authState?.studentLogin?.username
-        ? authState?.studentLogin?.preview
+        ? authState?.studentLogin?.demo
+          ? `Demo student mode is active for ${authState.studentLogin.displayName || authState.studentLogin.username}. Explore the full student journey, spend in the shop, and test modules without saving to live student records.`
+          : authState?.studentLogin?.preview
           ? `Teacher preview mode is active for ${authState.studentLogin.displayName || authState.studentLogin.username}. Explore the student experience without affecting live student records.`
           : `Signed in as ${authState.studentLogin.username}. Launch the game to begin building live module progress and shared career stats.`
         : "Launch the Megatrends game first, then come back here to see your live player profile."
@@ -1621,7 +1626,13 @@ async function renderStudentLiveData(players, skillsData) {
       ? [
         renderBadge(`Student: ${authState.studentLogin.displayName || authState.studentLogin.username}`),
         renderBadge(`Username: ${authState.studentLogin.username}`),
-        renderBadge(authState?.studentLogin?.preview ? "Teacher test-student preview" : "Live gameplay stats will appear after the first saved session")
+        renderBadge(
+          authState?.studentLogin?.demo
+            ? "Demo mode • local-only progress"
+            : authState?.studentLogin?.preview
+              ? "Teacher test-student preview"
+              : "Live gameplay stats will appear after the first saved session"
+        )
       ].join("")
       : '<span class="badge">No active student session yet</span>';
   }

@@ -1,6 +1,17 @@
 const ALLOWED_TEACHER_DOMAINS = ["cewa.edu.au", "education.wa.edu.au"];
 const AUTH_DEMO_STATE_KEY = "career-empire-auth-demo";
 const PLAYER_SESSION_KEY = "career-empire-session";
+const DEMO_STUDENT_PROFILE = {
+  id: null,
+  username: "DemoStudent",
+  displayName: "Demo Student",
+  schoolName: "Career Empire Demo",
+  classId: null,
+  classCode: "DEMO",
+  className: "Demo Class",
+  preview: true,
+  demo: true
+};
 const TEACHER_TEST_STUDENT = {
   username: "TeacherPreview",
   displayName: "Teacher Test Student",
@@ -68,6 +79,58 @@ function buildTeacherNavMarkup(activeKey) {
     }
     return `<a class="teacher-nav-item ${activeClass}" href="${item.href}">${item.label}</a>`;
   }).join("");
+}
+
+function seedDemoStudentSession() {
+  writeState({
+    studentLogin: {
+      ...DEMO_STUDENT_PROFILE,
+      loggedInAt: new Date().toISOString()
+    },
+    classroom: {
+      id: null,
+      classCode: DEMO_STUDENT_PROFILE.classCode,
+      name: DEMO_STUDENT_PROFILE.className
+    }
+  });
+
+  localStorage.setItem(PLAYER_SESSION_KEY, JSON.stringify({
+    studentId: null,
+    username: DEMO_STUDENT_PROFILE.username,
+    playerName: DEMO_STUDENT_PROFILE.displayName,
+    schoolName: DEMO_STUDENT_PROFILE.schoolName,
+    classId: DEMO_STUDENT_PROFILE.classId,
+    classCode: DEMO_STUDENT_PROFILE.classCode,
+    className: DEMO_STUDENT_PROFILE.className,
+    careerTitle: "Demo Explorer",
+    annualSalary: 32000,
+    cumulativeNetWorth: 12000,
+    savings: 3200,
+    taxPaid: 0,
+    yearsPlayed: 0,
+    careerLevel: 1,
+    jobSecurity: 68,
+    workLifeBalance: 72,
+    wellbeing: 72,
+    socialStatus: 48,
+    resilience: 61,
+    techMastery: 12,
+    climateMastery: 8,
+    demoMastery: 10,
+    economicMastery: 9,
+    communityVote: "none",
+    lastCommunityVote: "none",
+    ownedAssets: [],
+    economyLog: [],
+    checkpoint: "demo-student-preview",
+    demoMode: true,
+    updatedAt: new Date().toISOString()
+  }));
+}
+
+function launchDemoStudentPreview(targetPath = "../dashboards/student.html") {
+  seedDemoStudentSession();
+  window.location.href = targetPath;
 }
 
 function launchTeacherTestStudentPreview() {
@@ -839,7 +902,6 @@ function initStudentLogin() {
   const usernameInput = document.getElementById("student-username");
   const feedback = document.getElementById("student-username-feedback");
   const form = document.getElementById("student-login-form");
-  const hubButton = document.getElementById("open-student-hub");
   if (!usernameInput || !form) return;
 
   const redirectedError = sessionStorage.getItem("student-login-error");
@@ -864,16 +926,6 @@ function initStudentLogin() {
       feedback.textContent = "Use the exact teacher-issued username. Letters and numbers are allowed, but no spaces or email addresses.";
     }
   });
-
-  if (hubButton) {
-    hubButton.addEventListener("click", event => {
-      const authState = readState();
-      if (authState?.studentLogin?.id) return;
-      event.preventDefault();
-      feedback.className = "feedback bad";
-      feedback.textContent = "Please log in successfully before opening the Student Hub.";
-    });
-  }
 
   form.addEventListener("submit", async (event) => {
     event.preventDefault();
@@ -943,6 +995,16 @@ function initStudentLogin() {
       feedback.className = "feedback bad";
       feedback.textContent = error.message || "Student login failed.";
     }
+  });
+}
+
+function initDemoStudentLaunchers() {
+  document.querySelectorAll("[data-demo-student-launch='true']").forEach(button => {
+    button.addEventListener("click", event => {
+      event.preventDefault();
+      const target = button.dataset.demoStudentTarget || "../dashboards/student.html";
+      launchDemoStudentPreview(target);
+    });
   });
 }
 
@@ -1278,6 +1340,7 @@ document.addEventListener("DOMContentLoaded", () => {
   applyTeacherNavigation();
   initAuthContext();
   loadSchoolOptions();
+  initDemoStudentLaunchers();
   initTeacherSignup();
   initTeacherLogin();
   initTeacherPasswordReset().catch(error => {

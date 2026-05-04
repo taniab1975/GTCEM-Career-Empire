@@ -164,10 +164,31 @@ async function loadApprovedStoreItems() {
 
 async function loadStudentShopContext() {
   const authState = readState();
-  const studentId = authState?.studentLogin?.id;
-  const studentName = authState?.studentLogin?.displayName || authState?.studentLogin?.username || "Student";
-  const schoolName = authState?.studentLogin?.schoolName || "";
-  const classCode = authState?.studentLogin?.classCode || "";
+  const studentLogin = authState?.studentLogin || {};
+  const studentId = studentLogin?.id;
+  const studentName = studentLogin?.displayName || studentLogin?.username || "Student";
+  const schoolName = studentLogin?.schoolName || "";
+  const classCode = studentLogin?.classCode || "";
+  const session = readJsonStorage(PLAYER_SESSION_KEY, {});
+
+  if (!studentId && (studentLogin?.demo || studentLogin?.preview || session?.demoMode)) {
+    return {
+      studentId: null,
+      isDemo: true,
+      studentName,
+      schoolName: schoolName || session.schoolName || "Career Empire Demo",
+      classCode: classCode || session.classCode || "DEMO",
+      profile: {
+        annual_salary: Number(session.annualSalary || 32000),
+        cumulative_net_worth: Number(session.cumulativeNetWorth || 0),
+        savings: Number(session.savings || 0),
+        work_life_balance: Number(session.workLifeBalance || 70),
+        job_security: Number(session.jobSecurity || 70)
+      },
+      assets: Array.isArray(session.ownedAssets) ? session.ownedAssets : []
+    };
+  }
+
   if (!studentId) return null;
 
   const supabase = await getSupabaseClientOrNull();
@@ -207,7 +228,8 @@ function renderShopHero(context) {
   badges.innerHTML = [
     `<span class="badge">Student: ${escapeHtml(context.studentName)}</span>`,
     `<span class="badge">School: ${escapeHtml(context.schoolName || "School not set")}</span>`,
-    `<span class="badge">Class: ${escapeHtml(context.classCode || "Class not set")}</span>`
+    `<span class="badge">Class: ${escapeHtml(context.classCode || "Class not set")}</span>`,
+    context.isDemo ? '<span class="badge">Demo Mode: local only</span>' : ""
   ].join("");
 }
 
@@ -249,14 +271,59 @@ function renderOwnedInventory(context) {
 }
 
 async function buyGlobalAsset(asset, context) {
-  const supabase = await getSupabaseClientOrNull();
-  if (!supabase || !context?.studentId || !context.profile) return;
+  if (!context?.profile) return;
 
   const currentWorth = Number(context.profile.cumulative_net_worth || 0);
   if (currentWorth < asset.cost) {
     alert(`You need ${formatCurrency(asset.cost - currentWorth)} more to buy ${asset.name}.`);
     return;
   }
+
+  if (context.isDemo || !context.studentId) {
+    const nextAssets = [
+      ...(context.assets || []),
+      {
+        id: `demo-${asset.code}-${Date.now()}`,
+        asset_code: asset.code,
+        asset_name: asset.name,
+        asset_category: asset.category,
+        purchase_cost: asset.cost,
+        purchased_at: new Date().toISOString()
+      }
+    ];
+    const nextNetWorth = Math.max(0, currentWorth - asset.cost);
+    const nextSavings = Math.max(0, Number(context.profile.savings || 0) - asset.cost);
+    writePlayerSession({
+      studentId: null,
+      annualSalary: Number(context.profile.annual_salary || 0),
+      cumulativeNetWorth: nextNetWorth,
+      savings: nextSavings,
+      workLifeBalance: Number(context.profile.work_life_balance || 0),
+      jobSecurity: Number(context.profile.job_security || 0),
+      ownedAssets: nextAssets,
+      checkpoint: "shop-purchase",
+      demoMode: true,
+      updatedAt: new Date().toISOString()
+    });
+    pushEconomyLog({
+      eventType: "purchase",
+      moduleId: "global-shop",
+      checkpoint: "shop-purchase",
+      label: asset.name,
+      detail: `Purchased from the demo global shop for ${formatCurrency(asset.cost)}`,
+      earnedDelta: 0,
+      taxDelta: 0,
+      spendDelta: asset.cost,
+      annualSalaryAfter: Number(context.profile.annual_salary || 0),
+      netWorthAfter: nextNetWorth,
+      savingsAfter: nextSavings
+    });
+    window.location.reload();
+    return;
+  }
+
+  const supabase = await getSupabaseClientOrNull();
+  if (!supabase) return;
 
   const { error: assetError } = await supabase
     .from("player_assets")
@@ -382,7 +449,7 @@ function renderShopGrid(context) {
 
   container.querySelectorAll("[data-buy-asset]").forEach(button => {
     button.addEventListener("click", async () => {
-      const asset = GLOBAL_ASSET_CATALOG.find(item => item.code === button.dataset.buyAsset);
+      const asset = getFullAssetCatalog().find(item => item.code === button.dataset.buyAsset);
       if (!asset) return;
       await buyGlobalAsset(asset, context);
     });

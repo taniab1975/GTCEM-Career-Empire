@@ -219,6 +219,17 @@ h1 {
   margin-bottom: 12px;
 }
 
+.tile-demo {
+  border-color: rgba(137, 240, 162, 0.26);
+  background:
+    linear-gradient(145deg, rgba(137, 240, 162, 0.14), rgba(107, 210, 255, 0.06)),
+    var(--panel);
+}
+
+.tile-demo .button-primary {
+  width: 100%;
+}
+
 .pill-row {
   display: flex;
   flex-wrap: wrap;
