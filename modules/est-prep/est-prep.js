@@ -1458,7 +1458,7 @@ function getContentGroupStatus(group, index) {
 }
 
 function isContentLessonActive() {
-  return state.selectedStageId === "content" && state.contentView === "lesson" && state.contentGroupIndex >= 0;
+  return state.selectedStageId === "content" && ["intro", "lesson", "response", "review"].includes(state.contentView) && state.contentGroupIndex >= 0;
 }
 
 function renderFocusNav() {
@@ -2017,6 +2017,18 @@ function renderArcActionButton({ label, onclick, asset, className = "" }) {
   `;
 }
 
+function getContentTopicRewardPreview() {
+  const stage = STAGES.find(item => item.id === "content");
+  const totalTopics = Math.max(1, (state.stageDeck?.contentGroups || []).length);
+  if (!stage) return { marks: 0, readiness: 0, credits: 0, tax: 0 };
+  return {
+    marks: Math.max(1, Math.round(stage.marks / totalTopics)),
+    readiness: Math.max(1, Math.round(stage.readiness / totalTopics)),
+    credits: Math.max(1, Math.round(stage.credits / totalTopics)),
+    tax: Math.max(0, Math.round((stage.credits / totalTopics) * stage.taxRate))
+  };
+}
+
 function renderArcTrainingBay(config, score) {
   const groupId = getGroupIdForTrainingType(config.type);
   const flow = getArcFlow(config);
@@ -2036,15 +2048,7 @@ function renderArcTrainingBay(config, score) {
   const stepProgress = getArcStepQuestionProgress(config, flow?.stepIndex || 0);
   const totalStepCount = steps.length || 4;
   const completedSteps = getArcStepProgress(config).completedSteps;
-  const sceneImage = getArcSceneImage(groupId, scene);
-  const guideCharacter = groupId ? getESTGuideCharacter(groupId) : null;
-  const guidePose = guideCharacter
-    ? guideContext === "forge"
-      ? guideCharacter.thinking
-      : scene === "restored"
-        ? guideCharacter.celebrating
-        : guideCharacter.pointing
-    : "";
+  const rewardPreview = getContentTopicRewardPreview();
   const microReward = isCorrect
     ? `Correct call locked. Salary and tax bank when this strand is completed or improved.`
     : `No salary banks on this card yet. Lock the strongest answer to move forward.`;
@@ -2062,51 +2066,31 @@ function renderArcTrainingBay(config, score) {
             <small>${escapeHtml(completedAll ? `All ${totalStepCount} steps cleared` : `${stepProgress.correct}/${stepProgress.total} cleared in this step • ${completedSteps}/${totalStepCount} steps done`)}</small>
           </div>
         </div>
-        <div class="training-focus-shell ${isTakeoverState ? "training-focus-shell--takeover" : ""}">
-          ${!isTakeoverState ? `
-            <aside class="training-focus-aside">
-              <div class="training-focus-summary">
-                <div class="kicker">Current mission</div>
-                <h3>${escapeHtml(currentStep?.title || config.title)}</h3>
-                <p>${escapeHtml(currentStep?.instruction || config.subtitle)}</p>
-              </div>
-              ${renderArcProgressRail(config)}
-              ${config.memoryHook ? `
-                <details class="training-memory-hook">
-                  <summary>Memory clue</summary>
-                  <p>${escapeHtml(config.memoryHook)}</p>
-                </details>
-              ` : ""}
-              ${sceneImage ? `<div class="training-scene-preview"><img src="${escapeHtml(sceneImage)}" alt="${escapeHtml(config.title)} scene preview"></div>` : ""}
-              ${guideCharacter ? `
-                <div class="training-guide-mini">
-                  <img class="training-guide-mini-image" src="${escapeHtml(guidePose)}" alt="EST guide character">
-                  <div class="training-guide-mini-copy">
-                    <div class="kicker">EST guide</div>
-                    <p>${escapeHtml(getESTGuideCopy(groupId, guideContext))}</p>
-                  </div>
-                </div>
-              ` : ""}
-            </aside>
-          ` : ""}
+        <div class="training-focus-shell training-focus-shell--takeover">
           <div class="training-focus-main">
             <div class="training-campaign-grid training-campaign-grid--flash">
           ${completedAll ? `
             <section class="training-step training-step--transition">
-              <div class="training-flash-media">
-                <img src="${escapeHtml(EST_ANIMATED_ASSETS.chamber)}" alt="Chamber complete animation">
-              </div>
               <div class="section-title">
                 <h2>All reactor steps complete</h2>
                 <p>${score.correct}/${score.total} decisions locked in. The practice bay is ready for your EST response build.</p>
               </div>
               <p class="training-feedback">Great work. You’ve cleared the initiative reactor and can now move into the written response with the content fresh in mind.</p>
+              <div class="training-economy-note good">
+                <strong>Reward preview</strong>
+                <span>${escapeHtml(`Bank the topic review next to add +${rewardPreview.marks} marks • +${rewardPreview.readiness}% readiness • +${formatCurrency(rewardPreview.credits)} salary • +${formatCurrency(rewardPreview.tax)} community fund into Career Empire.`)}</span>
+              </div>
+              <div class="arc-action-row">
+                ${renderArcActionButton({
+                  label: "Build EST response",
+                  onclick: "window.ESTPrep.openContentResponse()",
+                  asset: EST_ANIMATED_ASSETS.progress,
+                  className: "arc-action-button--overlay"
+                })}
+              </div>
             </section>
           ` : flow?.phase === "transition" ? `
             <section class="training-step training-step--transition">
-              <div class="training-flash-media">
-                <img src="${escapeHtml(EST_ANIMATED_ASSETS.transition)}" alt="Step transition animation">
-              </div>
               <div class="section-title">
                 <h2>${escapeHtml(steps[flow.stepIndex + 1]?.title || currentStep?.title || "Next step unlocked")}</h2>
                 <p>Step ${transitionStepNumber} is unlocked. Take the next challenge one card at a time.</p>
@@ -2116,7 +2100,7 @@ function renderArcTrainingBay(config, score) {
                 ${renderArcActionButton({
                   label: `Start Step ${transitionStepNumber}`,
                   onclick: `window.ESTPrep.startArcStep('${config.type}')`,
-                  asset: EST_ANIMATED_ASSETS.transition,
+                  asset: EST_ANIMATED_ASSETS.progress,
                   className: "arc-action-button--overlay"
                 })}
               </div>
@@ -2136,6 +2120,7 @@ function renderArcTrainingBay(config, score) {
                     <div class="training-step-fill" style="width:${stepProgress.percent}%"></div>
                   </div>
                   <small>${escapeHtml(`Flash card ${questionNumber} of ${questionCount}`)}</small>
+                  <span class="training-bank-preview">${escapeHtml(`Bank on topic review: +${formatCurrency(rewardPreview.credits)} salary • +${formatCurrency(rewardPreview.tax)} community fund`)}</span>
                 </div>
               </div>
               <article class="training-card training-card--flash ${currentAnswer ? (isCorrect ? "good" : "bad") : ""}">
@@ -2683,6 +2668,14 @@ function renderContentTopicReview(summary) {
             <strong>EST response</strong>
             <span>${summary.responsePercent}%</span>
           </div>
+        </div>
+        <div class="training-economy-note ${summary.reward?.improved ? "good" : "bad"}" style="margin-top:18px;">
+          <strong>${summary.reward?.improved ? "Career Empire banked" : "Saved, but no extra bank"}</strong>
+          <span>${escapeHtml(
+            summary.reward?.improved
+              ? `+${summary.reward.earnedMarks} marks • +${summary.reward.readinessGain}% readiness • +${formatCurrency(summary.reward.credits)} salary • +${formatCurrency(summary.reward.tax)} community fund`
+              : `Your best result still stands at ${Math.round(summary.reward?.previousPercent || 0)}%, so this attempt was saved for review without extra salary or community tax.`
+          )}</span>
         </div>
         <div class="builder-actions" style="margin-top:18px;">
           <button class="submit-button" type="button" onclick="window.ESTPrep.openStage('content')">Back to topic menu</button>
@@ -3835,9 +3828,10 @@ function renderGlossaryStudyDeck(batch) {
 function renderContentTopicIntro(group) {
   const highlights = group.introHighlights || [];
   const hasVideo = Boolean(group.introVideo);
+  const rewardPreview = getContentTopicRewardPreview();
   return `
     <section class="est-scene-shell est-scene-shell--intro" ${buildESTSceneStyle("neutral")}>
-      <div class="topic-intro-grid">
+      <div class="topic-intro-grid topic-intro-grid--compact">
         <div class="topic-media-card">
           ${hasVideo ? `
             <video class="topic-media" autoplay muted loop playsinline poster="${escapeHtml(group.introImage || "")}">
@@ -3851,7 +3845,10 @@ function renderContentTopicIntro(group) {
           <div class="kicker">Topic intro</div>
           <h3>${escapeHtml(group.introTitle || group.title)}</h3>
           <p class="small-copy">${escapeHtml(group.introSummary || group.writePrompt)}</p>
-          ${renderESTGuidePanel(group.id, "intro")}
+          <div class="training-economy-note good">
+            <strong>Topic reward preview</strong>
+            <span>${escapeHtml(`Up to +${rewardPreview.marks} marks • +${rewardPreview.readiness}% readiness • +${formatCurrency(rewardPreview.credits)} salary • +${formatCurrency(rewardPreview.tax)} community fund`)}</span>
+          </div>
           ${highlights.length ? `
             <div class="badge-row topic-intro-highlights">
               ${highlights.map(item => `<span class="badge">${escapeHtml(item)}</span>`).join("")}
@@ -3890,8 +3887,8 @@ function renderContentStage() {
     setGameplayViewportMode(false);
     setStageScene("neutral");
     setStageMenuMode(false);
-    setText("stage-title", "EST Content Check");
-    setText("stage-subtitle", `${currentGroup.title}`);
+    setText("stage-title", "");
+    setText("stage-subtitle", "");
     renderStageRoot(renderContentTopicIntro(currentGroup));
     return;
   }
@@ -3899,9 +3896,67 @@ function renderContentStage() {
     setGameplayViewportMode(false);
     setStageScene("success");
     setStageMenuMode(false);
-    setText("stage-title", "EST Content Check");
-    setText("stage-subtitle", `${currentGroup.title} banked. Compare your response before moving on.`);
+    setText("stage-title", "");
+    setText("stage-subtitle", "");
     renderStageRoot(renderContentTopicReview(state.lastContentTopicReview));
+    return;
+  }
+  if (state.contentView === "response") {
+    setGameplayViewportMode(false);
+    setStageScene("neutral");
+    setStageMenuMode(false);
+    setText("stage-title", "");
+    setText("stage-subtitle", "");
+    renderStageRoot(`
+      <section class="est-scene-shell est-scene-shell--neutral" ${buildESTSceneStyle("neutral")}>
+        <div class="panel training-bay training-campaign training-campaign--focus">
+          <div class="training-hud">
+            <div class="training-hud-copy">
+              <div class="kicker">Response forge</div>
+              <h2>${escapeHtml(currentGroup.title)}</h2>
+            </div>
+            <div class="training-hud-status">
+              <strong>Build and bank your EST answer</strong>
+              <small>Compare it to the model before moving to the next strand.</small>
+            </div>
+          </div>
+          <div class="training-campaign-grid" style="margin-top:18px;">
+            ${currentGroup.rounds.map((round, index) => `
+              <div class="panel">
+                <div class="section-title">
+                  <h2>${escapeHtml(round.topic)}</h2>
+                  <p>Knowledge check ${index + 1}</p>
+                </div>
+                <p class="small-copy">${escapeHtml(round.question)}</p>
+                <div class="mcq-grid" style="margin-top: 14px;">
+                  ${round.options.map(option => `
+                    <button
+                      type="button"
+                      class="choice-button ${state.answers[`content-${currentGroup.id}-${index}`] === option ? "selected live-selected" : ""}"
+                      data-group="content-${currentGroup.id}-${index}"
+                      data-value="${escapeHtml(option)}"
+                      onclick="window.ESTPrep.setChoiceEncoded('content-${currentGroup.id}-${index}', '${encodeURIComponent(option)}')"
+                    >
+                      <strong>${escapeHtml(option)}</strong>
+                    </button>
+                  `).join("")}
+                </div>
+              </div>
+            `).join("")}
+            ${renderContentResponseForge(currentGroup)}
+            <div class="written-stage">
+              <div style="display:flex;gap:12px;flex-wrap:wrap;">
+                <button class="submit-button" type="button" onclick="window.ESTPrep.startContentGroup()">Back to reactor</button>
+                <button class="submit-button" type="button" onclick="window.ESTPrep.submitCurrentContentTopic()">Bank Topic Review</button>
+                ${state.contentGroupIndex === groups.length - 1
+                  ? '<button class="submit-button" type="button" onclick="window.ESTPrep.submitContent()">Bank Full Content Suite</button>'
+                  : ""}
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+    `);
     return;
   }
   setStageMenuMode(false);
@@ -3911,76 +3966,16 @@ function renderContentStage() {
   const trainingComplete = trainingScore.total > 0 && trainingScore.correct === trainingScore.total;
   setGameplayViewportMode(trainingIsArc && !trainingComplete);
   setStageScene(trainingScore.total > 0 && trainingScore.correct === trainingScore.total ? "restored" : "challenge");
-  setText("stage-title", trainingIsArc && !trainingComplete ? "" : "EST Content Check");
-  setText("stage-subtitle", trainingIsArc && !trainingComplete ? "" : "Train one content strand at a time with a clean, distraction-light interface.");
+  setText("stage-title", "");
+  setText("stage-subtitle", "");
   if (trainingIsArc && !trainingComplete) {
     renderStageRoot(`
       ${renderTrainingBay(currentGroup)}
     `);
     return;
   }
-
-  const completionUnlock = trainingIsArc ? `
-    <div class="panel">
-      <div class="section-title">
-        <h2>Reactor cleared</h2>
-        <p>Now unlock the EST explanation layer.</p>
-      </div>
-      <p class="small-copy">You’ve cleared the interactive reactor. The answer builder and knowledge check now open below so you can turn the practice into EST-ready writing.</p>
-    </div>
-  ` : "";
-
   renderStageRoot(`
-    ${trainingIsArc ? "" : `
-      <div class="question-card">
-        <div class="kicker">Focused revision</div>
-        <h3>${escapeHtml(currentGroup.title)}</h3>
-        <p>This lab is dedicated to one revision strand only: briefing, practice, knowledge check, then a short EST response.</p>
-      </div>
-      <div class="panel">
-        <div class="section-title">
-          <h2>Module briefing</h2>
-          <p>EST content strand ${state.contentGroupIndex + 1} of ${groups.length}</p>
-        </div>
-        <p class="small-copy">${escapeHtml(currentGroup.writePrompt)}</p>
-        ${trainingConfig ? `<div class="badge-row" style="margin-top:14px;"><span class="badge">Practice Bay: ${escapeHtml(trainingConfig.title)}</span><span class="badge">Training score: ${trainingScore.percent}%</span></div>` : ""}
-      </div>
-    `}
     ${renderTrainingBay(currentGroup)}
-    ${completionUnlock}
-    ${currentGroup.rounds.map((round, index) => `
-      <div class="panel">
-        <div class="section-title">
-          <h2>${escapeHtml(round.topic)}</h2>
-          <p>Knowledge check ${index + 1}</p>
-        </div>
-        <p class="small-copy">${escapeHtml(round.question)}</p>
-        <div class="mcq-grid" style="margin-top: 14px;">
-          ${round.options.map(option => `
-            <button
-              type="button"
-              class="choice-button ${state.answers[`content-${currentGroup.id}-${index}`] === option ? "selected live-selected" : ""}"
-              data-group="content-${currentGroup.id}-${index}"
-              data-value="${escapeHtml(option)}"
-              onclick="window.ESTPrep.setChoiceEncoded('content-${currentGroup.id}-${index}', '${encodeURIComponent(option)}')"
-            >
-              <strong>${escapeHtml(option)}</strong>
-            </button>
-          `).join("")}
-        </div>
-      </div>
-    `).join("")}
-    ${renderContentResponseForge(currentGroup)}
-    <div class="written-stage">
-      <div style="display:flex;gap:12px;flex-wrap:wrap;">
-        <button class="submit-button" type="button" onclick="window.ESTPrep.openStage('content')">Back to topic menu</button>
-        ${state.contentGroupIndex > 0 ? '<button class="submit-button" type="button" onclick="window.ESTPrep.prevContentGroup()">Previous Topic</button>' : ""}
-        <button class="submit-button" type="button" onclick="window.ESTPrep.submitCurrentContentTopic()">Bank Topic Review</button>
-        ${state.contentGroupIndex === groups.length - 1
-          ? '<button class="submit-button" type="button" onclick="window.ESTPrep.submitContent()">Bank Full Content Suite</button>'
-          : ""}
-      </div>
-    </div>
   `);
 }
 
@@ -4317,7 +4312,7 @@ function openContentGroupIntro(index) {
   const groups = state.stageDeck?.contentGroups || [];
   if (!groups.length) return;
   const nextIndex = Math.max(0, Math.min(index, groups.length - 1));
-  if (state.contentView === "lesson" && state.contentGroupIndex >= 0) {
+  if ((state.contentView === "lesson" || state.contentView === "response") && state.contentGroupIndex >= 0) {
     persistCurrentContentNote();
     bankCurrentContentDuration();
   }
@@ -4346,6 +4341,19 @@ function startContentGroup() {
   state.contentGroupStartedAt = Date.now();
   renderContentStage();
   scrollToTopSmooth();
+}
+
+function openContentResponse() {
+  const groups = state.stageDeck?.contentGroups || [];
+  const currentGroup = groups[state.contentGroupIndex];
+  if (!currentGroup) return;
+  const trainingConfig = getContentTrainingConfig(currentGroup.id);
+  const trainingScore = getTrainingScore(trainingConfig);
+  if (trainingScore.total > 0 && trainingScore.correct === trainingScore.total) {
+    state.contentView = "response";
+    renderContentStage();
+    scrollToTopSmooth();
+  }
 }
 
 async function submitCurrentContentTopic() {
@@ -4419,7 +4427,7 @@ function openStage(stageId) {
   state.lastBossReview = null;
   state.stageStartedAt = Date.now();
   if (stageId === "content") {
-    if (previousStageId === "content" && state.contentView === "lesson" && state.contentGroupIndex >= 0) {
+    if (previousStageId === "content" && ["lesson", "response"].includes(state.contentView) && state.contentGroupIndex >= 0) {
       persistCurrentContentNote();
       bankCurrentContentDuration();
     }
@@ -5404,6 +5412,7 @@ window.ESTPrep = {
   openStage,
   openContentGroupIntro,
   startContentGroup,
+  openContentResponse,
   submitCurrentContentTopic,
   retryCurrentContentTopic,
   nextContentGroup: () => moveContentGroup(1),
