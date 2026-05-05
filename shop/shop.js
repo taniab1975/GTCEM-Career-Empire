@@ -84,6 +84,90 @@ function writePlayerSession(patch) {
   return next;
 }
 
+function getStudentStorageKey(studentLogin = {}, session = {}) {
+  return String(
+    studentLogin.id ||
+    studentLogin.username ||
+    session.studentId ||
+    session.username ||
+    session.playerName ||
+    "demo"
+  );
+}
+
+function sessionBelongsToStudent(studentLogin = {}, session = {}) {
+  if (studentLogin.id && session.studentId) return String(studentLogin.id) === String(session.studentId);
+  if (studentLogin.username && session.username) return String(studentLogin.username) === String(session.username);
+  return true;
+}
+
+function getLocalOwnedAssets(studentLogin = {}, session = {}) {
+  const ownerKey = getStudentStorageKey(studentLogin, session);
+  const groupedAssets = session.ownedAssetsByStudent && typeof session.ownedAssetsByStudent === "object"
+    ? session.ownedAssetsByStudent[ownerKey]
+    : null;
+  if (Array.isArray(groupedAssets)) return groupedAssets;
+  if (sessionBelongsToStudent(studentLogin, session) && Array.isArray(session.ownedAssets)) return session.ownedAssets;
+  return [];
+}
+
+function getAssetDedupeKey(asset = {}) {
+  const purchasedAt = asset.purchased_at ? Date.parse(asset.purchased_at) : NaN;
+  const timeBucket = Number.isNaN(purchasedAt) ? asset.id || "" : Math.floor(purchasedAt / 60000);
+  return `${asset.asset_code || asset.code || ""}|${asset.purchase_cost || asset.cost || 0}|${timeBucket}`;
+}
+
+function mergeAssetLists(...assetLists) {
+  const seen = new Set();
+  return assetLists.flat().filter(Boolean).filter(asset => {
+    const key = getAssetDedupeKey(asset);
+    if (seen.has(key)) return false;
+    seen.add(key);
+    return true;
+  });
+}
+
+function createPurchasedAsset(asset) {
+  const purchasedAt = new Date().toISOString();
+  return {
+    id: `local-${asset.code}-${Date.now()}`,
+    asset_code: asset.code,
+    asset_name: asset.name,
+    asset_category: asset.category,
+    purchase_cost: asset.cost,
+    purchased_at: purchasedAt
+  };
+}
+
+function persistLocalPurchase(context, nextAssets, nextNetWorth, nextSavings) {
+  const authState = readState();
+  const studentLogin = authState?.studentLogin || {};
+  const session = readJsonStorage(PLAYER_SESSION_KEY, {});
+  const ownerKey = getStudentStorageKey(studentLogin, session);
+  const ownedAssetsByStudent = {
+    ...(session.ownedAssetsByStudent && typeof session.ownedAssetsByStudent === "object" ? session.ownedAssetsByStudent : {}),
+    [ownerKey]: nextAssets
+  };
+
+  return writePlayerSession({
+    studentId: context.studentId || studentLogin.id || session.studentId || null,
+    username: studentLogin.username || session.username || "",
+    playerName: context.studentName || studentLogin.displayName || session.playerName || studentLogin.username || "Student",
+    schoolName: context.schoolName || studentLogin.schoolName || session.schoolName || "",
+    classCode: context.classCode || studentLogin.classCode || session.classCode || "",
+    annualSalary: Number(context.profile?.annual_salary || 0),
+    cumulativeNetWorth: nextNetWorth,
+    savings: nextSavings,
+    workLifeBalance: Number(context.profile?.work_life_balance || 0),
+    jobSecurity: Number(context.profile?.job_security || 0),
+    ownedAssets: nextAssets,
+    ownedAssetsByStudent,
+    checkpoint: "shop-purchase",
+    demoMode: Boolean(context.isDemo && !context.studentId),
+    updatedAt: new Date().toISOString()
+  });
+}
+
 function pushEconomyLog(entry = {}) {
   if (!window.CareerEmpireEconomy?.appendEvent) return [];
   return window.CareerEmpireEconomy.appendEvent(entry);
@@ -235,9 +319,10 @@ function getLocalShopContext() {
   const authState = readState();
   const studentLogin = authState?.studentLogin || {};
   const session = readJsonStorage(PLAYER_SESSION_KEY, {});
-  const studentName = studentLogin?.displayName || studentLogin?.username || session.studentName || "Demo Student";
+  const studentName = studentLogin?.displayName || studentLogin?.username || session.playerName || session.studentName || "Demo Student";
   const schoolName = studentLogin?.schoolName || session.schoolName || "Career Empire Demo";
   const classCode = studentLogin?.classCode || session.classCode || "DEMO";
+  const assets = getLocalOwnedAssets(studentLogin, session);
 
   return {
     studentId: studentLogin?.id || null,
@@ -252,7 +337,7 @@ function getLocalShopContext() {
       work_life_balance: Number(session.workLifeBalance || 70),
       job_security: Number(session.jobSecurity || 70)
     },
-    assets: Array.isArray(session.ownedAssets) ? session.ownedAssets : []
+    assets
   };
 }
 
@@ -261,17 +346,18 @@ async function loadStudentShopContext() {
   const studentLogin = authState?.studentLogin || {};
   const studentId = studentLogin?.id;
   const session = readJsonStorage(PLAYER_SESSION_KEY, {});
+  const localContext = getLocalShopContext();
 
   if (!studentId && (studentLogin?.demo || studentLogin?.preview || session?.demoMode || Object.keys(session).length)) {
-    return getLocalShopContext();
+    return localContext;
   }
 
   if (!studentId) return null;
 
   const supabase = await getSupabaseClientOrNull();
-  if (!supabase) return null;
+  if (!supabase) return localContext;
 
-  const [{ data: profile }, { data: assets }] = await Promise.all([
+  const [{ data: profile, error: profileError }, { data: assets, error: assetError }] = await Promise.all([
     supabase
       .from("player_profiles")
       .select("student_id, annual_salary, cumulative_net_worth, savings, work_life_balance, job_security")
@@ -284,13 +370,37 @@ async function loadStudentShopContext() {
       .order("purchased_at", { ascending: false })
   ]);
 
+  if (profileError) console.error(profileError);
+  if (assetError) console.error(assetError);
+
+  const localProfile = localContext.profile || {};
+  const sessionIsCurrentStudent = sessionBelongsToStudent(studentLogin, session);
+  const mergedProfile = {
+    ...localProfile,
+    ...(profile || {}),
+    annual_salary: Number((profile?.annual_salary ?? localProfile.annual_salary) || 0),
+    cumulative_net_worth: Number(
+      sessionIsCurrentStudent && session.cumulativeNetWorth !== undefined
+        ? session.cumulativeNetWorth
+        : (profile?.cumulative_net_worth ?? localProfile.cumulative_net_worth) || 0
+    ),
+    savings: Number(
+      sessionIsCurrentStudent && session.savings !== undefined
+        ? session.savings
+        : (profile?.savings ?? localProfile.savings) || 0
+    ),
+    work_life_balance: Number((profile?.work_life_balance ?? localProfile.work_life_balance) || 0),
+    job_security: Number((profile?.job_security ?? localProfile.job_security) || 0)
+  };
+
   return {
     studentId,
-    studentName,
-    schoolName,
-    classCode,
-    profile: profile || null,
-    assets: assets || []
+    isDemo: false,
+    studentName: localContext.studentName,
+    schoolName: localContext.schoolName,
+    classCode: localContext.classCode,
+    profile: mergedProfile,
+    assets: mergeAssetLists(assets || [], localContext.assets || [])
   };
 }
 
@@ -380,51 +490,37 @@ async function buyGlobalAsset(asset, context) {
     return;
   }
 
-  if (context.isDemo || !context.studentId) {
-    const nextAssets = [
-      ...(context.assets || []),
-      {
-        id: `demo-${asset.code}-${Date.now()}`,
-        asset_code: asset.code,
-        asset_name: asset.name,
-        asset_category: asset.category,
-        purchase_cost: asset.cost,
-        purchased_at: new Date().toISOString()
-      }
-    ];
-    const nextNetWorth = Math.max(0, currentWorth - asset.cost);
-    const nextSavings = Math.max(0, Number(context.profile.savings || 0) - asset.cost);
-    writePlayerSession({
-      studentId: null,
-      annualSalary: Number(context.profile.annual_salary || 0),
-      cumulativeNetWorth: nextNetWorth,
-      savings: nextSavings,
-      workLifeBalance: Number(context.profile.work_life_balance || 0),
-      jobSecurity: Number(context.profile.job_security || 0),
-      ownedAssets: nextAssets,
-      checkpoint: "shop-purchase",
-      demoMode: true,
-      updatedAt: new Date().toISOString()
-    });
-    pushEconomyLog({
-      eventType: "purchase",
-      moduleId: "global-shop",
-      checkpoint: "shop-purchase",
-      label: asset.name,
-      detail: `Purchased from the demo global shop for ${formatCurrency(asset.cost)}`,
-      earnedDelta: 0,
-      taxDelta: 0,
-      spendDelta: asset.cost,
-      annualSalaryAfter: Number(context.profile.annual_salary || 0),
-      netWorthAfter: nextNetWorth,
-      savingsAfter: nextSavings
-    });
-    window.location.reload();
-    return;
-  }
+  const purchasedAsset = createPurchasedAsset(asset);
+  const nextAssets = mergeAssetLists([purchasedAsset], context.assets || []);
+  const nextNetWorth = Math.max(0, currentWorth - asset.cost);
+  const nextSavings = Math.max(0, Number(context.profile.savings || 0) - asset.cost);
+  const nextContext = {
+    ...context,
+    profile: {
+      ...context.profile,
+      cumulative_net_worth: nextNetWorth,
+      savings: nextSavings
+    },
+    assets: nextAssets
+  };
+  persistLocalPurchase(context, nextAssets, nextNetWorth, nextSavings);
+  pushEconomyLog({
+    eventType: "purchase",
+    moduleId: "global-shop",
+    checkpoint: "shop-purchase",
+    label: asset.name,
+    detail: `Purchased from the global shop for ${formatCurrency(asset.cost)}`,
+    earnedDelta: 0,
+    taxDelta: 0,
+    spendDelta: asset.cost,
+    annualSalaryAfter: Number(context.profile.annual_salary || 0),
+    netWorthAfter: nextNetWorth,
+    savingsAfter: nextSavings
+  });
+  renderShopPage(nextContext);
 
   const supabase = await getSupabaseClientOrNull();
-  if (!supabase) return;
+  if (!supabase || context.isDemo || !context.studentId) return;
 
   const { error: assetError } = await supabase
     .from("player_assets")
@@ -438,7 +534,7 @@ async function buyGlobalAsset(asset, context) {
 
   if (assetError) {
     console.error(assetError);
-    alert("Could not save that purchase yet.");
+    alert("Saved on this device. Live sync could not complete yet, so this purchase may need checking later.");
     return;
   }
 
@@ -453,33 +549,8 @@ async function buyGlobalAsset(asset, context) {
 
   if (profileError) {
     console.error(profileError);
-    alert("Your purchase saved, but the profile balance update needs checking.");
+    alert("Your purchase is saved, but the live balance update needs checking.");
   }
-
-  writePlayerSession({
-    studentId: context.studentId,
-    annualSalary: Number(context.profile.annual_salary || 0),
-    cumulativeNetWorth: Math.max(0, currentWorth - asset.cost),
-    savings: Math.max(0, Number(context.profile.savings || 0) - asset.cost),
-    workLifeBalance: Number(context.profile.work_life_balance || 0),
-    jobSecurity: Number(context.profile.job_security || 0),
-    checkpoint: "shop-purchase"
-  });
-  pushEconomyLog({
-    eventType: "purchase",
-    moduleId: "global-shop",
-    checkpoint: "shop-purchase",
-    label: asset.name,
-    detail: `Purchased from the global shop for ${formatCurrency(asset.cost)}`,
-    earnedDelta: 0,
-    taxDelta: 0,
-    spendDelta: asset.cost,
-    annualSalaryAfter: Number(context.profile.annual_salary || 0),
-    netWorthAfter: Math.max(0, currentWorth - asset.cost),
-    savingsAfter: Math.max(0, Number(context.profile.savings || 0) - asset.cost)
-  });
-
-  window.location.reload();
 }
 
 function renderCategoryBar() {
