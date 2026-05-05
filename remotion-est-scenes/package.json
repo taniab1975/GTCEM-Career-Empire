@@ -13,7 +13,8 @@
     "render:problem-solving": "remotion render src/index.ts ProblemSolvingExplainer out/problem-solving.mp4",
     "render:initiative": "remotion render src/index.ts InitiativeScenario out/initiative.mp4",
     "render:initiative-portrait": "remotion render src/index.ts InitiativePortraitTeaser out/initiative-portrait.mp4",
-    "render:overseas-opportunity": "remotion render src/index.ts OverseasOpportunityScenario out/overseas-opportunity.mp4"
+    "render:overseas-opportunity": "remotion render src/index.ts OverseasOpportunityScenario out/overseas-opportunity.mp4",
+    "render:est-lab-systems": "remotion render src/index.ts ESTLabSystemsExplainer ../Assets/EST\\ Preparation/est-lab-systems.mp4"
   },
   "dependencies": {
     "@remotion/google-fonts": "^4.0.267",

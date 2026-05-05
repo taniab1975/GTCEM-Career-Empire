@@ -148,6 +148,131 @@ body.est-lab-mode {
     radial-gradient(circle at top right, rgba(97, 240, 255, 0.22), transparent 35%);
 }
 
+.hero-card--cinema {
+  position: relative;
+  display: grid;
+  grid-column: 1 / -1;
+  grid-template-columns: minmax(0, 1fr);
+  justify-items: center;
+  gap: 20px;
+  align-items: start;
+  min-height: 0;
+  padding: 26px;
+  overflow: hidden;
+  background:
+    radial-gradient(circle at 78% 22%, rgba(97, 240, 255, 0.22), transparent 34%),
+    radial-gradient(circle at 12% 82%, rgba(255, 138, 202, 0.16), transparent 26%),
+    linear-gradient(135deg, rgba(18, 33, 70, 0.96), rgba(8, 16, 36, 0.98));
+}
+
+.hero-card--cinema::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background:
+    linear-gradient(90deg, rgba(255, 255, 255, 0.05) 1px, transparent 1px),
+    linear-gradient(rgba(255, 255, 255, 0.04) 1px, transparent 1px);
+  background-size: 48px 48px;
+  opacity: 0.18;
+  pointer-events: none;
+}
+
+.hero-copy,
+.hero-video-shell {
+  position: relative;
+  z-index: 1;
+}
+
+.hero-copy {
+  align-self: center;
+  max-width: 920px;
+  padding: 2px 4px 0;
+  text-align: center;
+}
+
+.hero-copy .subtitle {
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.storyline-tags {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 10px;
+  margin-top: 18px;
+}
+
+.storyline-tags span {
+  display: inline-flex;
+  align-items: center;
+  min-height: 38px;
+  padding: 9px 12px;
+  border-radius: 999px;
+  background: rgba(97, 240, 255, 0.12);
+  border: 1px solid rgba(129, 166, 255, 0.24);
+  color: #e5f1ff;
+  font-size: 0.9rem;
+  font-weight: 800;
+}
+
+.hero-video-shell {
+  width: min(1120px, 100%);
+  aspect-ratio: 16 / 9;
+  min-height: 0;
+  border-radius: 22px;
+  overflow: hidden;
+  border: 1px solid rgba(133, 190, 255, 0.4);
+  background: #050b18;
+  box-shadow: 0 30px 70px rgba(0, 0, 0, 0.42);
+}
+
+.hero-video {
+  width: 100%;
+  height: 100%;
+  display: block;
+  object-fit: cover;
+}
+
+.hero-video-label {
+  position: absolute;
+  left: 16px;
+  right: 16px;
+  bottom: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 12px 14px;
+  border-radius: 18px;
+  background: rgba(7, 15, 34, 0.78);
+  border: 1px solid rgba(151, 187, 255, 0.22);
+  backdrop-filter: blur(10px);
+}
+
+.hero-video-label span {
+  color: var(--muted);
+  font-size: 0.86rem;
+  font-weight: 700;
+}
+
+.hero-video-label strong {
+  color: var(--green);
+  font-size: 0.92rem;
+}
+
+.hero-card--cinema .badge-row {
+  justify-content: center;
+}
+
+.hero-side {
+  grid-column: 1 / -1;
+}
+
+.hero-side .mission-list {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
 .eyebrow,
 .kicker {
   display: inline-flex;
