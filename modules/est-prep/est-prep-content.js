@@ -248,15 +248,16 @@ function getArcProgressRailAsset(config) {
   return EST_PROGRESS_RAILS.complete;
 }
 
-function renderArcProgressRail(config) {
+function renderArcProgressRail(config, className = "") {
   const { completedSteps, activeStep, stepStates } = getArcStepProgress(config);
   const asset = getArcProgressRailAsset(config);
   const totalSteps = stepStates.length || 4;
   const caption = completedSteps === totalSteps
     ? "All reactor steps complete"
     : `Step ${activeStep} active • ${completedSteps}/${totalSteps} complete`;
+  const classes = ["arc-progress-rail", className].filter(Boolean).join(" ");
   return `
-    <div class="arc-progress-rail">
+    <div class="${escapeHtml(classes)}">
       <img class="arc-progress-image" src="${escapeHtml(asset)}" alt="${escapeHtml(caption)}">
       <div class="arc-progress-caption">${escapeHtml(caption)}</div>
     </div>
@@ -283,6 +284,58 @@ function getContentTopicRewardPreview() {
     credits: Math.max(1, Math.round(stage.credits / totalTopics)),
     tax: Math.max(0, Math.round((stage.credits / totalTopics) * stage.taxRate))
   };
+}
+
+function getArcGuidePose(groupId, flow, isCorrect) {
+  const character = getESTGuideCharacter(groupId);
+  if (flow?.phase === "complete") return character.celebrating || character.encouraging || character.pointing;
+  if (flow?.phase === "transition") return character.encouraging || character.pointing || character.welcome;
+  if (flow?.phase === "feedback" && !isCorrect) return character.thinking || character.pointing || character.welcome;
+  if (flow?.phase === "feedback" && isCorrect) return character.encouraging || character.pointing || character.welcome;
+  return character.pointing || character.welcome;
+}
+
+function renderArcGuideAside({ config, groupId, scene, flow, currentStep, currentItem, questionNumber, questionCount, stepProgress, completedSteps, totalStepCount, isCorrect }) {
+  const guideContext = flow?.phase === "complete"
+    ? "forge"
+    : flow?.phase === "feedback" && !isCorrect
+      ? "forge"
+      : "challenge";
+  const guidePose = getArcGuidePose(groupId, flow, isCorrect);
+  const sceneImage = getArcSceneImage(groupId, scene) || getESTSceneBackground(scene);
+  const statusTitle = flow?.phase === "complete"
+    ? "Reactor restored"
+    : currentStep?.title || "Reactor step";
+  const statusCopy = flow?.phase === "complete"
+    ? `${completedSteps}/${totalStepCount} steps complete. Build the EST response while the content is fresh.`
+    : currentItem
+      ? `Flash card ${questionNumber} of ${questionCount}. ${stepProgress.correct}/${stepProgress.total} restored in this step.`
+      : `${completedSteps}/${totalStepCount} steps complete.`;
+  return `
+    <aside class="training-focus-aside training-focus-aside--arc" aria-label="Reactor guide">
+      <div class="training-guide-mini training-guide-mini--arc est-guide-${escapeHtml(guideContext)}">
+        <img class="training-guide-mini-image training-guide-mini-image--arc" src="${escapeHtml(guidePose)}" alt="ECC guide character">
+        <div class="training-guide-mini-copy">
+          <div class="kicker">ECC guide</div>
+          <p>${escapeHtml(getESTGuideCopy(groupId, guideContext))}</p>
+        </div>
+      </div>
+      <div class="training-focus-summary">
+        <div class="kicker">Mission status</div>
+        <h3>${escapeHtml(statusTitle)}</h3>
+        <p>${escapeHtml(statusCopy)}</p>
+      </div>
+      <div class="training-scene-preview training-scene-preview--arc">
+        <img src="${escapeHtml(sceneImage)}" alt="${escapeHtml(config.title)} scene">
+      </div>
+      ${config.memoryHook ? `
+        <details class="training-memory-hook" open>
+          <summary>Memory hook</summary>
+          <p>${escapeHtml(config.memoryHook)}</p>
+        </details>
+      ` : ""}
+    </aside>
+  `;
 }
 
 function renderArcTrainingBay(config, score) {
@@ -313,20 +366,18 @@ function renderArcTrainingBay(config, score) {
   return `
     <section class="est-scene-shell est-scene-shell--${scene}" ${buildESTSceneStyle(scene)}>
       <div class="panel training-bay training-campaign training-campaign--focus">
-        <div class="training-hud training-hud--compact">
+        <div class="training-hud training-hud--compact training-hud--mission">
           <div class="training-hud-copy">
             <div class="kicker">Knowledge reactor</div>
             <h2>${escapeHtml(config.title)}</h2>
-          </div>
-          <div class="training-hud-rail">
-            ${renderArcProgressRail(config)}
           </div>
           <div class="training-hud-status">
             <strong>${escapeHtml(currentStep?.title || "Reactor step")}</strong>
             <small>${escapeHtml(completedAll ? `All ${totalStepCount} steps cleared` : `${stepProgress.correct}/${stepProgress.total} cleared in this step • ${completedSteps}/${totalStepCount} steps done`)}</small>
           </div>
         </div>
-        <div class="training-focus-shell training-focus-shell--takeover">
+        <div class="training-focus-shell training-focus-shell--arc">
+          ${renderArcGuideAside({ config, groupId, scene, flow, currentStep, currentItem, questionNumber, questionCount, stepProgress, completedSteps, totalStepCount, isCorrect })}
           <div class="training-focus-main">
             <div class="training-campaign-grid training-campaign-grid--flash">
           ${completedAll ? `
@@ -400,17 +451,20 @@ function renderArcTrainingBay(config, score) {
                     <p>${escapeHtml(currentStep.instruction || "Choose the strongest move.")}</p>
                     <p class="training-feedback">Pick the strongest move, get instant feedback, then move to the next flash card.</p>
                   </div>
-                  <div class="training-stack">
-                    ${currentItem.options.map(option => `
-                      <button
-                        type="button"
-                        class="choice-button ${currentAnswer === option ? "selected live-selected" : ""} ${currentAnswer && option === currentItem.correct ? "correct" : ""} ${currentAnswer === option && !isCorrect ? "incorrect" : ""}"
-                        onclick="window.ESTPrep.setTrainingChoiceEncoded('${answerKey}', '${encodeURIComponent(option)}')"
-                        ${currentAnswer ? "disabled" : ""}
-                      >
-                        <strong>${escapeHtml(option)}</strong>
-                      </button>
-                    `).join("")}
+                  <div class="training-answer-column">
+                    <div class="training-stack">
+                      ${currentItem.options.map(option => `
+                        <button
+                          type="button"
+                          class="choice-button ${currentAnswer === option ? "selected live-selected" : ""} ${currentAnswer && option === currentItem.correct ? "correct" : ""} ${currentAnswer === option && !isCorrect ? "incorrect" : ""}"
+                          onclick="window.ESTPrep.setTrainingChoiceEncoded('${answerKey}', '${encodeURIComponent(option)}')"
+                          ${currentAnswer ? "disabled" : ""}
+                        >
+                          <strong>${escapeHtml(option)}</strong>
+                        </button>
+                      `).join("")}
+                    </div>
+                    ${renderArcProgressRail(config, "arc-progress-rail--answer")}
                   </div>
                 </div>
               </article>
@@ -1353,12 +1407,45 @@ function resetCurrentContentTopic() {
     delete state.answers[`content-${currentGroup.id}-${index}`];
   });
   delete state.answers[`content-note-${currentGroup.id}`];
-  delete state.responseForgeDrafts[currentGroup.id];
-  delete state.contentResponseBuilds[currentGroup.id];
+  if (state.responseForgeDrafts) delete state.responseForgeDrafts[currentGroup.id];
+  if (state.contentResponseBuilds) delete state.contentResponseBuilds[currentGroup.id];
   delete state.contentGroupDurations[currentGroup.id];
   if (trainingConfig && isArcTrainingType(trainingConfig.type)) {
+    (trainingConfig.steps || []).forEach(step => {
+      (step.items || []).forEach(item => {
+        delete state.answers[getArcTrainingAnswerKey(trainingConfig.type, item.id)];
+      });
+    });
     delete state.arcFlows[trainingConfig.type];
-    delete state.arcBanking[trainingConfig.type];
+    if (state.arcBanking) delete state.arcBanking[trainingConfig.type];
+  } else if (trainingConfig?.type === "sort") {
+    (trainingConfig.cards || []).forEach(card => {
+      delete state.answers[`training-${trainingConfig.type}-${card.id}`];
+    });
+  } else if (trainingConfig?.type === "scenario") {
+    (trainingConfig.scenarios || []).forEach(scenario => {
+      delete state.answers[`training-${trainingConfig.type}-${scenario.id}`];
+    });
+  } else if (trainingConfig?.type === "builder") {
+    (trainingConfig.rounds || []).forEach(round => {
+      delete state.answers[`training-${trainingConfig.type}-${round.id}`];
+    });
+  }
+  delete state.contentTopicBestScores[currentGroup.id];
+  delete state.contentTopicVotes[currentGroup.id];
+  Object.keys(state.contentTopicVoteSaves || {}).forEach(key => {
+    if (key.startsWith(`${currentGroup.id}:`)) delete state.contentTopicVoteSaves[key];
+  });
+  const bankedGroups = groups.filter(group => Number(state.contentTopicBestScores[group.id] || 0) > 0);
+  if (bankedGroups.length === groups.length && groups.length) {
+    syncContentCompletionFromTopicScores();
+  } else {
+    delete state.completed.content;
+    if (bankedGroups.length) {
+      state.stageBestScores.content = groups.reduce((sum, group) => sum + Number(state.contentTopicBestScores[group.id] || 0), 0) / (groups.length * 100);
+    } else {
+      delete state.stageBestScores.content;
+    }
   }
   state.lastContentTopicReview = null;
   state.contentView = "intro";
