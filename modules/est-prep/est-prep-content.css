@@ -1166,6 +1166,7 @@ body.est-lab-mode #stage-section.gameplay-viewport {
 .arc-action-button--overlay {
   position: relative;
   min-width: 220px;
+  max-width: min(320px, 100%);
   min-height: 54px;
   padding: 0;
   overflow: hidden;
@@ -1198,6 +1199,34 @@ body.est-lab-mode #stage-section.gameplay-viewport {
 
 .arc-action-button--retry {
   border-color: rgba(255, 216, 108, 0.34);
+  width: min(250px, 100%);
+  min-width: 0;
+  height: 54px;
+  padding: 0 20px 0 68px;
+  background: linear-gradient(135deg, rgba(26, 28, 49, 0.98), rgba(12, 20, 44, 0.98));
+}
+
+.arc-action-button--retry .arc-action-media {
+  position: absolute;
+  left: 14px;
+  top: 50%;
+  width: 42px;
+  height: 42px;
+  transform: translateY(-50%);
+}
+
+.arc-action-button--retry .arc-action-media img {
+  width: 42px;
+  height: 42px;
+  object-fit: contain;
+}
+
+.arc-action-button--retry .arc-action-label {
+  position: static;
+  inset: auto;
+  display: block;
+  padding: 0;
+  font-size: 0.88rem;
 }
 
 .training-hint-inline {
@@ -1211,13 +1240,15 @@ body.est-lab-mode #stage-section.gameplay-viewport {
 }
 
 .training-hint-inline img {
-  width: 56px;
-  height: auto;
+  width: 42px;
+  height: 42px;
   display: block;
+  object-fit: contain;
 }
 
 .training-hint-inline--state {
   justify-content: center;
+  align-items: center;
   max-width: 720px;
 }
 
@@ -1248,12 +1279,12 @@ body.est-lab-mode #stage-section.gameplay-viewport {
 
 .training-state-popover {
   width: min(600px, 100%);
-  max-height: 100%;
-  overflow: auto;
+  max-height: min(100%, calc(100dvh - 190px));
+  overflow: hidden;
   display: grid;
   justify-items: center;
-  gap: 12px;
-  padding: 18px;
+  gap: 10px;
+  padding: 16px;
   text-align: center;
   border-radius: 24px;
   border: 1px solid rgba(129, 166, 255, 0.26);
@@ -1280,6 +1311,10 @@ body.est-lab-mode #stage-section.gameplay-viewport {
 .training-state-popover .training-hint-inline--state {
   width: 100%;
   max-width: 540px;
+}
+
+.training-state-popover .arc-action-row {
+  width: 100%;
 }
 
 .training-step--scene-change {
