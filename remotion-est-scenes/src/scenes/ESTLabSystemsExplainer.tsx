@@ -144,12 +144,12 @@ const Timeline: React.FC<{activeIndex: number; frame: number; fps: number}> = ({
   <div
     style={{
       position: "absolute",
-      left: 54,
-      right: 54,
-      bottom: 34,
+      left: 60,
+      right: 60,
+      bottom: 22,
       display: "grid",
       gridTemplateColumns: "repeat(4, 1fr)",
-      gap: 12
+      gap: 10
     }}
   >
     {stages.map((stage, index) => {
@@ -162,8 +162,8 @@ const Timeline: React.FC<{activeIndex: number; frame: number; fps: number}> = ({
           key={stage.id}
           style={{
             ...panelBase,
-            minHeight: 84,
-            padding: "12px 14px",
+            minHeight: 56,
+            padding: "8px 12px",
             borderColor: isActive || isComplete ? stage.accent : "rgba(160, 191, 255, 0.22)",
             background: isActive
               ? `linear-gradient(135deg, ${stage.glow}, rgba(12,24,55,0.86))`
@@ -181,7 +181,7 @@ const Timeline: React.FC<{activeIndex: number; frame: number; fps: number}> = ({
               alignItems: "center",
               gap: 10,
               color: isActive || isComplete ? stage.accent : "rgba(211, 225, 255, 0.72)",
-              fontSize: 12,
+              fontSize: 10,
               fontWeight: 900,
               letterSpacing: "0.1em",
               textTransform: "uppercase"
@@ -192,9 +192,9 @@ const Timeline: React.FC<{activeIndex: number; frame: number; fps: number}> = ({
           </div>
           <div
             style={{
-              marginTop: 10,
+              marginTop: 5,
               color: "#ffffff",
-              fontSize: 24,
+              fontSize: 18,
               fontWeight: 900,
               lineHeight: 1
             }}
@@ -295,8 +295,8 @@ const IntroScene: React.FC<{frame: number; fps: number}> = ({frame, fps}) => {
         style={{
           position: "absolute",
           left: 62,
-          top: 58,
-          width: 610,
+          top: 54,
+          width: 580,
           transform: `translateY(${interpolate(title, [0, 1], [38, 0])}px)`,
           opacity: title
         }}
@@ -321,7 +321,7 @@ const IntroScene: React.FC<{frame: number; fps: number}> = ({frame, fps}) => {
           style={{
             margin: "18px 0 0",
             fontFamily: displayFont,
-            fontSize: 72,
+            fontSize: 64,
             lineHeight: 0.96,
             color: "#ffffff",
             WebkitTextStroke: "4px rgba(7, 13, 29, 0.9)",
@@ -336,7 +336,7 @@ const IntroScene: React.FC<{frame: number; fps: number}> = ({frame, fps}) => {
           style={{
             marginTop: 18,
             color: "#dbe8ff",
-            fontSize: 30,
+            fontSize: 28,
             lineHeight: 1.18,
             fontWeight: 800,
             opacity: copyOpacity
@@ -495,10 +495,10 @@ const StageVisual: React.FC<{stage: LabStage; frame: number; localFrame: number;
           ...panelBase,
           position: "absolute",
           left: 60,
-          top: 104,
-          width: 548,
-          minHeight: 404,
-          padding: "26px 28px",
+          top: 94,
+          width: 542,
+          minHeight: 0,
+          padding: "22px 26px",
           borderColor: stage.accent,
           background: `linear-gradient(135deg, ${stage.glow}, rgba(12,24,55,0.86))`,
           transform: `translateX(${interpolate(cardIn, [0, 1], [-42, 0])}px)`,
@@ -518,9 +518,9 @@ const StageVisual: React.FC<{stage: LabStage; frame: number; localFrame: number;
         </div>
         <h2
           style={{
-            margin: "14px 0 0",
+            margin: "10px 0 0",
             fontFamily: displayFont,
-            fontSize: 48,
+            fontSize: 42,
             lineHeight: 1,
             color: "#ffffff",
             WebkitTextStroke: "3px rgba(7, 13, 29, 0.86)",
@@ -532,10 +532,10 @@ const StageVisual: React.FC<{stage: LabStage; frame: number; localFrame: number;
         </h2>
         <p
           style={{
-            marginTop: 18,
+            marginTop: 12,
             color: "#dbe8ff",
-            fontSize: 26,
-            lineHeight: 1.22,
+            fontSize: 23,
+            lineHeight: 1.18,
             fontWeight: 800
           }}
         >
@@ -543,16 +543,16 @@ const StageVisual: React.FC<{stage: LabStage; frame: number; localFrame: number;
         </p>
         <div
           style={{
-            marginTop: 22,
+            marginTop: 16,
             display: "grid",
             gridTemplateColumns: "1fr",
-            gap: 12
+            gap: 10
           }}
         >
           <div
             style={{
               borderRadius: 18,
-              padding: "14px 16px",
+              padding: "12px 14px",
               background: "rgba(5, 13, 31, 0.58)",
               border: "1px solid rgba(255,255,255,0.14)"
             }}
@@ -560,14 +560,14 @@ const StageVisual: React.FC<{stage: LabStage; frame: number; localFrame: number;
             <div style={{color: stage.accent, fontSize: 13, fontWeight: 900}}>
               Student question
             </div>
-            <div style={{marginTop: 4, color: "#ffffff", fontSize: 23, fontWeight: 900}}>
+            <div style={{marginTop: 4, color: "#ffffff", fontSize: 20, fontWeight: 900}}>
               {stage.signal}
             </div>
           </div>
           <div
             style={{
               borderRadius: 18,
-              padding: "14px 16px",
+              padding: "12px 14px",
               background: "rgba(5, 13, 31, 0.58)",
               border: "1px solid rgba(255,255,255,0.14)"
             }}
@@ -575,7 +575,7 @@ const StageVisual: React.FC<{stage: LabStage; frame: number; localFrame: number;
             <div style={{color: stage.accent, fontSize: 13, fontWeight: 900}}>
               System output
             </div>
-            <div style={{marginTop: 4, color: "#ffffff", fontSize: 23, fontWeight: 900}}>
+            <div style={{marginTop: 4, color: "#ffffff", fontSize: 20, fontWeight: 900}}>
               {stage.answer}
             </div>
           </div>
@@ -587,10 +587,10 @@ const StageVisual: React.FC<{stage: LabStage; frame: number; localFrame: number;
           ...panelBase,
           position: "absolute",
           right: 68,
-          top: 120,
+          top: 112,
           width: 448,
-          height: 350,
-          padding: 24,
+          height: 330,
+          padding: 22,
           overflow: "hidden",
           transform: `translateX(${interpolate(consoleIn, [0, 1], [48, 0])}px)`,
           opacity: consoleIn
@@ -615,7 +615,7 @@ const StageVisual: React.FC<{stage: LabStage; frame: number; localFrame: number;
             display: "grid",
             height: "100%",
             gridTemplateRows: "auto 1fr auto",
-            gap: 18
+            gap: 14
           }}
         >
           <div
@@ -743,8 +743,8 @@ const StageVisual: React.FC<{stage: LabStage; frame: number; localFrame: number;
         style={{
           position: "absolute",
           right: stage.id === "vtcs" ? 8 : 38,
-          bottom: -18,
-          height: stage.id === "vtcs" ? 292 : 318,
+          bottom: 26,
+          height: stage.id === "vtcs" ? 238 : 250,
           objectFit: "contain",
           opacity: fade(localFrame, 22, 18),
           transform: `translateY(${interpolate(fade(localFrame, 22, 18), [0, 1], [72, 0])}px)`,

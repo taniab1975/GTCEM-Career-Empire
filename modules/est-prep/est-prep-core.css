@@ -127,7 +127,7 @@ body.est-lab-mode {
 }
 
 .hero {
-  grid-template-columns: minmax(0, 1.4fr) minmax(320px, 0.8fr);
+  grid-template-columns: 1fr;
   margin-bottom: 18px;
 }
 
@@ -154,10 +154,10 @@ body.est-lab-mode {
   grid-column: 1 / -1;
   grid-template-columns: minmax(0, 1fr);
   justify-items: center;
-  gap: 20px;
+  gap: 16px;
   align-items: start;
   min-height: 0;
-  padding: 26px;
+  padding: 18px;
   overflow: hidden;
   background:
     radial-gradient(circle at 78% 22%, rgba(97, 240, 255, 0.22), transparent 34%),
@@ -185,14 +185,22 @@ body.est-lab-mode {
 
 .hero-copy {
   align-self: center;
-  max-width: 920px;
-  padding: 2px 4px 0;
+  max-width: 760px;
+  padding: 0 4px;
   text-align: center;
+}
+
+.hero-card--cinema h1 {
+  margin-top: 8px;
+  font-size: clamp(1.7rem, 2.5vw, 2.35rem);
 }
 
 .hero-copy .subtitle {
   margin-left: auto;
   margin-right: auto;
+  margin-top: 8px;
+  font-size: 0.96rem;
+  line-height: 1.45;
 }
 
 .storyline-tags {
@@ -200,7 +208,7 @@ body.est-lab-mode {
   flex-wrap: wrap;
   justify-content: center;
   gap: 10px;
-  margin-top: 18px;
+  margin-top: 14px;
 }
 
 .storyline-tags span {
@@ -217,7 +225,7 @@ body.est-lab-mode {
 }
 
 .hero-video-shell {
-  width: min(1120px, 100%);
+  width: min(1180px, 100%);
   aspect-ratio: 16 / 9;
   min-height: 0;
   border-radius: 22px;
@@ -234,35 +242,9 @@ body.est-lab-mode {
   object-fit: cover;
 }
 
-.hero-video-label {
-  position: absolute;
-  left: 16px;
-  right: 16px;
-  bottom: 16px;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-  padding: 12px 14px;
-  border-radius: 18px;
-  background: rgba(7, 15, 34, 0.78);
-  border: 1px solid rgba(151, 187, 255, 0.22);
-  backdrop-filter: blur(10px);
-}
-
-.hero-video-label span {
-  color: var(--muted);
-  font-size: 0.86rem;
-  font-weight: 700;
-}
-
-.hero-video-label strong {
-  color: var(--green);
-  font-size: 0.92rem;
-}
-
 .hero-card--cinema .badge-row {
   justify-content: center;
+  margin-top: 10px;
 }
 
 .hero-side {
@@ -271,6 +253,78 @@ body.est-lab-mode {
 
 .hero-side .mission-list {
   grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
+.profile-disclosure {
+  margin-top: 10px;
+}
+
+.profile-disclosure summary,
+.disclosure-panel > summary {
+  list-style: none;
+  cursor: pointer;
+}
+
+.profile-disclosure summary::-webkit-details-marker,
+.disclosure-panel > summary::-webkit-details-marker {
+  display: none;
+}
+
+.profile-disclosure summary {
+  display: inline-flex;
+  align-items: center;
+  min-height: 36px;
+  padding: 8px 12px;
+  border-radius: 999px;
+  border: 1px solid rgba(129, 166, 255, 0.22);
+  background: rgba(12, 23, 51, 0.7);
+  color: var(--muted);
+  font-weight: 800;
+}
+
+.profile-disclosure[open] summary {
+  color: var(--text);
+  border-color: rgba(151, 187, 255, 0.4);
+}
+
+.disclosure-panel {
+  display: block;
+  margin-bottom: 18px;
+}
+
+.disclosure-panel > summary {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  min-height: 48px;
+  color: var(--text);
+  font-weight: 800;
+}
+
+.disclosure-panel > summary::after {
+  content: "+";
+  display: grid;
+  place-items: center;
+  width: 30px;
+  height: 30px;
+  flex: 0 0 auto;
+  border-radius: 999px;
+  color: var(--cyan);
+  border: 1px solid rgba(129, 166, 255, 0.24);
+  background: rgba(18, 31, 63, 0.72);
+}
+
+.disclosure-panel[open] > summary::after {
+  content: "-";
+}
+
+.disclosure-panel > summary small {
+  color: var(--muted);
+  font-size: 0.86rem;
+  font-weight: 700;
+  text-align: right;
 }
 
 .eyebrow,
@@ -318,6 +372,13 @@ h1 {
 .mcq-grid {
   display: grid;
   gap: 14px;
+}
+
+.hero-side.disclosure-panel,
+.build-disclosure.disclosure-panel,
+#metrics-section.disclosure-panel,
+#logs-section.disclosure-panel {
+  display: block;
 }
 
 .panel {
@@ -473,6 +534,15 @@ body.est-lab-mode #stage-section[data-scene="success"] {
     radial-gradient(circle at left center, rgba(97, 240, 255, 0.22), transparent 35%);
 }
 
+#metrics-section .metrics-grid {
+  margin-top: 14px;
+}
+
+#metrics-section .reward-strip {
+  margin: 0;
+  box-shadow: none;
+}
+
 .reward-chips {
   display: flex;
   flex-wrap: wrap;
@@ -501,6 +571,23 @@ body.est-lab-mode #stage-section[data-scene="success"] {
 .two-column {
   grid-template-columns: repeat(2, minmax(0, 1fr));
   margin-bottom: 18px;
+}
+
+.lab-primary {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 14px;
+  margin-bottom: 18px;
+}
+
+.lab-track-panel .chapter-grid {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
+.build-disclosure .list,
+#logs-section .two-column,
+.hero-side .mission-list {
+  margin-top: 14px;
 }
 
 .chapter-grid {
