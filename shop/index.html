@@ -197,13 +197,18 @@
       color: #94a3b8;
       margin-top: 8px;
     }
+    .shop-page .hero {
+      display: block;
+      margin-bottom: 14px;
+    }
     .shop-page .shop-hero-card {
       position: relative;
       overflow: hidden;
-      min-height: 430px;
+      min-height: clamp(300px, 34vw, 390px);
       display: flex;
       flex-direction: column;
       justify-content: flex-end;
+      padding: clamp(22px, 3vw, 32px);
       background:
         linear-gradient(90deg, rgba(5, 13, 26, 0.95), rgba(5, 13, 26, 0.7) 47%, rgba(5, 13, 26, 0.2)),
         linear-gradient(180deg, rgba(5, 13, 26, 0.1), rgba(5, 13, 26, 0.82)),
@@ -225,6 +230,78 @@
     .shop-page .shop-hero-card .subtitle {
       max-width: 52ch;
       color: #d8e7ff;
+    }
+    .shop-page .shop-hero-card h1 {
+      max-width: 920px;
+      font-size: clamp(40px, 5.6vw, 76px);
+    }
+    .shop-info-disclosure {
+      margin-bottom: 18px;
+      border: 1px solid rgba(136, 173, 255, 0.2);
+      border-radius: 20px;
+      background: rgba(13, 25, 45, 0.7);
+      box-shadow: var(--shadow);
+      overflow: hidden;
+    }
+    .shop-info-disclosure summary {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      padding: 16px 18px;
+      color: #e8f0ff;
+      cursor: pointer;
+      list-style: none;
+    }
+    .shop-info-disclosure summary::-webkit-details-marker {
+      display: none;
+    }
+    .shop-info-summary-title {
+      font-size: 18px;
+      font-weight: 800;
+    }
+    .shop-info-summary-note {
+      color: #a7b7d9;
+      font-size: 14px;
+      font-weight: 700;
+      text-align: right;
+    }
+    .shop-info-disclosure summary::after {
+      content: "+";
+      flex: 0 0 auto;
+      width: 28px;
+      height: 28px;
+      display: grid;
+      place-items: center;
+      border-radius: 999px;
+      border: 1px solid rgba(104, 210, 255, 0.28);
+      color: var(--accent);
+      font-size: 20px;
+      line-height: 1;
+    }
+    .shop-info-disclosure[open] summary::after {
+      content: "-";
+    }
+    .shop-info-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 14px;
+      padding: 0 18px 18px;
+    }
+    .shop-info-card {
+      padding: 16px;
+      border: 1px solid rgba(136, 173, 255, 0.18);
+      border-radius: 16px;
+      background: rgba(7, 17, 31, 0.62);
+    }
+    .shop-info-card h2 {
+      margin-bottom: 8px;
+      font-size: 22px;
+    }
+    .shop-info-card p {
+      margin-bottom: 0;
+      color: #c7d7f5;
+      line-height: 1.48;
     }
     .shop-page .shop-request-panel {
       border-radius: 18px;
@@ -407,8 +484,24 @@
     }
     @media (max-width: 680px) {
       .shop-page .shop-hero-card {
-        min-height: 380px;
+        min-height: 330px;
         background-position: 58% center;
+      }
+      .shop-info-disclosure summary {
+        align-items: flex-start;
+        flex-direction: column;
+        gap: 8px;
+      }
+      .shop-info-disclosure summary::after {
+        position: absolute;
+        right: 16px;
+      }
+      .shop-info-summary-note {
+        max-width: calc(100% - 40px);
+        text-align: left;
+      }
+      .shop-info-grid {
+        grid-template-columns: 1fr;
       }
       .shop-category-bar {
         gap: 9px;
@@ -460,23 +553,24 @@
           <button id="shop-add-item-button" class="shop-secondary-button" type="button" data-open-store-request="true">Add an Item to the Store</button>
         </div>
       </article>
-      <div class="hero-side">
-        <article class="panel">
-          <div class="section-title">
-            <h2>How It Works</h2>
-            <p class="status-good">Shared progress</p>
-          </div>
+    </section>
+
+    <details class="shop-info-disclosure">
+      <summary>
+        <span class="shop-info-summary-title">Shop guidance</span>
+        <span class="shop-info-summary-note">Buy once, keep across modules. Open for the short version.</span>
+      </summary>
+      <div class="shop-info-grid">
+        <article class="shop-info-card">
+          <h2>How It Works</h2>
           <p>Buy assets once and keep them as part of your wider Career Empire build. Over time these can affect multiple modules, not just one.</p>
         </article>
-        <article class="panel">
-          <div class="section-title">
-            <h2>Current Build</h2>
-            <p class="status-watch">Growing</p>
-          </div>
+        <article class="shop-info-card">
+          <h2>Current Build</h2>
           <p id="shop-build-note">The first wave of upgrades supports study, tools, transport, wellbeing, and home stability.</p>
         </article>
       </div>
-    </section>
+    </details>
 
     <section class="metrics-grid">
       <article class="metric">
