@@ -631,6 +631,7 @@ function renderSharedCommunityPage(players) {
     : "none";
 
   renderCommunityBoard("community-page-board", {
+    visualPath: "../Assets/Images and Animations/Student Hub/community-impact-banner.png",
     currentVoteLabel: voteLabels[currentVote] || voteLabels.none,
     taxPaid: formatCurrency(totalTax),
     summary: totalVotes

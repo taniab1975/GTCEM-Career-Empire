@@ -112,6 +112,103 @@ h1 {
   gap: 16px;
 }
 
+.community-dashboard-page .hero {
+  align-items: stretch;
+}
+
+.community-hero-art {
+  position: relative;
+  min-height: 380px;
+  overflow: hidden;
+  border: 1px solid rgba(136, 173, 255, 0.22);
+  border-radius: 24px;
+  background: rgba(8, 20, 38, 0.74);
+  box-shadow: var(--shadow);
+}
+
+.community-hero-art img {
+  width: 100%;
+  height: 100%;
+  min-height: 380px;
+  display: block;
+  object-fit: cover;
+}
+
+.community-hero-stat {
+  position: absolute;
+  left: 18px;
+  right: 18px;
+  bottom: 18px;
+  padding: 14px;
+  border: 1px solid rgba(206, 224, 255, 0.2);
+  border-radius: 14px;
+  background: rgba(7, 17, 31, 0.74);
+  backdrop-filter: blur(16px);
+}
+
+.community-hero-stat span {
+  display: block;
+  color: var(--accent);
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.community-hero-stat strong {
+  display: block;
+  margin-top: 5px;
+  font-size: 22px;
+}
+
+.community-pathway-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 16px;
+  margin-bottom: 20px;
+}
+
+.impact-path-card {
+  min-width: 0;
+  overflow: hidden;
+  border: 1px solid rgba(136, 173, 255, 0.2);
+  border-radius: 24px;
+  background: rgba(13, 25, 45, 0.76);
+  box-shadow: var(--shadow);
+}
+
+.impact-path-card img {
+  width: 100%;
+  aspect-ratio: 1.45;
+  display: block;
+  object-fit: cover;
+  border-bottom: 1px solid rgba(136, 173, 255, 0.18);
+}
+
+.impact-path-card .kicker,
+.impact-path-card h3,
+.impact-path-card p {
+  margin-left: 16px;
+  margin-right: 16px;
+}
+
+.impact-path-card .kicker {
+  margin-top: 16px;
+  color: var(--accent);
+}
+
+.impact-path-card h3 {
+  margin-bottom: 8px;
+  font-size: 22px;
+}
+
+.impact-path-card p {
+  margin-bottom: 18px;
+  color: var(--muted);
+  font-size: 14px;
+  line-height: 1.5;
+}
+
 .student-dashboard-page {
   background:
     linear-gradient(135deg, rgba(7, 17, 31, 0.96), rgba(12, 29, 48, 0.96) 48%, rgba(15, 42, 45, 0.96)),
@@ -512,6 +609,28 @@ h1 {
   box-shadow: var(--shadow);
 }
 
+.community-visual-card {
+  min-height: 260px;
+  grid-column: 1 / -1;
+  display: grid;
+  align-content: end;
+  overflow: hidden;
+  background:
+    linear-gradient(180deg, rgba(4, 12, 26, 0.04), rgba(4, 12, 26, 0.86)),
+    linear-gradient(90deg, rgba(4, 12, 26, 0.86), rgba(4, 12, 26, 0.16) 58%, rgba(4, 12, 26, 0.52)),
+    var(--community-visual) center center / cover no-repeat;
+}
+
+.community-visual-card h3 {
+  max-width: 16ch;
+  font-size: clamp(28px, 4vw, 44px);
+}
+
+.community-visual-card p {
+  max-width: 42ch;
+  color: #d7e6ff;
+}
+
 .community-stat {
   font-size: 28px;
   font-weight: 800;
@@ -718,28 +837,6 @@ h1 {
 
 .student-dashboard-page .community-board {
   grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.1fr);
-}
-
-.student-dashboard-page .community-visual-card {
-  min-height: 260px;
-  grid-column: 1 / -1;
-  display: grid;
-  align-content: end;
-  overflow: hidden;
-  background:
-    linear-gradient(180deg, rgba(4, 12, 26, 0.04), rgba(4, 12, 26, 0.86)),
-    linear-gradient(90deg, rgba(4, 12, 26, 0.86), rgba(4, 12, 26, 0.16) 58%, rgba(4, 12, 26, 0.52)),
-    var(--community-visual) center center / cover no-repeat;
-}
-
-.student-dashboard-page .community-visual-card h3 {
-  max-width: 16ch;
-  font-size: clamp(28px, 4vw, 44px);
-}
-
-.student-dashboard-page .community-visual-card p {
-  max-width: 42ch;
-  color: #d7e6ff;
 }
 
 .student-dashboard-page .skill-grid {
@@ -1026,6 +1123,10 @@ textarea {
     grid-template-columns: 1fr;
   }
 
+  .community-pathway-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
   .student-hero-card,
   .student-dashboard-page .two-column {
     grid-template-columns: 1fr;
@@ -1143,6 +1244,22 @@ textarea {
     padding-right: 0;
   }
 
+  .community-hero-art,
+  .community-hero-art img {
+    min-height: 280px;
+  }
+
+  .community-hero-stat {
+    left: 12px;
+    right: 12px;
+    bottom: 12px;
+    padding: 12px;
+  }
+
+  .community-hero-stat strong {
+    font-size: 18px;
+  }
+
   .student-guide-character {
     right: -18px;
     bottom: -18px;
@@ -1188,6 +1305,7 @@ textarea {
   .teacher-grid,
   .skill-grid,
   .module-grid,
+  .community-pathway-grid,
   .community-board {
     grid-template-columns: 1fr;
   }
@@ -1197,7 +1315,9 @@ textarea {
   .metric,
   .timeline-item,
   .skill-card,
-  .module-card {
+  .module-card,
+  .community-hero-art,
+  .impact-path-card {
     border-radius: 18px;
   }
 
