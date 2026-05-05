@@ -677,8 +677,21 @@
     }
     .platform-entry-btn {
       min-width: 180px;
+      display: inline-flex;
+      align-items: center;
       justify-content: center;
       text-decoration: none;
+    }
+    .platform-demo-entry {
+      grid-column: 1 / -1;
+      min-height: 52px;
+      background: linear-gradient(135deg, #14b8a6 0%, #2563eb 100%);
+      border-color: rgba(125, 211, 252, 0.35);
+      box-shadow: 0 16px 34px rgba(20, 184, 166, 0.22);
+      font-size: 1rem;
+    }
+    .platform-demo-entry:hover {
+      box-shadow: 0 18px 42px rgba(37, 99, 235, 0.34);
     }
     .platform-landing-grid {
       display: grid;
@@ -1033,9 +1046,9 @@
 
                 <div>
                   <div class="platform-link-stack">
+                    <button class="btn-primary text-white font-bold py-3 px-6 rounded-lg platform-entry-btn platform-demo-entry" type="button" data-demo-student-launch="true" data-demo-student-target="./dashboards/student.html">Try Demo Student Experience</button>
                     <a class="btn-primary text-white font-bold py-3 px-6 rounded-lg platform-entry-btn" href="./auth/student-login.html">Student Login</a>
                     <a class="btn-primary text-white font-bold py-3 px-6 rounded-lg platform-entry-btn" href="./auth/teacher-login.html">Teacher Login</a>
-                    <button class="btn-primary text-white font-bold py-3 px-6 rounded-lg platform-entry-btn" type="button" data-demo-student-launch="true" data-demo-student-target="./dashboards/student.html">✨ Try Demo Student Experience</button>
                     <a class="platform-ghost platform-entry-btn" href="./auth/teacher-signup.html">Teacher Register</a>
                     <a class="platform-ghost platform-entry-btn" href="./modules/year10-megatrends/index.html">Year 10 Quick Link</a>
                   </div>
