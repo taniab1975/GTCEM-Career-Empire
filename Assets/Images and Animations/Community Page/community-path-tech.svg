@@ -1,0 +1,42 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 520 360" role="img" aria-labelledby="title desc">
+  <title id="title">Technology pathway</title>
+  <desc id="desc">Connected learning screens and bright digital pathways.</desc>
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#17345d"/>
+      <stop offset="1" stop-color="#07111f"/>
+    </linearGradient>
+    <linearGradient id="screen" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#68d2ff"/>
+      <stop offset="1" stop-color="#8f9cff"/>
+    </linearGradient>
+  </defs>
+  <rect width="520" height="360" rx="28" fill="url(#bg)"/>
+  <g fill="none" stroke="#68d2ff" stroke-opacity=".34" stroke-width="5">
+    <path d="M148 184h224"/>
+    <path d="M260 100v166"/>
+    <path d="M148 184c52-86 172-86 224 0"/>
+    <path d="M148 184c52 86 172 86 224 0"/>
+  </g>
+  <g fill="#0b1729" stroke="#cfe4ff" stroke-opacity=".22" stroke-width="2">
+    <rect x="80" y="102" width="138" height="92" rx="18"/>
+    <rect x="302" y="102" width="138" height="92" rx="18"/>
+    <rect x="172" y="213" width="176" height="104" rx="22"/>
+  </g>
+  <g fill="url(#screen)">
+    <rect x="101" y="124" width="94" height="48" rx="10"/>
+    <rect x="323" y="124" width="94" height="48" rx="10"/>
+    <rect x="196" y="237" width="128" height="48" rx="10"/>
+  </g>
+  <g stroke="#07111f" stroke-width="8" stroke-linecap="round">
+    <path d="M123 149h50M345 149h50M224 262h72"/>
+    <path d="M260 246v32"/>
+  </g>
+  <g fill="#80ed99">
+    <circle cx="260" cy="93" r="24"/>
+    <circle cx="148" cy="184" r="13"/>
+    <circle cx="372" cy="184" r="13"/>
+    <circle cx="260" cy="266" r="13"/>
+  </g>
+  <path d="M236 94h48M260 70v48" stroke="#07111f" stroke-width="8" stroke-linecap="round"/>
+</svg>
