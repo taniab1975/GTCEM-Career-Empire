@@ -1,6 +1,7 @@
 const AUTH_DEMO_STATE_KEY = "career-empire-auth-demo";
 const FEEDBACK_FALLBACK_KEY = "career-empire-feedback-fallback";
 const PLAYER_SESSION_KEY = "career-empire-session";
+const SHOP_ASSET_IMAGE_BASE = "../Assets/Images and Animations/Global Shop/items";
 
 const GLOBAL_ASSET_CATALOG = [
   { code: "study-desk", name: "Focused Study Desk", category: "study", cost: 900, icon: "🪑", benefit: "Supports planning-heavy tasks and a more stable learning setup." },
@@ -19,7 +20,7 @@ const GLOBAL_ASSET_CATALOG = [
   { code: "cat-companion", name: "Cat Companion", category: "wellbeing", cost: 520, icon: "🐱", benefit: "A calm little life upgrade that makes the world feel more lived in." },
   { code: "life-insurance", name: "Starter Life Insurance", category: "investments", cost: 1100, icon: "🛡️", benefit: "A grown-up security move that fits long-term planning and stability." },
   { code: "home-deposit", name: "First Home Deposit", category: "investments", cost: 5000, icon: "🏡", benefit: "A serious investment step toward future housing security and wealth building." }
-];
+].map(asset => ({ ...asset, imagePath: `${SHOP_ASSET_IMAGE_BASE}/${asset.code}.png` }));
 
 const CATEGORY_META = {
   all: { label: "All", icon: "🛍️" },
@@ -34,6 +35,20 @@ const CATEGORY_META = {
   housing: { label: "Housing", icon: "🏠" },
   fun: { label: "Fun", icon: "🎉" },
   experiences: { label: "Experiences", icon: "🎟️" }
+};
+
+const CATEGORY_IMAGE_FALLBACKS = {
+  cars: "tesla-fund",
+  "mobile-phones": "iphone-upgrade",
+  clothes: "sneaker-drop",
+  investments: "life-insurance",
+  wellbeing: "wellbeing-pack",
+  technology: "laptop-upgrade",
+  study: "study-desk",
+  mobility: "transport-pass",
+  housing: "rental-upgrade",
+  fun: "ps5-bundle",
+  experiences: "festival-pass"
 };
 
 let activeCategory = "all";
@@ -107,6 +122,55 @@ function getCategoryMeta(category) {
     label: String(category || "Other").replaceAll("-", " ").replace(/\b\w/g, char => char.toUpperCase()),
     icon: "🧩"
   };
+}
+
+function getAssetImageSrc(asset) {
+  if (asset?.image?.dataUrl) return asset.image.dataUrl;
+  if (asset?.imagePath) return asset.imagePath;
+  const fallbackCode = CATEGORY_IMAGE_FALLBACKS[asset?.category];
+  return fallbackCode ? `${SHOP_ASSET_IMAGE_BASE}/${fallbackCode}.png` : "";
+}
+
+function getAssetDisplay(asset) {
+  const catalogAsset = getFullAssetCatalog().find(item => item.code === asset?.asset_code || item.code === asset?.code) || {};
+  return {
+    ...catalogAsset,
+    code: asset?.asset_code || asset?.code || catalogAsset.code,
+    name: asset?.asset_name || asset?.name || catalogAsset.name || "Shop item",
+    category: asset?.asset_category || asset?.category || catalogAsset.category || "other",
+    cost: Number(asset?.purchase_cost || asset?.cost || catalogAsset.cost || 0),
+    image: asset?.image || catalogAsset.image,
+    imagePath: asset?.imagePath || catalogAsset.imagePath,
+    icon: catalogAsset.icon || asset?.icon || getCategoryMeta(asset?.asset_category || asset?.category).icon
+  };
+}
+
+function renderAssetArtwork(asset, className = "shop-item-art") {
+  const display = getAssetDisplay(asset);
+  const imageSrc = getAssetImageSrc(display);
+  const categoryMeta = getCategoryMeta(display.category);
+
+  if (!imageSrc) {
+    return `
+      <div class="${className} shop-item-art--fallback">
+        <span>${escapeHtml(display.icon || categoryMeta.icon)}</span>
+      </div>
+    `;
+  }
+
+  return `
+    <div class="${className}">
+      <img src="${escapeHtml(imageSrc)}" alt="${escapeHtml(display.name)} artwork">
+      <span class="shop-art-chip">${escapeHtml(categoryMeta.label)}</span>
+    </div>
+  `;
+}
+
+function formatDate(value) {
+  if (!value) return "";
+  const parsed = new Date(value);
+  if (Number.isNaN(parsed.getTime())) return "";
+  return parsed.toLocaleDateString(undefined, { day: "numeric", month: "short", year: "numeric" });
 }
 
 function getCatalogCategories() {
@@ -246,7 +310,14 @@ function renderOwnedInventory(context) {
   if (!container) return;
   const assets = context?.assets || [];
   if (!assets.length) {
-    container.innerHTML = '<div class="timeline-item"><strong>No items owned yet</strong><p>Use Megatrends or Lifelong Learning to build money, then buy your first upgrade here.</p></div>';
+    container.className = "owned-inventory-grid";
+    container.innerHTML = `
+      <div class="inventory-empty-state">
+        <img src="../Assets/Images and Animations/Global Shop/global-shop-student-hub.png" alt="">
+        <strong>No items owned yet</strong>
+        <p>Use Megatrends or Lifelong Learning to build money, then buy your first upgrade here.</p>
+      </div>
+    `;
     return;
   }
 
@@ -262,12 +333,29 @@ function renderOwnedInventory(context) {
     }
   });
 
-  container.innerHTML = [...latestByCode.values()].map(asset => `
-    <div class="timeline-item">
-      <strong>${escapeHtml(asset.asset_name)}</strong>
-      <p>${escapeHtml(getCategoryMeta(asset.asset_category).label)} • ${formatCurrency(asset.purchase_cost)}${assetCounts[asset.asset_code] > 1 ? ` • Qty ${assetCounts[asset.asset_code]} • Total spent ${formatCurrency(totalSpendByCode[asset.asset_code])}` : ""}</p>
-    </div>
-  `).join("");
+  container.className = "owned-inventory-grid";
+  container.innerHTML = [...latestByCode.values()].map(asset => {
+    const display = getAssetDisplay(asset);
+    const categoryMeta = getCategoryMeta(display.category);
+    const count = assetCounts[display.code] || 1;
+    const totalSpend = totalSpendByCode[display.code] || display.cost;
+    const purchasedDate = formatDate(asset.purchased_at);
+
+    return `
+      <article class="inventory-card">
+        ${renderAssetArtwork(display, "inventory-art")}
+        <div class="inventory-card-body">
+          <div class="kicker">${escapeHtml(categoryMeta.label)}</div>
+          <h3>${escapeHtml(display.name)}</h3>
+          <div class="inventory-stat-grid">
+            <span><strong>${count}</strong> owned</span>
+            <span><strong>${formatCurrency(totalSpend)}</strong> spent</span>
+          </div>
+          <p>${count > 1 ? `${formatCurrency(display.cost)} each` : `${formatCurrency(display.cost)} purchase`}${purchasedDate ? ` • Latest ${purchasedDate}` : ""}</p>
+        </div>
+      </article>
+    `;
+  }).join("");
 }
 
 async function buyGlobalAsset(asset, context) {
@@ -420,28 +508,29 @@ function renderShopGrid(context) {
 
   container.innerHTML = filteredAssets.map(asset => {
     const categoryMeta = getCategoryMeta(asset.category);
+    const ownedCount = ownedCounts[asset.code] || 0;
+    const canAfford = currentWorth >= asset.cost;
     return `
-      <article class="module-card">
-        <div class="module-header">
-          <div class="badge">${asset.image?.dataUrl ? `<img src="${asset.image.dataUrl}" alt="${escapeHtml(asset.name)}" style="width:32px;height:32px;border-radius:10px;object-fit:cover;">` : asset.icon}</div>
-          <div>
-            <div class="kicker">${escapeHtml(categoryMeta.label)}</div>
-            <h3>${escapeHtml(asset.name)}</h3>
+      <article class="module-card shop-item-card">
+        ${renderAssetArtwork(asset)}
+        <div class="shop-item-body">
+          <div class="shop-item-topline">
+            <div>
+              <div class="kicker">${escapeHtml(categoryMeta.label)}</div>
+              <h3>${escapeHtml(asset.name)}</h3>
+            </div>
+            <span class="shop-item-price">${formatCurrency(asset.cost)}</span>
           </div>
-        </div>
-        <p>${escapeHtml(asset.benefit)}</p>
-        <div class="section-title">
-          <p>${formatCurrency(asset.cost)}</p>
-          <p>${currentWorth >= asset.cost ? "Affordable" : "Locked"}</p>
-        </div>
-        <div class="pill-row">
-          <span class="pill">Owned: ${ownedCounts[asset.code] || 0}</span>
-          <span class="pill">${escapeHtml(categoryMeta.label)}</span>
-        </div>
-        <div class="module-actions">
-          <button class="module-link" type="button" data-buy-asset="${asset.code}" ${currentWorth < asset.cost ? "disabled" : ""}>
-            ${(ownedCounts[asset.code] || 0) > 0 ? "Buy Another" : "Buy Item"}
-          </button>
+          <p>${escapeHtml(asset.benefit)}</p>
+          <div class="pill-row">
+            <span class="pill">Owned: ${ownedCount}</span>
+            <span class="pill">${canAfford ? "Affordable" : `Need ${formatCurrency(asset.cost - currentWorth)}`}</span>
+          </div>
+          <div class="module-actions">
+            <button class="module-link" type="button" data-buy-asset="${asset.code}" ${!canAfford ? "disabled" : ""}>
+              ${ownedCount > 0 ? "Buy Another" : "Buy Item"}
+            </button>
+          </div>
         </div>
       </article>
     `;

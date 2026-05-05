@@ -149,9 +149,232 @@
       color: #94a3b8;
       margin-top: 8px;
     }
+    .shop-page .shop-hero-card {
+      position: relative;
+      overflow: hidden;
+      min-height: 430px;
+      display: flex;
+      flex-direction: column;
+      justify-content: flex-end;
+      background:
+        linear-gradient(90deg, rgba(5, 13, 26, 0.95), rgba(5, 13, 26, 0.7) 47%, rgba(5, 13, 26, 0.2)),
+        linear-gradient(180deg, rgba(5, 13, 26, 0.1), rgba(5, 13, 26, 0.82)),
+        var(--shop-hero-image) center center / cover no-repeat;
+    }
+    .shop-page .shop-hero-card::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background:
+        radial-gradient(circle at 68% 24%, rgba(104, 210, 255, 0.2), transparent 32%),
+        linear-gradient(180deg, transparent 38%, rgba(5, 13, 26, 0.38));
+      pointer-events: none;
+    }
+    .shop-page .shop-hero-card > * {
+      position: relative;
+      z-index: 1;
+    }
+    .shop-page .shop-hero-card .subtitle {
+      max-width: 52ch;
+      color: #d8e7ff;
+    }
+    .shop-page .shop-request-panel {
+      border-radius: 18px;
+    }
+    .shop-page .module-grid {
+      gap: 18px;
+    }
+    .shop-item-card {
+      min-height: 520px;
+      display: flex;
+      overflow: hidden;
+      flex-direction: column;
+      padding: 0;
+      border-radius: 20px;
+      background: linear-gradient(145deg, rgba(13, 28, 50, 0.96), rgba(7, 17, 31, 0.96));
+    }
+    .shop-item-art {
+      position: relative;
+      overflow: hidden;
+      aspect-ratio: 16 / 10;
+      min-height: 0;
+      border-bottom: 1px solid rgba(136, 173, 255, 0.18);
+      background: #0b1930;
+    }
+    .shop-item-art img,
+    .inventory-art img {
+      width: 100%;
+      height: 100%;
+      display: block;
+      object-fit: cover;
+    }
+    .shop-item-art::after,
+    .inventory-art::after {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(180deg, rgba(4, 12, 26, 0.02), rgba(4, 12, 26, 0.2));
+      pointer-events: none;
+    }
+    .shop-art-chip {
+      position: absolute;
+      left: 14px;
+      top: 14px;
+      z-index: 1;
+      padding: 7px 10px;
+      border-radius: 999px;
+      border: 1px solid rgba(206, 224, 255, 0.26);
+      background: rgba(7, 16, 31, 0.74);
+      color: #eef5ff;
+      font-size: 12px;
+      font-weight: 800;
+      letter-spacing: 0.02em;
+    }
+    .shop-item-art--fallback {
+      display: grid;
+      place-items: center;
+      background:
+        radial-gradient(circle at 50% 38%, rgba(104, 210, 255, 0.22), transparent 42%),
+        linear-gradient(145deg, rgba(15, 34, 58, 0.96), rgba(7, 17, 31, 0.96));
+    }
+    .shop-item-art--fallback span {
+      font-size: 54px;
+      filter: drop-shadow(0 14px 24px rgba(0, 0, 0, 0.32));
+    }
+    .shop-item-body {
+      display: flex;
+      flex: 1;
+      flex-direction: column;
+      padding: 18px;
+    }
+    .shop-item-topline {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 12px;
+      margin-bottom: 12px;
+    }
+    .shop-item-topline h3 {
+      margin: 4px 0 0;
+      font-size: clamp(22px, 2.2vw, 28px);
+      line-height: 1.04;
+    }
+    .shop-item-price {
+      flex: 0 0 auto;
+      padding: 8px 10px;
+      border-radius: 12px;
+      border: 1px solid rgba(128, 237, 153, 0.24);
+      background: rgba(128, 237, 153, 0.1);
+      color: #d9ffe4;
+      font-weight: 800;
+    }
+    .shop-item-body > p {
+      color: #c7d7f5;
+      line-height: 1.48;
+    }
+    .shop-item-card .module-actions {
+      margin-top: auto;
+    }
+    .shop-item-card .module-link[disabled] {
+      opacity: 0.48;
+      cursor: not-allowed;
+    }
+    .owned-inventory-grid {
+      display: grid;
+      gap: 14px;
+    }
+    .inventory-card {
+      display: grid;
+      grid-template-columns: 116px minmax(0, 1fr);
+      gap: 14px;
+      padding: 12px;
+      border-radius: 18px;
+      border: 1px solid rgba(136, 173, 255, 0.2);
+      background:
+        linear-gradient(145deg, rgba(16, 34, 58, 0.82), rgba(8, 18, 34, 0.92));
+    }
+    .inventory-art {
+      position: relative;
+      min-height: 116px;
+      overflow: hidden;
+      border-radius: 14px;
+      border: 1px solid rgba(206, 224, 255, 0.16);
+      background: #0b1930;
+    }
+    .inventory-art .shop-art-chip {
+      display: none;
+    }
+    .inventory-card-body {
+      min-width: 0;
+      padding: 3px 4px 3px 0;
+    }
+    .inventory-card-body h3 {
+      margin: 4px 0 10px;
+      font-size: 22px;
+      line-height: 1.08;
+    }
+    .inventory-stat-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 8px;
+      margin-bottom: 10px;
+    }
+    .inventory-stat-grid span {
+      padding: 9px 10px;
+      border-radius: 12px;
+      border: 1px solid rgba(136, 173, 255, 0.16);
+      background: rgba(255, 255, 255, 0.04);
+      color: #c7d7f5;
+      font-size: 12px;
+    }
+    .inventory-stat-grid strong {
+      display: block;
+      color: #f2f7ff;
+      font-size: 18px;
+      line-height: 1.1;
+    }
+    .inventory-card-body p {
+      margin-bottom: 0;
+      color: #9fb1d6;
+      line-height: 1.4;
+    }
+    .inventory-empty-state {
+      display: grid;
+      gap: 12px;
+      padding: 16px;
+      border-radius: 18px;
+      border: 1px solid rgba(136, 173, 255, 0.2);
+      background: linear-gradient(145deg, rgba(16, 34, 58, 0.82), rgba(8, 18, 34, 0.92));
+    }
+    .inventory-empty-state img {
+      width: 100%;
+      max-height: 220px;
+      object-fit: cover;
+      border-radius: 14px;
+      border: 1px solid rgba(206, 224, 255, 0.16);
+    }
+    .inventory-empty-state p {
+      margin-bottom: 0;
+      color: #a7b7d9;
+    }
+    @media (max-width: 680px) {
+      .shop-page .shop-hero-card {
+        min-height: 380px;
+        background-position: 58% center;
+      }
+      .inventory-card {
+        grid-template-columns: 94px minmax(0, 1fr);
+      }
+      .inventory-art {
+        min-height: 94px;
+      }
+      .inventory-stat-grid {
+        grid-template-columns: 1fr;
+      }
+    }
   </style>
 </head>
-<body>
+<body class="shop-page">
   <main class="page-shell">
     <nav class="dashboard-nav">
       <a class="dashboard-nav-link" href="../dashboards/student.html">Student Hub</a>
@@ -162,7 +385,7 @@
     </nav>
 
     <section class="hero">
-      <article class="hero-card">
+      <article class="hero-card shop-hero-card" style="--shop-hero-image: url('../Assets/Images and Animations/Global Shop/global-shop-student-hub.png')">
         <span class="eyebrow">Global Shop</span>
         <h1 id="shop-hero-title">Spend your gains on the life you are building.</h1>
         <p id="shop-hero-subtitle" class="subtitle">
