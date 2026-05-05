@@ -247,11 +247,11 @@ body.est-lab-mode {
   margin-top: 10px;
 }
 
-.hero-side {
+.mission-brief-panel {
   grid-column: 1 / -1;
 }
 
-.hero-side .mission-list {
+.mission-brief-panel .mission-list {
   grid-template-columns: repeat(4, minmax(0, 1fr));
 }
 
@@ -364,7 +364,7 @@ h1 {
   line-height: 1.6;
 }
 
-.hero-side,
+.mission-brief-panel,
 .mission-list,
 .list,
 .chapter-grid,
@@ -374,7 +374,7 @@ h1 {
   gap: 14px;
 }
 
-.hero-side.disclosure-panel,
+.mission-brief-panel.disclosure-panel,
 .build-disclosure.disclosure-panel,
 #metrics-section.disclosure-panel,
 #logs-section.disclosure-panel {
@@ -586,7 +586,7 @@ body.est-lab-mode #stage-section[data-scene="success"] {
 
 .build-disclosure .list,
 #logs-section .two-column,
-.hero-side .mission-list {
+.mission-brief-panel .mission-list {
   margin-top: 14px;
 }
 
@@ -643,28 +643,28 @@ body.est-lab-mode #stage-section[data-scene="success"] {
   --challenge-bg: url("../../Assets/EST Preparation/est-lab-card-content.png");
   --challenge-accent: var(--cyan);
   --challenge-glow: rgba(97, 240, 255, 0.24);
-  background-position: 28% center;
+  background-position: center;
 }
 
 .challenge-tile--glossary {
   --challenge-bg: url("../../Assets/EST Preparation/est-lab-card-glossary.png");
   --challenge-accent: var(--green);
   --challenge-glow: rgba(114, 247, 184, 0.22);
-  background-position: 31% center;
+  background-position: center;
 }
 
 .challenge-tile--decoder {
   --challenge-bg: url("../../Assets/EST Preparation/est-lab-card-decoder.png");
   --challenge-accent: var(--gold);
   --challenge-glow: rgba(255, 216, 108, 0.22);
-  background-position: 38% center;
+  background-position: center;
 }
 
 .challenge-tile--boss {
   --challenge-bg: url("../../Assets/EST Preparation/est-lab-card-boss.png");
   --challenge-accent: var(--pink);
   --challenge-glow: rgba(255, 138, 202, 0.24);
-  background-position: 72% center;
+  background-position: center;
 }
 
 .challenge-tile .kicker {

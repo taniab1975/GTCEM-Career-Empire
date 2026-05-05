@@ -10,7 +10,7 @@
     min-height: 0;
   }
 
-  .hero-side .mission-list {
+  .mission-brief-panel .mission-list {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
@@ -36,11 +36,18 @@
   }
 
   .training-question-layout {
+    grid-template-rows: auto;
     min-height: auto;
   }
 
   .training-card--flash .training-stack {
+    height: auto;
     margin-top: 12px;
+  }
+
+  .training-card--flash .choice-button {
+    min-height: 68px;
+    height: auto;
   }
 
   .training-focus-aside {
@@ -161,7 +168,7 @@
     padding: 8px 10px;
   }
 
-  .hero-side .mission-list {
+  .mission-brief-panel .mission-list {
     grid-template-columns: 1fr;
   }
 

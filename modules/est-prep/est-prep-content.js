@@ -464,8 +464,8 @@ function renderArcTrainingBay(config, score) {
                         </button>
                       `).join("")}
                     </div>
-                    ${renderArcProgressRail(config, "arc-progress-rail--answer")}
                   </div>
+                  ${renderArcProgressRail(config, "arc-progress-rail--answer arc-progress-rail--wide")}
                 </div>
               </article>
               ${currentAnswer ? `
