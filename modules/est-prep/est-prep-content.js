@@ -1206,10 +1206,10 @@ function renderContentTopicIntro(group) {
           <div class="written-stage topic-intro-actions">
             <div class="topic-intro-button-row">
               <button class="submit-button compact" type="button" onclick="window.ESTPrep.openStage('content')">Back</button>
-              <button class="submit-button compact" type="button" onclick="window.ESTPrep.startContentGroup()">${hasBankedResult ? "Resume topic" : "Start content check"}</button>
+              <button class="submit-button compact" type="button" onclick="window.ESTPrep.startContentGroup()">${hasBankedResult ? "Replay topic" : "Start content check"}</button>
               ${hasBankedResult ? '<button class="submit-button compact ghost" type="button" onclick="window.ESTPrep.resetCurrentContentTopic()">Reset topic</button>' : ""}
             </div>
-            ${hasBankedResult ? `<p class="small-copy topic-intro-status">Best banked result: ${bankedPercent}% • reopen to improve or reset to replay from the start.</p>` : ""}
+            ${hasBankedResult ? `<p class="small-copy topic-intro-status">Best banked result: ${bankedPercent}% • replay from the first reactor card or reset to clear this topic.</p>` : ""}
           </div>
         </div>
       </div>
@@ -1398,24 +1398,29 @@ function bankCurrentContentDuration() {
   state.contentGroupStartedAt = Date.now();
 }
 
-function resetCurrentContentTopic() {
-  const groups = state.stageDeck?.contentGroups || [];
-  const currentGroup = groups[state.contentGroupIndex];
-  if (!currentGroup) return;
-  const trainingConfig = getContentTrainingConfig(currentGroup.id);
-  (currentGroup.rounds || []).forEach((_, index) => {
-    delete state.answers[`content-${currentGroup.id}-${index}`];
+function clearContentTopicWorkingState(group, { clearBankedResult = false, markEvidenceReset = false } = {}) {
+  if (!group) return;
+  const trainingConfig = getContentTrainingConfig(group.id);
+  (group.rounds || []).forEach((_, index) => {
+    delete state.answers[`content-${group.id}-${index}`];
   });
-  delete state.answers[`content-note-${currentGroup.id}`];
-  if (state.responseForgeDrafts) delete state.responseForgeDrafts[currentGroup.id];
-  if (state.contentResponseBuilds) delete state.contentResponseBuilds[currentGroup.id];
-  delete state.contentGroupDurations[currentGroup.id];
+  delete state.answers[`content-note-${group.id}`];
+
+  const scaffold = getContentResponseScaffold(group);
+  (scaffold?.segments || []).forEach(segment => {
+    delete state.answers[getContentResponseSegmentKey(group.id, segment.id)];
+  });
+
+  if (state.responseForgeDrafts) delete state.responseForgeDrafts[group.id];
+  if (state.contentResponseBuilds) delete state.contentResponseBuilds[group.id];
+  delete state.contentGroupDurations[group.id];
   if (trainingConfig && isArcTrainingType(trainingConfig.type)) {
     (trainingConfig.steps || []).forEach(step => {
       (step.items || []).forEach(item => {
         delete state.answers[getArcTrainingAnswerKey(trainingConfig.type, item.id)];
       });
     });
+    if (!state.arcFlows || typeof state.arcFlows !== "object") state.arcFlows = {};
     delete state.arcFlows[trainingConfig.type];
     if (state.arcBanking) delete state.arcBanking[trainingConfig.type];
   } else if (trainingConfig?.type === "sort") {
@@ -1431,11 +1436,22 @@ function resetCurrentContentTopic() {
       delete state.answers[`training-${trainingConfig.type}-${round.id}`];
     });
   }
-  delete state.contentTopicBestScores[currentGroup.id];
-  delete state.contentTopicVotes[currentGroup.id];
-  Object.keys(state.contentTopicVoteSaves || {}).forEach(key => {
-    if (key.startsWith(`${currentGroup.id}:`)) delete state.contentTopicVoteSaves[key];
-  });
+
+  if (clearBankedResult) {
+    delete state.contentTopicBestScores[group.id];
+    delete state.contentTopicVotes[group.id];
+    Object.keys(state.contentTopicVoteSaves || {}).forEach(key => {
+      if (key.startsWith(`${group.id}:`)) delete state.contentTopicVoteSaves[key];
+    });
+  }
+
+  if (markEvidenceReset) {
+    if (!state.contentTopicResetAt || typeof state.contentTopicResetAt !== "object") state.contentTopicResetAt = {};
+    state.contentTopicResetAt[group.id] = new Date().toISOString();
+  }
+}
+
+function refreshContentCompletionAfterTopicReset(groups) {
   const bankedGroups = groups.filter(group => Number(state.contentTopicBestScores[group.id] || 0) > 0);
   if (bankedGroups.length === groups.length && groups.length) {
     syncContentCompletionFromTopicScores();
@@ -1447,6 +1463,14 @@ function resetCurrentContentTopic() {
       delete state.stageBestScores.content;
     }
   }
+}
+
+function resetCurrentContentTopic() {
+  const groups = state.stageDeck?.contentGroups || [];
+  const currentGroup = groups[state.contentGroupIndex];
+  if (!currentGroup) return;
+  clearContentTopicWorkingState(currentGroup, { clearBankedResult: true, markEvidenceReset: true });
+  refreshContentCompletionAfterTopicReset(groups);
   state.lastContentTopicReview = null;
   state.contentView = "intro";
   state.contentGroupStartedAt = null;
@@ -1480,6 +1504,14 @@ function startContentGroup() {
   const groups = state.stageDeck?.contentGroups || [];
   const currentGroup = groups[state.contentGroupIndex];
   if (!currentGroup) return;
+  const startedFromIntro = state.contentView === "intro";
+  const trainingConfig = getContentTrainingConfig(currentGroup.id);
+  const trainingScore = getTrainingScore(trainingConfig);
+  const trainingComplete = trainingScore.total > 0 && trainingScore.correct === trainingScore.total;
+  const hasBankedResult = Number(state.contentTopicBestScores[currentGroup.id] || 0) > 0;
+  if (startedFromIntro && (hasBankedResult || trainingComplete)) {
+    clearContentTopicWorkingState(currentGroup);
+  }
   state.contentView = "lesson";
   state.contentGroupStartedAt = Date.now();
   persistESTProgressSnapshot();
@@ -1556,6 +1588,9 @@ function moveContentGroup(step) {
 
 function retryCurrentContentTopic() {
   if (state.contentGroupIndex < 0) return;
+  const groups = state.stageDeck?.contentGroups || [];
+  const currentGroup = groups[state.contentGroupIndex];
+  clearContentTopicWorkingState(currentGroup);
   state.lastContentTopicReview = null;
   openContentGroupIntro(state.contentGroupIndex);
 }
