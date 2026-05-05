@@ -231,31 +231,39 @@ async function loadApprovedStoreItems() {
     });
 }
 
+function getLocalShopContext() {
+  const authState = readState();
+  const studentLogin = authState?.studentLogin || {};
+  const session = readJsonStorage(PLAYER_SESSION_KEY, {});
+  const studentName = studentLogin?.displayName || studentLogin?.username || session.studentName || "Demo Student";
+  const schoolName = studentLogin?.schoolName || session.schoolName || "Career Empire Demo";
+  const classCode = studentLogin?.classCode || session.classCode || "DEMO";
+
+  return {
+    studentId: studentLogin?.id || null,
+    isDemo: true,
+    studentName,
+    schoolName,
+    classCode,
+    profile: {
+      annual_salary: Number(session.annualSalary || 32000),
+      cumulative_net_worth: Number(session.cumulativeNetWorth || session.savings || 0),
+      savings: Number(session.savings || session.cumulativeNetWorth || 0),
+      work_life_balance: Number(session.workLifeBalance || 70),
+      job_security: Number(session.jobSecurity || 70)
+    },
+    assets: Array.isArray(session.ownedAssets) ? session.ownedAssets : []
+  };
+}
+
 async function loadStudentShopContext() {
   const authState = readState();
   const studentLogin = authState?.studentLogin || {};
   const studentId = studentLogin?.id;
-  const studentName = studentLogin?.displayName || studentLogin?.username || "Student";
-  const schoolName = studentLogin?.schoolName || "";
-  const classCode = studentLogin?.classCode || "";
   const session = readJsonStorage(PLAYER_SESSION_KEY, {});
 
-  if (!studentId && (studentLogin?.demo || studentLogin?.preview || session?.demoMode)) {
-    return {
-      studentId: null,
-      isDemo: true,
-      studentName,
-      schoolName: schoolName || session.schoolName || "Career Empire Demo",
-      classCode: classCode || session.classCode || "DEMO",
-      profile: {
-        annual_salary: Number(session.annualSalary || 32000),
-        cumulative_net_worth: Number(session.cumulativeNetWorth || 0),
-        savings: Number(session.savings || 0),
-        work_life_balance: Number(session.workLifeBalance || 70),
-        job_security: Number(session.jobSecurity || 70)
-      },
-      assets: Array.isArray(session.ownedAssets) ? session.ownedAssets : []
-    };
+  if (!studentId && (studentLogin?.demo || studentLogin?.preview || session?.demoMode || Object.keys(session).length)) {
+    return getLocalShopContext();
   }
 
   if (!studentId) return null;
@@ -739,17 +747,37 @@ function renderBuildNote() {
   note.textContent = "Browse categories like cars, mobile phones, clothes, investments, wellbeing, and more. Students can now also suggest new items for teacher approval.";
 }
 
-async function initShop() {
-  await loadApprovedStoreItems();
-  currentShopContext = await loadStudentShopContext();
-  renderShopHero(currentShopContext);
+function renderShopPage(context) {
+  currentShopContext = context;
+  renderShopHero(context);
   renderShopMetrics(currentShopContext);
   renderOwnedInventory(currentShopContext);
   renderBuildNote();
   renderCategoryBar();
   renderShopGrid(currentShopContext);
+}
+
+async function initShop() {
+  renderShopPage(getLocalShopContext());
   createStoreRequestModal();
   bindStoreRequestActions();
+
+  try {
+    await loadApprovedStoreItems();
+    renderCategoryBar();
+    renderShopGrid(currentShopContext);
+  } catch (error) {
+    console.error(error);
+    approvedStoreItems = [];
+  }
+
+  try {
+    const studentContext = await loadStudentShopContext();
+    renderShopPage(studentContext || currentShopContext);
+  } catch (error) {
+    console.error(error);
+    renderShopPage(currentShopContext || getLocalShopContext());
+  }
 }
 
 initShop().catch(console.error);
