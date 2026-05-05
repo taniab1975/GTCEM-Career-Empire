@@ -210,7 +210,7 @@ function renderMap() {
   const totalContentTopics = Math.max(1, (state.stageDeck?.contentGroups || []).length);
   const completedContentTopics = getCompletedContentTopicCount();
   container.innerHTML = STAGES.map(stage => `
-    <article class="challenge-tile ${state.completed[stage.id] ? "completed" : ""} ${state.selectedStageId === stage.id ? "active" : ""}">
+    <article class="challenge-tile challenge-tile--${stage.id} ${state.completed[stage.id] ? "completed" : ""} ${state.selectedStageId === stage.id ? "active" : ""}">
       <div class="kicker">${escapeHtml(stage.state)}</div>
       <h3>${escapeHtml(stage.title)}</h3>
       <p>${escapeHtml(stage.id === "content" && completedContentTopics > 0 ? `${completedContentTopics}/${totalContentTopics} topics banked in the knowledge reactor.` : stage.summary)}</p>

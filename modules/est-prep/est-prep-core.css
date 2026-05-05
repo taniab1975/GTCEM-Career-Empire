@@ -595,8 +595,83 @@ body.est-lab-mode #stage-section[data-scene="success"] {
 }
 
 .challenge-tile {
+  --challenge-bg: none;
+  --challenge-accent: var(--cyan);
+  --challenge-glow: rgba(97, 240, 255, 0.18);
   padding: 16px;
   position: relative;
+  display: flex;
+  min-height: 250px;
+  overflow: hidden;
+  flex-direction: column;
+  justify-content: flex-start;
+  border-color: color-mix(in srgb, var(--challenge-accent) 42%, rgba(129, 166, 255, 0.18));
+  background:
+    linear-gradient(180deg, rgba(7, 13, 29, 0.18) 0%, rgba(7, 13, 29, 0.72) 50%, rgba(7, 13, 29, 0.96) 100%),
+    radial-gradient(circle at 70% 18%, var(--challenge-glow), transparent 42%),
+    var(--challenge-bg) center / cover no-repeat,
+    rgba(25, 37, 72, 0.72);
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.02);
+  isolation: isolate;
+}
+
+.challenge-tile::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  background:
+    linear-gradient(135deg, rgba(10, 21, 45, 0.16), rgba(10, 21, 45, 0.78)),
+    linear-gradient(180deg, transparent 0%, rgba(7, 13, 29, 0.82) 100%);
+}
+
+.challenge-tile::after {
+  content: "";
+  position: absolute;
+  inset: auto 16px 70px 16px;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, color-mix(in srgb, var(--challenge-accent) 70%, transparent), transparent);
+  opacity: 0.7;
+}
+
+.challenge-tile > * {
+  position: relative;
+  z-index: 1;
+}
+
+.challenge-tile--content {
+  --challenge-bg: url("../../Assets/EST Preparation/est-lab-card-content.png");
+  --challenge-accent: var(--cyan);
+  --challenge-glow: rgba(97, 240, 255, 0.24);
+  background-position: 28% center;
+}
+
+.challenge-tile--glossary {
+  --challenge-bg: url("../../Assets/EST Preparation/est-lab-card-glossary.png");
+  --challenge-accent: var(--green);
+  --challenge-glow: rgba(114, 247, 184, 0.22);
+  background-position: 31% center;
+}
+
+.challenge-tile--decoder {
+  --challenge-bg: url("../../Assets/EST Preparation/est-lab-card-decoder.png");
+  --challenge-accent: var(--gold);
+  --challenge-glow: rgba(255, 216, 108, 0.22);
+  background-position: 38% center;
+}
+
+.challenge-tile--boss {
+  --challenge-bg: url("../../Assets/EST Preparation/est-lab-card-boss.png");
+  --challenge-accent: var(--pink);
+  --challenge-glow: rgba(255, 138, 202, 0.24);
+  background-position: 72% center;
+}
+
+.challenge-tile .kicker {
+  width: fit-content;
+  border-color: color-mix(in srgb, var(--challenge-accent) 54%, rgba(129, 166, 255, 0.24));
+  background: rgba(7, 17, 40, 0.72);
+  color: #eef5ff;
 }
 
 .challenge-tile.completed {
@@ -610,7 +685,12 @@ body.est-lab-mode #stage-section[data-scene="success"] {
 
 .challenge-tile h3 {
   margin: 8px 0 10px;
-  font-size: 1.05rem;
+  font-size: 1.08rem;
+  text-shadow: 0 2px 10px rgba(0, 0, 0, 0.44);
+}
+
+.challenge-tile p {
+  text-shadow: 0 2px 10px rgba(0, 0, 0, 0.44);
 }
 
 .challenge-meta {
@@ -618,15 +698,24 @@ body.est-lab-mode #stage-section[data-scene="success"] {
   justify-content: space-between;
   gap: 10px;
   margin-top: 12px;
+  margin-bottom: 14px;
   font-size: 0.9rem;
-  color: var(--muted);
+  color: #d6e5ff;
 }
 
 .challenge-tile button {
   width: 100%;
-  margin-top: 14px;
+  margin-top: auto;
   padding: 12px 14px;
+  border: 1px solid color-mix(in srgb, var(--challenge-accent) 46%, rgba(161, 197, 255, 0.22));
+  background: rgba(7, 17, 40, 0.86);
+  color: #f7fbff;
   font-weight: 700;
+}
+
+.challenge-tile button:hover {
+  border-color: color-mix(in srgb, var(--challenge-accent) 72%, white);
+  box-shadow: 0 12px 28px color-mix(in srgb, var(--challenge-accent) 24%, transparent);
 }
 
 .stage-root {
