@@ -47,23 +47,71 @@
     .shop-category-bar {
       display: flex;
       flex-wrap: wrap;
-      gap: 10px;
-      margin: 16px 0 20px;
+      gap: 12px;
+      margin: 18px 0 24px;
     }
     .shop-category-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 11px;
+      min-height: 64px;
       border: 1px solid rgba(148, 163, 184, 0.2);
-      border-radius: 999px;
-      padding: 10px 14px;
-      background: rgba(255, 255, 255, 0.04);
-      color: #cbd5e1;
-      font: 700 13px "Outfit", "Segoe UI", sans-serif;
+      border-radius: 22px;
+      padding: 8px 18px 8px 8px;
+      background:
+        linear-gradient(145deg, rgba(18, 34, 58, 0.82), rgba(10, 22, 39, 0.94));
+      color: #d5e1f4;
+      font: 800 15px "Outfit", "Segoe UI", sans-serif;
       cursor: pointer;
-      transition: all 0.2s ease;
+      box-shadow: 0 14px 32px rgba(0, 0, 0, 0.16);
+      transition: transform 0.2s ease, border-color 0.2s ease, background 0.2s ease;
+    }
+    .shop-category-pill:hover {
+      transform: translateY(-1px);
+      border-color: rgba(125, 211, 252, 0.38);
     }
     .shop-category-pill.active {
-      background: linear-gradient(145deg, rgba(56, 189, 248, 0.18), rgba(59, 130, 246, 0.16));
-      border-color: rgba(125, 211, 252, 0.44);
+      background:
+        linear-gradient(145deg, rgba(56, 189, 248, 0.22), rgba(128, 237, 153, 0.1)),
+        rgba(13, 25, 45, 0.96);
+      border-color: rgba(104, 210, 255, 0.58);
       color: #eff6ff;
+    }
+    .shop-category-icon {
+      position: relative;
+      display: grid;
+      place-items: center;
+      width: 48px;
+      height: 48px;
+      overflow: hidden;
+      flex: 0 0 auto;
+      border-radius: 16px;
+      border: 1px solid rgba(206, 224, 255, 0.18);
+      background: rgba(4, 12, 26, 0.72);
+      box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.04);
+    }
+    .shop-category-icon::after {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background:
+        linear-gradient(180deg, rgba(255, 255, 255, 0.08), transparent 38%),
+        radial-gradient(circle at 50% 45%, transparent 32%, rgba(4, 12, 26, 0.28));
+      pointer-events: none;
+    }
+    .shop-category-icon img {
+      width: 100%;
+      height: 100%;
+      display: block;
+      object-fit: cover;
+      transform: scale(1.22);
+    }
+    .shop-category-icon > span {
+      font-size: 26px;
+      line-height: 1;
+    }
+    .shop-category-label {
+      white-space: nowrap;
     }
     .shop-request-backdrop {
       position: fixed;
@@ -361,6 +409,20 @@
       .shop-page .shop-hero-card {
         min-height: 380px;
         background-position: 58% center;
+      }
+      .shop-category-bar {
+        gap: 9px;
+      }
+      .shop-category-pill {
+        min-height: 56px;
+        padding: 7px 13px 7px 7px;
+        border-radius: 18px;
+        font-size: 13px;
+      }
+      .shop-category-icon {
+        width: 42px;
+        height: 42px;
+        border-radius: 13px;
       }
       .inventory-card {
         grid-template-columns: 94px minmax(0, 1fr);
