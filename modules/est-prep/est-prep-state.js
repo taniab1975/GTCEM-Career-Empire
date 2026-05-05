@@ -27,6 +27,7 @@ const state = {
   contentTopicBestScores: {},
   contentTopicVotes: {},
   contentTopicVoteSaves: {},
+  contentTopicResetAt: {},
   lastContentTopicReview: null,
   glossaryBoard: [],
   glossarySelection: [],
@@ -103,6 +104,7 @@ function persistESTProgressSnapshot() {
       contentTopicBestScores: state.contentTopicBestScores,
       contentTopicVotes: state.contentTopicVotes,
       contentTopicVoteSaves: state.contentTopicVoteSaves,
+      contentTopicResetAt: state.contentTopicResetAt,
       lastContentTopicReview: state.lastContentTopicReview,
       completed: state.completed,
       stageBestScores: state.stageBestScores,
@@ -135,6 +137,7 @@ function hydrateESTProgressSnapshot() {
   state.contentTopicBestScores = progress.contentTopicBestScores || {};
   state.contentTopicVotes = progress.contentTopicVotes || {};
   state.contentTopicVoteSaves = progress.contentTopicVoteSaves || {};
+  state.contentTopicResetAt = progress.contentTopicResetAt || {};
   state.lastContentTopicReview = progress.lastContentTopicReview || null;
   state.completed = progress.completed || {};
   state.stageBestScores = progress.stageBestScores || {};

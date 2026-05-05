@@ -180,9 +180,25 @@ function inferStageFromEvidence(row) {
   return null;
 }
 
-function hydrateContentTopicFromPayload(payload, row) {
+function isContentTopicEvidenceReset(topicId, row) {
+  const resetAt = state.contentTopicResetAt?.[topicId];
+  if (!resetAt) return false;
+  const resetTime = Date.parse(resetAt);
+  const evidenceTime = Date.parse(row?.created_at || "");
+  if (!Number.isFinite(resetTime)) return false;
+  return !Number.isFinite(evidenceTime) || evidenceTime <= resetTime;
+}
+
+function getContentTopicIdFromEvidence(payload, row) {
   const topicId = payload?.topic_group_id || String(row?.prompt || "").replace(/^revision-topic-/, "");
-  if (!topicId || topicId === row?.prompt) return;
+  if (!topicId || topicId === row?.prompt) return "";
+  return topicId;
+}
+
+function hydrateContentTopicFromPayload(payload, row) {
+  const topicId = getContentTopicIdFromEvidence(payload, row);
+  if (!topicId) return;
+  if (isContentTopicEvidenceReset(topicId, row)) return;
   const score = Number(row?.auto_score ?? payload?.score_percent);
   if (!Number.isFinite(score) || score <= 0) return;
   state.contentTopicBestScores[topicId] = Math.max(
@@ -283,9 +299,11 @@ async function hydrateFromSupabase() {
       const stageId = inferStageFromEvidence(row);
       const payload = parseEvidencePayload(row);
       const isContentTopicEvidence = row?.evidence_type === "revision-topic-check" || String(row?.prompt || "").startsWith("revision-topic-");
+      const topicId = isContentTopicEvidence ? getContentTopicIdFromEvidence(payload, row) : "";
+      const ignoreContentTopicEvidence = Boolean(topicId && isContentTopicEvidenceReset(topicId, row));
       if (stageId && !(stageId === "content" && isContentTopicEvidence)) state.completed[stageId] = true;
       const autoScore = Number(row?.auto_score);
-      if (stageId && Number.isFinite(autoScore)) {
+      if (stageId && Number.isFinite(autoScore) && !ignoreContentTopicEvidence) {
         state.stageBestScores[stageId] = Math.max(Number(state.stageBestScores[stageId] || 0), autoScore / 100);
       }
       if (isContentTopicEvidence) {
