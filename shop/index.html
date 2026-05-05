@@ -267,39 +267,62 @@
       font-size: 13px;
       line-height: 1.2;
     }
+    .shop-page .metrics-grid {
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 16px;
+      align-items: stretch;
+      margin-bottom: 18px;
+    }
     .shop-page .metrics-grid .metric-card--art {
       position: relative;
-      min-height: 170px;
+      min-height: 0;
       overflow: hidden;
       display: flex;
       flex-direction: column;
-      justify-content: flex-end;
+      justify-content: flex-start;
       isolation: isolate;
+      padding: 0;
       border-radius: 20px;
-      background:
-        linear-gradient(90deg, rgba(5, 13, 26, 0.9), rgba(5, 13, 26, 0.46) 54%, rgba(5, 13, 26, 0.78)),
-        var(--metric-art) right -24px center / min(180px, 58%) auto no-repeat,
-        linear-gradient(145deg, rgba(14, 42, 58, 0.78), rgba(10, 22, 42, 0.9));
+      background: linear-gradient(145deg, rgba(13, 28, 50, 0.96), rgba(7, 17, 31, 0.96));
     }
     .shop-page .metrics-grid .metric-card--art::before {
       content: "";
-      position: absolute;
-      inset: 0;
+      position: relative;
+      display: block;
+      width: 100%;
+      aspect-ratio: 16 / 8;
+      flex: 0 0 auto;
       z-index: 0;
       background:
-        radial-gradient(circle at 82% 34%, rgba(104, 210, 255, 0.18), transparent 34%),
-        linear-gradient(180deg, transparent 30%, rgba(4, 12, 26, 0.46));
+        linear-gradient(180deg, rgba(4, 12, 26, 0.02), rgba(4, 12, 26, 0.34)),
+        var(--metric-art) center center / cover no-repeat;
+      border-bottom: 1px solid rgba(136, 173, 255, 0.18);
       pointer-events: none;
     }
     .shop-page .metrics-grid .metric-card--art > * {
       position: relative;
       z-index: 1;
+      margin-right: 16px;
+      margin-left: 16px;
     }
     .shop-page .metrics-grid .metric-card--art .metric-label {
       max-width: 15ch;
+      margin-top: 16px;
+      margin-bottom: 10px;
+      color: var(--accent);
+      font-size: 12px;
+      line-height: 1.2;
     }
     .shop-page .metrics-grid .metric-card--art .metric-value {
-      font-size: 52px;
+      margin-bottom: 8px;
+      font-size: clamp(30px, 3.1vw, 42px);
+      line-height: 1;
+    }
+    .shop-page .metrics-grid .metric-card--art .metric-note {
+      max-width: 24ch;
+      margin-bottom: 18px;
+      font-size: 14px;
+      line-height: 1.35;
     }
     .shop-info-disclosure {
       margin-bottom: 18px;
@@ -564,10 +587,26 @@
         grid-template-columns: repeat(2, minmax(0, 1fr));
       }
     }
+    @media (max-width: 900px) {
+      .shop-page .metrics-grid {
+        gap: 12px;
+      }
+      .shop-page .metrics-grid .metric-card--art .metric-value {
+        font-size: 30px;
+      }
+      .shop-page .metrics-grid .metric-card--art .metric-note {
+        font-size: 11px;
+      }
+    }
     @media (max-width: 680px) {
       .shop-page .shop-hero-card {
         min-height: 330px;
         background-position: 58% center;
+      }
+      .shop-page .metrics-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 10px;
+        margin-bottom: 14px;
       }
       .shop-hero-content {
         grid-template-columns: 1fr;
@@ -588,7 +627,7 @@
         font-size: 12px;
       }
       .shop-page .metrics-grid .metric-card--art .metric-value {
-        font-size: 42px;
+        font-size: 34px;
       }
       .shop-info-disclosure summary {
         align-items: flex-start;
@@ -633,6 +672,22 @@
     @media (max-width: 520px) {
       .shop-hero-meta .badge-stack {
         grid-template-columns: 1fr;
+      }
+    }
+    @media (max-width: 420px) {
+      .shop-page .metrics-grid .metric-card--art > * {
+        margin-right: 12px;
+        margin-left: 12px;
+      }
+      .shop-page .metrics-grid .metric-card--art .metric-label {
+        margin-top: 12px;
+        font-size: 10px;
+      }
+      .shop-page .metrics-grid .metric-card--art .metric-value {
+        font-size: 29px;
+      }
+      .shop-page .metrics-grid .metric-card--art .metric-note {
+        font-size: 10px;
       }
     }
   </style>
