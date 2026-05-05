@@ -1,3 +1,20 @@
+const STUDENT_REWARD_ICONS = {
+  chamber: "../Assets/Images and Animations/Celebration Reward Icons/Chamber complete.png",
+  salary: "../Assets/Images and Animations/Celebration Reward Icons/Salary Banked.png",
+  signal: "../Assets/Images and Animations/Celebration Reward Icons/Signal restored.png",
+  tax: "../Assets/Images and Animations/Celebration Reward Icons/Tax contributed.png",
+  topic: "../Assets/Images and Animations/Celebration Reward Icons/Topic Complete.png"
+};
+
+const STUDENT_STATUS_ICONS = {
+  assets: "../Assets/Images and Animations/Student Hub/empire-status-assets-owned.png",
+  communityTax: "../Assets/Images and Animations/Student Hub/empire-status-community-tax.png",
+  jobSecurity: "../Assets/Images and Animations/Student Hub/empire-status-job-security.png",
+  netWorth: "../Assets/Images and Animations/Student Hub/empire-status-net-worth.png",
+  salary: "../Assets/Images and Animations/Student Hub/empire-status-salary.png",
+  workLife: "../Assets/Images and Animations/Student Hub/empire-status-work-life-balance.png"
+};
+
 async function loadEmployabilitySkills() {
   const response = await fetch("../data/employability-skills.json");
   if (!response.ok) throw new Error("Could not load employability skills.");
@@ -361,29 +378,34 @@ function renderBadge(label, logoPath = "", logoLabel = "") {
   return `<span class="badge ${logoPath ? "with-logo" : ""}">${logoPath ? `<img class="badge-logo" src="${logoPath}" alt="${escapeHtml(logoLabel || label)} logo">` : ""}${escapeHtml(label)}</span>`;
 }
 
+function getModuleImageStyle(imagePath = "") {
+  return imagePath ? ` style="--module-image: url('${escapeHtml(imagePath)}')"` : "";
+}
+
 function renderStudentModules(modules) {
   const container = document.getElementById("student-module-grid");
   if (!container) return;
 
   container.innerHTML = modules.map(module => `
-    <article class="module-card ${module.spotlight ? "spotlight" : ""}">
-      <div class="module-header">
+    <article class="module-card ${module.imagePath ? "module-card--image-bg" : ""} ${module.spotlight ? "spotlight" : ""}"${getModuleImageStyle(module.imagePath)}>
+      <div class="module-visual-badge">
         ${module.logoPath ? `<img class="module-logo" src="${module.logoPath}" alt="${escapeHtml(module.logoLabel || module.title)} logo">` : ""}
-        <div>
-          <div class="kicker">${module.state}</div>
-          <h3>${module.title}</h3>
+        <span>${module.title}</span>
+      </div>
+      <div class="module-card-body">
+        <div class="kicker">${module.state}</div>
+        <h3>${module.title}</h3>
+        <p>${module.summary}</p>
+        ${createProgressBar(module.progress, module.variant)}
+        <div class="section-title">
+          <p>${module.progress}% complete</p>
+          <p>${module.mastery}% mastery</p>
         </div>
+        <div class="pill-row">
+          ${module.tags.map(tag => `<span class="pill">${tag}</span>`).join("")}
+        </div>
+        ${module.launchPath ? `<div class="module-actions"><a class="module-link" href="${module.launchPath}">${module.launchLabel || "Open Module"}</a></div>` : ""}
       </div>
-      <p>${module.summary}</p>
-      ${createProgressBar(module.progress, module.variant)}
-      <div class="section-title">
-        <p>${module.progress}% complete</p>
-        <p>${module.mastery}% mastery</p>
-      </div>
-      <div class="pill-row">
-        ${module.tags.map(tag => `<span class="pill">${tag}</span>`).join("")}
-      </div>
-      ${module.launchPath ? `<div class="module-actions"><a class="module-link" href="${module.launchPath}">${module.launchLabel || "Open Module"}</a></div>` : ""}
     </article>
   `).join("");
 }
@@ -392,11 +414,27 @@ function renderStudentTimeline(items) {
   const container = document.getElementById("student-timeline");
   if (!container) return;
 
+  if (!items.length) {
+    container.innerHTML = `
+      <div class="timeline-empty-state" style="--empty-state-image: url('../Assets/Images and Animations/Student Hub/activity-empty-state.png')">
+        <div>
+          <div class="timeline-kicker">Ready to earn</div>
+          <strong>No activity yet</strong>
+          <p>Complete a mission, bank salary, or buy an upgrade and your latest Career Empire moves will appear here.</p>
+        </div>
+      </div>
+    `;
+    return;
+  }
+
   container.innerHTML = items.map(item => `
-    <div class="timeline-item ${item.variant || ""}">
-      ${item.kicker ? `<div class="timeline-kicker">${item.kicker}</div>` : ""}
-      <strong>${item.title}</strong>
-      <p>${item.detail}</p>
+    <div class="timeline-item ${item.variant || ""} ${item.iconPath ? "with-icon" : ""}">
+      ${item.iconPath ? `<img class="timeline-reward-icon" src="${item.iconPath}" alt="">` : ""}
+      <div>
+        ${item.kicker ? `<div class="timeline-kicker">${item.kicker}</div>` : ""}
+        <strong>${item.title}</strong>
+        <p>${item.detail}</p>
+      </div>
     </div>
   `).join("");
 }
@@ -426,11 +464,18 @@ function buildEconomyTimelineItems(session) {
       entry.eventType === "reward-awarded" ? "Reward awarded" :
       entry.eventType === "scenario-choice" ? "Scenario reward" :
       "Profile saved";
+    const iconPath =
+      entry.eventType === "purchase" ? STUDENT_REWARD_ICONS.salary :
+      entry.eventType === "reward-awarded" ? STUDENT_REWARD_ICONS.chamber :
+      Number(entry.taxDelta || 0) > 0 ? STUDENT_REWARD_ICONS.tax :
+      Number(entry.earnedDelta || 0) > 0 ? STUDENT_REWARD_ICONS.salary :
+      STUDENT_REWARD_ICONS.signal;
 
     return {
       title: `${entry.label || entry.checkpoint || "Economy update"} • ${new Date(entry.timestamp).toLocaleString()}`,
       kicker: `${moduleLabel} • ${eventLabel}`,
       variant: entry.eventType === "purchase" ? "timeline-spend" : "timeline-income",
+      iconPath,
       detail: [
         entry.detail || `${entry.moduleId || "module"} updated your shared profile.`,
         incomeParts.join(" • "),
@@ -444,15 +489,20 @@ function renderStudentShopPreview(items) {
   const container = document.getElementById("student-shop-preview");
   if (!container) return;
   container.innerHTML = items.map(item => `
-    <article class="module-card ${item.spotlight ? "spotlight" : ""}">
-      <div class="kicker">${item.state}</div>
-      <h3>${item.title}</h3>
-      <p>${item.summary}</p>
-      <div class="pill-row">
-        ${item.tags.map(tag => `<span class="pill">${tag}</span>`).join("")}
+    <article class="module-card ${item.imagePath ? "module-card--image-bg" : ""} ${item.spotlight ? "spotlight" : ""}"${getModuleImageStyle(item.imagePath)}>
+      <div class="module-visual-badge">
+        <span>${item.title}</span>
       </div>
-      <div class="module-actions">
-        <a class="module-link" href="${item.launchPath}">${item.launchLabel}</a>
+      <div class="module-card-body">
+        <div class="kicker">${item.state}</div>
+        <h3>${item.title}</h3>
+        <p>${item.summary}</p>
+        <div class="pill-row">
+          ${item.tags.map(tag => `<span class="pill">${tag}</span>`).join("")}
+        </div>
+        <div class="module-actions">
+          <a class="module-link" href="${item.launchPath}">${item.launchLabel}</a>
+        </div>
       </div>
     </article>
   `).join("");
@@ -477,6 +527,13 @@ function renderCommunityBoard(targetId, data) {
   }).join("");
 
   container.innerHTML = `
+    ${data.visualPath ? `
+      <article class="community-card community-visual-card" style="--community-visual: url('${escapeHtml(data.visualPath)}')">
+        <div class="kicker">Class Impact</div>
+        <h3>Every module feeds the shared build</h3>
+        <p>Salary, tax, votes, and progress connect your individual play to the class economy.</p>
+      </article>
+    ` : ""}
     <article class="community-card">
       <div class="kicker">Your Impact</div>
       <h3>${data.currentVoteLabel}</h3>
@@ -497,7 +554,10 @@ function renderCommunityBoard(targetId, data) {
 }
 
 function renderStudentCommunityBoard(data) {
-  renderCommunityBoard("student-community-board", data);
+  renderCommunityBoard("student-community-board", {
+    visualPath: "../Assets/Images and Animations/Student Hub/community-impact-banner.png",
+    ...data
+  });
 }
 
 function getCommunityVoteLabels() {
@@ -1616,10 +1676,10 @@ async function renderStudentLiveData(players, skillsData) {
   const badgeStack = document.getElementById("student-badge-stack");
   if (badgeStack) {
     badgeStack.innerHTML = record ? [
-      renderBadge(`Salary: ${formatCurrency(record.annual_salary)}`),
-      renderBadge(`Net Worth: ${formatCurrency(record.cumulative_net_worth)}`),
-      renderBadge(`Work-Life Balance: ${record.work_life_balance || 0}%`),
-      renderBadge(`Job Security: ${record.job_security || 0}%`),
+      renderBadge(`Salary: ${formatCurrency(record.annual_salary)}`, STUDENT_STATUS_ICONS.salary, "Salary"),
+      renderBadge(`Net Worth: ${formatCurrency(record.cumulative_net_worth)}`, STUDENT_STATUS_ICONS.netWorth, "Net worth"),
+      renderBadge(`Work-Life Balance: ${record.work_life_balance || 0}%`, STUDENT_STATUS_ICONS.workLife, "Work-life balance"),
+      renderBadge(`Job Security: ${record.job_security || 0}%`, STUDENT_STATUS_ICONS.jobSecurity, "Job security"),
       renderBadge(`Strongest Skill: ${strongestSkill?.title || "Not yet clear"}`, strongestSkill?.logoPath, strongestSkill?.title),
       renderBadge(`Class Code: ${record.class_code || "Not joined"}`)
     ].join("") : authState?.studentLogin?.username
@@ -1686,6 +1746,7 @@ async function renderStudentLiveData(players, skillsData) {
       spotlight: true,
       logoPath: skillsData.categories.find(category => category.id === "digital-literacy")?.logoPath,
       logoLabel: "Digital Literacy",
+      imagePath: "../Assets/Images and Animations/Student Hub/module-megatrends-thumb.png",
       launchPath: buildMegatrendsLaunchPath(),
       launchLabel: "Open Megatrends",
       tags: ["Live data", "Career stats", "Class impact"]
@@ -1700,6 +1761,7 @@ async function renderStudentLiveData(players, skillsData) {
       spotlight: false,
       logoPath: skillsData.categories.find(category => category.id === "time-management")?.logoPath,
       logoLabel: "Time Management",
+      imagePath: "../Assets/Images and Animations/Student Hub/module-lifelong-learning-thumb.png",
       launchPath: "../modules/lifelong-learning/index.html",
       launchLabel: "Open Lifelong Learning",
       tags: ["Planning", "Growth", "Reflection"]
@@ -1714,6 +1776,7 @@ async function renderStudentLiveData(players, skillsData) {
       spotlight: false,
       logoPath: skillsData.categories.find(category => category.id === "critical-thinking")?.logoPath,
       logoLabel: "Critical Thinking",
+      imagePath: "../Assets/Images and Animations/Student Hub/module-est-prep-thumb.png",
       launchPath: "../modules/est-prep/index.html",
       launchLabel: "Open EST Prep",
       tags: ["Exam readiness", "Command verbs", "Short answer"]
@@ -1727,6 +1790,7 @@ async function renderStudentLiveData(players, skillsData) {
         ? "Your shared inventory is live. Open the shop to buy more upgrades that carry across the platform."
         : "Buy study, tool, transport, and lifestyle upgrades that connect to the wider Career Empire build.",
       spotlight: true,
+      imagePath: "../Assets/Images and Animations/Global Shop/global-shop-student-hub.png",
       launchPath: "../shop/index.html",
       launchLabel: "Open Global Shop",
       tags: ["Shared inventory", "Cross-module", "Life build"]

@@ -9,7 +9,7 @@
   <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="./dashboard.css">
 </head>
-<body>
+<body class="student-dashboard-page">
   <main class="page-shell">
     <nav class="dashboard-nav">
       <a class="dashboard-nav-link active" href="./student.html">Student Hub</a>
@@ -19,70 +19,74 @@
       <a class="dashboard-nav-link" href="../shop/index.html">Shop</a>
     </nav>
 
-    <section class="hero">
-      <article class="hero-card">
-        <span class="eyebrow">Student Dashboard</span>
-        <h1 id="student-hero-title">Build your future, not just your score.</h1>
-        <p id="student-hero-subtitle" class="subtitle">
-          This shell is the shared player home for all curriculum modules. It connects module mastery, employability skills,
-          class impact, and personal career progression into one long-term game profile.
-        </p>
-        <div id="student-badge-stack" class="badge-stack">
-          <span class="badge">Loading player profile...</span>
+    <section class="student-command-hero">
+      <article class="student-hero-card">
+        <div class="student-hero-copy">
+          <span class="eyebrow">Student Dashboard</span>
+          <h1 id="student-hero-title">Build your future, not just your score.</h1>
+          <p id="student-hero-subtitle" class="subtitle">
+            This shell is the shared player home for all curriculum modules. It connects module mastery, employability skills,
+            class impact, and personal career progression into one long-term game profile.
+          </p>
+          <div class="student-primary-actions">
+            <a class="module-link primary" href="../modules/est-prep/index.html">Continue EST Prep</a>
+            <a id="student-hub-megatrends-link" class="module-link" href="../index.html?screen=megatrends">Play Megatrends</a>
+            <a class="module-link" href="../modules/lifelong-learning/index.html">Lifelong Learning</a>
+            <a class="module-link" href="../shop/index.html">Shop</a>
+          </div>
+          <div id="student-badge-stack" class="badge-stack student-identity-strip">
+            <span class="badge">Loading player profile...</span>
+          </div>
+        </div>
+        <div class="student-hero-visual">
+          <div class="student-visual-card current-mission-card">
+            <div class="kicker">Current mission</div>
+            <h2>Continue your next move</h2>
+            <p id="student-focus-text">Time Management is your weakest employability area right now. Lifelong Learning should become the next recommended module.</p>
+            <div class="pill-row">
+              <span class="pill">Recommended next module</span>
+              <span class="pill">Teacher-visible growth area</span>
+            </div>
+          </div>
+          <img
+            class="student-guide-character"
+            src="../Assets/Images and Animations/Student Hub/student-hub-guide.gif"
+            alt=""
+          >
+          <div class="student-visual-card class-impact-card">
+            <div class="kicker">Class impact</div>
+            <p>Your play feeds class taxes, leaderboard movement, and the Global Index.</p>
+          </div>
         </div>
       </article>
-      <div class="hero-side">
-        <article class="panel">
-          <div class="section-title">
-            <h2>Quick Access</h2>
-            <p class="status-good">Student hub</p>
-          </div>
-          <div class="module-actions">
-            <a id="student-hub-megatrends-link" class="module-link" href="../index.html?screen=megatrends">Play Megatrends</a>
-            <a class="module-link" href="../modules/lifelong-learning/index.html">Play Lifelong Learning</a>
-            <a class="module-link" href="../modules/est-prep/index.html">Play EST Prep</a>
-            <a class="module-link" href="../shop/index.html">Open Global Shop</a>
-          </div>
-        </article>
-        <article class="panel">
-          <div class="section-title">
-            <h2>Current Focus</h2>
-            <p class="status-watch">Needs attention</p>
-          </div>
-          <p id="student-focus-text">Time Management is your weakest employability area right now. Lifelong Learning should become the next recommended module.</p>
-          <div class="pill-row">
-            <span class="pill">Recommended next module</span>
-            <span class="pill">Teacher-visible growth area</span>
-          </div>
-        </article>
-        <article class="panel">
-          <div class="section-title">
-            <h2>Class Impact</h2>
-            <p class="status-good">Contributing</p>
-          </div>
-          <p>Your play is feeding class taxes, leaderboard movement, and the Global Index. This is where modules become one connected ecosystem.</p>
-        </article>
-      </div>
     </section>
 
-    <section class="metrics-grid">
-      <article class="metric">
-        <div class="metric-label">Overall Module Completion</div>
+    <section class="metrics-grid student-status-strip">
+      <article class="metric metric-card--art" style="--metric-art: url('../Assets/Images and Animations/Celebration Reward Icons/Chamber complete.png')">
+        <div class="metric-topline">
+          <div class="metric-label">Overall Module Completion</div>
+        </div>
         <div id="student-overall-completion" class="metric-value">0%</div>
         <div id="student-overall-completion-note" class="metric-note">Across the full Year 12 game ecosystem</div>
       </article>
-      <article class="metric">
-        <div class="metric-label">Employability Score</div>
+      <article class="metric metric-card--art" style="--metric-art: url('../Assets/Images and Animations/Celebration Reward Icons/Signal restored.png')">
+        <div class="metric-topline">
+          <div class="metric-label">Employability Score</div>
+        </div>
         <div id="student-employability-score" class="metric-value">0%</div>
         <div class="metric-note">Combined skill growth across all categories</div>
       </article>
-      <article class="metric">
-        <div class="metric-label">Community Tax Paid</div>
+      <article class="metric metric-card--art" style="--metric-art: url('../Assets/Images and Animations/Student Hub/empire-status-community-tax.png')">
+        <div class="metric-topline">
+          <div class="metric-label">Community Tax Paid</div>
+        </div>
         <div id="student-tax-paid" class="metric-value">$0</div>
         <div class="metric-note">Contributing to your class fund and projects</div>
       </article>
-      <article class="metric">
-        <div class="metric-label">Assets Owned</div>
+      <article class="metric metric-card--art" style="--metric-art: url('../Assets/Images and Animations/Student Hub/empire-status-assets-owned.png')">
+        <div class="metric-topline">
+          <div class="metric-label">Assets Owned</div>
+        </div>
         <div id="student-assets-owned" class="metric-value">0</div>
         <div class="metric-note">Cars, furniture, housing, and upgrades</div>
       </article>
@@ -97,13 +101,12 @@
         <div id="student-module-grid" class="module-grid"></div>
       </article>
 
-      <article class="panel">
+      <article class="panel timeline-panel">
         <div class="section-title">
-          <h2>Earnings Log</h2>
-          <p>Income, tax, spending, and saved totals across modules</p>
+          <h2>Recent Activity</h2>
+          <p>Rewards, tax, spending, and mission updates</p>
         </div>
         <div id="student-timeline" class="list"></div>
-        <p class="footer-note">This log shows where your money changed, what was taxed, what was spent, and which module triggered the update.</p>
       </article>
     </section>
 

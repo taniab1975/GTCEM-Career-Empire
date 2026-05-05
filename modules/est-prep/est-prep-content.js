@@ -287,9 +287,9 @@ function getContentTopicRewardPreview() {
 
 function renderArcTrainingBay(config, score) {
   const groupId = getGroupIdForTrainingType(config.type);
+  const groupLabel = getContentGroupShortLabel(groupId);
   const flow = getArcFlow(config);
   const scene = flow?.phase === "complete" || flow?.phase === "transition" ? "restored" : "challenge";
-  const guideContext = flow?.phase === "feedback" && flow?.lastOutcome === "wrong" ? "forge" : "challenge";
   const steps = config.steps || [];
   const currentStep = steps[flow?.stepIndex || 0] || steps[0];
   const currentItem = currentStep?.items?.[flow?.itemIndex || 0] || null;
@@ -308,14 +308,18 @@ function renderArcTrainingBay(config, score) {
   const microReward = isCorrect
     ? `Correct call locked. Salary and tax bank when this strand is completed or improved.`
     : `No salary banks on this card yet. Lock the strongest answer to move forward.`;
-  const isTakeoverState = completedAll || flow?.phase === "transition" || Boolean(currentAnswer);
+  const stateTitle = isCorrect ? `${groupLabel} signal locked` : "Try again";
+  const stateLead = isCorrect ? "Strong call." : "Not quite yet.";
   return `
     <section class="est-scene-shell est-scene-shell--${scene}" ${buildESTSceneStyle(scene)}>
       <div class="panel training-bay training-campaign training-campaign--focus">
-        <div class="training-hud">
+        <div class="training-hud training-hud--compact">
           <div class="training-hud-copy">
             <div class="kicker">Knowledge reactor</div>
             <h2>${escapeHtml(config.title)}</h2>
+          </div>
+          <div class="training-hud-rail">
+            ${renderArcProgressRail(config)}
           </div>
           <div class="training-hud-status">
             <strong>${escapeHtml(currentStep?.title || "Reactor step")}</strong>
@@ -326,45 +330,55 @@ function renderArcTrainingBay(config, score) {
           <div class="training-focus-main">
             <div class="training-campaign-grid training-campaign-grid--flash">
           ${completedAll ? `
-            <section class="training-step training-step--transition">
-              <div class="section-title">
-                <h2>All reactor steps complete</h2>
-                <p>${score.correct}/${score.total} decisions locked in. The practice bay is ready for your EST response build.</p>
-              </div>
-              <p class="training-feedback">Great work. You’ve cleared the initiative reactor and can now move into the written response with the content fresh in mind.</p>
-              <div class="training-economy-note good">
-                <strong>Reward preview</strong>
-                <span>${escapeHtml(`Bank the topic review next to add +${rewardPreview.marks} marks • +${rewardPreview.readiness}% readiness • +${formatCurrency(rewardPreview.credits)} salary • +${formatCurrency(rewardPreview.tax)} community fund into Career Empire.`)}</span>
-              </div>
-              <div class="arc-action-row">
-                ${renderArcActionButton({
-                  label: "Build EST response",
-                  onclick: "window.ESTPrep.openContentResponse()",
-                  asset: EST_ANIMATED_ASSETS.progress,
-                  className: "arc-action-button--overlay"
-                })}
-                <button type="button" class="submit-button compact ghost" onclick="window.ESTPrep.resetCurrentContentTopic()">Reset reactor</button>
+            <section class="training-step training-step--transition training-step--scene-change">
+              <div class="training-state-popover training-state-popover--scene good">
+                <div class="training-flash-media training-flash-media--scene">
+                  <img src="${escapeHtml(EST_ANIMATED_ASSETS.unlock)}" alt="">
+                </div>
+                <div class="training-answer-copy">
+                  <div class="kicker">Reactor cleared</div>
+                  <h3>All reactor steps complete</h3>
+                  <p class="training-feedback">${score.correct}/${score.total} decisions locked in. Move straight into the EST response while the content is fresh.</p>
+                </div>
+                <div class="training-economy-note good">
+                  <strong>Reward preview</strong>
+                  <span>${escapeHtml(`Bank the topic review next to add +${rewardPreview.marks} marks • +${rewardPreview.readiness}% readiness • +${formatCurrency(rewardPreview.credits)} salary • +${formatCurrency(rewardPreview.tax)} community fund into Career Empire.`)}</span>
+                </div>
+                <div class="arc-action-row">
+                  ${renderArcActionButton({
+                    label: "Build EST response",
+                    onclick: "window.ESTPrep.openContentResponse()",
+                    asset: EST_ANIMATED_ASSETS.progress,
+                    className: "arc-action-button--overlay"
+                  })}
+                  <button type="button" class="submit-button compact ghost" onclick="window.ESTPrep.resetCurrentContentTopic()">Reset reactor</button>
+                </div>
               </div>
             </section>
           ` : flow?.phase === "transition" ? `
-            <section class="training-step training-step--transition">
-              <div class="section-title">
-                <h2>${escapeHtml(steps[flow.stepIndex + 1]?.title || currentStep?.title || "Next step unlocked")}</h2>
-                <p>Step ${transitionStepNumber} is unlocked. Take the next challenge one card at a time.</p>
-              </div>
-              <p class="training-feedback">Step ${stepNumber} is banked. The next flash card will open when you continue.</p>
-              <div class="arc-action-row">
-                ${renderArcActionButton({
-                  label: `Start Step ${transitionStepNumber}`,
-                  onclick: `window.ESTPrep.startArcStep('${config.type}')`,
-                  asset: EST_ANIMATED_ASSETS.progress,
-                  className: "arc-action-button--overlay"
-                })}
-                <button type="button" class="submit-button compact ghost" onclick="window.ESTPrep.resetCurrentContentTopic()">Reset reactor</button>
+            <section class="training-step training-step--transition training-step--scene-change">
+              <div class="training-state-popover training-state-popover--scene good">
+                <div class="training-flash-media training-flash-media--scene">
+                  <img src="${escapeHtml(EST_ANIMATED_ASSETS.chamber)}" alt="">
+                </div>
+                <div class="training-answer-copy">
+                  <div class="kicker">Step ${stepNumber} banked</div>
+                  <h3>${escapeHtml(steps[flow.stepIndex + 1]?.title || currentStep?.title || "Next step unlocked")}</h3>
+                  <p class="training-feedback">Step ${transitionStepNumber} is unlocked. The next flash card opens when you continue.</p>
+                </div>
+                <div class="arc-action-row">
+                  ${renderArcActionButton({
+                    label: `Start Step ${transitionStepNumber}`,
+                    onclick: `window.ESTPrep.startArcStep('${config.type}')`,
+                    asset: EST_ANIMATED_ASSETS.next,
+                    className: "arc-action-button--overlay"
+                  })}
+                  <button type="button" class="submit-button compact ghost" onclick="window.ESTPrep.resetCurrentContentTopic()">Reset reactor</button>
+                </div>
               </div>
             </section>
           ` : currentItem ? `
-            <section class="training-step training-step--flash">
+            <section class="training-step training-step--flash ${currentAnswer ? "has-state-overlay" : ""}">
               <div class="training-main-header compact">
                 <div class="training-main-copy">
                   <div class="kicker">Central task</div>
@@ -380,15 +394,36 @@ function renderArcTrainingBay(config, score) {
                 </div>
               </div>
               <article class="training-card training-card--flash ${currentAnswer ? (isCorrect ? "good" : "bad") : ""}">
-                ${currentAnswer ? `
-                  <div class="training-answer-state ${isCorrect ? "good" : "bad"}">
+                  <div class="training-question-layout ${currentAnswer ? "is-dimmed" : ""}">
+                  <div class="training-card-lead">
+                    <p class="training-card-prompt">${escapeHtml(currentItem?.prompt || "")}</p>
+                    <p>${escapeHtml(currentStep.instruction || "Choose the strongest move.")}</p>
+                    <p class="training-feedback">Pick the strongest move, get instant feedback, then move to the next flash card.</p>
+                  </div>
+                  <div class="training-stack">
+                    ${currentItem.options.map(option => `
+                      <button
+                        type="button"
+                        class="choice-button ${currentAnswer === option ? "selected live-selected" : ""} ${currentAnswer && option === currentItem.correct ? "correct" : ""} ${currentAnswer === option && !isCorrect ? "incorrect" : ""}"
+                        onclick="window.ESTPrep.setTrainingChoiceEncoded('${answerKey}', '${encodeURIComponent(option)}')"
+                        ${currentAnswer ? "disabled" : ""}
+                      >
+                        <strong>${escapeHtml(option)}</strong>
+                      </button>
+                    `).join("")}
+                  </div>
+                </div>
+              </article>
+              ${currentAnswer ? `
+                <div class="training-state-scrim" aria-live="polite">
+                  <section class="training-state-popover ${isCorrect ? "good" : "bad"}">
                     <div class="training-flash-media training-flash-media--state">
                       <img src="${escapeHtml(isCorrect ? EST_ANIMATED_ASSETS.tick : EST_ANIMATED_ASSETS.wrong)}" alt="${escapeHtml(isCorrect ? "Correct answer animation" : "Wrong answer animation")}">
                     </div>
                     <div class="training-answer-copy">
                       <div class="kicker">${escapeHtml(isCorrect ? "Signal restored" : "Try again")}</div>
-                      <h3>${escapeHtml(isCorrect ? "Strong initiative call locked" : "That choice won’t unlock the chamber")}</h3>
-                      <p class="training-feedback">${escapeHtml(`${isCorrect ? "Strong initiative call." : "Not quite yet."} ${currentItem.feedback}`)}</p>
+                      <h3>${escapeHtml(isCorrect ? stateTitle : "That choice won’t unlock the chamber")}</h3>
+                      <p class="training-feedback">${escapeHtml(`${stateLead} ${currentItem.feedback}`)}</p>
                     </div>
                     <div class="training-economy-note ${isCorrect ? "good" : "bad"}">
                       <strong>${isCorrect ? "Micro reward signal" : "Banking rule"}</strong>
@@ -417,26 +452,9 @@ function renderArcTrainingBay(config, score) {
                         })}
                       </div>
                     `}
-                  </div>
-                ` : `
-                  <div class="training-card-lead">
-                    <p class="training-card-prompt">${escapeHtml(currentItem?.prompt || "")}</p>
-                    <p>${escapeHtml(currentStep.instruction || "Choose the strongest initiative move.")}</p>
-                  </div>
-                  <div class="training-stack">
-                    ${currentItem.options.map(option => `
-                      <button
-                        type="button"
-                        class="choice-button ${currentAnswer === option ? "selected live-selected" : ""} ${currentAnswer && option === currentItem.correct ? "correct" : ""} ${currentAnswer === option && !isCorrect ? "incorrect" : ""}"
-                        onclick="window.ESTPrep.setTrainingChoiceEncoded('${answerKey}', '${encodeURIComponent(option)}')"
-                      >
-                        <strong>${escapeHtml(option)}</strong>
-                      </button>
-                    `).join("")}
-                  </div>
-                  <p class="training-feedback">Pick the strongest move, get instant feedback, then move to the next flash card.</p>
-                `}
-              </article>
+                  </section>
+                </div>
+              ` : ""}
             </section>
           ` : ""}
             </div>
@@ -1251,7 +1269,7 @@ function renderContentStage() {
   const trainingScore = getTrainingScore(trainingConfig);
   const trainingIsArc = trainingConfig && isArcTrainingType(trainingConfig.type);
   const trainingComplete = trainingScore.total > 0 && trainingScore.correct === trainingScore.total;
-  setGameplayViewportMode(trainingIsArc && !trainingComplete);
+  setGameplayViewportMode(Boolean(trainingIsArc));
   setStageScene(trainingScore.total > 0 && trainingScore.correct === trainingScore.total ? "restored" : "challenge");
   setText("stage-title", "");
   setText("stage-subtitle", "");
