@@ -51,6 +51,12 @@ const CATEGORY_IMAGE_FALLBACKS = {
   experiences: "festival-pass"
 };
 
+function getCategoryArtworkSrc(category) {
+  if (category === "all") return "../Assets/Images and Animations/Global Shop/global-shop-student-hub.png";
+  const fallbackCode = CATEGORY_IMAGE_FALLBACKS[category];
+  return fallbackCode ? `${SHOP_ASSET_IMAGE_BASE}/${fallbackCode}.png` : "";
+}
+
 let activeCategory = "all";
 let currentShopContext = null;
 let pendingStoreImage = null;
@@ -127,8 +133,7 @@ function getCategoryMeta(category) {
 function getAssetImageSrc(asset) {
   if (asset?.image?.dataUrl) return asset.image.dataUrl;
   if (asset?.imagePath) return asset.imagePath;
-  const fallbackCode = CATEGORY_IMAGE_FALLBACKS[asset?.category];
-  return fallbackCode ? `${SHOP_ASSET_IMAGE_BASE}/${fallbackCode}.png` : "";
+  return getCategoryArtworkSrc(asset?.category);
 }
 
 function getAssetDisplay(asset) {
@@ -475,9 +480,13 @@ function renderCategoryBar() {
   const categories = getCatalogCategories();
   container.innerHTML = categories.map(category => {
     const meta = getCategoryMeta(category);
+    const artworkSrc = getCategoryArtworkSrc(category);
     return `
-      <button class="shop-category-pill ${category === activeCategory ? "active" : ""}" type="button" data-shop-category="${category}">
-        ${meta.icon} ${escapeHtml(meta.label)}
+      <button class="shop-category-pill ${category === activeCategory ? "active" : ""}" type="button" data-shop-category="${category}" aria-pressed="${category === activeCategory}">
+        <span class="shop-category-icon">
+          ${artworkSrc ? `<img src="${escapeHtml(artworkSrc)}" alt="">` : `<span>${escapeHtml(meta.icon)}</span>`}
+        </span>
+        <span class="shop-category-label">${escapeHtml(meta.label)}</span>
       </button>
     `;
   }).join("");
