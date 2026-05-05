@@ -1472,10 +1472,16 @@ function resetCurrentContentTopic() {
   clearContentTopicWorkingState(currentGroup, { clearBankedResult: true, markEvidenceReset: true });
   refreshContentCompletionAfterTopicReset(groups);
   state.lastContentTopicReview = null;
-  state.contentView = "intro";
-  state.contentGroupStartedAt = null;
+  state.contentView = "lesson";
+  state.contentGroupStartedAt = Date.now();
+  state.recentReward = {
+    type: "warning",
+    title: "Topic reset",
+    detail: `${currentGroup.title} has restarted from the first reactor card.`
+  };
   persistESTProgressSnapshot();
   renderContentStage();
+  renderRewardPulse();
   scrollToTopSmooth();
 }
 
