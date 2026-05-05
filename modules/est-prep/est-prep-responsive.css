@@ -157,12 +157,13 @@
   }
 
   #stage-section.gameplay-viewport .training-hud--compact {
-    grid-template-columns: 1fr auto;
+    grid-template-columns: 1fr;
     gap: 8px;
   }
 
   #stage-section.gameplay-viewport .training-hud-rail {
-    display: none;
+    display: block;
+    width: 100%;
   }
 
   #stage-section.gameplay-viewport .training-hud-copy h2 {
@@ -177,6 +178,19 @@
   #stage-section.gameplay-viewport .training-card--flash,
   #stage-section.gameplay-viewport .training-step {
     padding: 10px;
+  }
+
+  #stage-section.gameplay-viewport .training-focus-shell--arc,
+  #stage-section.gameplay-viewport .training-main-header.compact {
+    grid-template-columns: 1fr;
+  }
+
+  #stage-section.gameplay-viewport .training-focus-aside--arc {
+    order: 2;
+  }
+
+  #stage-section.gameplay-viewport .training-focus-main {
+    order: 1;
   }
 
   #stage-section.gameplay-viewport .training-question-layout .training-card-lead {
