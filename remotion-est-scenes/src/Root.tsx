@@ -88,7 +88,7 @@ export const RemotionRoot: React.FC = () => {
       <Composition
         id="InitiativePortraitTeaser"
         component={InitiativePortraitTeaser}
-        durationInFrames={135}
+        durationInFrames={270}
         fps={30}
         width={1080}
         height={1920}
@@ -96,7 +96,7 @@ export const RemotionRoot: React.FC = () => {
       <Composition
         id="TimeManagementPortraitTeaser"
         component={TimeManagementPortraitTeaser}
-        durationInFrames={150}
+        durationInFrames={270}
         fps={30}
         width={1080}
         height={1920}
@@ -104,7 +104,7 @@ export const RemotionRoot: React.FC = () => {
       <Composition
         id="PersonalFinancePortraitTeaser"
         component={PersonalFinancePortraitTeaser}
-        durationInFrames={150}
+        durationInFrames={270}
         fps={30}
         width={1080}
         height={1920}
@@ -112,7 +112,7 @@ export const RemotionRoot: React.FC = () => {
       <Composition
         id="JobApplicationPortraitTeaser"
         component={JobApplicationPortraitTeaser}
-        durationInFrames={150}
+        durationInFrames={270}
         fps={30}
         width={1080}
         height={1920}
@@ -120,7 +120,7 @@ export const RemotionRoot: React.FC = () => {
       <Composition
         id="CommunicationPortraitTeaser"
         component={CommunicationPortraitTeaser}
-        durationInFrames={150}
+        durationInFrames={270}
         fps={30}
         width={1080}
         height={1920}
@@ -128,7 +128,7 @@ export const RemotionRoot: React.FC = () => {
       <Composition
         id="MegatrendsLmiPortraitTeaser"
         component={MegatrendsLmiPortraitTeaser}
-        durationInFrames={150}
+        durationInFrames={270}
         fps={30}
         width={1080}
         height={1920}

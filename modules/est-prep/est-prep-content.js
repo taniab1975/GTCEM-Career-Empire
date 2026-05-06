@@ -1187,6 +1187,25 @@ function toggleReveal(key) {
   if (state.selectedStageId === "boss") renderBossStage();
 }
 
+function toggleTopicIntroVideo(button) {
+  const video = button?.closest(".topic-media-card")?.querySelector("video");
+  if (!video) return;
+  const label = button.querySelector(".topic-video-control-label");
+  const setControlState = (isPlaying) => {
+    button.setAttribute("aria-label", isPlaying ? "Pause topic animation" : "Play topic animation");
+    button.setAttribute("aria-pressed", String(!isPlaying));
+    if (label) label.textContent = isPlaying ? "Pause" : "Play";
+  };
+  if (video.paused || video.ended) {
+    const playPromise = video.play();
+    setControlState(true);
+    if (playPromise?.catch) playPromise.catch(() => setControlState(false));
+  } else {
+    video.pause();
+    setControlState(false);
+  }
+}
+
 function renderContentTopicIntro(group) {
   const highlights = group.introHighlights || [];
   const hasVideo = Boolean(group.introVideo);
@@ -1202,6 +1221,9 @@ function renderContentTopicIntro(group) {
             <video class="topic-media ${usesPortraitMedia ? "topic-media--portrait" : ""}" autoplay muted loop playsinline poster="${escapeHtml(group.introImage || "")}">
               <source src="${escapeHtml(group.introVideo)}" type="video/mp4">
             </video>
+            <button class="topic-video-control" type="button" aria-label="Pause topic animation" aria-pressed="false" onclick="window.ESTPrep.toggleTopicIntroVideo(this)">
+              <span class="topic-video-control-label">Pause</span>
+            </button>
           ` : `
             <img class="topic-media topic-media-image" src="${escapeHtml(group.introImage || "")}" alt="${escapeHtml(group.title)}">
           `}

@@ -115,6 +115,7 @@ window.ESTPrep = {
   nextContentGroup: () => moveContentGroup(1),
   prevContentGroup: () => moveContentGroup(-1),
   jumpToContentGroup,
+  toggleTopicIntroVideo,
   setTrainingChoice,
   setTrainingChoiceEncoded,
   advanceArcCard,

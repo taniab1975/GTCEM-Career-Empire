@@ -228,6 +228,7 @@
 }
 
 .topic-media-card {
+  position: relative;
   border-radius: 28px;
   border: 1px solid rgba(129, 166, 255, 0.18);
   background: rgba(10, 19, 40, 0.76);
@@ -273,6 +274,33 @@
 .topic-media-image {
   object-fit: contain;
   padding: 8px;
+}
+
+.topic-video-control {
+  position: absolute;
+  z-index: 3;
+  right: 18px;
+  bottom: 18px;
+  min-width: 92px;
+  min-height: 44px;
+  padding: 10px 16px;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 255, 255, 0.42);
+  background: rgba(7, 15, 34, 0.78);
+  color: #eef7ff;
+  font: inherit;
+  font-weight: 900;
+  letter-spacing: 0;
+  cursor: pointer;
+  box-shadow: 0 12px 24px rgba(0, 0, 0, 0.28);
+  backdrop-filter: blur(12px);
+}
+
+.topic-video-control:hover,
+.topic-video-control:focus-visible {
+  border-color: rgba(114, 247, 184, 0.72);
+  background: rgba(13, 32, 67, 0.92);
+  outline: none;
 }
 
 .topic-intro-actions {

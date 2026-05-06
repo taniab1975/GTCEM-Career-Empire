@@ -68,21 +68,22 @@ const phaseOpacity = (frame: number, inStart: number, outStart?: number) => {
 
 export const InitiativePortraitTeaser: React.FC = () => {
   const frame = useCurrentFrame();
-  const {fps} = useVideoConfig();
-  const progress = frame / (4.5 * fps);
+  const {fps, durationInFrames} = useVideoConfig();
+  const totalFrames = Math.max(1, durationInFrames - 1);
+  const progress = frame / totalFrames;
 
-  const bgScale = interpolate(frame, [0, 135], [1.02, 1.08], {
+  const bgScale = interpolate(frame, [0, totalFrames], [1.02, 1.08], {
     extrapolateRight: "clamp"
   });
-  const titleY = enter(frame, 6, 22, -92, 0);
-  const titleOpacity = enter(frame, 6, 16, 0, 1);
-  const screenOpacity = enter(frame, 28, 14, 0, 1);
-  const screenY = enter(frame, 28, 18, 70, 0);
-  const skillOpacity = phaseOpacity(frame, 34, 72);
-  const howOpacity = phaseOpacity(frame, 82);
+  const titleY = enter(frame, 8, 28, -92, 0);
+  const titleOpacity = enter(frame, 8, 20, 0, 1);
+  const screenOpacity = enter(frame, 40, 20, 0, 1);
+  const screenY = enter(frame, 40, 24, 70, 0);
+  const skillOpacity = phaseOpacity(frame, 54, 144);
+  const howOpacity = phaseOpacity(frame, 156);
   const crestPop = spring({
     fps,
-    frame: frame - 72,
+    frame: frame - 150,
     config: {damping: 14, stiffness: 110}
   });
   const shimmer = interpolate(frame % 80, [0, 40, 80], [-120, 180, -120]);
@@ -400,8 +401,8 @@ export const InitiativePortraitTeaser: React.FC = () => {
                     : "rgba(4, 47, 85, 0.78)",
                 border: "3px solid rgba(255,255,255,0.52)",
                 boxShadow: "0 12px 24px rgba(0,0,0,0.18)",
-                opacity: enter(frame, 90 + index * 5, 10, 0, 1),
-                transform: `translateY(${enter(frame, 90 + index * 5, 12, 28, 0)}px)`,
+                opacity: enter(frame, 172 + index * 9, 14, 0, 1),
+                transform: `translateY(${enter(frame, 172 + index * 9, 18, 28, 0)}px)`,
                 gridColumn: index === 4 ? "1 / span 2" : undefined
               }}
             >
@@ -445,8 +446,8 @@ export const InitiativePortraitTeaser: React.FC = () => {
           border: "4px solid rgba(255,255,255,0.62)",
           boxShadow: "0 22px 46px rgba(0,0,0,0.24)",
           backdropFilter: "blur(12px)",
-          transform: `translateY(${enter(frame, 54, 20, 44, 0)}px)`,
-          opacity: enter(frame, 54, 18, 0, 1)
+          transform: `translateY(${enter(frame, 92, 24, 44, 0)}px)`,
+          opacity: enter(frame, 92, 22, 0, 1)
         }}
       >
         <div
@@ -485,7 +486,7 @@ export const InitiativePortraitTeaser: React.FC = () => {
           height: 170,
           objectFit: "contain",
           transform: `scale(${0.72 + crestPop * 0.28})`,
-          opacity: enter(frame, 74, 16, 0, 1),
+          opacity: enter(frame, 154, 20, 0, 1),
           filter: "drop-shadow(0 14px 24px rgba(0,0,0,0.28))"
         }}
       />

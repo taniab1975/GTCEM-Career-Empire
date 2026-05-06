@@ -81,22 +81,23 @@ const getTitleFontSize = (title: string) => {
 
 const TopicPortraitTeaser: React.FC<{config: TopicTeaserConfig}> = ({config}) => {
   const frame = useCurrentFrame();
-  const {fps} = useVideoConfig();
-  const progress = frame / (5 * fps);
+  const {fps, durationInFrames} = useVideoConfig();
+  const totalFrames = Math.max(1, durationInFrames - 1);
+  const progress = frame / totalFrames;
   const characterIsRight = config.characterAlign === "right";
-  const bgScale = interpolate(frame, [0, 150], [1, 1.045], {
+  const bgScale = interpolate(frame, [0, totalFrames], [1, 1.045], {
     extrapolateRight: "clamp"
   });
-  const titleY = enter(frame, 5, 20, -92, 0);
-  const titleOpacity = enter(frame, 5, 16, 0, 1);
-  const panelOpacity = enter(frame, 28, 14, 0, 1);
-  const panelY = enter(frame, 28, 18, 72, 0);
-  const beatsOpacity = phaseOpacity(frame, 34, 78);
-  const skillsOpacity = phaseOpacity(frame, 82);
+  const titleY = enter(frame, 8, 26, -92, 0);
+  const titleOpacity = enter(frame, 8, 20, 0, 1);
+  const panelOpacity = enter(frame, 38, 18, 0, 1);
+  const panelY = enter(frame, 38, 24, 72, 0);
+  const beatsOpacity = phaseOpacity(frame, 54, 144);
+  const skillsOpacity = phaseOpacity(frame, 156);
   const shimmer = interpolate(frame % 84, [0, 42, 84], [-140, 190, -140]);
   const crestPop = spring({
     fps,
-    frame: frame - 78,
+    frame: frame - 150,
     config: {damping: 14, stiffness: 110}
   });
   const iconFloat = interpolate(frame % 96, [0, 48, 96], [-8, 10, -8]);
@@ -293,8 +294,8 @@ const TopicPortraitTeaser: React.FC<{config: TopicTeaserConfig}> = ({config}) =>
                   background: index % 2 === 0 ? "rgba(8, 60, 74, 0.72)" : "rgba(5, 38, 78, 0.76)",
                   border: "3px solid rgba(255,255,255,0.48)",
                   boxShadow: "0 12px 22px rgba(0,0,0,0.18)",
-                  opacity: enter(frame, 48 + index * 4, 9, 0, 1),
-                  transform: `translateY(${enter(frame, 48 + index * 4, 12, 24, 0)}px)`
+                  opacity: enter(frame, 68 + index * 8, 14, 0, 1),
+                  transform: `translateY(${enter(frame, 68 + index * 8, 16, 24, 0)}px)`
                 }}
               >
                 <div
@@ -384,8 +385,8 @@ const TopicPortraitTeaser: React.FC<{config: TopicTeaserConfig}> = ({config}) =>
                   background: index % 2 === 0 ? "rgba(19, 86, 83, 0.74)" : "rgba(4, 47, 85, 0.78)",
                   border: "3px solid rgba(255,255,255,0.52)",
                   boxShadow: "0 12px 24px rgba(0,0,0,0.18)",
-                  opacity: enter(frame, 88 + index * 4, 10, 0, 1),
-                  transform: `translateY(${enter(frame, 88 + index * 4, 12, 28, 0)}px)`
+                  opacity: enter(frame, 172 + index * 10, 14, 0, 1),
+                  transform: `translateY(${enter(frame, 172 + index * 10, 18, 28, 0)}px)`
                 }}
               >
                 <Img
@@ -441,8 +442,8 @@ const TopicPortraitTeaser: React.FC<{config: TopicTeaserConfig}> = ({config}) =>
           border: "4px solid rgba(255,255,255,0.62)",
           boxShadow: "0 22px 46px rgba(0,0,0,0.24)",
           backdropFilter: "blur(12px)",
-          transform: `translateY(${enter(frame, 58, 20, 44, 0)}px)`,
-          opacity: enter(frame, 58, 18, 0, 1)
+          transform: `translateY(${enter(frame, 92, 24, 44, 0)}px)`,
+          opacity: enter(frame, 92, 22, 0, 1)
         }}
       >
         <div
@@ -481,7 +482,7 @@ const TopicPortraitTeaser: React.FC<{config: TopicTeaserConfig}> = ({config}) =>
           height: 176,
           objectFit: "contain",
           transform: `translateY(${iconFloat}px) scale(${0.74 + crestPop * 0.26})`,
-          opacity: enter(frame, 78, 16, 0, 1),
+          opacity: enter(frame, 154, 20, 0, 1),
           filter: "drop-shadow(0 14px 24px rgba(0,0,0,0.28))"
         }}
       />
