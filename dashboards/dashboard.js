@@ -469,16 +469,16 @@ const STAR_BUILDER_STEPS = [
     label: "S",
     term: "Situation",
     lead: "Awesome, tell me about it. What was the situation?",
-    prompt: "Where were you, who was involved, and what made communication matter?",
-    examples: ["During a group presentation in class...", "At my part-time job, a customer needed help...", "In a club meeting, our team had to explain..."]
+    prompt: "Set the scene only: when and where it happened, who was involved, and what your role was. Save what you had to do for Task.",
+    examples: ["During Year 11 at ECC, I was part of a group presentation and my role was...", "At my part-time job, I was working a shift in the customer service area...", "In a club meeting, I was one of the senior students helping younger members..."]
   },
   {
     key: "task",
     label: "T",
     term: "Task",
     lead: "Great. Now what was the task?",
-    prompt: "What were you required to do, and how did you know?",
-    examples: ["I needed to explain the instructions clearly.", "I had to check what the person needed before responding.", "My role was to keep the group on the same page."]
+    prompt: "What were you required to do as part of that role, and how did you know?",
+    examples: ["Part of this role meant I had to explain the instructions clearly.", "I was required to check what the person needed before responding.", "My task was to keep the group on the same page."]
   },
   {
     key: "actions",
@@ -500,26 +500,26 @@ const STAR_BUILDER_STEPS = [
 
 const STAR_CONTEXT_EXAMPLES = {
   school: {
-    situation: ["During the school play, I had to communicate with students backstage...", "In my Phys Ed class, our group needed clear instructions before the activity...", "As a peer mentor, I supported a younger student who was unsure what to do..."],
-    task: ["I needed to explain the next step clearly so everyone knew where to go.", "I had to listen to the student and check what they understood.", "My role was to help the group share information without talking over each other."],
+    situation: ["During Year 11 at ECC, I was part of the school play and my role was backstage support...", "In my Phys Ed class, I was part of a small team activity with students I do not usually work with...", "As a peer mentor, my role was to support a younger student during orientation..."],
+    task: ["Part of this role meant I had to explain the next step clearly so everyone knew where to go.", "I was required to listen to the student and check what they understood.", "My task was to help the group share information without talking over each other."],
     actions: ["I used eye contact and a calm tone.", "I asked a clarifying question before giving advice.", "I repeated the key instruction and checked that the group understood."],
     results: ["The group completed the task smoothly.", "The younger student felt more confident and joined in.", "My teacher said I communicated clearly and helped the group stay organised."]
   },
   workplace: {
-    situation: ["At my retail job, a customer asked for help choosing between products...", "During workplace learning, I had to speak with a supervisor about a task...", "At work, a customer was confused about where to find an item..."],
-    task: ["I needed to understand what the customer wanted before suggesting an option.", "I had to check the instructions and confirm what standard was expected.", "My role was to serve the customer politely and keep the interaction clear."],
+    situation: ["At my retail job, I was working on the shop floor during a busy afternoon shift...", "During workplace learning, I was assigned to help my supervisor with a stock display...", "At work, I was serving customers near the front counter..."],
+    task: ["Part of this role meant I had to understand what the customer wanted before suggesting an option.", "I was required to check the instructions and confirm what standard was expected.", "My task was to serve the customer politely and keep the interaction clear."],
     actions: ["I greeted the customer, listened carefully, and repeated the request back.", "I asked my supervisor one clear question before starting.", "I adjusted my language so it was easy for the customer to understand."],
     results: ["The customer found what they needed and thanked me.", "The task was completed correctly the first time.", "My supervisor gave me positive feedback for being polite and clear."]
   },
   community: {
-    situation: ["At a community event, I helped explain directions to visitors...", "During a volunteer activity, our team needed to organise people quickly...", "At my sports club, I helped share updates with younger players..."],
-    task: ["I needed to give clear information so people knew what to do next.", "I had to listen to questions and respond respectfully.", "My role was to make sure everyone received the same message."],
+    situation: ["At a community event, I was volunteering at the information table...", "During a volunteer activity, I was part of a team helping organise participants...", "At my sports club, I was one of the older players helping younger team members..."],
+    task: ["Part of this role meant I had to give clear information so people knew what to do next.", "I was required to listen to questions and respond respectfully.", "My task was to make sure everyone received the same message."],
     actions: ["I spoke clearly and used simple instructions.", "I checked whether people had questions before moving on.", "I used friendly body language so people felt comfortable asking for help."],
     results: ["The event ran more smoothly.", "People knew where to go and what to do.", "A coordinator thanked me for helping the group stay organised."]
   },
   gameplay: {
-    situation: ["In an EST Prep activity, I had to explain a response using correct terminology...", "During a module task, I needed to communicate my reasoning clearly...", "In the glossary check, I had to show that I understood the term and could use it properly..."],
-    task: ["I needed to write a clear answer that matched the question.", "I had to use the right term and explain it in my own words.", "My role was to turn the game feedback into a stronger response."],
+    situation: ["In an EST Prep activity, I was working through a short-answer response about employability skills...", "During a module task, I was completing a question that asked me to explain my reasoning...", "In the glossary check, I was practising terminology for the EST Prep module..."],
+    task: ["Part of this role meant I had to write a clear answer that matched the question.", "I was required to use the right term and explain it in my own words.", "My task was to turn the game feedback into a stronger response."],
     actions: ["I reread the question before answering.", "I used the glossary term accurately in a sentence.", "I changed my response after checking the feedback."],
     results: ["My answer became clearer and more accurate.", "I completed the check and showed better use of terminology.", "The module saved evidence that I could communicate the idea properly."]
   }
