@@ -1311,8 +1311,8 @@ const FULL_GLOSSARY_TERMS = [
 ];
 
 const GLOSSARY_ROUND_CONFIGS = [
-  { id: "colour-shape", title: "Round 1: Signal Scan", cue: "Recover the right glossary term from the clue trail and stabilise the first chamber." },
-  { id: "keyword-cloze", title: "Round 2: Blank Repair", cue: "Fill the missing keyword from the definition and strengthen the memory trace." },
+  { id: "term-catch", title: "Round 1: Termfall Dash", cue: "Catch the correct falling term for the definition before it disappears down the memory road." },
+  { id: "signal-slice", title: "Round 2: Signal Slice", cue: "Slice the explanation fragments that genuinely belong to the active glossary term." },
   { id: "plain-match", title: "Round 3: Corruption Sweep", cue: "The supports are gone. Recover the correct term from meaning alone." },
   { id: "recall", title: "Round 4: Recall Forge", cue: "Use keywords to retrieve the term, then retrieve a keyword from the term." }
 ];

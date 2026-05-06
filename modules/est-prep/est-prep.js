@@ -148,6 +148,7 @@ window.ESTPrep = {
   continueGlossaryRound,
   setGlossaryRoundVote,
   startNewGlossaryPracticeRun,
+  jumpToGlossaryRound,
   toggleReveal,
   setGlossaryRecallAnswer,
   setGlossaryRecallChoiceEncoded,

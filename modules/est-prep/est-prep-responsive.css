@@ -66,6 +66,19 @@
     order: 1;
   }
 
+  .glossary-game-layout {
+    grid-template-columns: 1fr;
+  }
+
+  .glossary-memory-bank {
+    position: static;
+    max-height: none;
+  }
+
+  .glossary-memory-bank-list {
+    max-height: 340px;
+  }
+
   .glossary-chamber-rail,
   .glossary-mastery-strip,
   .glossary-escape-console,
@@ -129,6 +142,14 @@
 
   .glossary-guide-art img {
     max-height: 230px;
+  }
+
+  .glossary-catch-game {
+    min-height: 500px;
+  }
+
+  .glossary-slice-game {
+    min-height: 500px;
   }
 
   .focus-toolbar {
@@ -342,6 +363,63 @@
 
   #stage-section.gameplay-viewport .arc-progress-step strong {
     font-size: 0.72rem;
+  }
+
+  .glossary-memory-bank {
+    padding: 12px;
+  }
+
+  .glossary-memory-bank-stats {
+    grid-template-columns: 1fr;
+  }
+
+  .glossary-catch-game {
+    min-height: 520px;
+  }
+
+  .glossary-catch-road {
+    bottom: 150px;
+  }
+
+  .glossary-fall-term {
+    width: min(42%, 180px);
+  }
+
+  .glossary-fall-term--lane-1,
+  .glossary-fall-term--lane-3 {
+    left: 5%;
+  }
+
+  .glossary-fall-term--lane-2,
+  .glossary-fall-term--lane-4 {
+    left: 53%;
+  }
+
+  .glossary-catch-guide {
+    width: 84px;
+    opacity: 0.86;
+  }
+
+  .glossary-slice-game {
+    min-height: 540px;
+  }
+
+  .glossary-slice-vault {
+    grid-template-columns: 74px minmax(0, 1fr);
+    min-height: 112px;
+  }
+
+  .glossary-slice-vault img {
+    width: 74px;
+    max-height: 96px;
+  }
+
+  .glossary-slice-field {
+    bottom: 158px;
+  }
+
+  .glossary-slice-token {
+    width: min(46%, 180px);
   }
 
   .glossary-socket,
