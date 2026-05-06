@@ -28,6 +28,39 @@ const GLOSSARY_GUIDE_ASSETS = {
   reward: "../../Assets/EST Preparation/guide-character/guide-celebration.png"
 };
 
+const GLOSSARY_SCENE_VISUALS = {
+  Arbitration: { motif: "dispute", badge: "FAIR", title: "Neutral decision", caption: "A referee figure hears both sides and makes a binding call.", tags: ["neutral", "evidence", "binding"] },
+  Career: { motif: "pathway", badge: "PATH", title: "Life role pathway", caption: "Paid work, unpaid roles, learning, leisure and community form one long path.", tags: ["roles", "life", "work"] },
+  "Career adaptability": { motif: "pivot", badge: "PIVOT", title: "Switches route", caption: "A worker changes direction when the work landscape shifts.", tags: ["adjust", "opportunity", "transition"] },
+  "Career competencies": { motif: "toolkit", badge: "TOOLS", title: "Career toolkit", caption: "Knowledge, skills and attitudes are packed ready for future decisions.", tags: ["skills", "attitudes", "balance"] },
+  "Career development": { motif: "growth-path", badge: "GROW", title: "Future path grows", caption: "A person builds behaviours and knowledge toward a preferred future.", tags: ["lifelong", "future", "manage"] },
+  "Cover letter": { motif: "document", badge: "NOTE", title: "Applicant message", caption: "A targeted note travels with the resume and highlights suitability.", tags: ["interest", "skills", "job"] },
+  "Demographic shift": { motif: "population", badge: "POP", title: "Population pattern changes", caption: "Groups grow, shrink or move as migration, births and deaths change.", tags: ["migration", "births", "rates"] },
+  "Dispute resolution": { motif: "dispute", badge: "SOLVE", title: "Fair solution table", caption: "People work through conflict toward a solution all sides can accept.", tags: ["conflict", "fair", "solution"] },
+  Diversity: { motif: "community", badge: "MIX", title: "Different people included", caption: "Different ages, cultures, genders, beliefs and abilities belong together.", tags: ["variety", "inclusion", "people"] },
+  "Economic power shift": { motif: "global-shift", badge: "SHIFT", title: "Markets change weight", caption: "Influence moves from established economies toward emerging markets.", tags: ["global", "markets", "change"] },
+  "Emerging industries": { motif: "invention", badge: "NEW", title: "New industry launch", caption: "New products, services and technologies start taking shape.", tags: ["early", "innovation", "technology"] },
+  Enterprise: { motif: "spark", badge: "TRY", title: "Tries the new idea", caption: "Someone is willing to innovate, show initiative and promote new activity.", tags: ["initiative", "innovation", "try"] },
+  "Enterprise culture": { motif: "workplace", badge: "CODE", title: "Shared workplace code", caption: "Values, beliefs, standards and behaviours shape how the workplace feels.", tags: ["values", "beliefs", "behaviour"] },
+  "Impactful technology": { motif: "technology", badge: "TECH", title: "Tech changes the system", caption: "A powerful tool improves processes while also disrupting routines.", tags: ["improve", "disrupt", "uncertainty"] },
+  "Green industries": { motif: "green", badge: "ECO", title: "Cleaner production", caption: "Industry protects the environment by reducing waste and pollution.", tags: ["sustainable", "waste", "materials"] },
+  Grievance: { motif: "concern", badge: "ISSUE", title: "Workplace concern raised", caption: "An employee names a real or perceived problem at work.", tags: ["problem", "workplace", "employee"] },
+  "Growth industry": { motif: "growth-chart", badge: "RISE", title: "Fast-rising sector", caption: "The sector climbs faster than the average industry around it.", tags: ["growth", "rate", "industry"] },
+  Initiative: { motif: "initiative", badge: "ACT", title: "Steps in before trouble", caption: "Someone helps before the problem drops or the workload piles up.", tags: ["proactive", "challenge", "unexpected"] },
+  "Learning opportunity": { motif: "learning", badge: "LEARN", title: "Chance to build skill", caption: "A situation becomes a place to develop knowledge and understanding.", tags: ["develop", "knowledge", "skills"] },
+  "Lifelong learning": { motif: "lifelong", badge: "ALWAYS", title: "Learning keeps moving", caption: "Knowledge and skills keep developing across personal and professional life.", tags: ["ongoing", "voluntary", "skills"] },
+  Mediation: { motif: "mediator", badge: "GUIDE", title: "Neutral guide between sides", caption: "A third party helps people communicate and negotiate a compromise.", tags: ["third party", "negotiate", "compromise"] },
+  Megatrend: { motif: "wave", badge: "WAVE", title: "Large long-term wave", caption: "A lasting force changes how people live, work and do business.", tags: ["long-lasting", "transform", "work"] },
+  "Performance management": { motif: "feedback", badge: "LOOP", title: "Feedback loop", caption: "Employer and employee keep communicating so performance can improve.", tags: ["feedback", "support", "role"] },
+  "Personal risk": { motif: "home-risk", badge: "HOME", title: "Family impact risk", caption: "A choice directly affects the individual or family around them.", tags: ["individual", "family", "impact"] },
+  "Professional development": { motif: "training", badge: "UPSKILL", title: "Skills upgrade", caption: "Training refines skills, knowledge and understanding for work.", tags: ["training", "refine", "enhance"] },
+  "Professional risk": { motif: "career-risk", badge: "LEAP", title: "Career leap", caption: "A work risk is taken because it could improve career outcomes.", tags: ["career", "risk", "outcome"] },
+  Resilience: { motif: "bounce", badge: "BACK", title: "Bounces back", caption: "A person endures a challenge and recovers after adversity.", tags: ["endure", "recover", "challenge"] },
+  "Selection criteria": { motif: "checklist", badge: "FIT", title: "Role requirements", caption: "A checklist names the qualities and skills needed for the job.", tags: ["qualities", "skills", "job"] },
+  "Skills shortage": { motif: "vacancy", badge: "GAP", title: "Vacancy gap", caption: "Employers have roles open but cannot find enough people with the skill.", tags: ["employers", "vacancies", "occupation"] },
+  "Work environment": { motif: "workplace", badge: "PLACE", title: "Inside the workplace", caption: "Physical conditions, processes and social dynamics shape daily work.", tags: ["conditions", "procedures", "social"] }
+};
+
 function clearGlossaryRecallAdvanceTimeout() {
   if (glossaryRecallAdvanceTimeout) {
     clearTimeout(glossaryRecallAdvanceTimeout);
@@ -463,6 +496,52 @@ function buildGlossaryChallengeOptions(roundId, item, batch = getCurrentGlossary
   }));
 }
 
+function getGlossarySceneVisual(term) {
+  const scene = GLOSSARY_SCENE_VISUALS[term];
+  if (scene) return scene;
+  return {
+    motif: "toolkit",
+    badge: "TERM",
+    title: term || "Glossary scene",
+    caption: "A visual anchor for this glossary term.",
+    tags: deriveGlossaryKeywords(term || "").slice(0, 3)
+  };
+}
+
+function getGlossaryStableDistractors(item, count = 3) {
+  const glossarySource = buildGlossarySource();
+  if (!item || !glossarySource.length) return [];
+  const sourceIndex = Math.max(0, glossarySource.findIndex(candidate => candidate.id === item.id));
+  const offsets = [5, 11, 17, 23, 29, 7, 13, 19];
+  const picked = [];
+  offsets.forEach(offset => {
+    if (picked.length >= count) return;
+    const candidate = glossarySource[(sourceIndex + offset) % glossarySource.length];
+    if (candidate && candidate.id !== item.id && !picked.some(entry => entry.id === candidate.id)) {
+      picked.push(candidate);
+    }
+  });
+  glossarySource.forEach(candidate => {
+    if (picked.length >= count) return;
+    if (candidate.id !== item.id && !picked.some(entry => entry.id === candidate.id)) {
+      picked.push(candidate);
+    }
+  });
+  return picked;
+}
+
+function buildGlossarySceneMatchOptions(item) {
+  if (!item) return [];
+  return [item, ...getGlossaryStableDistractors(item, 3)].map(candidate => ({
+    value: candidate.term,
+    term: candidate.term,
+    scene: getGlossarySceneVisual(candidate.term),
+    correct: candidate.id === item.id
+  })).sort((a, b) => {
+    return (getGlossaryStableNumber(`${item.id}-${a.term}`) % 97) - (getGlossaryStableNumber(`${item.id}-${b.term}`) % 97);
+  });
+}
+
 function getGlossaryStableNumber(value) {
   return String(value || "").split("").reduce((sum, char, index) => {
     return sum + (char.charCodeAt(0) * (index + 1));
@@ -532,7 +611,8 @@ function captureGlossaryFlightSignal() {
 function isGlossaryChoiceCorrect(roundId, item, value) {
   if (!item) return false;
   if (roundId === "signal-slice") {
-    return (item.keywords || []).some(keyword => normaliseGlossaryTermText(value) === normaliseGlossaryTermText(keyword));
+    return normaliseGlossaryTermText(value) === normaliseGlossaryTermText(item.term)
+      || (item.keywords || []).some(keyword => normaliseGlossaryTermText(value) === normaliseGlossaryTermText(keyword));
   }
   if (roundId === "keyword-cloze") {
     return normaliseGlossaryTermText(value) === normaliseGlossaryTermText(getGlossaryCloze(item).keyword);
@@ -572,12 +652,14 @@ function submitGlossaryChallengeChoiceEncoded(targetId, encodedValue) {
     state.glossaryPulse = round.id === "term-catch"
       ? "Wrong catch. Track the definition at the bottom and grab the matching term next pass."
       : round.id === "signal-slice"
-        ? "Wrong slice. That fragment belongs somewhere else. Watch the active term and slice a true meaning piece."
+        ? "Wrong scene. Look for the picture that best represents the active term."
         : round.id === "keyword-cloze"
           ? "Blank mismatch. Read the definition rhythm and try the missing keyword again."
-          : round.id === "recall"
-            ? "Wrong gate. Move lanes, reread the definition, and capture the term that fits."
-            : "Signal mismatch. Use the clue feed and restore the right glossary term.";
+          : round.id === "plain-match"
+            ? "Wrong ship. Use the definition lock and shoot the term that matches it."
+            : round.id === "recall"
+              ? "Wrong gate. Move lanes, reread the definition, and capture the term that fits."
+              : "Signal mismatch. Use the clue feed and restore the right glossary term.";
     state.glossaryPulseType = "warn";
     state.recentReward = {
       type: "warning",
@@ -664,9 +746,9 @@ function formatGlossaryRoundTitle(roundNumber) {
   return roundNumber === 1
     ? "Termfall Dash cleared. The first glossary game is banked."
     : roundNumber === 2
-      ? "Signal Slice cleared. Explanation fragments are locking into memory."
+      ? "Scene Match cleared. Visual anchors are locking into memory."
       : roundNumber === 3
-        ? "Corruption Sweep cleared. Meaning-to-term recognition is stronger."
+        ? "Definition Invaders cleared. Meaning-to-term recognition is stronger."
         : "Vault Flight complete. Retrieval practice is banked.";
 }
 
@@ -1154,8 +1236,8 @@ function getGlossaryGuideCopy(roundId, item) {
       body: `Watch the falling options. The definition points toward ${term}; catch it before the memory road resets.`
     },
     "signal-slice": {
-      title: "Slice true meaning",
-      body: `The vault has loaded ${term}. Slice only the fragments that belong to its explanation and leave the decoys alone.`
+      title: "Picture the meaning",
+      body: `The vault has loaded ${term}. Choose the image scene that best represents what this term looks like in action.`
     },
     "colour-shape": {
       title: "Scan the clue trail",
@@ -1166,8 +1248,8 @@ function getGlossaryGuideCopy(roundId, item) {
       body: `Blank repair is the memory workout. Read the definition rhythm, predict the keyword, then choose it.`
     },
     "plain-match": {
-      title: "Clear the noise",
-      body: `Now the hints are thinner. Match meaning to term and watch for close-but-wrong options.`
+      title: "Shoot the right term",
+      body: `Now the definition is the target lock. Fire at the moving term ship that matches the meaning.`
     },
     recall: {
       title: "Fly the right lane",
@@ -1503,10 +1585,137 @@ function renderGlossarySignalSliceGame(round, promptItem, optionSet, batch, batc
   `;
 }
 
+function renderGlossarySceneArt(scene) {
+  return `
+    <div class="glossary-scene-art glossary-scene-art--${escapeHtml(scene.motif)}" aria-hidden="true">
+      <span class="glossary-scene-shape glossary-scene-shape--one"></span>
+      <span class="glossary-scene-shape glossary-scene-shape--two"></span>
+      <span class="glossary-scene-shape glossary-scene-shape--three"></span>
+      <strong>${escapeHtml(scene.badge)}</strong>
+    </div>
+  `;
+}
+
+function renderGlossarySceneMatchGame(round, promptItem, optionSet, batch, batchNumber, totalBatches, matchedCount, roundScore, progressPercent) {
+  const guideImage = GLOSSARY_GUIDE_ASSETS["signal-slice"];
+  return `
+    <div class="panel glossary-command-panel glossary-arcade-shell glossary-scene-shell">
+      <div class="section-title">
+        <h2>Scene Match</h2>
+        <p>${matchedCount}/${batch.length} visual anchors matched</p>
+      </div>
+      <div class="badge-row" style="margin-bottom:14px;">
+        <span class="badge">Current streak: x${state.glossaryStreak}</span>
+        <span class="badge">Best streak: x${state.glossaryBestStreak}</span>
+        <span class="badge">Misses: ${state.glossaryMisses}</span>
+        <span class="badge">Score: ${roundScore}</span>
+      </div>
+      <p class="small-copy glossary-pulse ${state.glossaryPulseType}">${escapeHtml(state.glossaryPulse || round.cue)}</p>
+      <div class="glossary-progress-track" aria-hidden="true">
+        <div class="glossary-progress-bar" style="width:${progressPercent}%;"></div>
+      </div>
+      <div class="glossary-scene-match-game">
+        <article class="glossary-scene-prompt">
+          <div class="glossary-scene-guide">
+            <img src="${escapeHtml(guideImage)}" alt="">
+            <span></span>
+          </div>
+          <div>
+            <div class="kicker">Active term</div>
+            <h3>${escapeHtml(promptItem.term)}</h3>
+            <p>${escapeHtml(promptItem.definition)}</p>
+            <div class="glossary-scene-keywords">
+              ${(promptItem.keywords || []).slice(0, 4).map(keyword => `<span>${escapeHtml(keyword)}</span>`).join("")}
+            </div>
+          </div>
+        </article>
+        <div class="glossary-scene-gallery" aria-label="Choose the scene that matches the active glossary term">
+          ${optionSet.map(option => {
+            const scene = option.scene;
+            return `
+              <button
+                type="button"
+                class="glossary-scene-card"
+                onclick="window.ESTPrep.submitGlossaryChallengeChoiceEncoded('${promptItem.id}', '${encodeForInlineHandler(option.value)}')"
+              >
+                ${renderGlossarySceneArt(scene)}
+                <span class="kicker">Visual cue</span>
+                <strong>${escapeHtml(scene.title)}</strong>
+                <p>${escapeHtml(scene.caption)}</p>
+                <div class="glossary-scene-tags-mini">
+                  ${(scene.tags || []).slice(0, 3).map(tag => `<span>${escapeHtml(tag)}</span>`).join("")}
+                </div>
+              </button>
+            `;
+          }).join("")}
+        </div>
+      </div>
+    </div>
+    <div class="written-stage glossary-finale-stage">
+      <strong>Scene exit</strong>
+      <p class="small-copy">Match each term to a visual memory anchor. The point is not just recall, but having a picture for the concept.</p>
+      <button class="submit-button" type="button" onclick="window.ESTPrep.nextGlossaryPhase()" ${isGlossaryBatchMatched() ? "" : "disabled"}>Finish Game</button>
+    </div>
+  `;
+}
+
+function renderGlossaryInvadersGame(round, promptItem, optionSet, batch, batchNumber, totalBatches, matchedCount, roundScore, progressPercent) {
+  return `
+    <div class="panel glossary-command-panel glossary-arcade-shell glossary-invaders-shell">
+      <div class="section-title">
+        <h2>Definition Invaders</h2>
+        <p>${matchedCount}/${batch.length} term ships cleared</p>
+      </div>
+      <div class="badge-row" style="margin-bottom:14px;">
+        <span class="badge">Current streak: x${state.glossaryStreak}</span>
+        <span class="badge">Best streak: x${state.glossaryBestStreak}</span>
+        <span class="badge">Misses: ${state.glossaryMisses}</span>
+        <span class="badge">Score: ${roundScore}</span>
+      </div>
+      <p class="small-copy glossary-pulse ${state.glossaryPulseType}">${escapeHtml(state.glossaryPulse || round.cue)}</p>
+      <div class="glossary-progress-track" aria-hidden="true">
+        <div class="glossary-progress-bar" style="width:${progressPercent}%;"></div>
+      </div>
+      <div class="glossary-invaders-game">
+        <div class="glossary-invader-field" aria-label="Shoot the term ship that matches the definition">
+          <span class="glossary-invader-scan glossary-invader-scan--one"></span>
+          <span class="glossary-invader-scan glossary-invader-scan--two"></span>
+          ${optionSet.map((option, index) => `
+            <button
+              type="button"
+              class="glossary-invader-ship glossary-invader-ship--${index + 1}"
+              style="--ship-left:${12 + ((index * 21) % 62)}%; --ship-top:${10 + ((index * 17) % 42)}%; --ship-delay:${(index * -0.42).toFixed(2)}s;"
+              onclick="window.ESTPrep.submitGlossaryChallengeChoiceEncoded('${promptItem.id}', '${encodeForInlineHandler(option.value)}')"
+            >
+              <span>Term ship</span>
+              <strong>${escapeHtml(option.title)}</strong>
+            </button>
+          `).join("")}
+          <div class="glossary-invader-defender" aria-hidden="true">
+            <span class="glossary-invader-cannon"></span>
+            <span class="glossary-invader-laser glossary-invader-laser--one"></span>
+            <span class="glossary-invader-laser glossary-invader-laser--two"></span>
+          </div>
+        </div>
+        <div class="glossary-invader-definition">
+          <span class="kicker">Definition lock</span>
+          <strong>Shoot the term that means:</strong>
+          <p>${escapeHtml(promptItem.definition)}</p>
+        </div>
+      </div>
+    </div>
+    <div class="written-stage glossary-finale-stage">
+      <strong>Invader exit</strong>
+      <p class="small-copy">Clear the correct term ship for every definition lock to bank the round.</p>
+      <button class="submit-button" type="button" onclick="window.ESTPrep.nextGlossaryPhase()" ${isGlossaryBatchMatched() ? "" : "disabled"}>Finish Game</button>
+    </div>
+  `;
+}
+
 function renderGlossaryVaultFlightGame(round, promptItem, optionSet, batch, batchNumber, totalBatches, matchedCount, roundScore, progressPercent) {
   const guideImage = GLOSSARY_GUIDE_ASSETS.recall;
   const lane = getGlossaryFlightLane();
-  const laneY = 9 + (lane * 14.8);
+  const laneY = 16.4 + (lane * 14.8);
   return `
     <div class="panel glossary-command-panel glossary-arcade-shell glossary-flight-shell">
       <div class="section-title">
@@ -1600,13 +1809,17 @@ function renderGlossaryChallengeArena(round, batch, batchNumber, totalBatches, m
     return renderGlossaryVaultFlightGame(round, promptItem, buildGlossaryFlightOptions(promptItem), batch, batchNumber, totalBatches, matchedCount, roundScore, progressPercent);
   }
 
+  if (round.id === "signal-slice") {
+    return renderGlossarySceneMatchGame(round, promptItem, buildGlossarySceneMatchOptions(promptItem), batch, batchNumber, totalBatches, matchedCount, roundScore, progressPercent);
+  }
+
   const optionSet = buildGlossaryChallengeOptions(round.id, promptItem, batch);
   if (round.id === "term-catch") {
     return renderGlossaryCatchGame(round, promptItem, optionSet, batch, batchNumber, totalBatches, matchedCount, roundScore, progressPercent);
   }
 
-  if (round.id === "signal-slice") {
-    return renderGlossarySignalSliceGame(round, promptItem, optionSet, batch, batchNumber, totalBatches, matchedCount, roundScore, progressPercent);
+  if (round.id === "plain-match") {
+    return renderGlossaryInvadersGame(round, promptItem, optionSet, batch, batchNumber, totalBatches, matchedCount, roundScore, progressPercent);
   }
 
   const challengeCopy = round.id === "colour-shape"

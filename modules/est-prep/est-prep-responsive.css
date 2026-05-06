@@ -87,6 +87,10 @@
     grid-column: 1 / -1;
   }
 
+  .glossary-scene-match-game {
+    grid-template-columns: 1fr;
+  }
+
   .glossary-chamber-rail,
   .glossary-mastery-strip,
   .glossary-escape-console,
@@ -133,6 +137,7 @@
   .glossary-mastery-strip,
   .glossary-escape-console,
   .glossary-arcade-grid,
+  .glossary-scene-gallery,
   .glossary-recall-grid,
   .glossary-guide-panel {
     grid-template-columns: 1fr;
@@ -158,6 +163,10 @@
 
   .glossary-slice-game {
     min-height: 500px;
+  }
+
+  .glossary-invaders-game {
+    min-height: 520px;
   }
 
   .glossary-flight-game {
@@ -416,6 +425,26 @@
     min-height: 540px;
   }
 
+  .glossary-scene-card {
+    min-height: 0;
+  }
+
+  .glossary-scene-prompt {
+    padding: 14px;
+  }
+
+  .glossary-invaders-game {
+    min-height: 560px;
+  }
+
+  .glossary-invader-field {
+    bottom: 176px;
+  }
+
+  .glossary-invader-ship {
+    width: min(44%, 170px);
+  }
+
   .glossary-flight-game {
     min-height: 570px;
   }
@@ -443,8 +472,8 @@
 
   .glossary-flight-player {
     left: 3.5%;
-    width: 78px;
-    min-width: 76px;
+    width: 66px;
+    min-width: 62px;
   }
 
   .glossary-flight-definition {
