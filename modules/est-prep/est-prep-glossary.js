@@ -13,7 +13,7 @@ const GLOSSARY_VISUAL_ASSETS = {
   "signal-slice": "../../Assets/Images and Animations/Glossary Check/glossary-blank-repair.svg",
   "keyword-cloze": "../../Assets/Images and Animations/Glossary Check/glossary-blank-repair.svg",
   "plain-match": "../../Assets/Images and Animations/Glossary Check/glossary-corruption-sweep.svg",
-  recall: "../../Assets/Images and Animations/Glossary Check/glossary-recall-forge.svg",
+  recall: "../../Assets/Images and Animations/Glossary Check/glossary-space-runner.svg",
   reward: "../../Assets/Images and Animations/Glossary Check/glossary-reward-vault.svg"
 };
 
@@ -23,7 +23,7 @@ const GLOSSARY_GUIDE_ASSETS = {
   "signal-slice": "../../Assets/EST Preparation/guide-character/guide-thinking-top.png",
   "keyword-cloze": "../../Assets/EST Preparation/guide-character/guide-thinking-top.png",
   "plain-match": "../../Assets/EST Preparation/guide-character/guide-thinking-bottom.png",
-  recall: "../../Assets/EST Preparation/guide-character/guide-thumbs-up.png",
+  recall: "../../Assets/Images and Animations/Emmanuel Student Characters/MacKillop/MacKillop encouraging.png",
   study: "../../Assets/EST Preparation/guide-character/guide-thinking-top.png",
   reward: "../../Assets/EST Preparation/guide-character/guide-celebration.png"
 };
@@ -463,6 +463,72 @@ function buildGlossaryChallengeOptions(roundId, item, batch = getCurrentGlossary
   }));
 }
 
+function getGlossaryStableNumber(value) {
+  return String(value || "").split("").reduce((sum, char, index) => {
+    return sum + (char.charCodeAt(0) * (index + 1));
+  }, 0);
+}
+
+function buildGlossaryFlightOptions(item) {
+  const glossarySource = buildGlossarySource();
+  if (!item) return [];
+  const sourceIndex = Math.max(0, glossarySource.findIndex(candidate => candidate.id === item.id));
+  const options = [item.term];
+  const offsets = [7, 13, 19, 23, 29, 5, 11];
+
+  offsets.forEach(offset => {
+    const candidate = glossarySource[(sourceIndex + offset) % glossarySource.length];
+    if (candidate && candidate.id !== item.id && !options.includes(candidate.term)) {
+      options.push(candidate.term);
+    }
+  });
+
+  glossarySource.forEach(candidate => {
+    if (options.length >= 4) return;
+    if (candidate.id !== item.id && !options.includes(candidate.term)) {
+      options.push(candidate.term);
+    }
+  });
+
+  const laneTerms = options.slice(1, 4);
+  const correctLane = getGlossaryStableNumber(item.id) % 4;
+  laneTerms.splice(correctLane, 0, item.term);
+  return laneTerms.slice(0, 4).map((term, index) => ({
+    value: term,
+    title: term,
+    lane: index,
+    correct: normaliseGlossaryTermText(term) === normaliseGlossaryTermText(item.term)
+  }));
+}
+
+function getGlossaryFlightLane() {
+  const lane = Number(state.answers.glossaryFlightLane ?? 1);
+  if (!Number.isFinite(lane)) return 1;
+  return Math.max(0, Math.min(3, Math.round(lane)));
+}
+
+function moveGlossaryFlightLane(delta) {
+  state.answers.glossaryFlightLane = Math.max(0, Math.min(3, getGlossaryFlightLane() + Number(delta || 0)));
+  persistESTProgressSnapshot();
+  renderGlossaryStage();
+}
+
+function setGlossaryFlightLane(lane) {
+  state.answers.glossaryFlightLane = Math.max(0, Math.min(3, Number(lane || 0)));
+  persistESTProgressSnapshot();
+  renderGlossaryStage();
+}
+
+function captureGlossaryFlightSignal() {
+  const batch = getCurrentGlossaryBatch();
+  const item = getCurrentGlossaryPromptItem(batch);
+  if (!item) return;
+  const options = buildGlossaryFlightOptions(item);
+  const selected = options[getGlossaryFlightLane()] || options[0];
+  if (!selected) return;
+  submitGlossaryChallengeChoiceEncoded(item.id, encodeURIComponent(selected.value));
+}
+
 function isGlossaryChoiceCorrect(roundId, item, value) {
   if (!item) return false;
   if (roundId === "signal-slice") {
@@ -491,7 +557,9 @@ function submitGlossaryChallengeChoiceEncoded(targetId, encodedValue) {
     state.glossaryAssignments[getGlossaryBatchKey()] = assignments;
     state.glossaryStreak += 1;
     state.glossaryBestStreak = Math.max(state.glossaryBestStreak, state.glossaryStreak);
-    state.glossaryPulse = `${item.term} restored. Another glossary signal is back online.`;
+    state.glossaryPulse = round.id === "recall"
+      ? `${item.term} gate captured. Vault flight path is stabilising.`
+      : `${item.term} restored. Another glossary signal is back online.`;
     state.glossaryPulseType = "good";
     state.recentReward = {
       type: "positive",
@@ -507,7 +575,9 @@ function submitGlossaryChallengeChoiceEncoded(targetId, encodedValue) {
         ? "Wrong slice. That fragment belongs somewhere else. Watch the active term and slice a true meaning piece."
         : round.id === "keyword-cloze"
           ? "Blank mismatch. Read the definition rhythm and try the missing keyword again."
-          : "Signal mismatch. Use the clue feed and restore the right glossary term.";
+          : round.id === "recall"
+            ? "Wrong gate. Move lanes, reread the definition, and capture the term that fits."
+            : "Signal mismatch. Use the clue feed and restore the right glossary term.";
     state.glossaryPulseType = "warn";
     state.recentReward = {
       type: "warning",
@@ -597,7 +667,7 @@ function formatGlossaryRoundTitle(roundNumber) {
       ? "Signal Slice cleared. Explanation fragments are locking into memory."
       : roundNumber === 3
         ? "Corruption Sweep cleared. Meaning-to-term recognition is stronger."
-        : "Recall Forge complete. Retrieval practice is banked.";
+        : "Vault Flight complete. Retrieval practice is banked.";
 }
 
 function buildGlossaryCelebration(roundNumber, scoreText) {
@@ -778,10 +848,8 @@ function moveToNextGlossaryBatchOrRound() {
 }
 
 function nextGlossaryPhase() {
-  if (state.glossaryRoundIndex < 3) {
-    if (!isGlossaryBatchMatched()) return;
-    moveToNextGlossaryBatchOrRound();
-  }
+  if (!isGlossaryBatchMatched()) return;
+  moveToNextGlossaryBatchOrRound();
 }
 
 function setGlossaryRecallAnswer(key, value) {
@@ -1001,6 +1069,9 @@ function getGlossaryMemoryStatus(row) {
 function renderGlossaryMemoryBankPanel(activeItem = null) {
   const summary = getGlossaryMasterySummary();
   const batchIds = new Set(getCurrentGlossaryBatch().map(item => item.id));
+  const alphabeticalRows = [...summary.rows].sort((a, b) => {
+    return a.item.term.localeCompare(b.item.term, undefined, { sensitivity: "base" });
+  });
   return `
     <aside class="glossary-memory-bank" aria-label="Glossary memory bank">
       <div class="glossary-memory-bank-head">
@@ -1017,10 +1088,10 @@ function renderGlossaryMemoryBankPanel(activeItem = null) {
       <div class="glossary-memory-bank-stats">
         <span>${summary.tested}/${summary.total} tested</span>
         <span>${summary.attempts} reps</span>
-        <span>${summary.untested} new</span>
+        <span>A-Z: ${summary.total} terms</span>
       </div>
       <div class="glossary-memory-bank-list">
-        ${summary.rows.map((row, index) => {
+        ${alphabeticalRows.map((row, index) => {
           const status = getGlossaryMemoryStatus(row);
           const percent = row.tested ? Math.round(row.accuracy * 100) : 0;
           const active = activeItem?.id === row.item.id;
@@ -1099,8 +1170,8 @@ function getGlossaryGuideCopy(roundId, item) {
       body: `Now the hints are thinner. Match meaning to term and watch for close-but-wrong options.`
     },
     recall: {
-      title: "Retrieve, then lock",
-      body: `Final pass: pull the term from the cue, then prove it by choosing a matching keyword.`
+      title: "Fly the right lane",
+      body: `Final pass: steer through the vault lane holding ${term}. Use the definition, move with the arrows, then capture the gate.`
     },
     study: {
       title: "Look, cover, retrieve",
@@ -1432,6 +1503,74 @@ function renderGlossarySignalSliceGame(round, promptItem, optionSet, batch, batc
   `;
 }
 
+function renderGlossaryVaultFlightGame(round, promptItem, optionSet, batch, batchNumber, totalBatches, matchedCount, roundScore, progressPercent) {
+  const guideImage = GLOSSARY_GUIDE_ASSETS.recall;
+  const lane = getGlossaryFlightLane();
+  const laneY = 10 + (lane * 16.8);
+  return `
+    <div class="panel glossary-command-panel glossary-arcade-shell glossary-flight-shell">
+      <div class="section-title">
+        <h2>Vault Flight</h2>
+        <p>${matchedCount}/${batch.length} gates captured in this set</p>
+      </div>
+      <div class="badge-row" style="margin-bottom:14px;">
+        <span class="badge">Current streak: x${state.glossaryStreak}</span>
+        <span class="badge">Best streak: x${state.glossaryBestStreak}</span>
+        <span class="badge">Misses: ${state.glossaryMisses}</span>
+        <span class="badge">Score: ${roundScore}</span>
+      </div>
+      <p class="small-copy glossary-pulse ${state.glossaryPulseType}">${escapeHtml(state.glossaryPulse || round.cue)}</p>
+      <div class="glossary-progress-track" aria-hidden="true">
+        <div class="glossary-progress-bar" style="width:${progressPercent}%;"></div>
+      </div>
+      <div class="glossary-flight-game" style="--flight-y:${laneY}%;">
+        <img class="glossary-flight-bg" src="${escapeHtml(GLOSSARY_VISUAL_ASSETS.recall)}" alt="">
+        <span class="glossary-flight-star glossary-flight-star--one"></span>
+        <span class="glossary-flight-star glossary-flight-star--two"></span>
+        <span class="glossary-flight-star glossary-flight-star--three"></span>
+        <div class="glossary-flight-lanes" aria-hidden="true">
+          <span></span>
+          <span></span>
+          <span></span>
+          <span></span>
+        </div>
+        ${optionSet.map(option => `
+          <button
+            type="button"
+            class="glossary-flight-gate glossary-flight-gate--${option.lane} ${lane === option.lane ? "selected" : ""}"
+            onclick="window.ESTPrep.setGlossaryFlightLane(${option.lane})"
+          >
+            <span>Lane ${option.lane + 1}</span>
+            <strong>${escapeHtml(option.title)}</strong>
+          </button>
+        `).join("")}
+        <div class="glossary-flight-player" aria-label="Flying glossary character">
+          <span class="glossary-flight-thruster"></span>
+          <img src="${escapeHtml(guideImage)}" alt="">
+        </div>
+        <div class="glossary-flight-definition">
+          <span class="kicker">Definition target</span>
+          <strong>Fly to the term that means:</strong>
+          <p>${escapeHtml(promptItem.definition)}</p>
+        </div>
+      </div>
+      <div class="glossary-flight-controls">
+        <button class="choice-button glossary-flight-arrow" type="button" onclick="window.ESTPrep.moveGlossaryFlightLane(-1)" ${lane <= 0 ? "disabled" : ""} aria-label="Move up">&uarr;</button>
+        <button class="choice-button glossary-flight-arrow" type="button" onclick="window.ESTPrep.moveGlossaryFlightLane(1)" ${lane >= 3 ? "disabled" : ""} aria-label="Move down">&darr;</button>
+        <button class="submit-button glossary-flight-capture" type="button" onclick="window.ESTPrep.captureGlossaryFlightSignal()">
+          Capture selected gate
+        </button>
+        <span>Use arrow keys or the buttons, then capture the selected gate.</span>
+      </div>
+    </div>
+    <div class="written-stage glossary-finale-stage">
+      <strong>Vault exit</strong>
+      <p class="small-copy">Capture all ${batch.length} correct term gates to bank the final glossary reward for this timed set.</p>
+      <button class="submit-button" type="button" onclick="window.ESTPrep.nextGlossaryPhase()" ${isGlossaryBatchMatched() ? "" : "disabled"}>Finish Game</button>
+    </div>
+  `;
+}
+
 function renderGlossaryChallengeArena(round, batch, batchNumber, totalBatches, matchedCount, roundScore) {
   const promptItem = getCurrentGlossaryPromptItem(batch);
   const progressPercent = Math.round((matchedCount / Math.max(1, batch.length)) * 100);
@@ -1451,6 +1590,10 @@ function renderGlossaryChallengeArena(round, batch, batchNumber, totalBatches, m
         <button class="submit-button" type="button" onclick="window.ESTPrep.nextGlossaryPhase()">Finish Game</button>
       </div>
     `;
+  }
+
+  if (round.id === "recall") {
+    return renderGlossaryVaultFlightGame(round, promptItem, buildGlossaryFlightOptions(promptItem), batch, batchNumber, totalBatches, matchedCount, roundScore, progressPercent);
   }
 
   const optionSet = buildGlossaryChallengeOptions(round.id, promptItem, batch);
@@ -1683,12 +1826,6 @@ function renderGlossaryStage() {
     return;
   }
 
-  if (round.id === "recall") {
-    renderStageRoot(renderGlossaryRecallForge(batch, batchNumber, totalBatches));
-    startGlossaryRoundTimer();
-    return;
-  }
-
   const roundScore = Math.max(0, (matchedCount * 100) - (state.glossaryMisses * 25));
   const modeSwitch = `
     <div class="glossary-mode-switch">
@@ -1750,6 +1887,26 @@ function renderGlossaryStage() {
     </div>
   `);
   startGlossaryRoundTimer();
+}
+
+if (!window.__glossaryFlightControlsBound) {
+  window.__glossaryFlightControlsBound = true;
+  window.addEventListener("keydown", event => {
+    if (!document.body.classList.contains("glossary-mission-active")) return;
+    if (state.glossaryRoundCelebration || getCurrentGlossaryRound()?.id !== "recall") return;
+    if (event.key === "ArrowUp" || event.key === "ArrowLeft") {
+      event.preventDefault();
+      moveGlossaryFlightLane(-1);
+    }
+    if (event.key === "ArrowDown" || event.key === "ArrowRight") {
+      event.preventDefault();
+      moveGlossaryFlightLane(1);
+    }
+    if (event.key === " " || event.key === "Enter") {
+      event.preventDefault();
+      captureGlossaryFlightSignal();
+    }
+  });
 }
 
 async function submitGlossary() {

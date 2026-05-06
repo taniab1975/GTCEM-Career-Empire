@@ -79,6 +79,14 @@
     max-height: 340px;
   }
 
+  .glossary-flight-controls {
+    grid-template-columns: 54px 54px minmax(0, 1fr);
+  }
+
+  .glossary-flight-controls span {
+    grid-column: 1 / -1;
+  }
+
   .glossary-chamber-rail,
   .glossary-mastery-strip,
   .glossary-escape-console,
@@ -150,6 +158,10 @@
 
   .glossary-slice-game {
     min-height: 500px;
+  }
+
+  .glossary-flight-game {
+    min-height: 520px;
   }
 
   .focus-toolbar {
@@ -402,6 +414,41 @@
 
   .glossary-slice-game {
     min-height: 540px;
+  }
+
+  .glossary-flight-game {
+    min-height: 570px;
+  }
+
+  .glossary-flight-lanes {
+    inset: 16px 12px 176px;
+  }
+
+  .glossary-flight-gate {
+    right: 4%;
+    width: min(58%, 260px);
+    min-height: 70px;
+    padding: 10px 11px;
+  }
+
+  .glossary-flight-player {
+    left: 3%;
+    width: 86px;
+    min-width: 76px;
+  }
+
+  .glossary-flight-definition {
+    left: 12px;
+    right: 12px;
+  }
+
+  .glossary-flight-controls {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .glossary-flight-capture,
+  .glossary-flight-controls span {
+    grid-column: 1 / -1;
   }
 
   .glossary-slice-vault {
