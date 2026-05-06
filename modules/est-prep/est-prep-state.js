@@ -218,7 +218,7 @@ async function loadBank() {
 
 async function loadContentStageConfig() {
   try {
-    const response = await fetch(CONTENT_STAGE_CONFIG_PATH);
+    const response = await fetch(CONTENT_STAGE_CONFIG_PATH, { cache: "no-store" });
     if (!response.ok) throw new Error("Could not load EST content stage config.");
     return response.json();
   } catch (error) {

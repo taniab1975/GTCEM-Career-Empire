@@ -257,7 +257,7 @@ export const InitiativePortraitTeaser: React.FC = () => {
                 background: "rgba(19, 86, 83, 0.74)",
                 border: "3px solid rgba(170,255,214,0.5)",
                 display: "grid",
-                gridTemplateColumns: "132px 1fr",
+                gridTemplateColumns: "152px 1fr",
                 alignItems: "center",
                 gap: 22,
                 padding: "20px 24px"
@@ -266,8 +266,8 @@ export const InitiativePortraitTeaser: React.FC = () => {
               <Img
                 src={estAssets.logos.problemSolving}
                 style={{
-                  width: 118,
-                  height: 118,
+                  width: 138,
+                  height: 138,
                   objectFit: "contain",
                   filter: "drop-shadow(0 8px 0 rgba(7,55,94,0.34))"
                 }}
@@ -318,7 +318,7 @@ export const InitiativePortraitTeaser: React.FC = () => {
                     background: "rgba(19, 86, 83, 0.74)",
                     border: "3px solid rgba(170,255,214,0.5)",
                     display: "grid",
-                    gridTemplateColumns: "78px 1fr",
+                    gridTemplateColumns: "100px 1fr",
                     alignItems: "center",
                     gap: 14,
                     padding: "15px 18px"
@@ -327,8 +327,8 @@ export const InitiativePortraitTeaser: React.FC = () => {
                   <Img
                     src={item.icon}
                     style={{
-                      width: 62,
-                      height: 62,
+                      width: 84,
+                      height: 84,
                       objectFit: "contain",
                       filter: "drop-shadow(0 5px 0 rgba(7,55,94,0.34))"
                     }}

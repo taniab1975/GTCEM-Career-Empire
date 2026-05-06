@@ -79,6 +79,12 @@ const DEFAULT_CONTENT_TOPIC_GROUPS = [
   {
     id: "initiative",
     title: "Enterprise Behaviours - Initiative",
+    introTitle: "Initiative In Action",
+    introSummary: "This strand focuses on acting early, improving work, helping others, and stepping up before being told.",
+    introImage: "../../remotion-est-scenes/public/est-assets/game-images/Siena.png",
+    introVideo: "../../Assets/EST Preparation/initiative-portrait.mp4",
+    introMediaLayout: "portrait",
+    introHighlights: ["Be proactive", "Improve work practices", "Vocalise opinions", "Help fellow workers"],
     topics: ["Initiative", "Being proactive", "Improving work practices", "Vocalising opinions", "Helping fellow workers", "Seeking more responsibilities"],
     writePrompt: "Write one or two EST-ready sentences explaining how initiative can be shown in a workplace situation.",
     sampleResponse: "Initiative can be shown when a worker acts proactively, suggests improvements, helps colleagues, or volunteers for extra responsibilities before being told. This matters because it improves productivity and shows the worker can contribute positively to the workplace."
@@ -86,6 +92,12 @@ const DEFAULT_CONTENT_TOPIC_GROUPS = [
   {
     id: "time-management",
     title: "Time Management Skills - Plan and prioritise tasks to meet deadlines",
+    introTitle: "Plan, Prioritise, Deliver",
+    introSummary: "This strand is about ordering tasks clearly, using tools well, and adjusting when deadlines shift.",
+    introImage: "../../Assets/Images and Animations/Employability Skill Logos/4.0 Time Management.png",
+    introVideo: "../../Assets/EST Preparation/time-management-portrait.mp4",
+    introMediaLayout: "portrait",
+    introHighlights: ["Plan ahead", "Use productivity tools", "Adjust when priorities change"],
     topics: ["Time management", "Time-management tools", "Managing multiple tasks"],
     writePrompt: "Write one or two EST-ready sentences explaining how a student or worker can plan and prioritise tasks to meet deadlines.",
     sampleResponse: "Time management involves planning ahead, prioritising urgent tasks, and using tools such as calendars, lists, or reminders to stay organised. This helps a person meet deadlines because responsibilities are visible, manageable, and easier to adjust when circumstances change."
@@ -93,6 +105,12 @@ const DEFAULT_CONTENT_TOPIC_GROUPS = [
   {
     id: "personal-finance",
     title: "Managing personal finance, budgeting, seeking assistance, unexpected financial events inc changes to financial circumstance",
+    introTitle: "Money Decisions Under Pressure",
+    introSummary: "This strand trains budgeting, seeking support, and responding to financial changes without panic.",
+    introImage: "../../Assets/Images and Animations/Student Hub/empire-status-net-worth.png",
+    introVideo: "../../Assets/EST Preparation/personal-finance-portrait.mp4",
+    introMediaLayout: "portrait",
+    introHighlights: ["Balance income and expenses", "Seek reliable assistance", "Respond to life events"],
     topics: ["Budgeting", "Tracking money in and out", "Seeking assistance", "Unexpected life events", "Responding to changed financial circumstances"],
     writePrompt: "Write one or two EST-ready sentences explaining how budgeting and seeking assistance support personal financial management.",
     sampleResponse: "Budgeting helps a person balance income and expenses, identify unnecessary spending, and plan for unexpected events. Seeking assistance from trusted services or experts also supports financial management because it provides reliable advice and helps people make informed decisions."
@@ -100,6 +118,12 @@ const DEFAULT_CONTENT_TOPIC_GROUPS = [
   {
     id: "job-application",
     title: "Cover Letters, STAR and Addressing Selection Criteria",
+    introTitle: "Build Stronger Applications",
+    introSummary: "This strand focuses on cover letters, STAR responses, and evidence-rich answers to selection criteria.",
+    introImage: "../../Assets/Images and Animations/Employability Skill Logos/5.0 Critical Thinking.png",
+    introVideo: "../../Assets/EST Preparation/job-application-portrait.mp4",
+    introMediaLayout: "portrait",
+    introHighlights: ["Target the role", "Use STAR clearly", "Show your evidence"],
     topics: ["Cover letter purpose", "Selection criteria", "STAR method"],
     writePrompt: "Write one or two EST-ready sentences explaining how STAR helps an applicant address selection criteria effectively.",
     sampleResponse: "The STAR method helps applicants address selection criteria by structuring examples into Situation, Task, Action, and Result. This makes a response clearer because the employer can see exactly what the applicant did and what outcome was achieved."
@@ -107,13 +131,25 @@ const DEFAULT_CONTENT_TOPIC_GROUPS = [
   {
     id: "communication",
     title: "Communication Skills",
+    introTitle: "Communication That Moves Work Forward",
+    introSummary: "This strand focuses on clear messages, active listening, and communication that suits the audience and situation.",
+    introImage: "../../remotion-est-scenes/public/est-assets/game-images/Teresa.png",
+    introVideo: "../../Assets/EST Preparation/communication-portrait.mp4",
+    introMediaLayout: "portrait",
+    introHighlights: ["Listen actively", "Check understanding", "Use clear language"],
     topics: ["Communication skills", "Non-verbal communication", "Active listening"],
     writePrompt: "Write one or two EST-ready sentences explaining how communication skills can be applied in a workplace or interview situation.",
     sampleResponse: "Communication skills can be applied by using clear verbal language, active listening, and appropriate non-verbal communication for the audience and purpose. This is important because it reduces misunderstandings, builds rapport, and helps tasks or interviews run more effectively."
   },
   {
     id: "future-of-work",
-    title: "Megatrends, Growth Industries and Labour Market Information",
+    title: "Megatrends and Labour Market Information",
+    introTitle: "Megatrends and Labour Market Information",
+    introSummary: "This strand focuses on megatrends, growth industries, and labour market evidence that shapes future career opportunities.",
+    introImage: "../../Assets/Images and Animations/Student Hub/module-megatrends-thumb.png",
+    introVideo: "../../Assets/EST Preparation/megatrends-lmi-portrait.mp4",
+    introMediaLayout: "portrait",
+    introHighlights: ["Spot long-term shifts", "Read growth signals", "Use labour market evidence"],
     topics: ["Megatrends", "Growth industry", "Labour market information", "Emerging industry", "Green industry"],
     writePrompt: "Write one or two EST-ready sentences explaining how megatrends, growth industries, or labour market information can influence future career opportunities.",
     sampleResponse: "Megatrends shape the future of work by changing industries, jobs, and skill needs over time. Labour market information and knowledge of growth industries help people make better career decisions because they show where demand is increasing, what qualifications may be needed, and which opportunities are emerging."

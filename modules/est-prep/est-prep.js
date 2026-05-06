@@ -76,8 +76,11 @@ async function init() {
   state.contentStageConfig = contentStageConfig;
   if (!state.stageDeck || !state.stageDeck?.contentGroups?.length) {
     state.stageDeck = buildStageDeck(state.bank);
+  } else {
+    refreshStageDeckContentGroups(state.bank);
   }
   await hydrateFromSupabase();
+  refreshStageDeckContentGroups(state.bank);
   syncContentCompletionFromTopicScores();
   if (!state.contentView) {
     state.contentView = "menu";

@@ -12,6 +12,11 @@ Small Remotion scene pack for EST scenario gameplay videos.
 - `ProblemSolvingExplainer`
 - `InitiativeScenario`
 - `InitiativePortraitTeaser`
+- `TimeManagementPortraitTeaser`
+- `PersonalFinancePortraitTeaser`
+- `JobApplicationPortraitTeaser`
+- `CommunicationPortraitTeaser`
+- `MegatrendsLmiPortraitTeaser`
 
 ## Install
 
@@ -41,6 +46,11 @@ npm run render:critical-thinking
 npm run render:problem-solving
 npm run render:initiative
 npm run render:initiative-portrait
+npm run render:time-management-portrait
+npm run render:personal-finance-portrait
+npm run render:job-application-portrait
+npm run render:communication-portrait
+npm run render:megatrends-lmi-portrait
 ```
 
 ## Design goal

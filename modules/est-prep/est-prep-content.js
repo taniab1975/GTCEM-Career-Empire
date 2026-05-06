@@ -6,7 +6,7 @@ function getContentGroupShortLabel(groupId) {
     "personal-finance": "Finance",
     "job-application": "Cover Letters",
     communication: "Comms",
-    "future-of-work": "Megatrends"
+    "future-of-work": "Megatrends + Labour Market"
   };
   return labels[groupId] || "Topic";
 }
@@ -75,6 +75,22 @@ function buildContentGroups(bank) {
     ...group,
     rounds: pickRandom(rounds.filter(round => group.topics.includes(round.topic)), 2)
   })).filter(group => group.rounds.length);
+}
+
+function refreshStageDeckContentGroups(bank) {
+  if (!state.stageDeck) return;
+  const freshGroups = buildContentGroups(bank);
+  if (!freshGroups.length) return;
+  const existingById = new Map((state.stageDeck.contentGroups || []).map(group => [group.id, group]));
+  state.stageDeck.contentGroups = freshGroups.map(freshGroup => {
+    const existing = existingById.get(freshGroup.id) || {};
+    const existingRounds = Array.isArray(existing.rounds) && existing.rounds.length ? existing.rounds : null;
+    return {
+      ...existing,
+      ...freshGroup,
+      rounds: existingRounds || freshGroup.rounds
+    };
+  });
 }
 
 function buildStageDeck(bank) {

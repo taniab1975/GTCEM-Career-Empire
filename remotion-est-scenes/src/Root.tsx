@@ -10,6 +10,13 @@ import {OverseasOpportunityScenario} from "./scenes/OverseasOpportunityScenario"
 import {ProblemSolvingExplainer} from "./scenes/ProblemSolvingExplainer";
 import {TeamworkExplainer} from "./scenes/TeamworkExplainer";
 import {TimeManagementExplainer} from "./scenes/TimeManagementExplainer";
+import {
+  CommunicationPortraitTeaser,
+  JobApplicationPortraitTeaser,
+  MegatrendsLmiPortraitTeaser,
+  PersonalFinancePortraitTeaser,
+  TimeManagementPortraitTeaser
+} from "./scenes/TopicPortraitTeaser";
 
 export const RemotionRoot: React.FC = () => {
   return (
@@ -82,6 +89,46 @@ export const RemotionRoot: React.FC = () => {
         id="InitiativePortraitTeaser"
         component={InitiativePortraitTeaser}
         durationInFrames={135}
+        fps={30}
+        width={1080}
+        height={1920}
+      />
+      <Composition
+        id="TimeManagementPortraitTeaser"
+        component={TimeManagementPortraitTeaser}
+        durationInFrames={150}
+        fps={30}
+        width={1080}
+        height={1920}
+      />
+      <Composition
+        id="PersonalFinancePortraitTeaser"
+        component={PersonalFinancePortraitTeaser}
+        durationInFrames={150}
+        fps={30}
+        width={1080}
+        height={1920}
+      />
+      <Composition
+        id="JobApplicationPortraitTeaser"
+        component={JobApplicationPortraitTeaser}
+        durationInFrames={150}
+        fps={30}
+        width={1080}
+        height={1920}
+      />
+      <Composition
+        id="CommunicationPortraitTeaser"
+        component={CommunicationPortraitTeaser}
+        durationInFrames={150}
+        fps={30}
+        width={1080}
+        height={1920}
+      />
+      <Composition
+        id="MegatrendsLmiPortraitTeaser"
+        component={MegatrendsLmiPortraitTeaser}
+        durationInFrames={150}
         fps={30}
         width={1080}
         height={1920}
