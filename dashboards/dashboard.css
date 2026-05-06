@@ -795,8 +795,10 @@ h1 {
   grid-template-rows: minmax(0, 1fr) auto;
   gap: 16px;
   align-content: stretch;
-  height: 100%;
+  height: var(--student-side-stack-height, 100%);
+  max-height: var(--student-side-stack-height, none);
   min-height: 0;
+  overflow: hidden;
 }
 
 .student-dashboard-page .module-grid {
@@ -915,6 +917,7 @@ h1 {
   display: flex;
   flex-direction: column;
   min-height: 0;
+  overflow: hidden;
 }
 
 .student-dashboard-page .timeline-panel .section-title {
@@ -951,6 +954,7 @@ h1 {
 }
 
 .student-dashboard-page .timeline-empty-state {
+  height: 100%;
   min-height: 100%;
   display: grid;
   align-content: end;
@@ -1634,6 +1638,8 @@ textarea {
   .student-side-stack {
     grid-template-rows: auto;
     height: auto;
+    max-height: none;
+    overflow: visible;
   }
 
   .student-dashboard-page #student-timeline {

@@ -580,6 +580,35 @@ function renderStudentTimeline(items) {
   `).join("");
 }
 
+let studentSideStackFrame = null;
+
+function syncStudentSideStackHeight() {
+  const mapPanel = document.querySelector(".student-dashboard-page .module-map-panel");
+  const sideStack = document.querySelector(".student-dashboard-page .student-side-stack");
+  if (!mapPanel || !sideStack) return;
+
+  if (window.matchMedia("(max-width: 1000px)").matches) {
+    sideStack.style.removeProperty("--student-side-stack-height");
+    return;
+  }
+
+  const mapHeight = Math.ceil(mapPanel.getBoundingClientRect().height);
+  if (mapHeight > 0) {
+    sideStack.style.setProperty("--student-side-stack-height", `${mapHeight}px`);
+  }
+}
+
+function scheduleStudentSideStackHeightSync() {
+  if (studentSideStackFrame) {
+    window.cancelAnimationFrame(studentSideStackFrame);
+  }
+  studentSideStackFrame = window.requestAnimationFrame(() => {
+    studentSideStackFrame = null;
+    syncStudentSideStackHeight();
+    window.setTimeout(syncStudentSideStackHeight, 160);
+  });
+}
+
 function buildEconomyTimelineItems(session) {
   const entries = Array.isArray(session?.economyLog) ? session.economyLog : [];
   return entries.slice(0, 6).map(entry => {
@@ -2001,6 +2030,7 @@ async function renderStudentLiveData(players, skillsData) {
       Number(entry.economic_mastery || 0)
     ])}%`
   })));
+  scheduleStudentSideStackHeightSync();
 }
 
 function renderTeacherLiveData(players, skillsData, teacherData = null) {
@@ -2339,6 +2369,8 @@ async function initDashboards() {
   if (document.getElementById("student-module-grid")) {
     try {
       await renderStudentLiveData(players, skillsData);
+      window.addEventListener("resize", scheduleStudentSideStackHeightSync);
+      window.addEventListener("load", scheduleStudentSideStackHeightSync, { once: true });
     } catch (error) {
       console.error("Failed to render student dashboard", error);
     }
