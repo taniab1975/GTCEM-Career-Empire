@@ -7,7 +7,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="./dashboard.css">
+  <link rel="stylesheet" href="./dashboard.css?v=20260506-star-across">
 </head>
 <body class="student-dashboard-page">
   <main class="page-shell">
@@ -29,7 +29,7 @@
             class impact, and personal career progression into one long-term game profile.
           </p>
           <div class="student-primary-actions">
-            <a class="module-link primary" href="../modules/est-prep/index.html">Continue EST Prep</a>
+            <a id="student-hub-est-link" class="module-link primary" href="../modules/est-prep/index.html">Open EST Prep</a>
             <a id="student-hub-megatrends-link" class="module-link" href="../index.html?screen=megatrends">Play Megatrends</a>
             <a class="module-link" href="../modules/lifelong-learning/index.html">Lifelong Learning</a>
             <a class="module-link" href="../shop/index.html">Shop</a>
@@ -41,7 +41,7 @@
         <div class="student-hero-visual">
           <div class="student-visual-card current-mission-card">
             <div class="kicker">Current mission</div>
-            <h2>Continue your next move</h2>
+            <h2 id="student-current-mission-title">Start your first move</h2>
             <p id="student-focus-text">Time Management is your weakest employability area right now. Lifelong Learning should become the next recommended module.</p>
             <div class="pill-row">
               <span class="pill">Recommended next module</span>
@@ -110,34 +110,58 @@
       </article>
     </section>
 
-    <section class="panel">
-      <div class="section-title">
-        <h2>Community Board</h2>
-        <p>Where your class contribution is flowing</p>
+    <details class="panel dashboard-dropdown">
+      <summary class="section-title dashboard-dropdown-summary">
+        <span>
+          <h2>Community Board</h2>
+          <p>Where your class contribution is flowing</p>
+        </span>
+        <span class="dashboard-dropdown-action" aria-hidden="true">
+          <span class="dashboard-action-open">Open</span>
+          <span class="dashboard-action-close">Close</span>
+        </span>
+      </summary>
+      <div class="dashboard-dropdown-content">
+        <div id="student-community-board" class="community-board"></div>
       </div>
-      <div id="student-community-board" class="community-board"></div>
-    </section>
+    </details>
 
-    <section class="panel">
-      <div class="section-title">
-        <h2>Global Shop</h2>
-        <p>Shared across all modules</p>
+    <details class="panel dashboard-dropdown">
+      <summary class="section-title dashboard-dropdown-summary">
+        <span>
+          <h2>Global Shop</h2>
+          <p>Shared across all modules</p>
+        </span>
+        <span class="dashboard-dropdown-action" aria-hidden="true">
+          <span class="dashboard-action-open">Open</span>
+          <span class="dashboard-action-close">Close</span>
+        </span>
+      </summary>
+      <div class="dashboard-dropdown-content">
+        <div id="student-shop-preview" class="module-grid"></div>
       </div>
-      <div id="student-shop-preview" class="module-grid"></div>
-    </section>
+    </details>
 
-    <section class="panel">
-      <div class="section-title">
-        <h2>Employability Skills</h2>
-        <p>Tracked across all modules</p>
+    <details class="panel dashboard-dropdown" open>
+      <summary class="section-title dashboard-dropdown-summary">
+        <span>
+          <h2>Employability Skills</h2>
+          <p>Tracked across all modules</p>
+        </span>
+        <span class="dashboard-dropdown-action" aria-hidden="true">
+          <span class="dashboard-action-open">Open</span>
+          <span class="dashboard-action-close">Close</span>
+        </span>
+      </summary>
+      <div class="dashboard-dropdown-content">
+        <div id="student-skill-grid" class="skill-grid"></div>
       </div>
-      <div id="student-skill-grid" class="skill-grid"></div>
-    </section>
+    </details>
   </main>
 
   <script src="../config/supabase-config.js"></script>
   <script src="../src/services/supabase-browser.js"></script>
-  <script src="./dashboard.js"></script>
+  <script src="./dashboard.js?v=20260506-star-across"></script>
   <script src="../src/services/feedback-widget.js"></script>
 </body>
 </html>

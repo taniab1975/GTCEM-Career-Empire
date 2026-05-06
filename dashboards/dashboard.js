@@ -143,7 +143,7 @@ async function getCurrentStudentModuleProgress() {
 
   const { data, error } = await supabase
     .from("student_module_progress")
-    .select("module_id, completion_percent, mastery_percent, completed")
+    .select("module_id, completion_percent, mastery_percent, attempts, completed")
     .eq("student_id", studentId);
 
   if (error) {
@@ -290,7 +290,7 @@ function parseTime(value) {
 function dedupeLatestPlayers(players) {
   const latest = new Map();
   players.forEach(player => {
-    const key = `${player.player_name || "unknown"}::${player.class_code || ""}`;
+    const key = player.id || `${player.player_name || "unknown"}::${player.class_code || ""}`;
     const current = latest.get(key);
     if (!current || parseTime(player.timestamp) > parseTime(current.timestamp)) {
       latest.set(key, player);
@@ -300,7 +300,12 @@ function dedupeLatestPlayers(players) {
 }
 
 function getPlayerHistory(players, session) {
-  if (!session || !session.playerName) return [];
+  if (!session || (!session.studentId && !session.playerName)) return [];
+  if (session.studentId) {
+    return players
+      .filter(player => player.id === session.studentId)
+      .sort((a, b) => parseTime(b.timestamp) - parseTime(a.timestamp));
+  }
   return players
     .filter(player => player.player_name === session.playerName && (!session.classCode || player.class_code === session.classCode))
     .sort((a, b) => parseTime(b.timestamp) - parseTime(a.timestamp));
@@ -309,12 +314,148 @@ function getPlayerHistory(players, session) {
 function getCurrentPlayerRecord(players, session) {
   const history = getPlayerHistory(players, session);
   if (history.length) return history[0];
+  if (session?.studentId || session?.playerName || session?.username) return null;
   return [...players].sort((a, b) => parseTime(b.timestamp) - parseTime(a.timestamp))[0] || null;
+}
+
+function hasMeaningfulPlayerProgress(record) {
+  if (!record) return false;
+  return [
+    record.years_played,
+    record.tech_mastery,
+    record.climate_mastery,
+    record.demo_mastery,
+    record.economic_mastery,
+    record.cumulative_net_worth,
+    record.tax_paid
+  ].some(value => Number(value || 0) > 0)
+    || Number(record.annual_salary || 0) > 25000
+    || Boolean(record.community_vote && record.community_vote !== "none");
+}
+
+function hasMeaningfulModuleProgress(progress) {
+  if (!progress) return false;
+  return Number(progress.completion_percent || 0) > 0
+    || Number(progress.mastery_percent || 0) > 0
+    || Number(progress.attempts || 0) > 0
+    || Boolean(progress.completed);
+}
+
+function hasLocalESTProgress(session) {
+  const progress = session?.estPrepProgress;
+  if (!progress) return false;
+
+  const hasCompletedStage = Object.values(progress.completed || {}).some(Boolean);
+  const hasContentScore = Object.values(progress.contentTopicBestScores || {}).some(value => Number(value || 0) > 0);
+  const hasDecoderResult = Object.keys(progress.decoderResults || {}).length > 0;
+  const hasContentWork = Number(progress.contentGroupIndex) >= 0
+    || Object.keys(progress.arcFlows || {}).length > 0
+    || Object.keys(progress.answers || {}).some(key => key.startsWith("content-") || key.startsWith("training-"));
+  const hasGlossaryWork = Boolean(progress.glossaryHasStarted)
+    || Number(progress.glossaryRoundIndex || 0) > 0
+    || Number(progress.glossaryBatchIndex || 0) > 0
+    || Object.keys(progress.glossaryRecallAnswers || {}).length > 0
+    || Object.keys(progress.glossaryRecallResults || {}).length > 0
+    || Object.keys(progress.glossaryRoundRewards || {}).length > 0;
+  const hasBossWork = Object.keys(progress.answers || {}).some(key => key.startsWith("boss"));
+
+  return Number(progress.marksBanked || 0) > 0
+    || Number(progress.readiness || 0) > 0
+    || hasCompletedStage
+    || hasContentScore
+    || hasDecoderResult
+    || hasContentWork
+    || hasGlossaryWork
+    || hasBossWork;
 }
 
 function average(values) {
   if (!values.length) return 0;
   return Math.round(values.reduce((sum, value) => sum + value, 0) / values.length);
+}
+
+const EMPLOYABILITY_SKILL_META = {
+  "communication": {
+    accent: "#68d2ff",
+    accentSoft: "rgba(104, 210, 255, 0.16)",
+    accentStrong: "rgba(104, 210, 255, 0.34)",
+    logoFile: "1.0 Communication.png",
+    subskillLogoFiles: ["1.1 Communication.png", "1.2 Communication.png", "1.3 Communication.png", "1.4 Communication.png"],
+    starExample: {
+      title: "Year 12 STAR application",
+      rows: [
+        {
+          label: "S",
+          term: "Situation",
+          text: "During workplace learning at my retail job, I use communication skills with customers from many different backgrounds."
+        },
+        {
+          label: "T",
+          term: "Task",
+          text: "I need to serve customers clearly, understand what they need, and work respectfully with other staff."
+        },
+        {
+          label: "A",
+          term: "Actions",
+          text: "I use good eye contact, a friendly smile, and active listening. I repeat key details back to customers and adjust how I speak for different people, such as an elderly person or a young child."
+        },
+        {
+          label: "R",
+          term: "Results",
+          text: "In June, my supervisor gave me a commendation for being friendly, polite, and courteous to customers."
+        }
+      ]
+    },
+    sources: ["Demographics mastery", "Economic mastery"]
+  },
+  "digital-literacy": {
+    accent: "#7c9cff",
+    accentSoft: "rgba(124, 156, 255, 0.16)",
+    accentStrong: "rgba(124, 156, 255, 0.34)",
+    logoFile: "2.0 Digital Literacy.png",
+    subskillLogoFiles: ["2.1 Digital Literacy.png", "2.3 Digital Literacy.png", "2.4 Digital LIteracy.png", "2.5 Digital Literacy.png"],
+    sources: ["Technology mastery"]
+  },
+  "teamwork": {
+    accent: "#80ed99",
+    accentSoft: "rgba(128, 237, 153, 0.16)",
+    accentStrong: "rgba(128, 237, 153, 0.34)",
+    logoFile: "3.0 Teamwork.png",
+    subskillLogoFiles: ["3.1 Teamwork.png", "3.2 Teamwork.png", "3.3 Teamwork.png", "3.4 Teamwork.png"],
+    sources: ["Demographics mastery"]
+  },
+  "time-management": {
+    accent: "#ffd166",
+    accentSoft: "rgba(255, 209, 102, 0.16)",
+    accentStrong: "rgba(255, 209, 102, 0.34)",
+    logoFile: "4.0 Time Management.png",
+    subskillLogoFiles: ["4.1 Time Management.png", "4.2 Time Management.png", "4.3 Time Management.png"],
+    sources: ["Work-life balance", "Climate mastery"]
+  },
+  "critical-thinking": {
+    accent: "#b48cff",
+    accentSoft: "rgba(180, 140, 255, 0.16)",
+    accentStrong: "rgba(180, 140, 255, 0.34)",
+    logoFile: "5.0 Critical Thinking.png",
+    subskillLogoFiles: ["5.1 Critical Thinking.png", "5.2 Critical Thinking.png", "5.3 Critical Thinking.png"],
+    sources: ["Technology", "Climate", "Demographics", "Economic"]
+  },
+  "problem-solving": {
+    accent: "#ff8f70",
+    accentSoft: "rgba(255, 143, 112, 0.16)",
+    accentStrong: "rgba(255, 143, 112, 0.34)",
+    logoFile: "6.0 Problem Solving.png",
+    subskillLogoFiles: ["6.1 Problem Solving.png", "6.2 Problem Solving.png", "6.3 Problem Solving.png"],
+    sources: ["Technology", "Climate", "Economic"]
+  }
+};
+
+function clampPercent(value) {
+  return Math.max(0, Math.min(100, Math.round(Number(value) || 0)));
+}
+
+function getEmployabilityLogoPath(fileName) {
+  return fileName ? `../Assets/Images and Animations/Employability Skill Logos/${fileName}` : "";
 }
 
 function deriveEmployabilityProgress(record) {
@@ -986,20 +1127,64 @@ function renderSkills(skillsData, targetId, progressMap) {
   if (!container) return;
 
   container.innerHTML = skillsData.categories.map(category => {
-    const progress = progressMap[category.id] || 0;
+    const progress = clampPercent(progressMap[category.id] || 0);
+    const meta = EMPLOYABILITY_SKILL_META[category.id] || EMPLOYABILITY_SKILL_META.communication;
+    const sources = meta.sources.map(source => `<span>${escapeHtml(source)}</span>`).join("");
+    const subskills = category.subskills.slice(0, 4);
+    const parentLogoPath = getEmployabilityLogoPath(meta.logoFile) || category.logoPath || "";
+    const starExampleMarkup = meta.starExample ? `
+      <div class="skill-star-example">
+        <div class="skill-star-title">${escapeHtml(meta.starExample.title)}</div>
+        <div class="skill-star-grid">
+          ${meta.starExample.rows.map(row => `
+            <div class="skill-star-row">
+              <span class="skill-star-marker">
+                <strong>${escapeHtml(row.label)}</strong>
+                <small>${escapeHtml(row.term)}</small>
+              </span>
+              <p>${escapeHtml(row.text)}</p>
+            </div>
+          `).join("")}
+        </div>
+      </div>
+    ` : "";
+    const subskillItems = subskills.map((subskill, index) => ({
+      ...subskill,
+      logoPath: getEmployabilityLogoPath(meta.subskillLogoFiles?.[index] || "")
+    }));
     return `
-      <article class="skill-card">
-        <div class="skill-header">
-          <img class="skill-logo" src="${category.logoPath || ""}" alt="${category.title} logo">
-          <div>
-            <div class="kicker">${category.title}</div>
-            <h3>${progress}%</h3>
+      <article class="skill-card skill-card-modern ${meta.starExample ? "skill-card-has-star" : ""}" style="--skill-accent: ${meta.accent}; --skill-accent-soft: ${meta.accentSoft}; --skill-accent-strong: ${meta.accentStrong}; --skill-progress-angle: ${progress * 3.6}deg;">
+        <div class="skill-card-top">
+          <div class="skill-visual" aria-hidden="true">
+            <img class="skill-hero-logo" src="${escapeHtml(parentLogoPath)}" alt="">
+            <div class="skill-mini-logo-cloud">
+              ${subskillItems.map((subskill, index) => `
+                <span class="skill-mini-logo skill-mini-logo-${index + 1}" style="--mini-delay: ${index * 0.14}s;">
+                  <img src="${escapeHtml(subskill.logoPath)}" alt="">
+                </span>
+              `).join("")}
+            </div>
+          </div>
+          <div class="skill-score-block">
+            <div class="kicker">${escapeHtml(category.title)}</div>
+            <strong class="skill-score">${progress}%</strong>
+            <span class="skill-score-label">current signal</span>
           </div>
         </div>
-        <p>${category.description}</p>
+        <p class="skill-description">${escapeHtml(category.description)}</p>
+        <div class="skill-source-strip">
+          <span class="skill-source-label">Calculated from</span>
+          <div class="skill-source-list">${sources}</div>
+        </div>
+        ${starExampleMarkup}
         ${createProgressBar(progress)}
-        <div class="pill-row">
-          ${category.subskills.slice(0, 3).map(subskill => `<span class="pill">${subskill.title}</span>`).join("")}
+        <div class="skill-subskill-grid">
+          ${subskillItems.map(subskill => `
+            <span class="skill-subskill-card">
+              <img src="${escapeHtml(subskill.logoPath)}" alt="">
+              <span>${escapeHtml(subskill.title)}</span>
+            </span>
+          `).join("")}
         </div>
       </article>
     `;
@@ -1630,40 +1815,46 @@ async function renderStudentLiveData(players, skillsData) {
   const record = getCurrentPlayerRecord(players, session);
   const history = getPlayerHistory(players, session);
   const latestPlayers = dedupeLatestPlayers(players);
-  const progressMap = deriveEmployabilityProgress(record);
+  const moduleProgressById = await getCurrentStudentModuleProgress();
+  const lifelongProgressRow = moduleProgressById["lifelong-learning"];
+  const estProgressRow = moduleProgressById["est-prep"];
+  const hasPlayerProgress = hasMeaningfulPlayerProgress(record);
+  const hasLifelongProgress = hasMeaningfulModuleProgress(lifelongProgressRow);
+  const hasESTProgress = hasMeaningfulModuleProgress(estProgressRow) || hasLocalESTProgress(session);
+  const hasAnySavedProgress = hasPlayerProgress || hasLifelongProgress || hasESTProgress;
+  const progressRecord = hasPlayerProgress ? record : null;
+  const progressMap = deriveEmployabilityProgress(progressRecord);
   const employabilityScore = average(Object.values(progressMap));
   const weakestSkillId = getWeakestSkill(progressMap)[0];
   const strongestSkillId = getStrongestSkill(progressMap)[0];
   const weakestSkill = skillsData.categories.find(category => category.id === weakestSkillId);
   const strongestSkill = skillsData.categories.find(category => category.id === strongestSkillId);
   const overallMastery = Math.round((
-    Number(record?.tech_mastery || 0) +
-    Number(record?.climate_mastery || 0) +
-    Number(record?.demo_mastery || 0) +
-    Number(record?.economic_mastery || 0)
+    Number(progressRecord?.tech_mastery || 0) +
+    Number(progressRecord?.climate_mastery || 0) +
+    Number(progressRecord?.demo_mastery || 0) +
+    Number(progressRecord?.economic_mastery || 0)
   ) / 4);
-  const moduleCompletion = Math.min(100, Number(record?.years_played || 0) * 18);
+  const moduleCompletion = Math.min(100, Number(progressRecord?.years_played || 0) * 18);
   const taxPaid = Number(record?.tax_paid ?? session?.taxPaid ?? Math.floor(Number(record?.cumulative_net_worth || 0) * 0.1));
   const assetCount = await getCurrentStudentAssetCount();
-  const moduleProgressById = await getCurrentStudentModuleProgress();
   const assetsOwned = assetCount ?? Math.max(0, Math.floor(Number(record?.cumulative_net_worth || 0) / 25000));
-  const lifelongProgress = Number(moduleProgressById["lifelong-learning"]?.completion_percent || 0);
-  const lifelongMastery = Number(moduleProgressById["lifelong-learning"]?.mastery_percent || 0);
-  const estProgress = Number(moduleProgressById["est-prep"]?.completion_percent || 0);
-  const estMastery = Number(moduleProgressById["est-prep"]?.mastery_percent || 0);
+  const lifelongProgress = Number(lifelongProgressRow?.completion_percent || 0);
+  const lifelongMastery = Number(lifelongProgressRow?.mastery_percent || 0);
+  const estProgress = Number(estProgressRow?.completion_percent || 0);
+  const estMastery = Number(estProgressRow?.mastery_percent || 0);
   const overallModuleCompletion = Math.round(average([
     moduleCompletion,
     lifelongProgress,
     estProgress
   ]));
 
-  setText("student-hero-title", record ? `${record.player_name}'s Career Empire` : "Build your future, not just your score.");
-  if (!record && authState?.studentLogin?.displayName) {
-    setText("student-hero-title", `${authState.studentLogin.displayName}'s Career Empire`);
-  }
+  const signedInStudentName = authState?.studentLogin?.displayName || authState?.studentLogin?.username || session?.playerName || "";
+  const dashboardStudentName = record?.player_name || signedInStudentName;
+  setText("student-hero-title", dashboardStudentName ? `${dashboardStudentName}'s Career Empire` : "Build your future, not just your score.");
   setText(
     "student-hero-subtitle",
-    record
+    hasPlayerProgress
       ? `${record.career_title || "Professional"} from ${record.school_name || "your class"} with ${overallMastery}% overall megatrend mastery and ${record.years_played || 0} years played.`
       : authState?.studentLogin?.username
         ? authState?.studentLogin?.demo
@@ -1676,7 +1867,7 @@ async function renderStudentLiveData(players, skillsData) {
 
   const badgeStack = document.getElementById("student-badge-stack");
   if (badgeStack) {
-    badgeStack.innerHTML = record ? [
+    badgeStack.innerHTML = hasPlayerProgress ? [
       renderBadge(`Salary: ${formatCurrency(record.annual_salary)}`, STUDENT_STATUS_ICONS.salary, "Salary"),
       renderBadge(`Net Worth: ${formatCurrency(record.cumulative_net_worth)}`, STUDENT_STATUS_ICONS.netWorth, "Net worth"),
       renderBadge(`Work-Life Balance: ${record.work_life_balance || 0}%`, STUDENT_STATUS_ICONS.workLife, "Work-life balance"),
@@ -1698,12 +1889,14 @@ async function renderStudentLiveData(players, skillsData) {
       : '<span class="badge">No active student session yet</span>';
   }
 
-  setText("student-focus-text", weakestSkill ? `${weakestSkill.title} is your current focus area. The next module should target this skill more directly.` : "Launch a module to begin skill tracking.");
-  if (document.getElementById("student-focus-text") && !record) {
+  setText("student-current-mission-title", hasAnySavedProgress ? "Continue your next move" : "Start your first move");
+  setText("student-hub-est-link", hasESTProgress ? "Continue EST Prep" : "Open EST Prep");
+  setText("student-focus-text", progressRecord && weakestSkill ? `${weakestSkill.title} is your current focus area. The next module should target this skill more directly.` : "Launch a module to begin skill tracking.");
+  if (document.getElementById("student-focus-text") && !hasAnySavedProgress) {
     setText("student-focus-text", "EST Prep is ready next. Use it to train command verbs, glossary terms, and short-answer structure before the assessment.");
   }
   setText("student-overall-completion", `${overallModuleCompletion}%`);
-  setText("student-overall-completion-note", record ? `${record.years_played || 0} Megatrends rounds recorded, with live module sync across the platform.` : "No gameplay recorded yet");
+  setText("student-overall-completion-note", hasPlayerProgress ? `${record.years_played || 0} Megatrends rounds recorded, with live module sync across the platform.` : "No gameplay recorded yet");
   setText("student-employability-score", `${employabilityScore}%`);
   setText("student-tax-paid", formatCurrency(taxPaid));
   setText("student-assets-owned", String(assetsOwned));
@@ -1739,8 +1932,8 @@ async function renderStudentLiveData(players, skillsData) {
   renderStudentModules([
     {
       title: "Megatrends",
-      state: record ? "Module 1 Live" : "Ready to start",
-      summary: record ? "Your live Megatrends record is feeding your shared career profile." : "Start the game to begin building your first module record.",
+      state: hasPlayerProgress ? "Module 1 Live" : "Ready to start",
+      summary: hasPlayerProgress ? "Your live Megatrends record is feeding your shared career profile." : "Start the game to begin building your first module record.",
       progress: moduleCompletion,
       mastery: overallMastery,
       variant: "",
@@ -1754,7 +1947,7 @@ async function renderStudentLiveData(players, skillsData) {
     },
     {
       title: "Lifelong Learning",
-      state: lifelongProgress ? "Progress saved" : "Prototype live",
+      state: hasLifelongProgress ? "Progress saved" : "Ready to start",
       summary: "Build pathway flexibility, training choices, and professional growth through the first playable Lifelong Learning prototype.",
       progress: lifelongProgress,
       mastery: lifelongMastery,
@@ -1764,12 +1957,12 @@ async function renderStudentLiveData(players, skillsData) {
       logoLabel: "Time Management",
       imagePath: "../Assets/Images and Animations/Student Hub/module-lifelong-learning-thumb.png",
       launchPath: "../modules/lifelong-learning/index.html",
-      launchLabel: "Open Lifelong Learning",
+      launchLabel: hasLifelongProgress ? "Continue Lifelong Learning" : "Start Lifelong Learning",
       tags: ["Planning", "Growth", "Reflection"]
     },
     {
       title: "EST Prep",
-      state: estProgress ? "Progress saved" : "Prototype live",
+      state: hasESTProgress ? "Progress saved" : "Ready to start",
       summary: "Train for the upcoming EST by decoding questions, locking in glossary terms, and building mark-worthy responses.",
       progress: estProgress,
       mastery: estMastery,
@@ -1779,7 +1972,7 @@ async function renderStudentLiveData(players, skillsData) {
       logoLabel: "Critical Thinking",
       imagePath: "../Assets/Images and Animations/Student Hub/module-est-prep-thumb.png",
       launchPath: "../modules/est-prep/index.html",
-      launchLabel: "Open EST Prep",
+      launchLabel: hasESTProgress ? "Continue EST Prep" : "Open EST Prep",
       tags: ["Exam readiness", "Command verbs", "Short answer"]
     }
   ]);
@@ -1798,7 +1991,8 @@ async function renderStudentLiveData(players, skillsData) {
     }
   ]);
   const economyTimeline = buildEconomyTimelineItems(session);
-  renderStudentTimeline(economyTimeline.length ? economyTimeline : history.slice(0, 3).map(entry => ({
+  const meaningfulHistory = history.filter(hasMeaningfulPlayerProgress);
+  renderStudentTimeline(economyTimeline.length ? economyTimeline : meaningfulHistory.slice(0, 3).map(entry => ({
     title: `${entry.checkpoint || "checkpoint"} • ${new Date(entry.timestamp).toLocaleString()}`,
     detail: `Salary ${formatCurrency(entry.annual_salary)}, net worth ${formatCurrency(entry.cumulative_net_worth)}, mastery ${average([
       Number(entry.tech_mastery || 0),
