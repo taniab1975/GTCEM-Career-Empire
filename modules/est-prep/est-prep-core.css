@@ -155,10 +155,10 @@ body.est-lab-mode {
   grid-column: 1 / -1;
   grid-template-columns: minmax(0, 1fr);
   justify-items: center;
-  gap: 16px;
+  gap: 12px;
   align-items: start;
   min-height: 0;
-  padding: 18px;
+  padding: 34px 24px;
   overflow: hidden;
   background:
     radial-gradient(circle at 78% 22%, rgba(97, 240, 255, 0.22), transparent 34%),
@@ -223,136 +223,6 @@ body.est-lab-mode {
   color: #e5f1ff;
   font-size: 0.9rem;
   font-weight: 800;
-}
-
-.hero-system-grid {
-  position: relative;
-  z-index: 1;
-  width: min(1180px, 100%);
-  display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
-  gap: 12px;
-  padding: 14px;
-  border-radius: 22px;
-  border: 1px solid rgba(133, 190, 255, 0.4);
-  background:
-    linear-gradient(180deg, rgba(5, 11, 24, 0.22), rgba(5, 11, 24, 0.76)),
-    url("../../Assets/Images and Animations/EST backgrounds/Background Neutral.png") center / cover;
-  box-shadow: 0 30px 70px rgba(0, 0, 0, 0.42);
-}
-
-.hero-system-card {
-  position: relative;
-  min-height: 270px;
-  display: grid;
-  align-content: end;
-  gap: 8px;
-  overflow: hidden;
-  padding: 16px;
-  border: 1px solid color-mix(in srgb, var(--system-accent, var(--cyan)) 46%, rgba(129, 166, 255, 0.24));
-  border-radius: 16px;
-  color: var(--text);
-  text-align: left;
-  background:
-    linear-gradient(180deg, rgba(5, 11, 24, 0.04), rgba(5, 11, 24, 0.88)),
-    var(--system-bg, none) center / cover,
-    rgba(10, 20, 45, 0.9);
-  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.04);
-  cursor: pointer;
-}
-
-.hero-system-card::before {
-  content: "";
-  position: absolute;
-  inset: 0;
-  background:
-    radial-gradient(circle at 24% 20%, color-mix(in srgb, var(--system-accent, var(--cyan)) 30%, transparent), transparent 34%),
-    linear-gradient(180deg, rgba(9, 20, 44, 0.05), rgba(8, 15, 34, 0.82));
-  pointer-events: none;
-}
-
-.hero-system-card > * {
-  position: relative;
-  z-index: 1;
-}
-
-.hero-system-card span,
-.hero-system-card small,
-.hero-system-card em {
-  width: fit-content;
-  max-width: 100%;
-  border-radius: 999px;
-  border: 1px solid rgba(129, 166, 255, 0.22);
-  background: rgba(8, 17, 38, 0.72);
-}
-
-.hero-system-card span {
-  padding: 6px 9px;
-  color: var(--system-accent, var(--cyan));
-  font-size: 0.72rem;
-  font-weight: 900;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-}
-
-.hero-system-card strong {
-  color: #fff;
-  font-size: 1.15rem;
-  line-height: 1.05;
-}
-
-.hero-system-card small,
-.hero-system-card em {
-  padding: 7px 10px;
-  color: #dce8ff;
-  font-size: 0.82rem;
-  font-style: normal;
-  font-weight: 800;
-}
-
-.hero-system-card.not-started em {
-  border-color: rgba(97, 240, 255, 0.38);
-  color: var(--cyan);
-}
-
-.hero-system-card.in-progress {
-  border-color: rgba(255, 216, 108, 0.54);
-}
-
-.hero-system-card.in-progress small,
-.hero-system-card.in-progress em {
-  border-color: rgba(255, 216, 108, 0.36);
-  color: var(--gold);
-}
-
-.hero-system-card.complete {
-  border-color: rgba(114, 247, 184, 0.54);
-}
-
-.hero-system-card.complete small,
-.hero-system-card.complete em {
-  border-color: rgba(114, 247, 184, 0.36);
-  color: var(--green);
-}
-
-.hero-system-card--content {
-  --system-bg: url("../../Assets/EST Preparation/est-lab-card-content.png");
-  --system-accent: var(--cyan);
-}
-
-.hero-system-card--glossary {
-  --system-bg: url("../../Assets/EST Preparation/est-lab-card-glossary.png");
-  --system-accent: var(--green);
-}
-
-.hero-system-card--decoder {
-  --system-bg: url("../../Assets/EST Preparation/est-lab-card-decoder.png");
-  --system-accent: var(--gold);
-}
-
-.hero-system-card--boss {
-  --system-bg: url("../../Assets/EST Preparation/est-lab-card-boss.png");
-  --system-accent: var(--pink);
 }
 
 .hero-video-shell {

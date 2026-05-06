@@ -10,10 +10,6 @@
     min-height: 0;
   }
 
-  .hero-system-grid {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
-
   .mission-brief-panel .mission-list {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
@@ -250,15 +246,6 @@
   .storyline-tags span {
     min-height: 34px;
     padding: 8px 10px;
-  }
-
-  .hero-system-grid {
-    grid-template-columns: 1fr;
-    padding: 10px;
-  }
-
-  .hero-system-card {
-    min-height: 180px;
   }
 
   .mission-brief-panel .mission-list {

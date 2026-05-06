@@ -162,26 +162,6 @@ function renderHero() {
       `<span class="badge">Salary Boost: ${formatCurrency(state.salaryBoost)}</span>`
     ].join("");
   }
-
-  const systemGrid = document.getElementById("hero-system-status");
-  if (!systemGrid) return;
-  systemGrid.innerHTML = STAGES.map((stage, index) => {
-    const progressState = getStageProgressState(stage.id);
-    const statusLabel = progressState === "complete" ? "Complete" : progressState === "in-progress" ? "In progress" : "Not started";
-    const buttonLabel = progressState === "complete" ? "Review lab" : progressState === "in-progress" ? "Continue lab" : "Open lab";
-    return `
-      <button
-        type="button"
-        class="hero-system-card hero-system-card--${stage.id} ${progressState}"
-        onclick="window.ESTPrep.openStage('${stage.id}')"
-      >
-        <span>System ${String(index + 1).padStart(2, "0")}</span>
-        <strong>${escapeHtml(stage.title.replace(/^EST\s+/i, "").replace(/\s+Check$/i, ""))}</strong>
-        <small>${escapeHtml(statusLabel)}</small>
-        <em>${escapeHtml(buttonLabel)}</em>
-      </button>
-    `;
-  }).join("");
 }
 
 function renderRewardPulse() {
