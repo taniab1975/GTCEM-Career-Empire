@@ -71,6 +71,7 @@
   .glossary-escape-console,
   .glossary-arcade-grid,
   .glossary-recall-grid,
+  .glossary-guide-panel,
   .metrics-grid,
   .chapter-grid,
   .mcq-grid,
@@ -111,8 +112,23 @@
   .glossary-mastery-strip,
   .glossary-escape-console,
   .glossary-arcade-grid,
-  .glossary-recall-grid {
+  .glossary-recall-grid,
+  .glossary-guide-panel {
     grid-template-columns: 1fr;
+  }
+
+  .glossary-guide-panel {
+    min-height: 0;
+    padding: 14px;
+  }
+
+  .glossary-guide-art {
+    min-height: 210px;
+    place-items: end center;
+  }
+
+  .glossary-guide-art img {
+    max-height: 230px;
   }
 
   .focus-toolbar {
@@ -162,6 +178,7 @@
   .mcq-grid,
   .choice-grid,
   .est-guide-panel,
+  .glossary-guide-panel,
   .glossary-blueprint,
   .glossary-mastery-strip,
   .glossary-reward-grid,
