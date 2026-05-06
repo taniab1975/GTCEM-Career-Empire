@@ -240,6 +240,9 @@ function hydrateGlossarySummaryFromPayload(payload) {
   state.glossaryRoundVotes = summary.round_votes && typeof summary.round_votes === "object"
     ? { ...summary.round_votes }
     : state.glossaryRoundVotes;
+  state.glossaryTermStats = summary.term_stats && typeof summary.term_stats === "object"
+    ? { ...state.glossaryTermStats, ...summary.term_stats }
+    : state.glossaryTermStats;
   state.glossaryBestStreak = Math.max(Number(state.glossaryBestStreak || 0), Number(summary.best_streak || 0));
   state.glossaryMisses = Number(summary.misses || 0);
   state.glossaryRoundIndex = 0;
@@ -259,6 +262,9 @@ function restoreGlossaryReplayBoard() {
   state.glossaryRoundCelebration = null;
   state.glossaryRoundIndex = 0;
   state.glossaryBatchIndex = 0;
+  if (typeof refreshGlossaryPracticeDeck === "function") {
+    refreshGlossaryPracticeDeck();
+  }
   state.glossarySelectedTermId = "";
   state.glossarySelectedSocketId = "";
   state.glossaryDraggedTermId = "";

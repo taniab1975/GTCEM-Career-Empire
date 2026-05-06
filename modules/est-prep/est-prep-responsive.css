@@ -1,8 +1,29 @@
 /* Responsive layout rules. */
 @media (max-width: 1100px) {
   .hero,
+  .hero-card--cinema,
   .two-column {
     grid-template-columns: 1fr;
+  }
+
+  .hero-video-shell {
+    min-height: 0;
+  }
+
+  .hero-system-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .mission-brief-panel .mission-list {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .content-module-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .lab-track-panel .chapter-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
   .training-focus-shell,
@@ -23,11 +44,18 @@
   }
 
   .training-question-layout {
+    grid-template-rows: auto;
     min-height: auto;
   }
 
   .training-card--flash .training-stack {
+    height: auto;
     margin-top: 12px;
+  }
+
+  .training-card--flash .choice-button {
+    min-height: 68px;
+    height: auto;
   }
 
   .training-focus-aside {
@@ -39,6 +67,7 @@
   }
 
   .glossary-chamber-rail,
+  .glossary-mastery-strip,
   .glossary-escape-console,
   .glossary-arcade-grid,
   .glossary-recall-grid,
@@ -79,6 +108,7 @@
   }
 
   .glossary-chamber-rail,
+  .glossary-mastery-strip,
   .glossary-escape-console,
   .glossary-arcade-grid,
   .glossary-recall-grid {
@@ -108,6 +138,20 @@
     padding: 14px;
   }
 
+  .topic-media-stage {
+    min-height: 230px;
+  }
+
+  .topic-media-status {
+    max-width: calc(100% - 32px);
+    right: 16px;
+    text-align: center;
+  }
+
+  .topic-media-progress {
+    display: none;
+  }
+
   .topic-intro-grid--compact .topic-media-card--portrait {
     width: min(300px, 100%);
     max-height: 520px;
@@ -119,6 +163,7 @@
   .choice-grid,
   .est-guide-panel,
   .glossary-blueprint,
+  .glossary-mastery-strip,
   .glossary-reward-grid,
   .glossary-sockets,
   .glossary-recall-grid,
@@ -137,6 +182,51 @@
   .panel,
   .metric {
     padding: 18px;
+  }
+
+  .hero-card--cinema {
+    gap: 16px;
+  }
+
+  .storyline-tags span {
+    min-height: 34px;
+    padding: 8px 10px;
+  }
+
+  .hero-system-grid {
+    grid-template-columns: 1fr;
+    padding: 10px;
+  }
+
+  .hero-system-card {
+    min-height: 180px;
+  }
+
+  .mission-brief-panel .mission-list {
+    grid-template-columns: 1fr;
+  }
+
+  .content-module-grid,
+  .content-module-button {
+    grid-template-columns: 1fr;
+  }
+
+  .content-module-button {
+    justify-items: start;
+  }
+
+  .lab-track-panel .chapter-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .disclosure-panel > summary {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .disclosure-panel > summary::after {
+    position: absolute;
+    right: 18px;
   }
 
   .topic-intro-button-row {
@@ -189,6 +279,10 @@
     order: 2;
   }
 
+  #stage-section.gameplay-viewport .training-scene-preview--arc {
+    min-height: 132px;
+  }
+
   #stage-section.gameplay-viewport .training-focus-main {
     order: 1;
   }
@@ -210,6 +304,27 @@
   #stage-section.gameplay-viewport .training-card--flash .choice-button {
     min-height: 50px;
     padding: 10px 12px;
+  }
+
+  #stage-section.gameplay-viewport .arc-progress-track {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  #stage-section.gameplay-viewport .arc-progress-step {
+    min-height: 48px;
+    grid-template-columns: 28px minmax(0, 1fr);
+    gap: 7px;
+    padding: 8px;
+  }
+
+  #stage-section.gameplay-viewport .arc-progress-step span {
+    width: 28px;
+    height: 28px;
+    border-radius: 10px;
+  }
+
+  #stage-section.gameplay-viewport .arc-progress-step strong {
+    font-size: 0.72rem;
   }
 
   .glossary-socket,

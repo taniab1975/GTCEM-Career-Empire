@@ -6,9 +6,10 @@
   <title>EST Prep</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="icon" href="data:,">
   <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="../../dashboards/dashboard.css">
-  <link rel="stylesheet" href="./est-prep.css">
+  <link rel="stylesheet" href="./est-prep.css?v=est-hub-simplified">
 </head>
 <body>
   <main class="module-shell">
@@ -27,108 +28,84 @@
     </div>
 
     <section id="hero-section" class="hero">
-      <article class="hero-card">
-        <span class="eyebrow">Module 3</span>
-        <h1>Decode. Recall. Respond.</h1>
-        <p class="subtitle">
-          Enter the EST Lab. Beat the paper by unpacking the command verb, locking in glossary terms, and building responses
-          that actually earn marks.
-        </p>
-        <div id="hero-badges" class="badge-row">
-          <span class="badge">Loading exam profile...</span>
-        </div>
-      </article>
-      <article class="hero-side panel">
-        <div class="section-title">
-          <h2>Mission Brief</h2>
-          <p class="status-good">High stakes, low risk</p>
-        </div>
-        <div class="mission-list">
-          <div class="mission-item">
-            <strong>EST Content Check</strong>
-            <p>Check the actual revision content that will be assessed in this EST.</p>
+      <article class="hero-card hero-card--cinema">
+        <div id="hero-system-status" class="hero-system-grid" aria-label="EST Prep system progress">
+          <div class="hero-system-card is-loading">
+            <span>System 01</span>
+            <strong>Content</strong>
+            <small>Loading status</small>
           </div>
-          <div class="mission-item">
-            <strong>Glossary Check</strong>
-            <p>Lock in the exact glossary terms and meanings you need for EST questions.</p>
+          <div class="hero-system-card is-loading">
+            <span>System 02</span>
+            <strong>Glossary</strong>
+            <small>Loading status</small>
           </div>
-          <div class="mission-item">
-            <strong>VTCS Decoder</strong>
-            <p>Use verb, topic, context, and structure to unpack what the question really wants.</p>
+          <div class="hero-system-card is-loading">
+            <span>System 03</span>
+            <strong>VTCS</strong>
+            <small>Loading status</small>
           </div>
-          <div class="mission-item">
+          <div class="hero-system-card is-loading">
+            <span>System 04</span>
             <strong>Boss Round</strong>
-            <p>Pull content, glossary, and command-word decoding together in one exam-style battle.</p>
+            <small>Loading status</small>
           </div>
+        </div>
+        <div class="hero-copy">
+          <span class="eyebrow">Module 3</span>
+          <h1>Enter the EST Lab.</h1>
+          <p class="subtitle">
+            Four connected systems build exam readiness: content, glossary language, question decoding, and the final
+            response.
+          </p>
+          <details class="profile-disclosure">
+            <summary>Student profile</summary>
+            <div id="hero-badges" class="badge-row">
+              <span class="badge">Loading exam profile...</span>
+            </div>
+          </details>
         </div>
       </article>
     </section>
 
-    <section id="metrics-section" class="metrics-grid">
-      <article class="metric">
-        <div class="metric-label">Lab Progress</div>
-        <div id="metric-progress" class="metric-value">0/4</div>
-        <div class="metric-note">Stages cleared in this run</div>
-      </article>
-      <article class="metric">
-        <div class="metric-label">Marks Banked</div>
-        <div id="metric-marks" class="metric-value">0</div>
-        <div class="metric-note">Marks earned through challenge performance</div>
-      </article>
-      <article class="metric">
-        <div class="metric-label">Exam Readiness</div>
-        <div id="metric-readiness" class="metric-value">0%</div>
-        <div class="metric-note">How prepared you look for the EST</div>
-      </article>
-      <article class="metric">
-        <div class="metric-label">Streak Multiplier</div>
-        <div id="metric-streak" class="metric-value">x1</div>
-        <div class="metric-note">Success in a row boosts rewards</div>
-      </article>
-    </section>
-
-    <section id="reward-strip" class="reward-strip">
-      <div class="reward-banner">
-        <strong>Beat the paper, grow the empire</strong>
-        <p>Each stage can increase salary, confidence, and community tax contribution while giving teachers real evidence.</p>
-      </div>
-      <div id="reward-chips" class="reward-chips">
-        <span class="reward-chip">Ready to bank your first reward</span>
-      </div>
-    </section>
-
-    <section id="track-section" class="two-column">
-      <article class="panel">
+    <section id="track-section" class="lab-primary">
+      <article class="panel lab-track-panel">
         <div class="section-title">
           <h2>Exam Lab Track</h2>
           <p>Four linked challenge stages</p>
         </div>
         <div id="challenge-map" class="chapter-grid"></div>
       </article>
-      <article class="panel">
+      <article class="panel mission-brief-panel">
         <div class="section-title">
-          <h2>Current Build</h2>
-          <p>Shared rewards across Career Empire</p>
+          <h2>Assessed Content Modules</h2>
+          <p>Pick a topic reactor or follow the four-system track</p>
         </div>
-        <div id="resource-board" class="list"></div>
+        <div id="content-module-list" class="content-module-list" aria-live="polite"></div>
       </article>
     </section>
 
-    <section id="logs-section" class="two-column">
-      <article class="panel">
-        <div class="section-title">
-          <h2>Round Debrief</h2>
-          <p>What changed after your last move</p>
-        </div>
-        <div id="debrief-log" class="list"></div>
-      </article>
-      <article class="panel">
-        <div class="section-title">
-          <h2>Teacher-Visible Evidence</h2>
-          <p>Saved from your EST prep</p>
-        </div>
-        <div id="evidence-log" class="list"></div>
-      </article>
+    <section id="logs-section" class="panel is-hidden">
+      <div class="section-title">
+        <h2>Debrief And Teacher Evidence</h2>
+        <p>Saved feedback and written artifacts</p>
+      </div>
+      <div class="two-column">
+        <article>
+          <div class="section-title">
+            <h2>Round Debrief</h2>
+            <p>What changed after your last move</p>
+          </div>
+          <div id="debrief-log" class="list"></div>
+        </article>
+        <article>
+          <div class="section-title">
+            <h2>Teacher-Visible Evidence</h2>
+            <p>Saved from your EST prep</p>
+          </div>
+          <div id="evidence-log" class="list"></div>
+        </article>
+      </div>
     </section>
 
     <section id="stage-section" class="panel is-hidden">
@@ -154,14 +131,14 @@
   <script src="../../config/supabase-config.js"></script>
   <script src="../../src/services/economy-ledger.js"></script>
   <script src="../../src/services/supabase-browser.js"></script>
-  <script src="./est-prep-data.js"></script>
-  <script src="./est-prep-state.js"></script>
-  <script src="./est-prep-render.js"></script>
-  <script src="./est-prep-supabase.js"></script>
-  <script src="./est-prep-content.js"></script>
-  <script src="./est-prep-glossary.js"></script>
-  <script src="./est-prep-boss.js"></script>
-  <script src="./est-prep.js"></script>
+  <script src="./est-prep-data.js?v=est-hub-simplified"></script>
+  <script src="./est-prep-state.js?v=est-hub-simplified"></script>
+  <script src="./est-prep-render.js?v=est-hub-simplified"></script>
+  <script src="./est-prep-supabase.js?v=est-hub-simplified"></script>
+  <script src="./est-prep-content.js?v=est-hub-simplified"></script>
+  <script src="./est-prep-glossary.js?v=est-hub-simplified"></script>
+  <script src="./est-prep-boss.js?v=est-hub-simplified"></script>
+  <script src="./est-prep.js?v=est-hub-simplified"></script>
   <script src="../../src/services/feedback-widget.js"></script>
 </body>
 </html>

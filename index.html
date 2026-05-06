@@ -681,6 +681,22 @@
       align-items: center;
       justify-content: center;
       text-decoration: none;
+      text-align: center;
+      line-height: 1.2;
+    }
+    .platform-demo-panel {
+      grid-column: 1 / -1;
+      display: grid;
+      gap: 10px;
+      padding: 12px;
+      border-radius: 18px;
+      border: 1px solid rgba(125, 211, 252, 0.2);
+      background: rgba(15, 23, 42, 0.42);
+    }
+    .platform-demo-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 10px;
     }
     .platform-demo-entry {
       grid-column: 1 / -1;
@@ -690,8 +706,17 @@
       box-shadow: 0 16px 34px rgba(20, 184, 166, 0.22);
       font-size: 1rem;
     }
+    .platform-demo-grid .platform-demo-entry {
+      grid-column: auto;
+    }
     .platform-demo-entry:hover {
       box-shadow: 0 18px 42px rgba(37, 99, 235, 0.34);
+    }
+    .platform-demo-note {
+      margin: 0;
+      color: #bfdbfe;
+      font-size: 0.88rem;
+      line-height: 1.45;
     }
     .platform-landing-grid {
       display: grid;
@@ -995,11 +1020,34 @@
       gap: 12px;
       margin-top: 20px;
     }
+    .demo-student-launch-panel {
+      display: grid;
+      gap: 10px;
+      padding: 12px;
+      border-radius: 16px;
+      border: 1px solid rgba(125, 211, 252, 0.2);
+      background: rgba(15, 23, 42, 0.4);
+    }
+    .demo-student-launch-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 10px;
+    }
+    .demo-student-launch-note {
+      margin: 0;
+      color: #bfdbfe;
+      font-size: 0.88rem;
+      line-height: 1.45;
+    }
 
     body { box-sizing: border-box; }
 
     @media (max-width: 900px) {
       .platform-home-grid, .platform-portal-grid, .platform-showcase, .platform-media-grid, .platform-role-grid, .platform-landing-grid, .platform-link-stack { grid-template-columns: 1fr; }
+      .platform-demo-grid,
+      .demo-student-launch-grid {
+        grid-template-columns: 1fr;
+      }
       .megatrends-hud {
         padding: 12px 14px 16px;
       }
@@ -1046,7 +1094,13 @@
 
                 <div>
                   <div class="platform-link-stack">
-                    <button class="btn-primary text-white font-bold py-3 px-6 rounded-lg platform-entry-btn platform-demo-entry" type="button" data-demo-student-launch="true" data-demo-student-target="./dashboards/student.html">Try Demo Student Experience</button>
+                    <div class="platform-demo-panel">
+                      <p class="platform-demo-note">Test the game before signing up. Demo runs use a temporary student profile and no progress is saved to a real student account.</p>
+                      <div class="platform-demo-grid">
+                        <button class="btn-primary text-white font-bold py-3 px-6 rounded-lg platform-entry-btn platform-demo-entry" type="button" data-demo-student-launch="true" data-demo-student-target="./dashboards/student.html">Try Overall Demo Student Experience</button>
+                        <button class="btn-primary text-white font-bold py-3 px-6 rounded-lg platform-entry-btn platform-demo-entry" type="button" data-demo-student-launch="true" data-demo-student-target="./modules/est-prep/index.html">Try EST Prep Demo Student Experience</button>
+                      </div>
+                    </div>
                     <a class="btn-primary text-white font-bold py-3 px-6 rounded-lg platform-entry-btn" href="./auth/student-login.html">Student Login</a>
                     <a class="btn-primary text-white font-bold py-3 px-6 rounded-lg platform-entry-btn" href="./auth/teacher-login.html">Teacher Login</a>
                     <a class="platform-ghost platform-entry-btn" href="./auth/teacher-signup.html">Teacher Register</a>
@@ -1068,7 +1122,7 @@
                 </div>
                 <div class="platform-embed-frame">
                   <video controls playsinline preload="metadata">
-                    <source src="./Assets/videos/Career%20Empire%20Final.mp4" type="video/mp4">
+                    <source src="./Assets/videos/Career%20Empire%20Explainer%202026.mp4" type="video/mp4">
                     Your browser does not support the video tag.
                   </video>
                 </div>
@@ -1172,7 +1226,13 @@
                 </div>
                 <div id="megatrends-entry-actions" class="megatrends-entry-actions">
                   <button id="launch-btn" class="btn-primary text-white font-bold py-3 px-6 rounded-lg w-full">🚀 Login or Start Megatrends Now</button>
-                  <button id="demo-student-btn" class="btn-primary text-white font-bold py-3 px-6 rounded-lg w-full" type="button">✨ Try Demo Student Experience</button>
+                  <div class="demo-student-launch-panel">
+                    <p class="demo-student-launch-note">Want to test before signing up? These demo runs are temporary and do not save progress to a student account.</p>
+                    <div class="demo-student-launch-grid">
+                      <button class="btn-primary text-white font-bold py-3 px-6 rounded-lg w-full" type="button" data-demo-student-launch="true" data-demo-student-target="./dashboards/student.html">Try Overall Demo Student Experience</button>
+                      <button class="btn-primary text-white font-bold py-3 px-6 rounded-lg w-full" type="button" data-demo-student-launch="true" data-demo-student-target="./modules/est-prep/index.html">Try EST Prep Demo Student Experience</button>
+                    </div>
+                  </div>
                   <button id="megatrends-back-btn" type="button" onclick="goBackFromMegatrendsIntro()" class="w-full px-4 py-2 rounded-lg bg-slate-700 hover:bg-slate-600 text-white text-sm font-semibold">↩ Back</button>
                 </div>
               </div>
@@ -3580,17 +3640,10 @@
 
     function attachLaunchButton() {
       const launchBtn = document.getElementById('launch-btn');
-      const demoBtn = document.getElementById('demo-student-btn');
       if (launchBtn) {
         launchBtn.addEventListener('click', async function(e) {
           e.preventDefault();
           await startGame();
-        });
-      }
-      if (demoBtn) {
-        demoBtn.addEventListener('click', function(e) {
-          e.preventDefault();
-          launchDemoStudentExperience('./dashboards/student.html');
         });
       }
       document.querySelectorAll('[data-demo-student-launch="true"]').forEach(button => {

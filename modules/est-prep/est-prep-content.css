@@ -218,6 +218,64 @@
   border-color: rgba(114, 247, 184, 0.24);
 }
 
+.est-scene-shell--topic {
+  --topic-accent-soft: rgba(97, 240, 255, 0.12);
+  --topic-accent-mid: rgba(97, 240, 255, 0.3);
+  --topic-accent-solid: #61f0ff;
+  --topic-border: rgba(97, 240, 255, 0.24);
+}
+
+.est-scene-shell--topic-time-management {
+  --topic-accent-soft: rgba(87, 177, 255, 0.16);
+  --topic-accent-mid: rgba(255, 216, 108, 0.28);
+  --topic-accent-solid: #ffd86c;
+  --topic-border: rgba(87, 177, 255, 0.3);
+}
+
+.est-scene-shell--topic-personal-finance {
+  --topic-accent-soft: rgba(114, 247, 184, 0.15);
+  --topic-accent-mid: rgba(255, 216, 108, 0.24);
+  --topic-accent-solid: #72f7b8;
+  --topic-border: rgba(114, 247, 184, 0.3);
+}
+
+.est-scene-shell--topic-job-application {
+  --topic-accent-soft: rgba(255, 184, 112, 0.14);
+  --topic-accent-mid: rgba(153, 206, 255, 0.22);
+  --topic-accent-solid: #ffb870;
+  --topic-border: rgba(255, 184, 112, 0.28);
+}
+
+.est-scene-shell--topic-communication {
+  --topic-accent-soft: rgba(132, 244, 255, 0.14);
+  --topic-accent-mid: rgba(159, 233, 195, 0.22);
+  --topic-accent-solid: #84f4ff;
+  --topic-border: rgba(132, 244, 255, 0.28);
+}
+
+.est-scene-shell--topic-future-of-work {
+  --topic-accent-soft: rgba(159, 233, 195, 0.14);
+  --topic-accent-mid: rgba(126, 188, 255, 0.24);
+  --topic-accent-solid: #9fe9c3;
+  --topic-border: rgba(159, 233, 195, 0.28);
+}
+
+.est-scene-shell--topic::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background:
+    linear-gradient(110deg, transparent 0 28%, var(--topic-accent-soft) 46%, transparent 68%),
+    radial-gradient(circle at 82% 18%, var(--topic-accent-mid), transparent 28%);
+  opacity: 0.55;
+}
+
+.est-scene-shell--topic > * {
+  position: relative;
+  z-index: 1;
+}
+
 .topic-intro-copy h3 {
   margin-top: 4px;
   font-size: clamp(1.55rem, 2.1vw, 2.15rem);
@@ -239,6 +297,13 @@
   justify-content: center;
   padding: 12px;
   box-shadow: 0 18px 36px rgba(0, 0, 0, 0.22);
+}
+
+.topic-media-card--animated {
+  border-color: var(--topic-border);
+  background:
+    linear-gradient(180deg, rgba(9, 18, 39, 0.92), rgba(7, 14, 32, 0.98)),
+    radial-gradient(circle at top right, var(--topic-accent-soft), transparent 34%);
 }
 
 .topic-intro-grid--compact .topic-media-card {
@@ -273,6 +338,126 @@
 .topic-media-image {
   object-fit: contain;
   padding: 8px;
+}
+
+.topic-media-stage {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  min-height: 310px;
+  display: grid;
+  place-items: center;
+  overflow: hidden;
+  border-radius: 20px;
+  background:
+    linear-gradient(rgba(129, 166, 255, 0.08) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(129, 166, 255, 0.08) 1px, transparent 1px),
+    radial-gradient(circle at 50% 42%, var(--topic-accent-soft), transparent 42%),
+    rgba(7, 15, 34, 0.86);
+  background-size: 34px 34px, 34px 34px, auto, auto;
+}
+
+.topic-media-card--video .topic-media-stage {
+  min-height: 100%;
+}
+
+.topic-media-video {
+  position: absolute;
+  z-index: 1;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  display: block;
+  object-fit: cover;
+  border-radius: 20px;
+  opacity: 0.44;
+  filter: saturate(1.08) contrast(1.04);
+  background:
+    radial-gradient(circle at top right, rgba(97, 240, 255, 0.12), transparent 28%),
+    linear-gradient(180deg, rgba(18, 31, 61, 0.92), rgba(10, 18, 39, 0.96));
+}
+
+.topic-media-stage--video::after {
+  content: "";
+  position: absolute;
+  z-index: 1;
+  inset: 0;
+  border-radius: 20px;
+  background:
+    radial-gradient(circle at 50% 40%, transparent 0 34%, rgba(5, 11, 26, 0.42) 72%),
+    linear-gradient(180deg, rgba(6, 12, 28, 0.08), rgba(6, 12, 28, 0.46));
+  pointer-events: none;
+}
+
+.topic-media-stage .topic-media-image {
+  position: relative;
+  z-index: 3;
+  width: min(72%, 360px);
+  height: auto;
+  max-height: 72%;
+  filter: drop-shadow(0 22px 32px rgba(3, 8, 20, 0.42));
+  animation: topicMediaFloat 4.6s ease-in-out infinite;
+}
+
+.topic-media-card--personal-finance .topic-media-image,
+.topic-media-card--future-of-work .topic-media-image {
+  width: min(84%, 430px);
+}
+
+.topic-media-card--job-application .topic-media-image {
+  width: min(66%, 330px);
+}
+
+.topic-media-scan {
+  position: absolute;
+  z-index: 3;
+  inset: -30% 0 auto;
+  height: 46%;
+  background: linear-gradient(180deg, transparent, var(--topic-accent-mid), transparent);
+  opacity: 0.55;
+  animation: topicScan 3.8s ease-in-out infinite;
+}
+
+.topic-media-status {
+  position: absolute;
+  z-index: 4;
+  left: 16px;
+  bottom: 16px;
+  max-width: min(70%, 340px);
+  padding: 9px 12px;
+  border-radius: 999px;
+  border: 1px solid var(--topic-border);
+  background: rgba(5, 11, 26, 0.72);
+  color: #eef7ff;
+  font-size: 0.78rem;
+  font-weight: 800;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+  backdrop-filter: blur(8px);
+}
+
+.topic-media-progress {
+  position: absolute;
+  z-index: 4;
+  right: 16px;
+  bottom: 22px;
+  width: min(30%, 160px);
+  height: 8px;
+  border-radius: 999px;
+  overflow: hidden;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  background: rgba(7, 15, 34, 0.9);
+}
+
+.topic-media-progress span {
+  display: block;
+  width: 68%;
+  height: 100%;
+  border-radius: inherit;
+  background:
+    linear-gradient(90deg, var(--topic-accent-solid), #ffffff),
+    url("../../Assets/Images and Animations/Animated Buttons/animated_progress_bar_fill.gif") center/cover no-repeat;
+  animation: topicProgressPulse 2.6s ease-in-out infinite;
 }
 
 .topic-intro-actions {
@@ -511,6 +696,14 @@ body.est-lab-mode #stage-section.gameplay-viewport {
   backdrop-filter: blur(2px);
 }
 
+.training-campaign--topic {
+  border-color: var(--topic-border);
+  background:
+    linear-gradient(180deg, rgba(8, 16, 38, 0.34), rgba(8, 16, 38, 0.52)),
+    radial-gradient(circle at top right, var(--topic-accent-soft), transparent 30%),
+    radial-gradient(circle at bottom left, rgba(255, 255, 255, 0.035), transparent 34%);
+}
+
 .training-hud {
   display: flex;
   align-items: end;
@@ -679,19 +872,84 @@ body.est-lab-mode #stage-section.gameplay-viewport {
 }
 
 .training-scene-preview {
+  position: relative;
   overflow: hidden;
   aspect-ratio: 4 / 3;
 }
 
 .training-scene-preview--arc {
   min-height: 156px;
+  border-color: var(--topic-border);
+  background:
+    linear-gradient(rgba(129, 166, 255, 0.08) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(129, 166, 255, 0.08) 1px, transparent 1px),
+    radial-gradient(circle at 50% 44%, var(--topic-accent-soft), transparent 46%),
+    rgba(7, 15, 34, 0.86);
+  background-size: 28px 28px, 28px 28px, auto, auto;
 }
 
 .training-scene-preview img {
+  position: relative;
+  z-index: 1;
   width: 100%;
   height: 100%;
   object-fit: cover;
   display: block;
+}
+
+.training-scene-preview--time-management img,
+.training-scene-preview--personal-finance img,
+.training-scene-preview--job-application img,
+.training-scene-preview--communication img,
+.training-scene-preview--future-of-work img {
+  object-fit: contain;
+  padding: 20px;
+  filter: drop-shadow(0 18px 26px rgba(3, 8, 20, 0.42));
+}
+
+.training-scene-preview--personal-finance img,
+.training-scene-preview--future-of-work img {
+  padding: 12px;
+}
+
+.training-scene-preview--communication img {
+  padding: 10px;
+}
+
+.training-scene-scan {
+  position: absolute;
+  z-index: 2;
+  inset: -36% 0 auto;
+  height: 48%;
+  background: linear-gradient(180deg, transparent, var(--topic-accent-mid), transparent);
+  opacity: 0.42;
+  animation: topicScan 4.2s ease-in-out infinite;
+}
+
+.training-scene-badge {
+  position: absolute;
+  z-index: 3;
+  left: 12px;
+  right: 12px;
+  bottom: 12px;
+  display: inline-flex;
+  justify-content: center;
+  min-height: 32px;
+  padding: 8px 10px;
+  border-radius: 999px;
+  border: 1px solid var(--topic-border);
+  background: rgba(5, 11, 26, 0.76);
+  color: #eef7ff;
+  font-size: 0.74rem;
+  font-weight: 800;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+  backdrop-filter: blur(8px);
+}
+
+.training-scene-preview--restored .training-scene-badge,
+.training-scene-preview--success .training-scene-badge {
+  color: #dfffea;
 }
 
 .training-guide-mini {
@@ -706,7 +964,7 @@ body.est-lab-mode #stage-section.gameplay-viewport {
   position: relative;
   overflow: hidden;
   min-height: 220px;
-  grid-template-columns: minmax(150px, 0.56fr) minmax(0, 0.44fr);
+  grid-template-columns: minmax(118px, 0.42fr) minmax(0, 0.58fr);
   align-items: end;
   background:
     radial-gradient(circle at 30% 82%, rgba(97, 240, 255, 0.18), transparent 34%),
@@ -735,7 +993,7 @@ body.est-lab-mode #stage-section.gameplay-viewport {
 .training-guide-mini-image--arc {
   position: relative;
   z-index: 1;
-  width: min(280px, 150%);
+  width: min(178px, 100%);
   justify-self: center;
   align-self: end;
   animation: estGuideFloat 4.2s ease-in-out infinite;
@@ -761,6 +1019,91 @@ body.est-lab-mode #stage-section.gameplay-viewport {
   margin-bottom: 0;
 }
 
+.arc-progress-track {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.arc-progress-step {
+  position: relative;
+  display: grid;
+  grid-template-columns: 34px minmax(0, 1fr);
+  align-items: center;
+  gap: 8px;
+  min-height: 58px;
+  padding: 10px;
+  border-radius: 16px;
+  border: 1px solid rgba(129, 166, 255, 0.18);
+  background: rgba(8, 16, 38, 0.72);
+  color: #d7e9ff;
+  overflow: hidden;
+}
+
+.arc-progress-step::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(90deg, var(--topic-accent-soft), transparent 70%);
+  opacity: 0;
+}
+
+.arc-progress-step span,
+.arc-progress-step strong {
+  position: relative;
+  z-index: 1;
+}
+
+.arc-progress-step span {
+  display: grid;
+  place-items: center;
+  width: 34px;
+  height: 34px;
+  border-radius: 12px;
+  border: 1px solid rgba(129, 166, 255, 0.2);
+  background: rgba(13, 28, 61, 0.88);
+  color: #dcebff;
+  font-weight: 900;
+}
+
+.arc-progress-step strong {
+  min-width: 0;
+  color: inherit;
+  font-size: 0.78rem;
+  line-height: 1.14;
+}
+
+.arc-progress-step.active {
+  border-color: var(--topic-border);
+  box-shadow: inset 0 0 0 1px var(--topic-accent-soft), 0 12px 24px rgba(3, 8, 20, 0.2);
+}
+
+.arc-progress-step.active::before {
+  opacity: 1;
+}
+
+.arc-progress-step.active span {
+  border-color: var(--topic-border);
+  background: var(--topic-accent-solid);
+  color: #071126;
+}
+
+.arc-progress-step.complete {
+  border-color: rgba(114, 247, 184, 0.32);
+  background: rgba(11, 47, 42, 0.72);
+  color: #dfffea;
+}
+
+.arc-progress-step.complete span {
+  border-color: rgba(114, 247, 184, 0.42);
+  background: rgba(114, 247, 184, 0.92);
+  color: #072319;
+}
+
+.arc-progress-step.locked {
+  opacity: 0.62;
+}
+
 .arc-progress-image {
   width: 100%;
   height: auto;
@@ -783,7 +1126,7 @@ body.est-lab-mode #stage-section.gameplay-viewport {
 }
 
 .arc-progress-rail--answer {
-  margin-top: 16px;
+  margin-top: 0;
   padding: 12px;
   border-radius: 18px;
   border: 1px solid rgba(129, 166, 255, 0.24);
@@ -793,9 +1136,13 @@ body.est-lab-mode #stage-section.gameplay-viewport {
   box-shadow: inset 0 0 0 1px rgba(255,255,255,0.03), 0 14px 28px rgba(3, 8, 20, 0.22);
 }
 
+.arc-progress-rail--wide {
+  grid-column: 1 / -1;
+}
+
 .arc-progress-rail--answer .arc-progress-image {
   width: 100%;
-  max-height: 150px;
+  max-height: clamp(150px, 20vh, 220px);
   object-fit: contain;
 }
 
@@ -942,9 +1289,10 @@ body.est-lab-mode #stage-section.gameplay-viewport {
 .training-question-layout {
   display: grid;
   grid-template-columns: minmax(260px, 0.82fr) minmax(360px, 1.18fr);
+  grid-template-rows: minmax(250px, 1fr) auto;
   gap: 14px;
   align-items: stretch;
-  min-height: clamp(260px, 40vh, 390px);
+  min-height: clamp(420px, 56vh, 620px);
 }
 
 .training-question-layout.is-dimmed {
@@ -954,7 +1302,10 @@ body.est-lab-mode #stage-section.gameplay-viewport {
 }
 
 .training-question-layout .training-card-lead {
+  display: grid;
   align-content: center;
+  height: 100%;
+  min-height: 0;
   margin-bottom: 0;
   padding: 16px;
   border-radius: 20px;
@@ -966,17 +1317,23 @@ body.est-lab-mode #stage-section.gameplay-viewport {
 
 .training-card--flash .training-stack {
   grid-template-columns: 1fr;
-  align-content: center;
+  grid-auto-rows: minmax(0, 1fr);
+  align-content: stretch;
+  height: 100%;
   margin-top: 0;
 }
 
 .training-answer-column {
   display: grid;
-  align-content: center;
+  min-height: 0;
+  align-content: stretch;
 }
 
 .training-card--flash .choice-button {
-  min-height: 68px;
+  display: flex;
+  align-items: center;
+  min-height: 0;
+  height: 100%;
   padding: 12px 14px;
   border-radius: 16px;
 }
@@ -1508,11 +1865,52 @@ body.est-gameplay-viewport .ce-feedback-launcher {
 @keyframes estGuideFloat {
   0%,
   100% {
-    transform: translateY(0) scale(1.16);
+    transform: translateY(0) scale(1.04);
   }
 
   50% {
-    transform: translateY(-7px) scale(1.16);
+    transform: translateY(-7px) scale(1.04);
+  }
+}
+
+@keyframes topicMediaFloat {
+  0%,
+  100% {
+    transform: translateY(0) scale(1);
+  }
+
+  50% {
+    transform: translateY(-8px) scale(1.015);
+  }
+}
+
+@keyframes topicScan {
+  0% {
+    transform: translateY(-20%);
+    opacity: 0;
+  }
+
+  18%,
+  72% {
+    opacity: 0.48;
+  }
+
+  100% {
+    transform: translateY(220%);
+    opacity: 0;
+  }
+}
+
+@keyframes topicProgressPulse {
+  0%,
+  100% {
+    width: 58%;
+    opacity: 0.85;
+  }
+
+  50% {
+    width: 92%;
+    opacity: 1;
   }
 }
 

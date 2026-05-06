@@ -30,7 +30,9 @@
       "title": "Time Management Skills - Plan and prioritise tasks to meet deadlines",
       "introTitle": "Plan, Prioritise, Deliver",
       "introSummary": "This strand is about ordering tasks clearly, using tools well, and adjusting when deadlines shift.",
-      "introImage": "../../Assets/employability-logos/main/time-management.png",
+      "introImage": "../../Assets/Images and Animations/Employability Skill Logos/4.0 Time Management.png",
+      "introVideo": "../../Assets/EST Preparation/time-management-portrait.mp4",
+      "introMediaLayout": "portrait",
       "introHighlights": [
         "Plan ahead",
         "Use productivity tools",
@@ -49,7 +51,9 @@
       "title": "Managing personal finance, budgeting, seeking assistance, unexpected financial events inc changes to financial circumstance",
       "introTitle": "Money Decisions Under Pressure",
       "introSummary": "This strand trains budgeting, seeking support, and responding to financial changes without panic.",
-      "introImage": "../../Assets/employability-logos/main/problem-solving.png",
+      "introImage": "../../Assets/Images and Animations/Student Hub/empire-status-net-worth.png",
+      "introVideo": "../../Assets/EST Preparation/personal-finance-portrait.mp4",
+      "introMediaLayout": "portrait",
       "introHighlights": [
         "Balance income and expenses",
         "Seek reliable assistance",
@@ -70,7 +74,9 @@
       "title": "Cover Letters, STAR and Addressing Selection Criteria",
       "introTitle": "Build Stronger Applications",
       "introSummary": "This strand focuses on cover letters, STAR responses, and evidence-rich answers to selection criteria.",
-      "introImage": "../../Assets/employability-logos/main/critical-thinking.png",
+      "introImage": "../../Assets/Images and Animations/Employability Skill Logos/5.0 Critical Thinking.png",
+      "introVideo": "../../Assets/EST Preparation/job-application-portrait.mp4",
+      "introMediaLayout": "portrait",
       "introHighlights": [
         "Target the role",
         "Use STAR clearly",
@@ -90,7 +96,8 @@
       "introTitle": "Communication That Moves Work Forward",
       "introSummary": "This strand focuses on clear messages, active listening, and communication that suits the audience and situation.",
       "introImage": "../../remotion-est-scenes/public/est-assets/game-images/Teresa.png",
-      "introVideo": "../../Assets/employability-logos/ECC_Communications Skills (4).mp4#t=5",
+      "introVideo": "../../Assets/EST Preparation/communication-portrait.mp4",
+      "introMediaLayout": "portrait",
       "introHighlights": [
         "Listen actively",
         "Check understanding",
@@ -106,10 +113,12 @@
     },
     {
       "id": "future-of-work",
-      "title": "Megatrends, Growth Industries and Labour Market Information",
-      "introTitle": "Read the Future of Work",
+      "title": "Megatrends and Labour Market Information",
+      "introTitle": "Megatrends and Labour Market Information",
       "introSummary": "This strand focuses on megatrends, growth industries, and labour market evidence that shapes future career opportunities.",
-      "introImage": "../../Assets/employability-logos/main/digital-literacy.png",
+      "introImage": "../../Assets/Images and Animations/Student Hub/module-megatrends-thumb.png",
+      "introVideo": "../../Assets/EST Preparation/megatrends-lmi-portrait.mp4",
+      "introMediaLayout": "portrait",
       "introHighlights": [
         "Spot long-term shifts",
         "Read growth signals",

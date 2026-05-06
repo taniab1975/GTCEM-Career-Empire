@@ -514,12 +514,12 @@
       ]
     },
     {
-      "question": "Give your friend three key pieces of advice to help them manage time more effectively so as to balance life and work responsibilities.",
+      "question": "Describe three key pieces of advice to help a friend manage time more effectively so as to balance life and work responsibilities.",
       "help": "This is a practical time-management response. Explain the advice and the tools or techniques that would help.",
       "scaffold": "Advice 1: ...\nAdvice 2: ...\nAdvice 3: ...\nTools/techniques: ...",
       "strongAnswer": "One key piece of advice is to plan the week in advance using a diary or calendar app so school, work, sport, and family commitments are visible. A second piece of advice is to prioritise urgent tasks first and break larger tasks into smaller steps. A third is to review the plan regularly and adjust when shifts or deadlines change. Tools such as planners, reminders, to-do lists, and calendars can help balance responsibilities more effectively.",
       "conceptTags": ["Time management", "Advice", "Describe"],
-      "commandOptions": ["Give", "Describe", "Explain", "Discuss"],
+      "commandOptions": ["Describe", "Explain", "Discuss", "Identify"],
       "correctCommand": "Describe",
       "contentOptions": [
         "Strong advice includes planning ahead, prioritising urgent tasks, reviewing schedules, and using tools such as calendars, lists, or reminders.",
@@ -600,12 +600,12 @@
       ]
     },
     {
-      "question": "Write two responses to the selection criteria of effective communication skills and initiative and problem-solving using the STAR method.",
+      "question": "Describe two responses to the selection criteria of effective communication skills and initiative and problem-solving using the STAR method.",
       "help": "This question wants applied examples. Use Situation, Task, Action, and Result clearly for each criterion.",
       "scaffold": "Criterion 1: Situation... Task... Action... Result...\nCriterion 2: Situation... Task... Action... Result...",
       "strongAnswer": "For effective communication skills, a student might describe a fundraising stall where they organised roles, spoke clearly with customers, and managed the queue calmly so the event ran smoothly. For initiative and problem-solving, the student might explain how they identified a display or stock issue in retail, acted early, and improved the opening process. Using the STAR structure makes each example specific, relevant, and clearly linked to the criterion.",
       "conceptTags": ["Selection criteria", "STAR", "Communication", "Initiative"],
-      "commandOptions": ["Write", "Describe", "Discuss", "Compare"],
+      "commandOptions": ["Describe", "Explain", "Discuss", "Compare"],
       "correctCommand": "Describe",
       "contentOptions": [
         "A strong STAR response explains the situation, task, action, and result for a specific example linked to each criterion.",
@@ -639,6 +639,134 @@
           "band": "Needs work",
           "response": "The answer is STAR.",
           "commentary": "This identifies the method but does not explain or apply it."
+        }
+      ]
+    },
+    {
+      "question": "List three time-management tools that could help a young person manage school, work, and personal responsibilities.",
+      "help": "List means give the required items clearly. Short phrases are fine because the question does not ask for explanation.",
+      "scaffold": "Tool 1: ...\nTool 2: ...\nTool 3: ...",
+      "strongAnswer": "Useful time-management tools include a weekly planner, a phone calendar with reminders, and a prioritised to-do list.",
+      "conceptTags": ["Time management", "Tools", "List"],
+      "commandOptions": ["List", "Describe", "Explain", "Discuss"],
+      "correctCommand": "List",
+      "contentOptions": [
+        "Useful tools include planners, calendars, reminders, to-do lists, timetables, checklists, and scheduling apps.",
+        "The best tool is to guess what needs to be done each day.",
+        "Time-management tools are only useful after a deadline has already been missed."
+      ],
+      "correctContent": "Useful tools include planners, calendars, reminders, to-do lists, timetables, checklists, and scheduling apps.",
+      "glossaryOptions": ["Time management", "Initiative", "Megatrend", "Budget"],
+      "correctGlossary": "Time management",
+      "requiredKeywords": {
+        "point": ["planner", "calendar", "reminder", "to-do list", "schedule"],
+        "because": ["planner", "calendar", "reminder", "to-do list", "checklist"],
+        "result": ["school", "work", "personal", "responsibilities"],
+        "glossary": ["time management", "planner", "calendar", "reminder", "to-do list", "schedule"]
+      },
+      "writingChecks": [
+        {
+          "id": "list-items",
+          "label": "Three relevant items listed",
+          "keywords": ["planner", "calendar", "reminder", "to-do list", "checklist", "timetable", "schedule"],
+          "minimumMatches": 3,
+          "detail": "List three relevant time-management tools."
+        },
+        {
+          "id": "list-control",
+          "label": "Brief list format",
+          "keywords": ["1.", "2.", "3.", "first", "second", "third", ",", " and "],
+          "detail": "Keep List responses brief, clear, and itemised."
+        }
+      ],
+      "minimumWordCount": 8,
+      "controlLabel": "Enough items for marks",
+      "controlDetail": "List responses still need the requested number of relevant items.",
+      "reviewSummary": "This boss round checked command decoding, relevant list items, topic vocabulary, and concise list control.",
+      "sampleResponses": [
+        {
+          "label": "High sample",
+          "band": "Strong",
+          "response": "Useful time-management tools include a weekly planner, a phone calendar with reminders, and a prioritised to-do list.",
+          "commentary": "This response correctly lists three relevant tools and stays concise, which suits the List command verb."
+        },
+        {
+          "label": "Mid sample",
+          "band": "Developing",
+          "response": "A calendar and reminders.",
+          "commentary": "This is relevant but only lists two tools, so it does not fully meet the question."
+        },
+        {
+          "label": "Low sample",
+          "band": "Needs work",
+          "response": "Be organised.",
+          "commentary": "This gives general advice rather than listing three specific time-management tools."
+        }
+      ]
+    },
+    {
+      "question": "Explain how one megatrend could affect career development for young people.",
+      "help": "Explain means show cause and effect. Name the impact, show how or why it happens, then state the result for career development.",
+      "scaffold": "Megatrend or impact: ...\nHow/why it affects careers: ...\nResult for young people: ...",
+      "strongAnswer": "Automation and impactful technology can affect career development because some routine tasks may be completed by software or machines. This means young people may need to build digital literacy and keep updating skills through training. As a result, they are more prepared for changing jobs and can target pathways in growth areas.",
+      "conceptTags": ["Megatrends", "Career development", "Explain"],
+      "commandOptions": ["Explain", "Describe", "List", "Identify"],
+      "correctCommand": "Explain",
+      "contentOptions": [
+        "A strong explanation links a megatrend to a career impact, shows how or why it affects workers, and states a likely result.",
+        "A strong explanation only defines the word megatrend and stops there.",
+        "Megatrends do not affect career development because jobs never change."
+      ],
+      "correctContent": "A strong explanation links a megatrend to a career impact, shows how or why it affects workers, and states a likely result.",
+      "glossaryOptions": ["Megatrend", "Digital literacy", "Budget", "Selection criteria"],
+      "correctGlossary": "Megatrend",
+      "requiredKeywords": {
+        "point": ["megatrend", "automation", "technology", "career", "jobs"],
+        "because": ["because", "this means", "how", "why", "due to"],
+        "result": ["as a result", "therefore", "prepared", "training", "skills", "pathway"],
+        "glossary": ["megatrend", "automation", "technology", "career development"]
+      },
+      "writingChecks": [
+        {
+          "id": "impact",
+          "label": "Clear impact named",
+          "keywords": ["megatrend", "automation", "technology", "career", "jobs"],
+          "minimumMatches": 2,
+          "detail": "Name the megatrend or career impact clearly."
+        },
+        {
+          "id": "because",
+          "label": "How or why reasoning included",
+          "keywords": ["because", "this means", "how", "why", "due to"],
+          "detail": "Explain how or why the megatrend affects career development."
+        },
+        {
+          "id": "result",
+          "label": "Result or consequence included",
+          "keywords": ["as a result", "therefore", "prepared", "training", "skills", "pathway"],
+          "detail": "State what follows for young people, their skills, or their pathway."
+        }
+      ],
+      "minimumWordCount": 30,
+      "reviewSummary": "This boss round checked decoding, glossary control, cause-and-effect reasoning, and result language.",
+      "sampleResponses": [
+        {
+          "label": "High sample",
+          "band": "Strong",
+          "response": "Automation is a megatrend that could affect career development because routine tasks may be completed by technology. This means young people may need stronger digital skills and ongoing training. As a result, they can adapt to changing jobs and choose pathways with better future opportunities.",
+          "commentary": "This response explains the cause, the effect on skills, and the likely result for career pathways."
+        },
+        {
+          "label": "Mid sample",
+          "band": "Developing",
+          "response": "Megatrends can change jobs because people need new skills for the future.",
+          "commentary": "This has a basic cause-and-effect idea but needs a clearer example and a stronger result."
+        },
+        {
+          "label": "Low sample",
+          "band": "Needs work",
+          "response": "Megatrends are important.",
+          "commentary": "This is relevant but does not explain how or why career development is affected."
         }
       ]
     }

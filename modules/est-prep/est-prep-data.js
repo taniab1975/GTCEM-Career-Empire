@@ -29,16 +29,37 @@ const EST_GUIDE_CHARACTERS = {
     thinking: "../../Assets/Images and Animations/Emmanuel Student Characters/MacKillop/MacKillop Thinking.png",
     encouraging: "../../Assets/Images and Animations/Emmanuel Student Characters/MacKillop/MacKillop encouraging.png",
     celebrating: "../../Assets/Images and Animations/Emmanuel Student Characters/MacKillop/Mackillop Celebrating.png"
+  },
+  francis: {
+    welcome: "../../Assets/Images and Animations/Emmanuel Student Characters/Francis.png",
+    pointing: "../../Assets/Images and Animations/Emmanuel Student Characters/Francis.png",
+    thinking: "../../Assets/Images and Animations/Emmanuel Student Characters/Francis.png",
+    encouraging: "../../Assets/Images and Animations/Emmanuel Student Characters/Francis.png",
+    celebrating: "../../Assets/Images and Animations/Emmanuel Student Characters/Francis.png"
+  },
+  frassati: {
+    welcome: "../../Assets/Images and Animations/Emmanuel Student Characters/Frassati.png",
+    pointing: "../../Assets/Images and Animations/Emmanuel Student Characters/Frassati.png",
+    thinking: "../../Assets/Images and Animations/Emmanuel Student Characters/Frassati.png",
+    encouraging: "../../Assets/Images and Animations/Emmanuel Student Characters/Frassati.png",
+    celebrating: "../../Assets/Images and Animations/Emmanuel Student Characters/Frassati.png"
+  },
+  lisieux: {
+    welcome: "../../Assets/Images and Animations/Emmanuel Student Characters/Lisieux.png",
+    pointing: "../../Assets/Images and Animations/Emmanuel Student Characters/Lisieux.png",
+    thinking: "../../Assets/Images and Animations/Emmanuel Student Characters/Lisieux.png",
+    encouraging: "../../Assets/Images and Animations/Emmanuel Student Characters/Lisieux.png",
+    celebrating: "../../Assets/Images and Animations/Emmanuel Student Characters/Lisieux.png"
   }
 };
 
 const EST_GUIDE_ASSIGNMENTS = {
   initiative: "romero",
   "time-management": "mackillop",
-  "personal-finance": "mackillop",
-  "job-application": "romero",
+  "personal-finance": "lisieux",
+  "job-application": "francis",
   communication: "mackillop",
-  "future-of-work": "romero"
+  "future-of-work": "frassati"
 };
 
 const EST_SCENE_BACKGROUNDS = {
@@ -72,6 +93,31 @@ const EST_TOPIC_SCENES = {
     neutral: "../../Assets/Images and Animations/Initiative Scenes/Initiative topic scene neutral.png",
     challenge: "../../Assets/Images and Animations/Initiative Scenes/Initiative problem.png",
     success: "../../Assets/Images and Animations/Initiative Scenes/Initiative scene success.png"
+  },
+  "time-management": {
+    neutral: "../../Assets/Images and Animations/Employability Skill Logos/4.0 Time Management.png",
+    challenge: "../../Assets/Images and Animations/Employability Skill Logos/4.2 Time Management.png",
+    success: "../../Assets/Images and Animations/Employability Skill Logos/4.3 Time Management.png"
+  },
+  "personal-finance": {
+    neutral: "../../Assets/Images and Animations/Student Hub/empire-status-net-worth.png",
+    challenge: "../../Assets/Images and Animations/Student Hub/empire-status-salary.png",
+    success: "../../Assets/Images and Animations/Student Hub/empire-status-assets-owned.png"
+  },
+  "job-application": {
+    neutral: "../../Assets/Images and Animations/Employability Skill Logos/5.0 Critical Thinking.png",
+    challenge: "../../Assets/Images and Animations/Employability Skill Logos/5.1 Critical Thinking.png",
+    success: "../../Assets/Images and Animations/Celebration Reward Icons/Topic Complete.png"
+  },
+  communication: {
+    neutral: "../../remotion-est-scenes/public/est-assets/game-images/Comms_2.png",
+    challenge: "../../remotion-est-scenes/public/est-assets/game-images/Active listening.png",
+    success: "../../Assets/Images and Animations/Employability Skill Logos/1.4 Communication.png"
+  },
+  "future-of-work": {
+    neutral: "../../Assets/Images and Animations/Student Hub/module-megatrends-thumb.png",
+    challenge: "../../Assets/Images and Animations/Community Page/community-path-green-futures.png",
+    success: "../../Assets/Images and Animations/Student Hub/module-megatrends-loop.gif"
   }
 };
 
@@ -79,6 +125,12 @@ const DEFAULT_CONTENT_TOPIC_GROUPS = [
   {
     id: "initiative",
     title: "Enterprise Behaviours - Initiative",
+    introTitle: "Initiative In Action",
+    introSummary: "This strand focuses on acting early, improving work, helping others, and stepping up before being told.",
+    introImage: "../../remotion-est-scenes/public/est-assets/game-images/Siena.png",
+    introVideo: "../../Assets/EST Preparation/initiative-portrait.mp4",
+    introMediaLayout: "portrait",
+    introHighlights: ["Be proactive", "Improve work practices", "Vocalise opinions", "Help fellow workers"],
     topics: ["Initiative", "Being proactive", "Improving work practices", "Vocalising opinions", "Helping fellow workers", "Seeking more responsibilities"],
     writePrompt: "Write one or two EST-ready sentences explaining how initiative can be shown in a workplace situation.",
     sampleResponse: "Initiative can be shown when a worker acts proactively, suggests improvements, helps colleagues, or volunteers for extra responsibilities before being told. This matters because it improves productivity and shows the worker can contribute positively to the workplace."
@@ -86,6 +138,12 @@ const DEFAULT_CONTENT_TOPIC_GROUPS = [
   {
     id: "time-management",
     title: "Time Management Skills - Plan and prioritise tasks to meet deadlines",
+    introTitle: "Plan, Prioritise, Deliver",
+    introSummary: "This strand is about ordering tasks clearly, using tools well, and adjusting when deadlines shift.",
+    introImage: "../../Assets/Images and Animations/Employability Skill Logos/4.0 Time Management.png",
+    introVideo: "../../Assets/EST Preparation/time-management-portrait.mp4",
+    introMediaLayout: "portrait",
+    introHighlights: ["Plan ahead", "Use productivity tools", "Adjust when priorities change"],
     topics: ["Time management", "Time-management tools", "Managing multiple tasks"],
     writePrompt: "Write one or two EST-ready sentences explaining how a student or worker can plan and prioritise tasks to meet deadlines.",
     sampleResponse: "Time management involves planning ahead, prioritising urgent tasks, and using tools such as calendars, lists, or reminders to stay organised. This helps a person meet deadlines because responsibilities are visible, manageable, and easier to adjust when circumstances change."
@@ -93,6 +151,12 @@ const DEFAULT_CONTENT_TOPIC_GROUPS = [
   {
     id: "personal-finance",
     title: "Managing personal finance, budgeting, seeking assistance, unexpected financial events inc changes to financial circumstance",
+    introTitle: "Money Decisions Under Pressure",
+    introSummary: "This strand trains budgeting, seeking support, and responding to financial changes without panic.",
+    introImage: "../../Assets/Images and Animations/Student Hub/empire-status-net-worth.png",
+    introVideo: "../../Assets/EST Preparation/personal-finance-portrait.mp4",
+    introMediaLayout: "portrait",
+    introHighlights: ["Balance income and expenses", "Seek reliable assistance", "Respond to life events"],
     topics: ["Budgeting", "Tracking money in and out", "Seeking assistance", "Unexpected life events", "Responding to changed financial circumstances"],
     writePrompt: "Write one or two EST-ready sentences explaining how budgeting and seeking assistance support personal financial management.",
     sampleResponse: "Budgeting helps a person balance income and expenses, identify unnecessary spending, and plan for unexpected events. Seeking assistance from trusted services or experts also supports financial management because it provides reliable advice and helps people make informed decisions."
@@ -100,6 +164,12 @@ const DEFAULT_CONTENT_TOPIC_GROUPS = [
   {
     id: "job-application",
     title: "Cover Letters, STAR and Addressing Selection Criteria",
+    introTitle: "Build Stronger Applications",
+    introSummary: "This strand focuses on cover letters, STAR responses, and evidence-rich answers to selection criteria.",
+    introImage: "../../Assets/Images and Animations/Employability Skill Logos/5.0 Critical Thinking.png",
+    introVideo: "../../Assets/EST Preparation/job-application-portrait.mp4",
+    introMediaLayout: "portrait",
+    introHighlights: ["Target the role", "Use STAR clearly", "Show your evidence"],
     topics: ["Cover letter purpose", "Selection criteria", "STAR method"],
     writePrompt: "Write one or two EST-ready sentences explaining how STAR helps an applicant address selection criteria effectively.",
     sampleResponse: "The STAR method helps applicants address selection criteria by structuring examples into Situation, Task, Action, and Result. This makes a response clearer because the employer can see exactly what the applicant did and what outcome was achieved."
@@ -107,13 +177,25 @@ const DEFAULT_CONTENT_TOPIC_GROUPS = [
   {
     id: "communication",
     title: "Communication Skills",
+    introTitle: "Communication That Moves Work Forward",
+    introSummary: "This strand focuses on clear messages, active listening, and communication that suits the audience and situation.",
+    introImage: "../../remotion-est-scenes/public/est-assets/game-images/Teresa.png",
+    introVideo: "../../Assets/EST Preparation/communication-portrait.mp4",
+    introMediaLayout: "portrait",
+    introHighlights: ["Listen actively", "Check understanding", "Use clear language"],
     topics: ["Communication skills", "Non-verbal communication", "Active listening"],
     writePrompt: "Write one or two EST-ready sentences explaining how communication skills can be applied in a workplace or interview situation.",
     sampleResponse: "Communication skills can be applied by using clear verbal language, active listening, and appropriate non-verbal communication for the audience and purpose. This is important because it reduces misunderstandings, builds rapport, and helps tasks or interviews run more effectively."
   },
   {
     id: "future-of-work",
-    title: "Megatrends, Growth Industries and Labour Market Information",
+    title: "Megatrends and Labour Market Information",
+    introTitle: "Megatrends and Labour Market Information",
+    introSummary: "This strand focuses on megatrends, growth industries, and labour market evidence that shapes future career opportunities.",
+    introImage: "../../Assets/Images and Animations/Student Hub/module-megatrends-thumb.png",
+    introVideo: "../../Assets/EST Preparation/megatrends-lmi-portrait.mp4",
+    introMediaLayout: "portrait",
+    introHighlights: ["Spot long-term shifts", "Read growth signals", "Use labour market evidence"],
     topics: ["Megatrends", "Growth industry", "Labour market information", "Emerging industry", "Green industry"],
     writePrompt: "Write one or two EST-ready sentences explaining how megatrends, growth industries, or labour market information can influence future career opportunities.",
     sampleResponse: "Megatrends shape the future of work by changing industries, jobs, and skill needs over time. Labour market information and knowledge of growth industries help people make better career decisions because they show where demand is increasing, what qualifications may be needed, and which opportunities are emerging."
@@ -1230,7 +1312,7 @@ const FULL_GLOSSARY_TERMS = [
 
 const GLOSSARY_ROUND_CONFIGS = [
   { id: "colour-shape", title: "Round 1: Signal Scan", cue: "Recover the right glossary term from the clue trail and stabilise the first chamber." },
-  { id: "shape-only", title: "Round 2: Definition Repair", cue: "Restore the correct definition file for each term and bring chamber two back online." },
+  { id: "keyword-cloze", title: "Round 2: Blank Repair", cue: "Fill the missing keyword from the definition and strengthen the memory trace." },
   { id: "plain-match", title: "Round 3: Corruption Sweep", cue: "The supports are gone. Recover the correct term from meaning alone." },
   { id: "recall", title: "Round 4: Recall Forge", cue: "Use keywords to retrieve the term, then retrieve a keyword from the term." }
 ];
@@ -1242,4 +1324,4 @@ const STAGES = [
   { id: "boss", title: "Boss Round", state: "EST simulation", summary: "Build and justify a mark-worthy EST response with richer feedback.", marks: 8, readiness: 34, credits: 3400, taxRate: 0.1 }
 ];
 
-const HUB_SECTION_IDS = ["hero-section", "metrics-section", "reward-strip", "track-section", "logs-section"];
+const HUB_SECTION_IDS = ["hero-section", "track-section"];

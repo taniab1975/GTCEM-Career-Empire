@@ -20,6 +20,8 @@ const state = {
   creditedTaxContribution: 0,
   answers: {},
   lastBossReview: null,
+  decoderRoundIndex: 0,
+  decoderResults: {},
   contentGroupIndex: -1,
   contentView: "menu",
   contentGroupStartedAt: 0,
@@ -54,9 +56,11 @@ const state = {
   glossaryRoundVotes: {},
   glossaryMissionMode: false,
   glossaryRoundStartedAt: 0,
+  glossaryRunStartedAt: 0,
   glossaryHasStarted: false,
   glossaryMode: "play",
   glossaryStudyIndex: 0,
+  glossaryTermStats: {},
   stageBestScores: {},
   arcFlows: {}
 };
@@ -98,6 +102,8 @@ function persistESTProgressSnapshot() {
       taxContribution: state.taxContribution,
       creditedTaxContribution: state.creditedTaxContribution,
       answers: state.answers,
+      decoderRoundIndex: state.decoderRoundIndex,
+      decoderResults: state.decoderResults,
       contentGroupIndex: state.contentGroupIndex,
       contentView: state.contentView,
       arcFlows: state.arcFlows,
@@ -108,10 +114,21 @@ function persistESTProgressSnapshot() {
       lastContentTopicReview: state.lastContentTopicReview,
       completed: state.completed,
       stageBestScores: state.stageBestScores,
+      glossaryAssignments: state.glossaryAssignments,
       glossaryBatchIndex: state.glossaryBatchIndex,
       glossaryRoundIndex: state.glossaryRoundIndex,
+      glossaryHasStarted: state.glossaryHasStarted,
+      glossaryStreak: state.glossaryStreak,
+      glossaryBestStreak: state.glossaryBestStreak,
+      glossaryMisses: state.glossaryMisses,
+      glossaryRoundRewards: state.glossaryRoundRewards,
+      glossaryRoundVotes: state.glossaryRoundVotes,
+      glossaryRoundStartedAt: state.glossaryRoundStartedAt,
+      glossaryRunStartedAt: state.glossaryRunStartedAt,
       glossaryRecallAnswers: state.glossaryRecallAnswers,
-      glossaryRecallResults: state.glossaryRecallResults
+      glossaryRecallResults: state.glossaryRecallResults,
+      glossaryRecallIndex: state.glossaryRecallIndex,
+      glossaryTermStats: state.glossaryTermStats
     }
   });
 }
@@ -131,6 +148,8 @@ function hydrateESTProgressSnapshot() {
   state.taxContribution = Number(progress.taxContribution || state.taxContribution || 0);
   state.creditedTaxContribution = Number(progress.creditedTaxContribution || state.creditedTaxContribution || 0);
   state.answers = progress.answers || {};
+  state.decoderRoundIndex = Number.isInteger(progress.decoderRoundIndex) ? progress.decoderRoundIndex : 0;
+  state.decoderResults = progress.decoderResults || {};
   state.contentGroupIndex = Number.isInteger(progress.contentGroupIndex) ? progress.contentGroupIndex : -1;
   state.contentView = progress.contentView || "menu";
   state.arcFlows = progress.arcFlows || {};
@@ -141,10 +160,21 @@ function hydrateESTProgressSnapshot() {
   state.lastContentTopicReview = progress.lastContentTopicReview || null;
   state.completed = progress.completed || {};
   state.stageBestScores = progress.stageBestScores || {};
+  state.glossaryAssignments = progress.glossaryAssignments || {};
   state.glossaryBatchIndex = progress.glossaryBatchIndex || 0;
   state.glossaryRoundIndex = progress.glossaryRoundIndex || 0;
+  state.glossaryHasStarted = Boolean(progress.glossaryHasStarted || state.glossaryHasStarted);
+  state.glossaryStreak = Number(progress.glossaryStreak || state.glossaryStreak || 0);
+  state.glossaryBestStreak = Number(progress.glossaryBestStreak || state.glossaryBestStreak || 0);
+  state.glossaryMisses = Number(progress.glossaryMisses || state.glossaryMisses || 0);
+  state.glossaryRoundRewards = progress.glossaryRoundRewards || state.glossaryRoundRewards || {};
+  state.glossaryRoundVotes = progress.glossaryRoundVotes || state.glossaryRoundVotes || {};
+  state.glossaryRoundStartedAt = 0;
+  state.glossaryRunStartedAt = Number(progress.glossaryRunStartedAt || state.glossaryRunStartedAt || 0);
   state.glossaryRecallAnswers = progress.glossaryRecallAnswers || {};
   state.glossaryRecallResults = progress.glossaryRecallResults || {};
+  state.glossaryRecallIndex = Number(progress.glossaryRecallIndex || state.glossaryRecallIndex || 0);
+  state.glossaryTermStats = progress.glossaryTermStats || state.glossaryTermStats || {};
 }
 
 function pushEconomyLog(entry = {}) {
@@ -218,7 +248,7 @@ async function loadBank() {
 
 async function loadContentStageConfig() {
   try {
-    const response = await fetch(CONTENT_STAGE_CONFIG_PATH);
+    const response = await fetch(CONTENT_STAGE_CONFIG_PATH, { cache: "no-store" });
     if (!response.ok) throw new Error("Could not load EST content stage config.");
     return response.json();
   } catch (error) {
