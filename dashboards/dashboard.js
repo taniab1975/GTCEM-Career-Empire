@@ -405,48 +405,42 @@ const EMPLOYABILITY_SKILL_META = {
           text: "In June, my supervisor gave me a commendation for being friendly, polite, and courteous to customers."
         }
       ]
-    },
-    sources: ["Demographics mastery", "Economic mastery"]
+    }
   },
   "digital-literacy": {
     accent: "#7c9cff",
     accentSoft: "rgba(124, 156, 255, 0.16)",
     accentStrong: "rgba(124, 156, 255, 0.34)",
     logoFile: "2.0 Digital Literacy.png",
-    subskillLogoFiles: ["2.1 Digital Literacy.png", "2.3 Digital Literacy.png", "2.4 Digital LIteracy.png", "2.5 Digital Literacy.png"],
-    sources: ["Technology mastery"]
+    subskillLogoFiles: ["2.1 Digital Literacy.png", "2.3 Digital Literacy.png", "2.4 Digital LIteracy.png", "2.5 Digital Literacy.png"]
   },
   "teamwork": {
     accent: "#80ed99",
     accentSoft: "rgba(128, 237, 153, 0.16)",
     accentStrong: "rgba(128, 237, 153, 0.34)",
     logoFile: "3.0 Teamwork.png",
-    subskillLogoFiles: ["3.1 Teamwork.png", "3.2 Teamwork.png", "3.3 Teamwork.png", "3.4 Teamwork.png"],
-    sources: ["Demographics mastery"]
+    subskillLogoFiles: ["3.1 Teamwork.png", "3.2 Teamwork.png", "3.3 Teamwork.png", "3.4 Teamwork.png"]
   },
   "time-management": {
     accent: "#ffd166",
     accentSoft: "rgba(255, 209, 102, 0.16)",
     accentStrong: "rgba(255, 209, 102, 0.34)",
     logoFile: "4.0 Time Management.png",
-    subskillLogoFiles: ["4.1 Time Management.png", "4.2 Time Management.png", "4.3 Time Management.png"],
-    sources: ["Work-life balance", "Climate mastery"]
+    subskillLogoFiles: ["4.1 Time Management.png", "4.2 Time Management.png", "4.3 Time Management.png"]
   },
   "critical-thinking": {
     accent: "#b48cff",
     accentSoft: "rgba(180, 140, 255, 0.16)",
     accentStrong: "rgba(180, 140, 255, 0.34)",
     logoFile: "5.0 Critical Thinking.png",
-    subskillLogoFiles: ["5.1 Critical Thinking.png", "5.2 Critical Thinking.png", "5.3 Critical Thinking.png"],
-    sources: ["Technology", "Climate", "Demographics", "Economic"]
+    subskillLogoFiles: ["5.1 Critical Thinking.png", "5.2 Critical Thinking.png", "5.3 Critical Thinking.png"]
   },
   "problem-solving": {
     accent: "#ff8f70",
     accentSoft: "rgba(255, 143, 112, 0.16)",
     accentStrong: "rgba(255, 143, 112, 0.34)",
     logoFile: "6.0 Problem Solving.png",
-    subskillLogoFiles: ["6.1 Problem Solving.png", "6.2 Problem Solving.png", "6.3 Problem Solving.png"],
-    sources: ["Technology", "Climate", "Economic"]
+    subskillLogoFiles: ["6.1 Problem Solving.png", "6.2 Problem Solving.png", "6.3 Problem Solving.png"]
   }
 };
 
@@ -1166,22 +1160,42 @@ function renderSkills(skillsData, targetId, progressMap) {
   container.innerHTML = skillsData.categories.map(category => {
     const progress = clampPercent(progressMap[category.id] || 0);
     const meta = EMPLOYABILITY_SKILL_META[category.id] || EMPLOYABILITY_SKILL_META.communication;
-    const sources = meta.sources.map(source => `<span>${escapeHtml(source)}</span>`).join("");
     const subskills = category.subskills.slice(0, 4);
     const parentLogoPath = getEmployabilityLogoPath(meta.logoFile) || category.logoPath || "";
     const starExampleMarkup = meta.starExample ? `
       <div class="skill-star-example">
-        <div class="skill-star-title">${escapeHtml(meta.starExample.title)}</div>
-        <div class="skill-star-grid">
-          ${meta.starExample.rows.map(row => `
-            <div class="skill-star-row">
-              <span class="skill-star-marker">
-                <strong>${escapeHtml(row.label)}</strong>
-                <small>${escapeHtml(row.term)}</small>
-              </span>
-              <p>${escapeHtml(row.text)}</p>
+        <div class="skill-star-header">
+          <div>
+            <div class="skill-star-title">${escapeHtml(meta.starExample.title)}</div>
+            <p>Competence grows from plausible STAR evidence students bank from school, work, community, or gameplay.</p>
+          </div>
+          <span>Evidence stream</span>
+        </div>
+        <div class="skill-star-scroll">
+          <article class="skill-star-entry">
+            <div class="skill-star-entry-label">Predetermined example</div>
+            <div class="skill-star-grid">
+              ${meta.starExample.rows.map(row => `
+                <div class="skill-star-row">
+                  <span class="skill-star-marker">
+                    <strong>${escapeHtml(row.label)}</strong>
+                    <small>${escapeHtml(row.term)}</small>
+                  </span>
+                  <p>${escapeHtml(row.text)}</p>
+                </div>
+              `).join("")}
             </div>
-          `).join("")}
+          </article>
+          <article class="skill-star-entry skill-star-entry-next">
+            <div class="skill-star-entry-label">Collected student evidence</div>
+            <p>Student-written STAR fragments will stack here across the year, starting with glossary, school, workplace, and community examples.</p>
+            <div class="skill-evidence-tags">
+              <span>Glossary check</span>
+              <span>School</span>
+              <span>Workplace</span>
+              <span>Community</span>
+            </div>
+          </article>
         </div>
       </div>
     ` : "";
@@ -1205,14 +1219,10 @@ function renderSkills(skillsData, targetId, progressMap) {
           <div class="skill-score-block">
             <div class="kicker">${escapeHtml(category.title)}</div>
             <strong class="skill-score">${progress}%</strong>
-            <span class="skill-score-label">current signal</span>
+            <span class="skill-score-label">${meta.starExample ? "STAR evidence signal" : "evidence signal"}</span>
           </div>
         </div>
         <p class="skill-description">${escapeHtml(category.description)}</p>
-        <div class="skill-source-strip">
-          <span class="skill-source-label">Calculated from</span>
-          <div class="skill-source-list">${sources}</div>
-        </div>
         ${starExampleMarkup}
         ${createProgressBar(progress)}
         <div class="skill-subskill-grid">

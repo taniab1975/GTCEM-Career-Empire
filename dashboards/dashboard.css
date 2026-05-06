@@ -1275,43 +1275,10 @@ textarea {
   margin-bottom: 0;
 }
 
-.skill-source-strip {
-  display: grid;
-  grid-template-columns: 118px minmax(0, 1fr);
-  align-items: center;
-  gap: 12px;
-  padding: 12px;
-  border-radius: 8px;
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  background: rgba(255, 255, 255, 0.045);
-}
-
-.skill-source-label {
-  color: var(--muted);
-  font-size: 10px;
-  text-transform: uppercase;
-  letter-spacing: 0.08em;
-}
-
-.skill-source-list {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-}
-
-.skill-source-list span {
-  padding: 6px 9px;
-  border-radius: 999px;
-  color: var(--text);
-  background: var(--skill-accent-soft);
-  border: 1px solid var(--skill-accent-strong);
-  font-size: 12px;
-}
-
 .skill-star-example {
   display: grid;
-  gap: 10px;
-  padding: 14px;
+  gap: 16px;
+  padding: 22px;
   border-radius: 8px;
   border: 1px solid var(--skill-accent-strong);
   background:
@@ -1319,9 +1286,71 @@ textarea {
     rgba(255, 255, 255, 0.035);
 }
 
+.skill-star-header {
+  display: flex;
+  align-items: start;
+  justify-content: space-between;
+  gap: 18px;
+}
+
 .skill-star-title {
   color: var(--skill-accent);
-  font-size: 12px;
+  font-size: 15px;
+  font-weight: 900;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.skill-star-header p {
+  margin: 8px 0 0;
+  color: var(--muted);
+  font-size: 14px;
+  line-height: 1.45;
+}
+
+.skill-star-header > span {
+  flex: 0 0 auto;
+  padding: 8px 10px;
+  border-radius: 999px;
+  color: #06101c;
+  background: var(--skill-accent);
+  font-size: 11px;
+  font-weight: 900;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.skill-star-scroll {
+  display: grid;
+  gap: 14px;
+  max-height: 100%;
+  min-height: 0;
+  overflow-y: auto;
+  padding-right: 4px;
+}
+
+.skill-star-scroll::-webkit-scrollbar {
+  width: 8px;
+}
+
+.skill-star-scroll::-webkit-scrollbar-track {
+  background: rgba(255, 255, 255, 0.08);
+  border-radius: 999px;
+}
+
+.skill-star-scroll::-webkit-scrollbar-thumb {
+  background: var(--skill-accent-strong);
+  border-radius: 999px;
+}
+
+.skill-star-entry {
+  display: grid;
+  gap: 16px;
+}
+
+.skill-star-entry-label {
+  color: var(--muted);
+  font-size: 11px;
   font-weight: 900;
   letter-spacing: 0.08em;
   text-transform: uppercase;
@@ -1330,58 +1359,81 @@ textarea {
 .skill-star-grid {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 8px;
+  gap: 18px 20px;
 }
 
 .skill-star-row {
   display: grid;
   grid-template-columns: 1fr;
-  gap: 7px;
+  gap: 12px;
   align-items: start;
 }
 
 .skill-star-marker {
   display: grid;
-  grid-template-columns: 22px minmax(0, 1fr);
-  gap: 7px;
+  grid-template-columns: 32px minmax(0, 1fr);
+  gap: 10px;
   align-items: center;
 }
 
 .skill-star-marker strong {
   display: grid;
   place-items: center;
-  width: 24px;
-  height: 24px;
-  border-radius: 8px;
+  width: 32px;
+  height: 32px;
+  border-radius: 10px;
   color: #06101c;
   background: var(--skill-accent);
-  font-size: 12px;
+  font-size: 15px;
   font-weight: 900;
 }
 
 .skill-star-marker small {
   color: var(--text);
-  font-size: 11px;
+  font-size: 14px;
   font-weight: 900;
   letter-spacing: 0.04em;
   text-transform: uppercase;
 }
 
-.skill-star-row p {
+.skill-star-row p,
+.skill-star-entry-next p {
   margin-bottom: 0;
   color: #dbe8ff;
-  font-size: 13px;
-  line-height: 1.42;
+  font-size: 16px;
+  line-height: 1.5;
+}
+
+.skill-star-entry-next {
+  padding: 16px;
+  border-radius: 8px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: rgba(4, 11, 23, 0.28);
+}
+
+.skill-evidence-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.skill-evidence-tags span {
+  padding: 8px 10px;
+  border-radius: 999px;
+  color: var(--text);
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid var(--skill-accent-strong);
+  font-size: 12px;
+  font-weight: 800;
 }
 
 .skill-card-has-star {
   grid-column: 1 / -1;
   display: grid;
-  grid-template-columns: minmax(0, 1.08fr) minmax(320px, 0.92fr);
+  grid-template-columns: minmax(0, 0.9fr) minmax(420px, 1.1fr);
   grid-template-areas:
     "top star"
     "description star"
-    "sources star"
     "progress star"
     "subskills star";
   align-items: start;
@@ -1395,13 +1447,10 @@ textarea {
   grid-area: description;
 }
 
-.skill-card-has-star .skill-source-strip {
-  grid-area: sources;
-}
-
 .skill-card-has-star .skill-star-example {
   grid-area: star;
   align-self: stretch;
+  min-height: 100%;
 }
 
 .skill-card-has-star .progress-track {
@@ -1878,11 +1927,6 @@ textarea {
     font-size: 15px;
   }
 
-  .skill-source-strip {
-    grid-template-columns: 1fr;
-    gap: 8px;
-  }
-
   .skill-subskill-grid {
     grid-template-columns: 1fr;
   }
@@ -1934,7 +1978,6 @@ textarea {
     grid-template-areas:
       "top"
       "description"
-      "sources"
       "star"
       "progress"
       "subskills";
