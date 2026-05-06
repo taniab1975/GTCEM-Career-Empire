@@ -1,6 +1,6 @@
 # Career Empire Project Memory
 
-Last updated: 2026-05-04
+Last updated: 2026-05-06
 
 ## Purpose
 
@@ -17,6 +17,11 @@ Career Empire is becoming a connected Careers and Employability game ecosystem:
 - classes contribute to community funds, leaderboards, and global comparison views
 
 The core design risk is drifting back into "digital worksheet with decoration." Each module should create decisions, trade-offs, feedback, consequences, and saved evidence.
+
+Visual priority:
+
+- This is a visual game, so logos, stills, character art, and generated images should carry real weight wherever possible.
+- Keep asset ratios/focus intentional: make visual assets prominent without overwhelming the UI, avoid tiny icons floating in large empty boxes, and scale text/imagery together so panels feel like game surfaces rather than worksheets.
 
 ## Main Areas Of The Repo
 

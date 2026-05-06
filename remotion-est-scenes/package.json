@@ -5,6 +5,7 @@
   "type": "module",
   "scripts": {
     "dev": "remotion studio src/index.ts",
+    "render:career-empire": "remotion render src/index.ts CareerEmpireExplainer ../Assets/videos/Career\\ Empire\\ Explainer\\ 2026.mp4",
     "render:communication": "remotion render src/index.ts CommunicationExplainer out/communication.mp4",
     "render:digital-literacy": "remotion render src/index.ts DigitalLiteracyExplainer out/digital-literacy.mp4",
     "render:teamwork": "remotion render src/index.ts TeamworkExplainer out/teamwork.mp4",

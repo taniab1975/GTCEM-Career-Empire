@@ -115,7 +115,7 @@ function checkEstAssetReferences() {
     path.join(root, "data/modules/est-prep-rounds")
   ];
   const files = candidates.flatMap(dir => walk(dir, file => /\.(js|css|json|html)$/.test(file)));
-  const assetPattern = /["'`](\.\.\/\.\.\/Assets\/[^"'`]+?\.(?:png|jpe?g|gif|mp4|webm|pdf|docx)(?:[#?][^"'`]*)?)["'`]/gi;
+  const assetPattern = /["'`](\.\.\/\.\.\/Assets\/[^"'`]+?\.(?:png|svg|jpe?g|gif|mp4|webm|pdf|docx)(?:[#?][^"'`]*)?)["'`]/gi;
   let checked = 0;
 
   for (const file of files) {

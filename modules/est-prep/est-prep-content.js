@@ -1,4 +1,6 @@
 // EST Prep content bundle. Loaded as a classic browser script.
+const DECODER_ROUND_COUNT = 4;
+
 function getContentGroupShortLabel(groupId) {
   const labels = {
     initiative: "Initiative",
@@ -93,15 +95,39 @@ function refreshStageDeckContentGroups(bank) {
   });
 }
 
+function buildDecoderRounds(bank, seedRounds = []) {
+  const rounds = bank.decoderRounds || [];
+  const seeded = seedRounds.filter(Boolean).slice(0, DECODER_ROUND_COUNT);
+  const seenQuestions = new Set(seeded.map(round => round.question));
+  const extraRounds = pickRandom(rounds.filter(round => !seenQuestions.has(round.question)), DECODER_ROUND_COUNT - seeded.length);
+  return [...seeded, ...extraRounds].slice(0, DECODER_ROUND_COUNT);
+}
+
+function ensureStageDeckDecoderRounds(bank) {
+  if (!state.stageDeck) return;
+  const currentRounds = Array.isArray(state.stageDeck.decoderRounds) ? state.stageDeck.decoderRounds : [];
+  const seedRounds = currentRounds.length ? currentRounds : (state.stageDeck.decoderRound ? [state.stageDeck.decoderRound] : []);
+  const decoderRounds = buildDecoderRounds(bank, seedRounds);
+  state.stageDeck.decoderRounds = decoderRounds;
+  state.stageDeck.decoderRound = decoderRounds[0] || null;
+  if (!Number.isInteger(state.decoderRoundIndex)) state.decoderRoundIndex = 0;
+  state.decoderRoundIndex = Math.max(0, Math.min(state.decoderRoundIndex, Math.max(0, decoderRounds.length - 1)));
+}
+
 function buildStageDeck(bank) {
   const glossaryTerms = buildGlossarySource();
   const contentGroups = buildContentGroups(bank);
-  const glossaryBatches = chunkArray(pickRandom(glossaryTerms, 16), 4).slice(0, 4);
+  const glossaryBatches = typeof buildGlossaryPracticeBatches === "function"
+    ? buildGlossaryPracticeBatches(glossaryTerms)
+    : chunkArray(pickRandom(glossaryTerms, 16), 4).slice(0, 4);
+  const decoderRounds = buildDecoderRounds(bank);
 
   return {
     contentGroups,
+    glossaryTerms,
     glossaryBatches,
-    decoderRound: pickRandom(bank.decoderRounds || [], 1)[0] || null,
+    decoderRounds,
+    decoderRound: decoderRounds[0] || null,
     bossRound: pickRandom(bank.bossRounds || [], 1)[0] || null,
     communityOptions: bank.communityOptions || []
   };
@@ -180,6 +206,48 @@ function getArcSceneImage(groupId, scene) {
   if (scene === "restored" || scene === "success") return groupScenes.success || groupScenes.neutral || "";
   if (scene === "challenge" || scene === "warning") return groupScenes.challenge || groupScenes.neutral || "";
   return groupScenes.neutral || "";
+}
+
+function getTopicClassName(groupId) {
+  return String(groupId || "topic").toLowerCase().replace(/[^a-z0-9-]+/g, "-");
+}
+
+function getContentTopicSceneLabel(groupId, scene) {
+  const labels = {
+    initiative: {
+      neutral: "Workplace scanner",
+      challenge: "Opportunity spotted",
+      success: "Initiative locked"
+    },
+    "time-management": {
+      neutral: "Schedule board",
+      challenge: "Deadline pressure",
+      success: "Plan restored"
+    },
+    "personal-finance": {
+      neutral: "Budget signal",
+      challenge: "Money pressure",
+      success: "Stability restored"
+    },
+    "job-application": {
+      neutral: "Application desk",
+      challenge: "Evidence check",
+      success: "Response strengthened"
+    },
+    communication: {
+      neutral: "Message signal",
+      challenge: "Audience pressure",
+      success: "Clarity restored"
+    },
+    "future-of-work": {
+      neutral: "Trend scanner",
+      challenge: "Industry shift",
+      success: "Opportunity mapped"
+    }
+  };
+  const topicLabels = labels[groupId] || {};
+  if (scene === "restored") return topicLabels.success || "Signal restored";
+  return topicLabels[scene] || topicLabels.neutral || "Topic signal";
 }
 
 function getTrainingConfigByType(type) {
@@ -266,7 +334,6 @@ function getArcProgressRailAsset(config) {
 
 function renderArcProgressRail(config, className = "") {
   const { completedSteps, activeStep, stepStates } = getArcStepProgress(config);
-  const asset = getArcProgressRailAsset(config);
   const totalSteps = stepStates.length || 4;
   const caption = completedSteps === totalSteps
     ? "All reactor steps complete"
@@ -274,7 +341,21 @@ function renderArcProgressRail(config, className = "") {
   const classes = ["arc-progress-rail", className].filter(Boolean).join(" ");
   return `
     <div class="${escapeHtml(classes)}">
-      <img class="arc-progress-image" src="${escapeHtml(asset)}" alt="${escapeHtml(caption)}">
+      <div class="arc-progress-track" role="list" aria-label="${escapeHtml(caption)}">
+        ${stepStates.map((step, index) => {
+          const stepNumber = index + 1;
+          const isComplete = step.complete;
+          const isActive = !isComplete && stepNumber === activeStep;
+          const status = isComplete ? "complete" : isActive ? "active" : "locked";
+          const shortTitle = String(step.title || `Step ${stepNumber}`).replace(/^Step\s+\d+:\s*/i, "");
+          return `
+            <div class="arc-progress-step ${status}" role="listitem">
+              <span>${stepNumber}</span>
+              <strong>${escapeHtml(shortTitle)}</strong>
+            </div>
+          `;
+        }).join("")}
+      </div>
       <div class="arc-progress-caption">${escapeHtml(caption)}</div>
     </div>
   `;
@@ -312,6 +393,7 @@ function getArcGuidePose(groupId, flow, isCorrect) {
 }
 
 function renderArcGuideAside({ config, groupId, scene, flow, currentStep, currentItem, questionNumber, questionCount, stepProgress, completedSteps, totalStepCount, isCorrect }) {
+  const topicClass = getTopicClassName(groupId);
   const guideContext = flow?.phase === "complete"
     ? "forge"
     : flow?.phase === "feedback" && !isCorrect
@@ -341,8 +423,10 @@ function renderArcGuideAside({ config, groupId, scene, flow, currentStep, curren
         <h3>${escapeHtml(statusTitle)}</h3>
         <p>${escapeHtml(statusCopy)}</p>
       </div>
-      <div class="training-scene-preview training-scene-preview--arc">
+      <div class="training-scene-preview training-scene-preview--arc training-scene-preview--${escapeHtml(topicClass)} training-scene-preview--${escapeHtml(scene)}">
         <img src="${escapeHtml(sceneImage)}" alt="${escapeHtml(config.title)} scene">
+        <span class="training-scene-scan" aria-hidden="true"></span>
+        <span class="training-scene-badge">${escapeHtml(getContentTopicSceneLabel(groupId, scene))}</span>
       </div>
       ${config.memoryHook ? `
         <details class="training-memory-hook" open>
@@ -356,6 +440,7 @@ function renderArcGuideAside({ config, groupId, scene, flow, currentStep, curren
 
 function renderArcTrainingBay(config, score) {
   const groupId = getGroupIdForTrainingType(config.type);
+  const topicClass = getTopicClassName(groupId);
   const groupLabel = getContentGroupShortLabel(groupId);
   const flow = getArcFlow(config);
   const scene = flow?.phase === "complete" || flow?.phase === "transition" ? "restored" : "challenge";
@@ -380,8 +465,8 @@ function renderArcTrainingBay(config, score) {
   const stateTitle = isCorrect ? `${groupLabel} signal locked` : "Try again";
   const stateLead = isCorrect ? "Strong call." : "Not quite yet.";
   return `
-    <section class="est-scene-shell est-scene-shell--${scene}" ${buildESTSceneStyle(scene)}>
-      <div class="panel training-bay training-campaign training-campaign--focus">
+    <section class="est-scene-shell est-scene-shell--${scene} est-scene-shell--topic est-scene-shell--topic-${escapeHtml(topicClass)}" ${buildESTSceneStyle(scene)}>
+      <div class="panel training-bay training-campaign training-campaign--focus training-campaign--topic training-campaign--topic-${escapeHtml(topicClass)}">
         <div class="training-hud training-hud--compact training-hud--mission">
           <div class="training-hud-copy">
             <div class="kicker">Knowledge reactor</div>
@@ -473,7 +558,7 @@ function renderArcTrainingBay(config, score) {
                         <button
                           type="button"
                           class="choice-button ${currentAnswer === option ? "selected live-selected" : ""} ${currentAnswer && option === currentItem.correct ? "correct" : ""} ${currentAnswer === option && !isCorrect ? "incorrect" : ""}"
-                          onclick="window.ESTPrep.setTrainingChoiceEncoded('${answerKey}', '${encodeURIComponent(option)}')"
+                          onclick="window.ESTPrep.setTrainingChoiceEncoded('${answerKey}', '${encodeForInlineHandler(option)}')"
                           ${currentAnswer ? "disabled" : ""}
                         >
                           <strong>${escapeHtml(option)}</strong>
@@ -588,7 +673,7 @@ function renderScenarioTrainingBay(config, score) {
                   <button
                     type="button"
                     class="choice-button ${answer === option ? "selected live-selected" : ""}"
-                    onclick="window.ESTPrep.setTrainingChoiceEncoded('training-scenario-${scenario.id}', '${encodeURIComponent(option)}')"
+                    onclick="window.ESTPrep.setTrainingChoiceEncoded('training-scenario-${scenario.id}', '${encodeForInlineHandler(option)}')"
                   >
                     <strong>${escapeHtml(option)}</strong>
                   </button>
@@ -624,7 +709,7 @@ function renderBuilderTrainingBay(config, score) {
                   <button
                     type="button"
                     class="choice-button ${answer === option ? "selected live-selected" : ""}"
-                    onclick="window.ESTPrep.setTrainingChoiceEncoded('training-builder-${round.id}', '${encodeURIComponent(option)}')"
+                    onclick="window.ESTPrep.setTrainingChoiceEncoded('training-builder-${round.id}', '${encodeForInlineHandler(option)}')"
                   >
                     <strong>${escapeHtml(round.builderLabel || "Best move")}</strong>
                     <small>${escapeHtml(option)}</small>
@@ -1187,46 +1272,34 @@ function toggleReveal(key) {
   if (state.selectedStageId === "boss") renderBossStage();
 }
 
-function toggleTopicIntroVideo(button) {
-  const video = button?.closest(".topic-media-card")?.querySelector("video");
-  if (!video) return;
-  const label = button.querySelector(".topic-video-control-label");
-  const setControlState = (isPlaying) => {
-    button.setAttribute("aria-label", isPlaying ? "Pause topic animation" : "Play topic animation");
-    button.setAttribute("aria-pressed", String(!isPlaying));
-    if (label) label.textContent = isPlaying ? "Pause" : "Play";
-  };
-  if (video.paused || video.ended) {
-    const playPromise = video.play();
-    setControlState(true);
-    if (playPromise?.catch) playPromise.catch(() => setControlState(false));
-  } else {
-    video.pause();
-    setControlState(false);
-  }
-}
-
 function renderContentTopicIntro(group) {
   const highlights = group.introHighlights || [];
   const hasVideo = Boolean(group.introVideo);
   const usesPortraitMedia = group.introMediaLayout === "portrait" || /portrait/i.test(group.introVideo || "");
+  const topicClass = getTopicClassName(group.id);
   const rewardPreview = getContentTopicRewardPreview();
   const bankedPercent = Math.max(0, Number(state.contentTopicBestScores[group.id] || 0));
   const hasBankedResult = bankedPercent > 0;
+  const introImage = group.introImage || getArcSceneImage(group.id, "neutral");
+  const sceneLabel = getContentTopicSceneLabel(group.id, hasBankedResult ? "success" : "neutral");
+  const mediaStage = `
+    <div class="topic-media-stage topic-media-stage--${escapeHtml(topicClass)} ${hasVideo ? "topic-media-stage--video" : ""}">
+      ${hasVideo ? `
+        <video class="topic-media-video ${usesPortraitMedia ? "topic-media-video--portrait" : ""}" autoplay muted loop playsinline poster="${escapeHtml(introImage)}" aria-hidden="true">
+          <source src="${escapeHtml(group.introVideo)}" type="video/mp4">
+        </video>
+      ` : ""}
+      <img class="topic-media topic-media-image" src="${escapeHtml(introImage)}" alt="${escapeHtml(group.title)}">
+      <span class="topic-media-scan" aria-hidden="true"></span>
+      <span class="topic-media-status">${escapeHtml(sceneLabel)}</span>
+      <span class="topic-media-progress" aria-hidden="true"><span></span></span>
+    </div>
+  `;
   return `
-    <section class="est-scene-shell est-scene-shell--intro" ${buildESTSceneStyle("neutral")}>
-      <div class="topic-intro-grid topic-intro-grid--compact topic-intro-grid--visual ${usesPortraitMedia ? "topic-intro-grid--portrait" : ""}">
-        <div class="topic-media-card ${usesPortraitMedia ? "topic-media-card--portrait" : ""}">
-          ${hasVideo ? `
-            <video class="topic-media ${usesPortraitMedia ? "topic-media--portrait" : ""}" autoplay muted loop playsinline poster="${escapeHtml(group.introImage || "")}">
-              <source src="${escapeHtml(group.introVideo)}" type="video/mp4">
-            </video>
-            <button class="topic-video-control" type="button" aria-label="Pause topic animation" aria-pressed="false" onclick="window.ESTPrep.toggleTopicIntroVideo(this)">
-              <span class="topic-video-control-label">Pause</span>
-            </button>
-          ` : `
-            <img class="topic-media topic-media-image" src="${escapeHtml(group.introImage || "")}" alt="${escapeHtml(group.title)}">
-          `}
+    <section class="est-scene-shell est-scene-shell--intro est-scene-shell--topic est-scene-shell--topic-${escapeHtml(topicClass)}" ${buildESTSceneStyle("neutral")}>
+      <div class="topic-intro-grid topic-intro-grid--compact topic-intro-grid--visual topic-intro-grid--${escapeHtml(topicClass)} ${usesPortraitMedia ? "topic-intro-grid--portrait" : ""}">
+        <div class="topic-media-card topic-media-card--${escapeHtml(topicClass)} ${usesPortraitMedia ? "topic-media-card--portrait" : ""} ${hasVideo ? "topic-media-card--video" : "topic-media-card--animated"}">
+          ${mediaStage}
         </div>
         <div class="topic-intro-copy panel">
           <div class="kicker">Topic intro</div>
@@ -1330,7 +1403,7 @@ function renderContentStage() {
                       class="choice-button ${state.answers[`content-${currentGroup.id}-${index}`] === option ? "selected live-selected" : ""}"
                       data-group="content-${currentGroup.id}-${index}"
                       data-value="${escapeHtml(option)}"
-                      onclick="window.ESTPrep.setChoiceEncoded('content-${currentGroup.id}-${index}', '${encodeURIComponent(option)}')"
+                      onclick="window.ESTPrep.setChoiceEncoded('content-${currentGroup.id}-${index}', '${encodeForInlineHandler(option)}')"
                     >
                       <strong>${escapeHtml(option)}</strong>
                     </button>

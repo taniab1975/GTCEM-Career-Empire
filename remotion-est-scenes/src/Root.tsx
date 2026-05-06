@@ -1,5 +1,6 @@
 import React from "react";
 import {Composition} from "remotion";
+import {CareerEmpireExplainer} from "./scenes/CareerEmpireExplainer";
 import {CommunicationExplainer} from "./scenes/CommunicationExplainer";
 import {CriticalThinkingExplainer} from "./scenes/CriticalThinkingExplainer";
 import {DigitalLiteracyExplainer} from "./scenes/DigitalLiteracyExplainer";
@@ -21,6 +22,14 @@ import {
 export const RemotionRoot: React.FC = () => {
   return (
     <>
+      <Composition
+        id="CareerEmpireExplainer"
+        component={CareerEmpireExplainer}
+        durationInFrames={2340}
+        fps={30}
+        width={1600}
+        height={900}
+      />
       <Composition
         id="ESTLabSystemsExplainer"
         component={ESTLabSystemsExplainer}
@@ -88,7 +97,7 @@ export const RemotionRoot: React.FC = () => {
       <Composition
         id="InitiativePortraitTeaser"
         component={InitiativePortraitTeaser}
-        durationInFrames={270}
+        durationInFrames={135}
         fps={30}
         width={1080}
         height={1920}
@@ -96,7 +105,7 @@ export const RemotionRoot: React.FC = () => {
       <Composition
         id="TimeManagementPortraitTeaser"
         component={TimeManagementPortraitTeaser}
-        durationInFrames={270}
+        durationInFrames={150}
         fps={30}
         width={1080}
         height={1920}
@@ -104,7 +113,7 @@ export const RemotionRoot: React.FC = () => {
       <Composition
         id="PersonalFinancePortraitTeaser"
         component={PersonalFinancePortraitTeaser}
-        durationInFrames={270}
+        durationInFrames={150}
         fps={30}
         width={1080}
         height={1920}
@@ -112,7 +121,7 @@ export const RemotionRoot: React.FC = () => {
       <Composition
         id="JobApplicationPortraitTeaser"
         component={JobApplicationPortraitTeaser}
-        durationInFrames={270}
+        durationInFrames={150}
         fps={30}
         width={1080}
         height={1920}
@@ -120,7 +129,7 @@ export const RemotionRoot: React.FC = () => {
       <Composition
         id="CommunicationPortraitTeaser"
         component={CommunicationPortraitTeaser}
-        durationInFrames={270}
+        durationInFrames={150}
         fps={30}
         width={1080}
         height={1920}
@@ -128,7 +137,7 @@ export const RemotionRoot: React.FC = () => {
       <Composition
         id="MegatrendsLmiPortraitTeaser"
         component={MegatrendsLmiPortraitTeaser}
-        durationInFrames={270}
+        durationInFrames={150}
         fps={30}
         width={1080}
         height={1920}

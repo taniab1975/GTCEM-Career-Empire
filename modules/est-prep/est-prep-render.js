@@ -8,6 +8,10 @@ function escapeHtml(value) {
     .replaceAll("'", "&#39;");
 }
 
+function encodeForInlineHandler(value) {
+  return encodeURIComponent(value).replaceAll("'", "%27");
+}
+
 function formatCurrency(value) {
   return `$${Number(value || 0).toLocaleString()}`;
 }
@@ -149,14 +153,35 @@ function scrollToTopSmooth() {
 
 function renderHero() {
   const badgeRow = document.getElementById("hero-badges");
-  if (!badgeRow) return;
   const student = state.student;
-  badgeRow.innerHTML = [
-    `<span class="badge">Student: ${escapeHtml(student?.displayName || "Guest")}</span>`,
-    `<span class="badge">School: ${escapeHtml(student?.schoolName || "Not linked")}</span>`,
-    `<span class="badge">Class: ${escapeHtml(student?.classCode || "No class code")}</span>`,
-    `<span class="badge">Salary Boost: ${formatCurrency(state.salaryBoost)}</span>`
-  ].join("");
+  if (badgeRow) {
+    badgeRow.innerHTML = [
+      `<span class="badge">Student: ${escapeHtml(student?.displayName || "Guest")}</span>`,
+      `<span class="badge">School: ${escapeHtml(student?.schoolName || "Not linked")}</span>`,
+      `<span class="badge">Class: ${escapeHtml(student?.classCode || "No class code")}</span>`,
+      `<span class="badge">Salary Boost: ${formatCurrency(state.salaryBoost)}</span>`
+    ].join("");
+  }
+
+  const systemGrid = document.getElementById("hero-system-status");
+  if (!systemGrid) return;
+  systemGrid.innerHTML = STAGES.map((stage, index) => {
+    const progressState = getStageProgressState(stage.id);
+    const statusLabel = progressState === "complete" ? "Complete" : progressState === "in-progress" ? "In progress" : "Not started";
+    const buttonLabel = progressState === "complete" ? "Review lab" : progressState === "in-progress" ? "Continue lab" : "Open lab";
+    return `
+      <button
+        type="button"
+        class="hero-system-card hero-system-card--${stage.id} ${progressState}"
+        onclick="window.ESTPrep.openStage('${stage.id}')"
+      >
+        <span>System ${String(index + 1).padStart(2, "0")}</span>
+        <strong>${escapeHtml(stage.title.replace(/^EST\s+/i, "").replace(/\s+Check$/i, ""))}</strong>
+        <small>${escapeHtml(statusLabel)}</small>
+        <em>${escapeHtml(buttonLabel)}</em>
+      </button>
+    `;
+  }).join("");
 }
 
 function renderRewardPulse() {
@@ -204,23 +229,177 @@ function renderMetrics() {
   setText("metric-streak", `x${state.streak}`);
 }
 
+function renderContentModuleList() {
+  const container = document.getElementById("content-module-list");
+  if (!container) return;
+  const groups = state.stageDeck?.contentGroups || [];
+  if (!groups.length) {
+    container.innerHTML = `
+      <div class="content-module-empty">
+        <strong>Assessed content modules are loading.</strong>
+        <p>If this stays empty, the EST content bank needs checking.</p>
+      </div>
+    `;
+    return;
+  }
+
+  const completedTopicCount = getCompletedContentTopicCount();
+  container.innerHTML = `
+    <div class="content-module-heading">
+      <strong>Topic Reactors</strong>
+      <span>${completedTopicCount}/${groups.length} banked</span>
+    </div>
+    <div class="content-module-grid">
+      ${groups.map((group, index) => {
+        const status = getContentGroupStatus(group, index);
+        const statusLabel = status === "complete" ? "Banked" : status === "active" ? "In progress" : "Ready";
+        return `
+          <button
+            type="button"
+            class="content-module-button ${status}"
+            onclick="window.ESTPrep.openContentGroupIntro(${index})"
+          >
+            <span>${String(index + 1).padStart(2, "0")}</span>
+            <strong>${escapeHtml(getContentGroupShortLabel(group.id))}</strong>
+            <small>${escapeHtml(statusLabel)}</small>
+          </button>
+        `;
+      }).join("")}
+    </div>
+  `;
+}
+
+function getStageProgressState(stageId) {
+  if (state.completed[stageId]) return "complete";
+
+  if (stageId === "content") {
+    const hasContentWork = getCompletedContentTopicCount() > 0
+      || (Number(state.contentGroupIndex) >= 0 && state.contentView !== "menu")
+      || Object.keys(state.arcFlows || {}).length > 0
+      || Object.keys(state.answers || {}).some(key => key.startsWith("content-") || key.startsWith("training-"));
+    return hasContentWork ? "in-progress" : "not-started";
+  }
+
+  if (stageId === "glossary") {
+    const glossaryProgress = typeof getGlossaryStabilityPercent === "function" ? getGlossaryStabilityPercent() : 0;
+    const glossaryMastery = typeof getGlossaryMasterySummary === "function" ? getGlossaryMasterySummary() : null;
+    const hasGlossaryWork = Boolean(state.glossaryHasStarted)
+      || glossaryProgress > 0
+      || Number(glossaryMastery?.attempts || 0) > 0
+      || Object.keys(state.glossaryRoundRewards || {}).length > 0
+      || Object.keys(state.glossaryRecallAnswers || {}).length > 0
+      || Object.keys(state.glossaryRecallResults || {}).length > 0;
+    return hasGlossaryWork ? "in-progress" : "not-started";
+  }
+
+  if (stageId === "decoder") {
+    const decoderProgress = typeof getDecoderProgress === "function" ? getDecoderProgress() : null;
+    return decoderProgress?.completed > 0 ? "in-progress" : "not-started";
+  }
+
+  if (stageId === "boss") {
+    const hasBossWork = Object.keys(state.answers || {}).some(key => key.startsWith("boss"));
+    return hasBossWork ? "in-progress" : "not-started";
+  }
+
+  return "not-started";
+}
+
+function getStageCardMeta(stage, context = {}) {
+  const contentTopics = Math.max(1, Number(context.totalContentTopics || 1));
+  const completedTopics = Number(context.completedContentTopics || 0);
+  const decoderProgress = context.decoderProgress || null;
+  const glossaryMastery = context.glossaryMastery || null;
+  const glossaryProgress = typeof getGlossaryStabilityPercent === "function" ? getGlossaryStabilityPercent() : 0;
+  const bestScore = Math.round(Number(state.stageBestScores?.[stage.id] || 0) * 100);
+
+  if (stage.id === "content") {
+    return {
+      summary: completedTopics > 0
+        ? `${completedTopics}/${contentTopics} topics banked in the knowledge reactor.`
+        : stage.summary,
+      primary: `${completedTopics}/${contentTopics} topics`,
+      secondary: completedTopics > 0 ? `${bestScore}% content signal` : "Knowledge reactor"
+    };
+  }
+
+  if (stage.id === "glossary") {
+    const testedTerms = Number(glossaryMastery?.tested || 0);
+    const totalTerms = Number(glossaryMastery?.total || 0);
+    return {
+      summary: testedTerms > 0
+        ? `${testedTerms}/${totalTerms} glossary terms tested across ${glossaryMastery.attempts} memory reps.`
+        : stage.summary,
+      primary: totalTerms ? `${testedTerms}/${totalTerms} terms` : `${glossaryProgress}% restored`,
+      secondary: testedTerms > 0 ? `${glossaryMastery.accuracyPercent}% accuracy` : "Precision language"
+    };
+  }
+
+  if (stage.id === "decoder" && decoderProgress) {
+    return {
+      summary: decoderProgress.completed > 0
+        ? `${decoderProgress.completed}/${decoderProgress.total} decoder questions banked.`
+        : stage.summary,
+      primary: `${decoderProgress.completed}/${decoderProgress.total} questions`,
+      secondary: decoderProgress.completed > 0 ? `${decoderProgress.correct}/${decoderProgress.totalParts} VTCS parts` : "Question decode"
+    };
+  }
+
+  if (stage.id === "boss") {
+    return {
+      summary: bestScore > 0
+        ? `Boss Round response best result: ${bestScore}%.`
+        : stage.summary,
+      primary: bestScore > 0 ? `${bestScore}% best` : `${stage.marks} marks`,
+      secondary: bestScore > 0 ? "Teacher evidence saved" : "EST simulation"
+    };
+  }
+
+  return {
+    summary: stage.summary,
+    primary: `${stage.marks} marks`,
+    secondary: `${stage.readiness}% readiness`
+  };
+}
+
 function renderMap() {
   const container = document.getElementById("challenge-map");
-  if (!container) return;
+  if (!container) {
+    renderContentModuleList();
+    return;
+  }
   const totalContentTopics = Math.max(1, (state.stageDeck?.contentGroups || []).length);
   const completedContentTopics = getCompletedContentTopicCount();
-  container.innerHTML = STAGES.map(stage => `
-    <article class="challenge-tile challenge-tile--${stage.id} ${state.completed[stage.id] ? "completed" : ""} ${state.selectedStageId === stage.id ? "active" : ""}">
-      <div class="kicker">${escapeHtml(stage.state)}</div>
-      <h3>${escapeHtml(stage.title)}</h3>
-      <p>${escapeHtml(stage.id === "content" && completedContentTopics > 0 ? `${completedContentTopics}/${totalContentTopics} topics banked in the knowledge reactor.` : stage.summary)}</p>
-      <div class="challenge-meta">
-        <span>${stage.id === "content" ? `${completedContentTopics}/${totalContentTopics} topics` : `${stage.marks} marks`}</span>
-        <span>${stage.id === "content" ? `${formatCurrency(state.salaryBoost)} salary banked` : `${stage.readiness}% readiness`}</span>
-      </div>
-      <button type="button" onclick="window.ESTPrep.openStage('${stage.id}')">${stage.id === "content" && completedContentTopics > 0 ? "Resume lab" : state.completed[stage.id] ? "Review lab" : "Open lab"}</button>
-    </article>
-  `).join("");
+  const decoderProgress = typeof getDecoderProgress === "function" ? getDecoderProgress() : null;
+  const glossaryMastery = typeof getGlossaryMasterySummary === "function" ? getGlossaryMasterySummary() : null;
+  container.innerHTML = STAGES.map(stage => {
+    const progressState = getStageProgressState(stage.id);
+    const inProgress = progressState === "in-progress";
+    const complete = progressState === "complete";
+    const stageMeta = getStageCardMeta(stage, {
+      totalContentTopics,
+      completedContentTopics,
+      decoderProgress,
+      glossaryMastery
+    });
+    const statusLabel = complete ? "Complete" : inProgress ? "In progress" : "Not started";
+    const buttonLabel = complete ? "Review lab" : inProgress ? "Continue lab" : "Open lab";
+
+    return `
+      <article class="challenge-tile challenge-tile--${stage.id} ${complete ? "completed" : ""} ${inProgress ? "in-progress" : ""} ${state.selectedStageId === stage.id ? "active" : ""}">
+        <div class="kicker">${escapeHtml(stage.state)} • ${escapeHtml(statusLabel)}</div>
+        <h3>${escapeHtml(stage.title)}</h3>
+        <p>${escapeHtml(stageMeta.summary)}</p>
+        <div class="challenge-meta">
+          <span>${escapeHtml(stageMeta.primary)}</span>
+          <span>${escapeHtml(stageMeta.secondary)}</span>
+        </div>
+        <button type="button" onclick="window.ESTPrep.openStage('${stage.id}')">${escapeHtml(buttonLabel)}</button>
+      </article>
+    `;
+  }).join("");
+  renderContentModuleList();
+  renderHero();
 }
 
 function renderResources() {
@@ -236,11 +415,18 @@ function renderResources() {
   ].map(item => `<div class="resource-item"><strong>${escapeHtml(item.title)}</strong><p>${escapeHtml(item.detail)}</p></div>`).join("");
 }
 
+function updateLogsVisibility() {
+  const logsSection = document.getElementById("logs-section");
+  if (!logsSection) return;
+  logsSection.classList.toggle("is-hidden", !state.debriefLog.length && !state.evidenceLog.length);
+}
+
 function renderDebrief() {
   const container = document.getElementById("debrief-log");
   if (!container) return;
   if (!state.debriefLog.length) {
     container.innerHTML = '<div class="evidence-item"><strong>No debrief yet</strong><p>Clear your first stage and the EST lab will start banking rewards and feedback.</p></div>';
+    updateLogsVisibility();
     return;
   }
   container.innerHTML = state.debriefLog.slice(-5).reverse().map(item => `
@@ -249,6 +435,7 @@ function renderDebrief() {
       <p>${escapeHtml(item.detail)}</p>
     </div>
   `).join("");
+  updateLogsVisibility();
 }
 
 function renderEvidence() {
@@ -256,6 +443,7 @@ function renderEvidence() {
   if (!container) return;
   if (!state.evidenceLog.length) {
     container.innerHTML = '<div class="evidence-item"><strong>No evidence saved yet</strong><p>Written responses and decoded question artifacts will appear here.</p></div>';
+    updateLogsVisibility();
     return;
   }
   container.innerHTML = state.evidenceLog.slice(-6).reverse().map(item => `
@@ -264,6 +452,7 @@ function renderEvidence() {
       <p>${escapeHtml(item.detail)}</p>
     </div>
   `).join("");
+  updateLogsVisibility();
 }
 
 function renderStageRoot(html) {
@@ -285,7 +474,7 @@ function renderOptionGroup(groupKey, title, options) {
             class="choice-button ${state.answers[groupKey] === option ? "selected live-selected" : ""}"
             data-group="${escapeHtml(groupKey)}"
             data-value="${escapeHtml(option)}"
-            onclick="window.ESTPrep.setChoiceEncoded('${groupKey}', '${encodeURIComponent(option)}')"
+            onclick="window.ESTPrep.setChoiceEncoded('${groupKey}', '${encodeForInlineHandler(option)}')"
           >
             <strong>${escapeHtml(option)}</strong>
           </button>

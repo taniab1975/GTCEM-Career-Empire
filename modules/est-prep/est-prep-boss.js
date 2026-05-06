@@ -14,6 +14,105 @@ function getBossScaffoldLines(round) {
     .filter(Boolean);
 }
 
+const DECODER_PARTS = [
+  {
+    id: "verb",
+    label: "Verb",
+    placeholder: "Select the command word",
+    optionsKey: "verbOptions",
+    correctKey: "correctVerb",
+    toolTitle: "Forensics Tool 1: Command verb"
+  },
+  {
+    id: "topic",
+    label: "Topic",
+    placeholder: "Select the concept",
+    optionsKey: "topicOptions",
+    correctKey: "correctTopic",
+    toolTitle: "Forensics Tool 2: Topic"
+  },
+  {
+    id: "context",
+    label: "Context",
+    placeholder: "Select the context",
+    optionsKey: "contextOptions",
+    correctKey: "correctContext",
+    toolTitle: "Forensics Tool 3: Context"
+  },
+  {
+    id: "structure",
+    label: "Structure",
+    placeholder: "Select the structure",
+    optionsKey: "structureOptions",
+    correctKey: "correctStructure",
+    toolTitle: "Forensics Tool 4: Structure"
+  }
+];
+
+function getDecoderRounds() {
+  const rounds = state.stageDeck?.decoderRounds;
+  if (Array.isArray(rounds) && rounds.length) return rounds;
+  return state.stageDeck?.decoderRound ? [state.stageDeck.decoderRound] : [];
+}
+
+function getDecoderRoundIndex() {
+  const rounds = getDecoderRounds();
+  if (!rounds.length) return 0;
+  if (!Number.isInteger(state.decoderRoundIndex)) state.decoderRoundIndex = 0;
+  state.decoderRoundIndex = Math.max(0, Math.min(state.decoderRoundIndex, rounds.length - 1));
+  return state.decoderRoundIndex;
+}
+
+function getDecoderAnswerKey(partId, roundIndex = getDecoderRoundIndex()) {
+  return `decoder-${roundIndex}-${partId}`;
+}
+
+function getDecoderAnswer(partId, roundIndex = getDecoderRoundIndex()) {
+  return state.answers[getDecoderAnswerKey(partId, roundIndex)] || (roundIndex === 0 ? state.answers[`decoder-${partId}`] || "" : "");
+}
+
+function getDecoderAnswers(roundIndex = getDecoderRoundIndex()) {
+  return DECODER_PARTS.reduce((answers, part) => ({
+    ...answers,
+    [part.id]: getDecoderAnswer(part.id, roundIndex)
+  }), {});
+}
+
+function getDecoderPartFromAnswerKey(groupKey) {
+  const roundIndex = getDecoderRoundIndex();
+  return DECODER_PARTS.find(part => groupKey === getDecoderAnswerKey(part.id, roundIndex) || groupKey === `decoder-${part.id}`) || null;
+}
+
+function setDecoderChoice(groupKey, option) {
+  state.answers[groupKey] = option;
+  const round = getDecoderRounds()[getDecoderRoundIndex()];
+  const part = getDecoderPartFromAnswerKey(groupKey);
+  const isCorrect = Boolean(part && round && option === round[part.correctKey]);
+  state.recentReward = {
+    type: isCorrect ? "positive" : "warning",
+    title: isCorrect ? `${part.label} locked in` : "Keep decoding",
+    detail: isCorrect
+      ? `${option} is now glowing on the forensics board.`
+      : "That choice is selected, but the board only lights up for the correct VTCS part."
+  };
+  persistESTProgressSnapshot();
+  renderDecoderStage();
+  renderRewardPulse();
+}
+
+function getDecoderProgress() {
+  const rounds = getDecoderRounds();
+  const results = state.decoderResults || {};
+  const completed = rounds.reduce((count, _, index) => count + (results[index] ? 1 : 0), 0);
+  const correct = rounds.reduce((sum, _, index) => sum + Number(results[index]?.correctCount || 0), 0);
+  return {
+    completed,
+    correct,
+    total: rounds.length,
+    totalParts: rounds.length * DECODER_PARTS.length
+  };
+}
+
 function renderBossResponseBuilder(round) {
   const lines = getBossScaffoldLines(round);
   return `
@@ -47,49 +146,53 @@ function renderDecoderStage() {
   setStageMenuMode(false);
   setStageScene("challenge");
   renderFocusNav();
-  const round = state.stageDeck?.decoderRound;
+  const rounds = getDecoderRounds();
+  const roundIndex = getDecoderRoundIndex();
+  const round = rounds[roundIndex];
   if (!round) return;
-  setText("stage-title", "VTCS Decoder");
-  setText("stage-subtitle", "Run question forensics before you write.");
-  renderStageRoot(`
-    <div class="question-card">
-      <div class="kicker">VTCS Core</div>
-      <h3>${escapeHtml(round.question)}</h3>
-      <p>${escapeHtml(round.feedback)}</p>
-    </div>
+  const progress = getDecoderProgress();
+  const progressBadges = rounds.map((_, index) => {
+    const result = state.decoderResults?.[index];
+    const stateClass = index === roundIndex ? "active" : result ? "complete" : "";
+    const score = result ? ` ${result.correctCount}/${DECODER_PARTS.length}` : "";
+    return `<span class="badge decoder-progress-badge ${stateClass}">Question ${index + 1}${score}</span>`;
+  }).join("");
+  const forensicsBoard = `
     <div class="panel training-bay">
       <div class="section-title">
         <h2>Question Forensics Board</h2>
         <p>Build the brief</p>
       </div>
-      <p class="small-copy">Treat the EST question like evidence. Build the four-part brief by locking the correct verb, topic, context, and response structure.</p>
+      <p class="small-copy">Treat the EST question like evidence. Correct VTCS choices lock into the brief below.</p>
       <div class="forensics-grid">
-        <div class="prompt-card forensics-slot ${state.answers["decoder-verb"] ? "filled" : ""}">
-          <strong>Verb</strong>
-          <p>${escapeHtml(state.answers["decoder-verb"] || "Select the command word")}</p>
-        </div>
-        <div class="prompt-card forensics-slot ${state.answers["decoder-topic"] ? "filled" : ""}">
-          <strong>Topic</strong>
-          <p>${escapeHtml(state.answers["decoder-topic"] || "Select the concept")}</p>
-        </div>
-        <div class="prompt-card forensics-slot ${state.answers["decoder-context"] ? "filled" : ""}">
-          <strong>Context</strong>
-          <p>${escapeHtml(state.answers["decoder-context"] || "Select the context")}</p>
-        </div>
-        <div class="prompt-card forensics-slot ${state.answers["decoder-structure"] ? "filled" : ""}">
-          <strong>Structure</strong>
-          <p>${escapeHtml(state.answers["decoder-structure"] || "Select the structure")}</p>
-        </div>
+        ${DECODER_PARTS.map(part => {
+          const answer = getDecoderAnswer(part.id, roundIndex);
+          const isCorrect = answer === round[part.correctKey];
+          return `
+            <div class="prompt-card forensics-slot ${isCorrect ? "filled" : "pending"}">
+              <strong>${escapeHtml(part.label)}</strong>
+              <p>${isCorrect ? escapeHtml(answer) : ""}</p>
+            </div>
+          `;
+        }).join("")}
       </div>
     </div>
-    ${renderOptionGroup("decoder-verb", "Forensics Tool 1: Command verb", round.verbOptions)}
-    ${renderOptionGroup("decoder-topic", "Forensics Tool 2: Topic", round.topicOptions)}
-    ${renderOptionGroup("decoder-context", "Forensics Tool 3: Context", round.contextOptions)}
-    ${renderOptionGroup("decoder-structure", "Forensics Tool 4: Structure", round.structureOptions)}
+  `;
+  setText("stage-title", "VTCS Decoder");
+  setText("stage-subtitle", `Question ${roundIndex + 1} of ${rounds.length}: run question forensics before you write.`);
+  renderStageRoot(`
+    <div class="badge-row decoder-progress-strip">${progressBadges}</div>
+    <div class="question-card">
+      <div class="kicker">VTCS Core ${roundIndex + 1}/${rounds.length}</div>
+      <h3>${escapeHtml(round.question)}</h3>
+      <p>${escapeHtml(round.feedback)}</p>
+    </div>
+    ${DECODER_PARTS.map(part => renderOptionGroup(getDecoderAnswerKey(part.id, roundIndex), part.toolTitle, round[part.optionsKey] || [])).join("")}
+    ${forensicsBoard}
     <div class="written-stage">
       <strong>Case summary</strong>
-      <p class="small-copy">Students lose marks when they misread what the question is actually asking. Strong decoding protects marks before writing starts.</p>
-      <button class="submit-button" type="button" onclick="window.ESTPrep.submitDecoder()">Bank Decoder Results</button>
+      <p class="small-copy">${progress.completed}/${progress.total} questions banked. Students lose marks when they misread what the question is actually asking. Strong decoding protects marks before writing starts.</p>
+      <button class="submit-button" type="button" onclick="window.ESTPrep.submitDecoder()">${roundIndex === rounds.length - 1 ? "Bank Decoder Results" : "Bank Question And Continue"}</button>
     </div>
   `);
 }
@@ -133,7 +236,7 @@ function renderBossStage() {
                 type="button"
                 class="choice-button ${state.answers.bossShowdown === sample.label ? "selected live-selected" : ""}"
                 style="margin-top:12px;"
-                onclick="window.ESTPrep.setChoiceEncoded('bossShowdown', '${encodeURIComponent(sample.label)}')"
+                onclick="window.ESTPrep.setChoiceEncoded('bossShowdown', '${encodeForInlineHandler(sample.label)}')"
               >
                 <strong>This is stronger</strong>
               </button>
@@ -175,6 +278,10 @@ function renderBossStage() {
 }
 
 function setChoice(groupKey, option) {
+  if (getDecoderPartFromAnswerKey(groupKey)) {
+    setDecoderChoice(groupKey, option);
+    return;
+  }
   state.answers[groupKey] = option;
   updateSelectionButtons(groupKey, option);
   setSelectionPulse(groupKey, option);
@@ -187,10 +294,12 @@ function setChoiceEncoded(groupKey, encodedOption) {
 
 function setBossScaffold(index, value) {
   state.answers[`boss-scaffold-${index}`] = value;
+  persistESTProgressSnapshot();
 }
 
 function setBossShowdownReason(value) {
   state.answers.bossShowdownReason = value;
+  persistESTProgressSnapshot();
 }
 
 function buildBossDraft() {
@@ -212,6 +321,7 @@ function buildBossDraft() {
     title: "Draft built",
     detail: "Your scaffold blocks have been assembled into a first EST response draft."
   };
+  persistESTProgressSnapshot();
   renderRewardPulse();
 }
 
@@ -220,21 +330,64 @@ function setBossVote(optionId) {
   updateSelectionButtons("boss-vote", optionId);
   const option = (state.stageDeck?.communityOptions || []).find(item => item.id === optionId);
   setSelectionPulse("boss-vote", option?.label || optionId);
+  persistESTProgressSnapshot();
+}
+
+function getBossWritingCriteria(round) {
+  if (Array.isArray(round?.writingChecks) && round.writingChecks.length) {
+    return round.writingChecks;
+  }
+
+  return [
+    { id: "point", label: "Clear answer point", keywords: round.requiredKeywords?.point || [], detail: "Your response should directly answer the question." },
+    { id: "because", label: "Cause or explanation included", keywords: round.requiredKeywords?.because || [], detail: "Use because/how reasoning, not a bare statement." },
+    { id: "result", label: "Consequence or outcome included", keywords: round.requiredKeywords?.result || [], detail: "Show the effect, outcome, or implication." }
+  ];
+}
+
+function showDecoderQuestionFeedback(round, roundIndex, correctCount, scoreRatio) {
+  const type = scoreRatio >= 0.75 ? "good" : scoreRatio >= 0.5 ? "warn" : "bad";
+  const scene = type === "good" ? "restored" : "challenge";
+  setStageScene(scene);
+  renderStageRoot(`
+    <section class="est-scene-shell est-scene-shell--${scene}" ${buildESTSceneStyle(scene)}>
+      <div class="feedback-box ${type}">
+        <p><strong>Question ${roundIndex + 1} banked:</strong> ${correctCount}/${DECODER_PARTS.length} VTCS parts correct.</p>
+        <p>Best reading: <strong>${escapeHtml(round.correctVerb)}</strong> the issue of <strong>${escapeHtml(round.correctTopic)}</strong> in the context of <strong>${escapeHtml(round.correctContext)}</strong> using <strong>${escapeHtml(round.correctStructure)}</strong>.</p>
+        <p><button class="submit-button" type="button" onclick="window.ESTPrep.nextDecoderQuestion()">Continue to Question ${roundIndex + 2}</button></p>
+      </div>
+    </section>
+  `);
+}
+
+function nextDecoderQuestion() {
+  renderDecoderStage();
+  scrollToTopSmooth();
 }
 
 function bossCriterionReview(round, response) {
   const normalized = String(response || "").trim();
   const lower = normalized.toLowerCase();
   const wordCount = normalized ? normalized.split(/\s+/).filter(Boolean).length : 0;
+  const writingChecks = getBossWritingCriteria(round).map(criteria => {
+    const keywords = Array.isArray(criteria.keywords) ? criteria.keywords : [];
+    const minimumMatches = Math.max(1, Number(criteria.minimumMatches) || 1);
+    const matchedCount = keywords.filter(keyword => lower.includes(String(keyword).toLowerCase())).length;
+    return {
+      id: criteria.id,
+      label: criteria.label,
+      passed: matchedCount >= minimumMatches,
+      detail: criteria.detail
+    };
+  });
+  const minimumWordCount = Number.isFinite(round.minimumWordCount) ? round.minimumWordCount : 24;
   const checks = [
     { id: "command", label: "Command word decoded", passed: state.answers["boss-command"] === round.correctCommand, detail: `Expected ${round.correctCommand}.` },
     { id: "content", label: "Best content point chosen", passed: state.answers["boss-content"] === round.correctContent, detail: "Content option aligns to the revision topic." },
     { id: "glossary", label: "Correct glossary term selected", passed: state.answers["boss-glossary"] === round.correctGlossary, detail: `Expected ${round.correctGlossary}.` },
-    { id: "point", label: "Clear answer point", passed: round.requiredKeywords.point.some(keyword => lower.includes(keyword.toLowerCase())), detail: "Your response should directly answer the question." },
-    { id: "because", label: "Cause or explanation included", passed: round.requiredKeywords.because.some(keyword => lower.includes(keyword.toLowerCase())), detail: "Use because/how reasoning, not a bare statement." },
-    { id: "result", label: "Consequence or outcome included", passed: round.requiredKeywords.result.some(keyword => lower.includes(keyword.toLowerCase())), detail: "Show the effect, outcome, or implication." },
+    ...writingChecks,
     { id: "glossary-language", label: "Glossary language used in writing", passed: round.requiredKeywords.glossary.some(keyword => lower.includes(keyword.toLowerCase())), detail: "Bring the glossary term into the actual response." },
-    { id: "control", label: "Enough detail for marks", passed: wordCount >= 24, detail: "Very short answers usually miss the explanation needed for marks." }
+    { id: "control", label: round.controlLabel || "Enough detail for marks", passed: wordCount >= minimumWordCount, detail: round.controlDetail || "Very short answers usually miss the explanation needed for marks." }
   ];
 
   const passedCount = checks.filter(check => check.passed).length;
@@ -271,35 +424,87 @@ function renderBossSamples(round) {
 }
 
 async function submitDecoder() {
-  const round = state.stageDeck?.decoderRound;
+  const rounds = getDecoderRounds();
+  const roundIndex = getDecoderRoundIndex();
+  const round = rounds[roundIndex];
   if (!round) return;
   const durationSeconds = getCurrentStageDurationSeconds();
-  const correctCount = [
-    state.answers["decoder-verb"] === round.correctVerb,
-    state.answers["decoder-topic"] === round.correctTopic,
-    state.answers["decoder-context"] === round.correctContext,
-    state.answers["decoder-structure"] === round.correctStructure
-  ].filter(Boolean).length;
-  const scoreRatio = correctCount / 4;
-  awardStage("decoder", { scoreRatio });
-  addEvidence("Decoded EST question", `${round.question} • Verb: ${state.answers["decoder-verb"] || "not chosen"} • Topic: ${state.answers["decoder-topic"] || "not chosen"} • Context: ${state.answers["decoder-context"] || "not chosen"} • Structure: ${state.answers["decoder-structure"] || "not chosen"}`);
-  await saveProgress("decoder-drill", "decoder-breakdown", `Question: ${round.question}\nVerb: ${state.answers["decoder-verb"] || "not chosen"}\nTopic: ${state.answers["decoder-topic"] || "not chosen"}\nContext: ${state.answers["decoder-context"] || "not chosen"}\nStructure: ${state.answers["decoder-structure"] || "not chosen"}`, Math.round(scoreRatio * 100), {
-    taskName: "VTCS Decoder",
+  const answersByPart = getDecoderAnswers(roundIndex);
+  const correctCount = DECODER_PARTS.filter(part => answersByPart[part.id] === round[part.correctKey]).length;
+  const questionScoreRatio = correctCount / DECODER_PARTS.length;
+  state.decoderResults[roundIndex] = {
+    question: round.question,
+    correctCount,
+    totalParts: DECODER_PARTS.length,
+    scoreRatio: questionScoreRatio,
+    answers: answersByPart
+  };
+  addEvidence(`Decoded EST question ${roundIndex + 1}/${rounds.length}`, `${round.question} • Verb: ${answersByPart.verb || "not chosen"} • Topic: ${answersByPart.topic || "not chosen"} • Context: ${answersByPart.context || "not chosen"} • Structure: ${answersByPart.structure || "not chosen"}`);
+  await saveProgress("decoder-drill", "decoder-breakdown", `Question ${roundIndex + 1}/${rounds.length}: ${round.question}\nVerb: ${answersByPart.verb || "not chosen"}\nTopic: ${answersByPart.topic || "not chosen"}\nContext: ${answersByPart.context || "not chosen"}\nStructure: ${answersByPart.structure || "not chosen"}`, Math.round(questionScoreRatio * 100), {
+    taskName: `VTCS Decoder Question ${roundIndex + 1}`,
     durationSeconds,
     promptText: round.question,
     extraPayload: {
+      question_number: roundIndex + 1,
+      total_questions: rounds.length,
       forensic_brief: {
-        verb: state.answers["decoder-verb"] || "",
-        topic: state.answers["decoder-topic"] || "",
-        context: state.answers["decoder-context"] || "",
-        structure: state.answers["decoder-structure"] || ""
+        verb: answersByPart.verb || "",
+        topic: answersByPart.topic || "",
+        context: answersByPart.context || "",
+        structure: answersByPart.structure || ""
       }
     }
   });
-  showFeedbackBox(scoreRatio >= 0.75 ? "good" : scoreRatio >= 0.5 ? "warn" : "bad", [
-    `<strong>Decoder results:</strong> ${correctCount}/4 parts correct.`,
-    `Best reading: <strong>${round.correctVerb}</strong> the issue of <strong>${round.correctTopic}</strong> in the context of <strong>${round.correctContext}</strong> using <strong>${round.correctStructure}</strong>.`,
-    "You banked marks and readiness by reading the question properly before writing."
+
+  if (roundIndex < rounds.length - 1) {
+    state.decoderRoundIndex = roundIndex + 1;
+    persistESTProgressSnapshot();
+    showDecoderQuestionFeedback(round, roundIndex, correctCount, questionScoreRatio);
+    return;
+  }
+
+  const progress = getDecoderProgress();
+  const finalScoreRatio = progress.totalParts ? progress.correct / progress.totalParts : 0;
+  const scorePercent = Math.round(finalScoreRatio * 100);
+  const previousBestRatio = Math.max(0, Number(state.stageBestScores.decoder || 0));
+  const firstDecoderClear = !state.completed.decoder && previousBestRatio === 0;
+  const improvedBest = finalScoreRatio > previousBestRatio;
+
+  if (firstDecoderClear) {
+    awardStage("decoder", { scoreRatio: finalScoreRatio });
+  } else if (improvedBest) {
+    awardStageImprovement("decoder", previousBestRatio, finalScoreRatio);
+  } else {
+    state.recentReward = {
+      type: "warning",
+      title: "Decoder replay saved",
+      detail: `This attempt scored ${scorePercent}%. Your best decoder result remains ${Math.round(previousBestRatio * 100)}%, so no extra salary or tax was added.`
+    };
+    renderRewardPulse();
+  }
+
+  state.stageBestScores.decoder = Math.max(previousBestRatio, finalScoreRatio);
+  await saveProgress("decoder-drill", "decoder-breakdown", `Final VTCS Decoder score: ${progress.correct}/${progress.totalParts} parts correct across ${progress.total} questions.`, scorePercent, {
+    taskName: "VTCS Decoder",
+    durationSeconds,
+    promptText: "Decode multiple EST questions using verb, topic, context, and structure.",
+    extraPayload: {
+      decoder_results: rounds.map((item, index) => ({
+        question_number: index + 1,
+        question: item.question,
+        correct_count: Number(state.decoderResults[index]?.correctCount || 0),
+        total_parts: DECODER_PARTS.length,
+        answers: state.decoderResults[index]?.answers || {}
+      }))
+    }
+  });
+  persistESTProgressSnapshot();
+  showFeedbackBox(finalScoreRatio >= 0.75 ? "good" : finalScoreRatio >= 0.5 ? "warn" : "bad", [
+    `<strong>Decoder results:</strong> ${progress.correct}/${progress.totalParts} VTCS parts correct across ${progress.total} questions.`,
+    `${improvedBest || firstDecoderClear
+      ? `Best decoder result is now ${Math.round(state.stageBestScores.decoder * 100)}%.`
+      : `Best decoder result remains ${Math.round(previousBestRatio * 100)}%. This replay was saved but did not overwrite your best run.`}`,
+    "You banked marks and readiness by reading each question properly before writing."
   ]);
 }
 
@@ -356,7 +561,7 @@ async function submitBoss() {
 
   showFeedbackBox(review.scorePercent >= 85 ? "good" : review.scorePercent >= 60 ? "warn" : "bad", [
     `<strong>Boss round complete:</strong> ${review.scorePercent}% • ${review.band} band.`,
-    `Word count: ${review.wordCount}. This boss round checked decoding, glossary control, answer structure, explanation, and result language.`,
+    `Word count: ${review.wordCount}. ${escapeHtml(round.reviewSummary || "This boss round checked decoding, glossary control, answer structure, explanation, and result language.")}`,
     `Marker model: ${escapeHtml(round.strongAnswer)}`
   ], `
     <div class="sample-review">

@@ -41,6 +41,7 @@ function openStage(stageId) {
   if (stageId === "glossary") renderGlossaryStage();
   if (stageId === "decoder") renderDecoderStage();
   if (stageId === "boss") renderBossStage();
+  persistESTProgressSnapshot();
   scrollToTopSmooth();
 }
 
@@ -49,6 +50,10 @@ function returnToTrack() {
   setStageMenuMode(false);
   setGameplayViewportMode(false);
   setStageScene("neutral");
+  state.glossaryMissionMode = false;
+  state.glossaryRoundStartedAt = 0;
+  clearGlossaryTimer();
+  syncMissionMode();
   state.selectedStageId = null;
   state.lastBossReview = null;
   state.contentGroupIndex = -1;
@@ -58,6 +63,7 @@ function returnToTrack() {
   setText("stage-title", "Choose your next challenge");
   setText("stage-subtitle", "Move through the EST Lab to build readiness, confidence, and mark-winning habits.");
   renderStageRoot('<div class="empty-state"><p>Select another stage from the EST Lab Track above.</p></div>');
+  persistESTProgressSnapshot();
   scrollToTopSmooth();
 }
 
@@ -79,8 +85,15 @@ async function init() {
   } else {
     refreshStageDeckContentGroups(state.bank);
   }
+  ensureStageDeckDecoderRounds(state.bank);
+  if (!state.glossaryHasStarted && typeof refreshGlossaryPracticeDeck === "function") {
+    refreshGlossaryPracticeDeck();
+  }
   await hydrateFromSupabase();
   refreshStageDeckContentGroups(state.bank);
+  if (!state.glossaryHasStarted && typeof refreshGlossaryPracticeDeck === "function") {
+    refreshGlossaryPracticeDeck();
+  }
   syncContentCompletionFromTopicScores();
   if (!state.contentView) {
     state.contentView = "menu";
@@ -115,7 +128,6 @@ window.ESTPrep = {
   nextContentGroup: () => moveContentGroup(1),
   prevContentGroup: () => moveContentGroup(-1),
   jumpToContentGroup,
-  toggleTopicIntroVideo,
   setTrainingChoice,
   setTrainingChoiceEncoded,
   advanceArcCard,
@@ -135,6 +147,7 @@ window.ESTPrep = {
   nextGlossaryPhase,
   continueGlossaryRound,
   setGlossaryRoundVote,
+  startNewGlossaryPracticeRun,
   toggleReveal,
   setGlossaryRecallAnswer,
   setGlossaryRecallChoiceEncoded,
@@ -149,6 +162,7 @@ window.ESTPrep = {
   setBossVote,
   submitContent,
   submitDecoder,
+  nextDecoderQuestion,
   submitGlossary,
   submitBoss,
   returnToLab,
