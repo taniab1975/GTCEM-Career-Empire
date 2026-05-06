@@ -786,8 +786,18 @@ h1 {
   align-items: start;
 }
 
+.student-side-stack {
+  display: grid;
+  gap: 20px;
+  align-content: start;
+}
+
 .student-dashboard-page .module-grid {
   grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.student-dashboard-page .student-side-stack .shop-preview-grid {
+  grid-template-columns: 1fr;
 }
 
 .student-dashboard-page .module-card {
@@ -815,6 +825,18 @@ h1 {
     linear-gradient(180deg, rgba(4, 12, 26, 0.04), rgba(4, 12, 26, 0.94)),
     linear-gradient(90deg, rgba(4, 12, 26, 0.74), rgba(4, 12, 26, 0.08) 58%, rgba(4, 12, 26, 0.5)),
     var(--module-image) center center / cover no-repeat;
+}
+
+.student-dashboard-page .student-side-stack .module-card--image-bg {
+  min-height: 230px;
+}
+
+.student-dashboard-page .student-side-stack .module-card--image-bg .module-card-body {
+  padding-top: 74px;
+}
+
+.student-dashboard-page .student-side-stack .module-card h3 {
+  font-size: 20px;
 }
 
 .student-dashboard-page .module-card--image-bg::before {

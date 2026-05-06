@@ -7,7 +7,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="./dashboard.css?v=20260506-star-across">
+  <link rel="stylesheet" href="./dashboard.css?v=20260506-side-shop">
 </head>
 <body class="student-dashboard-page">
   <main class="page-shell">
@@ -101,13 +101,31 @@
         <div id="student-module-grid" class="module-grid"></div>
       </article>
 
-      <article class="panel timeline-panel">
-        <div class="section-title">
-          <h2>Recent Activity</h2>
-          <p>Rewards, tax, spending, and mission updates</p>
-        </div>
-        <div id="student-timeline" class="list"></div>
-      </article>
+      <div class="student-side-stack">
+        <article class="panel timeline-panel">
+          <div class="section-title">
+            <h2>Recent Activity</h2>
+            <p>Rewards, tax, spending, and mission updates</p>
+          </div>
+          <div id="student-timeline" class="list"></div>
+        </article>
+
+        <details class="panel dashboard-dropdown student-side-dropdown" open>
+          <summary class="section-title dashboard-dropdown-summary">
+            <span>
+              <h2>Global Shop</h2>
+              <p>Shared across all modules</p>
+            </span>
+            <span class="dashboard-dropdown-action" aria-hidden="true">
+              <span class="dashboard-action-open">Open</span>
+              <span class="dashboard-action-close">Close</span>
+            </span>
+          </summary>
+          <div class="dashboard-dropdown-content">
+            <div id="student-shop-preview" class="module-grid shop-preview-grid"></div>
+          </div>
+        </details>
+      </div>
     </section>
 
     <details class="panel dashboard-dropdown">
@@ -123,22 +141,6 @@
       </summary>
       <div class="dashboard-dropdown-content">
         <div id="student-community-board" class="community-board"></div>
-      </div>
-    </details>
-
-    <details class="panel dashboard-dropdown">
-      <summary class="section-title dashboard-dropdown-summary">
-        <span>
-          <h2>Global Shop</h2>
-          <p>Shared across all modules</p>
-        </span>
-        <span class="dashboard-dropdown-action" aria-hidden="true">
-          <span class="dashboard-action-open">Open</span>
-          <span class="dashboard-action-close">Close</span>
-        </span>
-      </summary>
-      <div class="dashboard-dropdown-content">
-        <div id="student-shop-preview" class="module-grid"></div>
       </div>
     </details>
 
@@ -161,7 +163,7 @@
 
   <script src="../config/supabase-config.js"></script>
   <script src="../src/services/supabase-browser.js"></script>
-  <script src="./dashboard.js?v=20260506-star-across"></script>
+  <script src="./dashboard.js?v=20260506-side-shop"></script>
   <script src="../src/services/feedback-widget.js"></script>
 </body>
 </html>
