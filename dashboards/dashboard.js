@@ -584,15 +584,23 @@ let studentSideStackFrame = null;
 
 function syncStudentSideStackHeight() {
   const mapPanel = document.querySelector(".student-dashboard-page .module-map-panel");
+  const moduleGrid = document.getElementById("student-module-grid");
   const sideStack = document.querySelector(".student-dashboard-page .student-side-stack");
-  if (!mapPanel || !sideStack) return;
+  if (!mapPanel || !moduleGrid || !sideStack) return;
 
   if (window.matchMedia("(max-width: 1000px)").matches) {
     sideStack.style.removeProperty("--student-side-stack-height");
     return;
   }
 
-  const mapHeight = Math.ceil(mapPanel.getBoundingClientRect().height);
+  const mapPanelTop = mapPanel.getBoundingClientRect().top;
+  const moduleGridBottom = moduleGrid.getBoundingClientRect().bottom;
+  const mapPanelStyles = window.getComputedStyle(mapPanel);
+  const mapHeight = Math.ceil(
+    moduleGridBottom -
+    mapPanelTop +
+    (parseFloat(mapPanelStyles.paddingBottom) || 0)
+  );
   if (mapHeight > 0) {
     sideStack.style.setProperty("--student-side-stack-height", `${mapHeight}px`);
   }

@@ -783,7 +783,7 @@ h1 {
 
 .student-dashboard-page .two-column {
   grid-template-columns: minmax(0, 1.18fr) minmax(300px, 0.82fr);
-  align-items: stretch;
+  align-items: start;
 }
 
 .module-map-panel {
@@ -795,7 +795,7 @@ h1 {
   grid-template-rows: minmax(0, 1fr) auto;
   gap: 16px;
   align-content: stretch;
-  height: var(--student-side-stack-height, 100%);
+  height: var(--student-side-stack-height, auto);
   max-height: var(--student-side-stack-height, none);
   min-height: 0;
   overflow: hidden;
