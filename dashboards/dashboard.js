@@ -498,6 +498,33 @@ const STAR_BUILDER_STEPS = [
   }
 ];
 
+const STAR_CONTEXT_EXAMPLES = {
+  school: {
+    situation: ["During the school play, I had to communicate with students backstage...", "In my Phys Ed class, our group needed clear instructions before the activity...", "As a peer mentor, I supported a younger student who was unsure what to do..."],
+    task: ["I needed to explain the next step clearly so everyone knew where to go.", "I had to listen to the student and check what they understood.", "My role was to help the group share information without talking over each other."],
+    actions: ["I used eye contact and a calm tone.", "I asked a clarifying question before giving advice.", "I repeated the key instruction and checked that the group understood."],
+    results: ["The group completed the task smoothly.", "The younger student felt more confident and joined in.", "My teacher said I communicated clearly and helped the group stay organised."]
+  },
+  workplace: {
+    situation: ["At my retail job, a customer asked for help choosing between products...", "During workplace learning, I had to speak with a supervisor about a task...", "At work, a customer was confused about where to find an item..."],
+    task: ["I needed to understand what the customer wanted before suggesting an option.", "I had to check the instructions and confirm what standard was expected.", "My role was to serve the customer politely and keep the interaction clear."],
+    actions: ["I greeted the customer, listened carefully, and repeated the request back.", "I asked my supervisor one clear question before starting.", "I adjusted my language so it was easy for the customer to understand."],
+    results: ["The customer found what they needed and thanked me.", "The task was completed correctly the first time.", "My supervisor gave me positive feedback for being polite and clear."]
+  },
+  community: {
+    situation: ["At a community event, I helped explain directions to visitors...", "During a volunteer activity, our team needed to organise people quickly...", "At my sports club, I helped share updates with younger players..."],
+    task: ["I needed to give clear information so people knew what to do next.", "I had to listen to questions and respond respectfully.", "My role was to make sure everyone received the same message."],
+    actions: ["I spoke clearly and used simple instructions.", "I checked whether people had questions before moving on.", "I used friendly body language so people felt comfortable asking for help."],
+    results: ["The event ran more smoothly.", "People knew where to go and what to do.", "A coordinator thanked me for helping the group stay organised."]
+  },
+  gameplay: {
+    situation: ["In an EST Prep activity, I had to explain a response using correct terminology...", "During a module task, I needed to communicate my reasoning clearly...", "In the glossary check, I had to show that I understood the term and could use it properly..."],
+    task: ["I needed to write a clear answer that matched the question.", "I had to use the right term and explain it in my own words.", "My role was to turn the game feedback into a stronger response."],
+    actions: ["I reread the question before answering.", "I used the glossary term accurately in a sentence.", "I changed my response after checking the feedback."],
+    results: ["My answer became clearer and more accurate.", "I completed the check and showed better use of terminology.", "The module saved evidence that I could communicate the idea properly."]
+  }
+};
+
 let starBuilderState = null;
 
 function getSkillStarEvidenceMap() {
@@ -529,6 +556,30 @@ function applySkillEvidenceProgress(progressMap, evidenceMap) {
 
 function getStarContextLabel(contextId) {
   return STAR_CONTEXTS.find(context => context.id === contextId)?.label || "School";
+}
+
+function getStarBuilderExamples(contextId, stepKey, fallback = []) {
+  return STAR_CONTEXT_EXAMPLES[contextId]?.[stepKey] || fallback;
+}
+
+function makeSnippet(value) {
+  const cleanValue = String(value || "")
+    .replace(/\s+/g, " ")
+    .replace(/^[\-•\s]+/, "")
+    .trim();
+  if (!cleanValue) return "";
+  const firstSentence = cleanValue.split(/[.!?]/)[0].trim();
+  const source = firstSentence || cleanValue;
+  return source.length > 78 ? `${source.slice(0, 75).trim()}...` : source;
+}
+
+function createStarEvidenceSummary({ contextId, skillTitle, responses }) {
+  const contextLabel = getStarContextLabel(contextId);
+  const situation = makeSnippet(responses?.situation);
+  const task = makeSnippet(responses?.task);
+  const action = makeSnippet(responses?.actions);
+  const core = situation || task || action || "STAR evidence";
+  return `${contextLabel} ${skillTitle}: ${core}`;
 }
 
 function bankStarEvidenceSalary(entry) {
@@ -1289,6 +1340,7 @@ function renderSkills(skillsData, targetId, progressMap, skillEvidenceMap = {}) 
           <span>${escapeHtml(getStarContextLabel(entry.contextId))}</span>
           <time>${escapeHtml(formatDateTime(entry.createdAt))}</time>
         </div>
+        <strong class="skill-star-summary">${escapeHtml(entry.summary || createStarEvidenceSummary(entry))}</strong>
         <div class="skill-star-grid">
           ${renderStarRows([
             { label: "S", term: "Situation", text: entry.responses?.situation || "" },
@@ -1356,7 +1408,6 @@ function renderSkills(skillsData, targetId, progressMap, skillEvidenceMap = {}) 
           </div>
         </div>
         <p class="skill-description">${escapeHtml(category.description)}</p>
-        ${starActionMarkup}
         ${starExampleMarkup}
         ${createProgressBar(progress)}
         <div class="skill-subskill-grid">
@@ -1367,6 +1418,7 @@ function renderSkills(skillsData, targetId, progressMap, skillEvidenceMap = {}) 
             </span>
           `).join("")}
         </div>
+        ${starActionMarkup}
       </article>
     `;
   }).join("");
@@ -1435,6 +1487,8 @@ function renderSkillStarBuilder() {
   const contextLabel = getStarContextLabel(starBuilderState.contextId).toLowerCase();
   const currentValue = starBuilderState.responses[step.key] || "";
   const isFinalStep = starBuilderState.stepIndex === STAR_BUILDER_STEPS.length - 1;
+  const examples = getStarBuilderExamples(starBuilderState.contextId, step.key, step.examples);
+  const summaryPreview = createStarEvidenceSummary(starBuilderState);
 
   modal.hidden = false;
   modal.innerHTML = `
@@ -1458,7 +1512,11 @@ function renderSkillStarBuilder() {
       </label>
       <div class="skill-star-builder-examples">
         <span>Examples</span>
-        ${step.examples.map(example => `<p>${escapeHtml(example)}</p>`).join("")}
+        ${examples.map(example => `<p>${escapeHtml(example)}</p>`).join("")}
+      </div>
+      <div class="skill-star-summary-preview">
+        <span>Summary preview</span>
+        <strong data-star-builder-summary>${escapeHtml(summaryPreview)}</strong>
       </div>
       ${starBuilderState.error ? `<div class="skill-star-builder-error">${escapeHtml(starBuilderState.error)}</div>` : ""}
       <div class="skill-star-builder-actions">
@@ -1470,7 +1528,11 @@ function renderSkillStarBuilder() {
 
   const input = modal.querySelector("[data-star-builder-input]");
   input?.focus();
-  input?.addEventListener("input", event => updateSkillStarBuilderResponse(event.target.value));
+  input?.addEventListener("input", event => {
+    updateSkillStarBuilderResponse(event.target.value);
+    const summaryTarget = modal.querySelector("[data-star-builder-summary]");
+    if (summaryTarget) summaryTarget.textContent = createStarEvidenceSummary(starBuilderState);
+  });
   modal.querySelector("[data-star-builder-close]")?.addEventListener("click", closeSkillStarBuilder);
   modal.querySelector("[data-star-builder-back]")?.addEventListener("click", () => {
     if (!starBuilderState || starBuilderState.stepIndex === 0) return;
@@ -1498,6 +1560,7 @@ function renderSkillStarBuilder() {
       skillTitle: starBuilderState.skillTitle,
       contextId: starBuilderState.contextId,
       responses: { ...starBuilderState.responses },
+      summary: createStarEvidenceSummary(starBuilderState),
       salaryReward: STAR_EVIDENCE_SALARY_REWARD,
       createdAt: new Date().toISOString()
     };
