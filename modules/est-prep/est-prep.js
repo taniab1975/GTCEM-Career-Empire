@@ -158,6 +158,7 @@ window.ESTPrep = {
   setGlossaryFlightLane,
   moveGlossaryFlightLane,
   captureGlossaryFlightSignal,
+  fireGlossaryInvaderShipEncoded,
   setBossScaffold,
   setBossShowdownReason,
   buildBossDraft,

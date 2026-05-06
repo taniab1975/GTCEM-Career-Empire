@@ -3,6 +3,8 @@ let glossaryTimerInterval = null;
 
 let glossaryRecallAdvanceTimeout = null;
 
+let glossaryInvaderShotTimeout = null;
+
 const GLOSSARY_TERMS_PER_ROUND = 4;
 const GLOSSARY_MASTERY_TARGET = FULL_GLOSSARY_TERMS.length;
 const GLOSSARY_MASTERY_ACCURACY = 1;
@@ -65,6 +67,17 @@ function clearGlossaryRecallAdvanceTimeout() {
   if (glossaryRecallAdvanceTimeout) {
     clearTimeout(glossaryRecallAdvanceTimeout);
     glossaryRecallAdvanceTimeout = null;
+  }
+}
+
+function clearGlossaryInvaderShotTimeout() {
+  if (glossaryInvaderShotTimeout) {
+    clearTimeout(glossaryInvaderShotTimeout);
+    glossaryInvaderShotTimeout = null;
+  }
+  if (state?.answers) {
+    delete state.answers.glossaryInvaderTarget;
+    delete state.answers.glossaryInvaderFiring;
   }
 }
 
@@ -365,6 +378,7 @@ function resetGlossaryRewardLoop() {
 
 function initialiseGlossaryBoard() {
   clearGlossaryRecallAdvanceTimeout();
+  clearGlossaryInvaderShotTimeout();
   refreshGlossaryPracticeDeck();
   state.glossaryRoundIndex = 0;
   state.glossaryBatchIndex = 0;
@@ -403,6 +417,7 @@ function startNewGlossaryPracticeRun() {
 
 function clearGlossaryRoundState(roundIndex) {
   clearGlossaryRecallAdvanceTimeout();
+  clearGlossaryInvaderShotTimeout();
   const roundBatchKey = `glossary-r${roundIndex}-b0`;
   delete state.glossaryAssignments[roundBatchKey];
 
@@ -485,6 +500,16 @@ function buildGlossaryChallengeOptions(roundId, item, batch = getCurrentGlossary
     }));
   }
 
+  if (roundId === "plain-match") {
+    return [item, ...getGlossaryStableDistractors(item, 3)].map(candidate => ({
+      value: candidate.term,
+      title: candidate.term,
+      detail: "Shoot this term ship"
+    })).sort((a, b) => {
+      return (getGlossaryStableNumber(`${item.id}-${a.value}`) % 97) - (getGlossaryStableNumber(`${item.id}-${b.value}`) % 97);
+    });
+  }
+
   const distractors = pickRandom(
     glossarySource.filter(candidate => candidate.id !== item.id).map(candidate => candidate.term),
     3
@@ -535,7 +560,6 @@ function buildGlossarySceneMatchOptions(item) {
   return [item, ...getGlossaryStableDistractors(item, 3)].map(candidate => ({
     value: candidate.term,
     term: candidate.term,
-    scene: getGlossarySceneVisual(candidate.term),
     correct: candidate.id === item.id
   })).sort((a, b) => {
     return (getGlossaryStableNumber(`${item.id}-${a.term}`) % 97) - (getGlossaryStableNumber(`${item.id}-${b.term}`) % 97);
@@ -608,6 +632,26 @@ function captureGlossaryFlightSignal() {
   submitGlossaryChallengeChoiceEncoded(item.id, encodeURIComponent(selected.value));
 }
 
+function fireGlossaryInvaderShipEncoded(targetId, encodedValue) {
+  const batch = getCurrentGlossaryBatch();
+  const item = batch.find(entry => entry.id === targetId);
+  if (!item || getCurrentGlossaryRound()?.id !== "plain-match") return;
+  clearGlossaryInvaderShotTimeout();
+  const answer = decodeURIComponent(encodedValue || "");
+  state.answers.glossaryInvaderTarget = answer;
+  state.answers.glossaryInvaderFiring = true;
+  state.glossaryPulse = `Laser locked on ${answer}.`;
+  state.glossaryPulseType = "neutral";
+  persistESTProgressSnapshot();
+  renderGlossaryStage();
+  glossaryInvaderShotTimeout = setTimeout(() => {
+    glossaryInvaderShotTimeout = null;
+    delete state.answers.glossaryInvaderTarget;
+    delete state.answers.glossaryInvaderFiring;
+    submitGlossaryChallengeChoiceEncoded(targetId, encodedValue);
+  }, 420);
+}
+
 function isGlossaryChoiceCorrect(roundId, item, value) {
   if (!item) return false;
   if (roundId === "signal-slice") {
@@ -652,7 +696,7 @@ function submitGlossaryChallengeChoiceEncoded(targetId, encodedValue) {
     state.glossaryPulse = round.id === "term-catch"
       ? "Wrong catch. Track the definition at the bottom and grab the matching term next pass."
       : round.id === "signal-slice"
-        ? "Wrong scene. Look for the picture that best represents the active term."
+        ? "Wrong term. Watch the animated scene again, then choose the key term it represents."
         : round.id === "keyword-cloze"
           ? "Blank mismatch. Read the definition rhythm and try the missing keyword again."
           : round.id === "plain-match"
@@ -746,7 +790,7 @@ function formatGlossaryRoundTitle(roundNumber) {
   return roundNumber === 1
     ? "Termfall Dash cleared. The first glossary game is banked."
     : roundNumber === 2
-      ? "Scene Match cleared. Visual anchors are locking into memory."
+      ? "Visual Match cleared. Animated meanings are locking into memory."
       : roundNumber === 3
         ? "Definition Invaders cleared. Meaning-to-term recognition is stronger."
         : "Vault Flight complete. Retrieval practice is banked.";
@@ -1591,18 +1635,20 @@ function renderGlossarySceneArt(scene) {
       <span class="glossary-scene-shape glossary-scene-shape--one"></span>
       <span class="glossary-scene-shape glossary-scene-shape--two"></span>
       <span class="glossary-scene-shape glossary-scene-shape--three"></span>
+      <span class="glossary-scene-motion glossary-scene-motion--one"></span>
+      <span class="glossary-scene-motion glossary-scene-motion--two"></span>
       <strong>${escapeHtml(scene.badge)}</strong>
     </div>
   `;
 }
 
 function renderGlossarySceneMatchGame(round, promptItem, optionSet, batch, batchNumber, totalBatches, matchedCount, roundScore, progressPercent) {
-  const guideImage = GLOSSARY_GUIDE_ASSETS["signal-slice"];
+  const scene = getGlossarySceneVisual(promptItem.term);
   return `
     <div class="panel glossary-command-panel glossary-arcade-shell glossary-scene-shell">
       <div class="section-title">
-        <h2>Scene Match</h2>
-        <p>${matchedCount}/${batch.length} visual anchors matched</p>
+        <h2>Visual Match</h2>
+        <p>${matchedCount}/${batch.length} animated meanings decoded</p>
       </div>
       <div class="badge-row" style="margin-bottom:14px;">
         <span class="badge">Current streak: x${state.glossaryStreak}</span>
@@ -1616,50 +1662,38 @@ function renderGlossarySceneMatchGame(round, promptItem, optionSet, batch, batch
       </div>
       <div class="glossary-scene-match-game">
         <article class="glossary-scene-prompt">
-          <div class="glossary-scene-guide">
-            <img src="${escapeHtml(guideImage)}" alt="">
-            <span></span>
-          </div>
-          <div>
-            <div class="kicker">Active term</div>
-            <h3>${escapeHtml(promptItem.term)}</h3>
-            <p>${escapeHtml(promptItem.definition)}</p>
-            <div class="glossary-scene-keywords">
-              ${(promptItem.keywords || []).slice(0, 4).map(keyword => `<span>${escapeHtml(keyword)}</span>`).join("")}
-            </div>
+          ${renderGlossarySceneArt(scene)}
+          <div class="glossary-scene-prompt-copy">
+            <div class="kicker">Animated meaning</div>
+            <h3>Which key term does this visual show?</h3>
+            <p>${escapeHtml(scene.caption)}</p>
           </div>
         </article>
-        <div class="glossary-scene-gallery" aria-label="Choose the scene that matches the active glossary term">
-          ${optionSet.map(option => {
-            const scene = option.scene;
-            return `
-              <button
-                type="button"
-                class="glossary-scene-card"
-                onclick="window.ESTPrep.submitGlossaryChallengeChoiceEncoded('${promptItem.id}', '${encodeForInlineHandler(option.value)}')"
-              >
-                ${renderGlossarySceneArt(scene)}
-                <span class="kicker">Visual cue</span>
-                <strong>${escapeHtml(scene.title)}</strong>
-                <p>${escapeHtml(scene.caption)}</p>
-                <div class="glossary-scene-tags-mini">
-                  ${(scene.tags || []).slice(0, 3).map(tag => `<span>${escapeHtml(tag)}</span>`).join("")}
-                </div>
-              </button>
-            `;
-          }).join("")}
+        <div class="glossary-scene-term-grid" aria-label="Choose the glossary term that matches the animated meaning">
+          ${optionSet.map(option => `
+            <button
+              type="button"
+              class="choice-button glossary-scene-term-option"
+              onclick="window.ESTPrep.submitGlossaryChallengeChoiceEncoded('${promptItem.id}', '${encodeForInlineHandler(option.value)}')"
+            >
+              <span class="kicker">Key term</span>
+              <strong>${escapeHtml(option.term)}</strong>
+            </button>
+          `).join("")}
         </div>
       </div>
     </div>
     <div class="written-stage glossary-finale-stage">
       <strong>Scene exit</strong>
-      <p class="small-copy">Match each term to a visual memory anchor. The point is not just recall, but having a picture for the concept.</p>
+      <p class="small-copy">Decode each animated concept scene, then choose the key term it represents.</p>
       <button class="submit-button" type="button" onclick="window.ESTPrep.nextGlossaryPhase()" ${isGlossaryBatchMatched() ? "" : "disabled"}>Finish Game</button>
     </div>
   `;
 }
 
 function renderGlossaryInvadersGame(round, promptItem, optionSet, batch, batchNumber, totalBatches, matchedCount, roundScore, progressPercent) {
+  const firingTarget = state.answers.glossaryInvaderTarget || "";
+  const isFiring = Boolean(state.answers.glossaryInvaderFiring);
   return `
     <div class="panel glossary-command-panel glossary-arcade-shell glossary-invaders-shell">
       <div class="section-title">
@@ -1676,16 +1710,17 @@ function renderGlossaryInvadersGame(round, promptItem, optionSet, batch, batchNu
       <div class="glossary-progress-track" aria-hidden="true">
         <div class="glossary-progress-bar" style="width:${progressPercent}%;"></div>
       </div>
-      <div class="glossary-invaders-game">
+      <div class="glossary-invaders-game ${isFiring ? "is-firing" : ""}">
         <div class="glossary-invader-field" aria-label="Shoot the term ship that matches the definition">
           <span class="glossary-invader-scan glossary-invader-scan--one"></span>
           <span class="glossary-invader-scan glossary-invader-scan--two"></span>
           ${optionSet.map((option, index) => `
             <button
               type="button"
-              class="glossary-invader-ship glossary-invader-ship--${index + 1}"
+              class="glossary-invader-ship glossary-invader-ship--${index + 1} ${firingTarget === option.value ? "targeted" : ""}"
               style="--ship-left:${12 + ((index * 21) % 62)}%; --ship-top:${10 + ((index * 17) % 42)}%; --ship-delay:${(index * -0.42).toFixed(2)}s;"
-              onclick="window.ESTPrep.submitGlossaryChallengeChoiceEncoded('${promptItem.id}', '${encodeForInlineHandler(option.value)}')"
+              onclick="window.ESTPrep.fireGlossaryInvaderShipEncoded('${promptItem.id}', '${encodeForInlineHandler(option.value)}')"
+              ${isFiring ? "disabled" : ""}
             >
               <span>Term ship</span>
               <strong>${escapeHtml(option.title)}</strong>

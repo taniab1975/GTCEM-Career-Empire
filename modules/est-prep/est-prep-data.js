@@ -1312,7 +1312,7 @@ const FULL_GLOSSARY_TERMS = [
 
 const GLOSSARY_ROUND_CONFIGS = [
   { id: "term-catch", title: "Round 1: Termfall Dash", cue: "Catch the correct falling term for the definition before it disappears down the memory road." },
-  { id: "signal-slice", title: "Round 2: Scene Match", cue: "Choose the image scene that best represents the active glossary term." },
+  { id: "signal-slice", title: "Round 2: Visual Match", cue: "Watch the animated meaning scene, then choose the key glossary term it represents." },
   { id: "plain-match", title: "Round 3: Definition Invaders", cue: "Use the definition lock and shoot the correct term from the moving invader formation." },
   { id: "recall", title: "Round 4: Vault Flight", cue: "Dodge the wrong moving gates, fly into the lane with the correct term, then capture it to secure recall." }
 ];
