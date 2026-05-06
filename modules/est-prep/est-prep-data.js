@@ -1314,7 +1314,7 @@ const GLOSSARY_ROUND_CONFIGS = [
   { id: "term-catch", title: "Round 1: Termfall Dash", cue: "Catch the correct falling term for the definition before it disappears down the memory road." },
   { id: "signal-slice", title: "Round 2: Signal Slice", cue: "Slice the explanation fragments that genuinely belong to the active glossary term." },
   { id: "plain-match", title: "Round 3: Corruption Sweep", cue: "The supports are gone. Recover the correct term from meaning alone." },
-  { id: "recall", title: "Round 4: Vault Flight", cue: "Fly through the lane holding the correct glossary term, then capture the gate to secure recall." }
+  { id: "recall", title: "Round 4: Vault Flight", cue: "Dodge the wrong moving gates, fly into the lane with the correct term, then capture it to secure recall." }
 ];
 
 const STAGES = [

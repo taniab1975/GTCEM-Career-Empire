@@ -421,19 +421,29 @@
   }
 
   .glossary-flight-lanes {
-    inset: 16px 12px 176px;
+    inset: 16px 12px 190px;
+  }
+
+  .glossary-flight-capture-zone {
+    left: 8%;
+    bottom: 194px;
+    width: 86px;
+  }
+
+  .glossary-flight-capture-zone span {
+    width: 58px;
+    height: 58px;
   }
 
   .glossary-flight-gate {
-    right: 4%;
-    width: min(58%, 260px);
+    width: min(64%, 260px);
     min-height: 70px;
     padding: 10px 11px;
   }
 
   .glossary-flight-player {
-    left: 3%;
-    width: 86px;
+    left: 3.5%;
+    width: 78px;
     min-width: 76px;
   }
 

@@ -23,7 +23,7 @@ const GLOSSARY_GUIDE_ASSETS = {
   "signal-slice": "../../Assets/EST Preparation/guide-character/guide-thinking-top.png",
   "keyword-cloze": "../../Assets/EST Preparation/guide-character/guide-thinking-top.png",
   "plain-match": "../../Assets/EST Preparation/guide-character/guide-thinking-bottom.png",
-  recall: "../../Assets/Images and Animations/Emmanuel Student Characters/MacKillop/MacKillop encouraging.png",
+  recall: "../../Assets/Images and Animations/Emmanuel Student Characters/MacKillop/MacKillop Encouraging.png",
   study: "../../Assets/EST Preparation/guide-character/guide-thinking-top.png",
   reward: "../../Assets/EST Preparation/guide-character/guide-celebration.png"
 };
@@ -1506,7 +1506,7 @@ function renderGlossarySignalSliceGame(round, promptItem, optionSet, batch, batc
 function renderGlossaryVaultFlightGame(round, promptItem, optionSet, batch, batchNumber, totalBatches, matchedCount, roundScore, progressPercent) {
   const guideImage = GLOSSARY_GUIDE_ASSETS.recall;
   const lane = getGlossaryFlightLane();
-  const laneY = 10 + (lane * 16.8);
+  const laneY = 9 + (lane * 14.8);
   return `
     <div class="panel glossary-command-panel glossary-arcade-shell glossary-flight-shell">
       <div class="section-title">
@@ -1534,10 +1534,14 @@ function renderGlossaryVaultFlightGame(round, promptItem, optionSet, batch, batc
           <span></span>
           <span></span>
         </div>
+        <div class="glossary-flight-capture-zone" aria-hidden="true">
+          <span></span>
+        </div>
         ${optionSet.map(option => `
           <button
             type="button"
             class="glossary-flight-gate glossary-flight-gate--${option.lane} ${lane === option.lane ? "selected" : ""}"
+            style="--gate-delay:${(option.lane * -0.06).toFixed(2)}s;"
             onclick="window.ESTPrep.setGlossaryFlightLane(${option.lane})"
           >
             <span>Lane ${option.lane + 1}</span>
@@ -1560,7 +1564,7 @@ function renderGlossaryVaultFlightGame(round, promptItem, optionSet, batch, batc
         <button class="submit-button glossary-flight-capture" type="button" onclick="window.ESTPrep.captureGlossaryFlightSignal()">
           Capture selected gate
         </button>
-        <span>Use arrow keys or the buttons, then capture the selected gate.</span>
+        <span>Move lanes as the gates fly in, then capture the selected term.</span>
       </div>
     </div>
     <div class="written-stage glossary-finale-stage">
