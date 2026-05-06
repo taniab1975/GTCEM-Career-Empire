@@ -452,6 +452,111 @@ function getEmployabilityLogoPath(fileName) {
   return fileName ? `../Assets/Images and Animations/Employability Skill Logos/${fileName}` : "";
 }
 
+const STAR_EVIDENCE_STORAGE_KEY = "career-empire-star-evidence";
+const STAR_EVIDENCE_SKILL_POINTS = 15;
+const STAR_EVIDENCE_SALARY_REWARD = 500;
+
+const STAR_CONTEXTS = [
+  { id: "school", label: "School" },
+  { id: "workplace", label: "Workplace" },
+  { id: "community", label: "Community" },
+  { id: "gameplay", label: "Gameplay" }
+];
+
+const STAR_BUILDER_STEPS = [
+  {
+    key: "situation",
+    label: "S",
+    term: "Situation",
+    lead: "Awesome, tell me about it. What was the situation?",
+    prompt: "Where were you, who was involved, and what made communication matter?",
+    examples: ["During a group presentation in class...", "At my part-time job, a customer needed help...", "In a club meeting, our team had to explain..."]
+  },
+  {
+    key: "task",
+    label: "T",
+    term: "Task",
+    lead: "Great. Now what was the task?",
+    prompt: "What were you required to do, and how did you know?",
+    examples: ["I needed to explain the instructions clearly.", "I had to check what the person needed before responding.", "My role was to keep the group on the same page."]
+  },
+  {
+    key: "actions",
+    label: "A",
+    term: "Actions",
+    lead: "Interesting. What actions did you specifically take?",
+    prompt: "What did you say, write, ask, listen for, or show? Dot points are fine.",
+    examples: ["I asked clarifying questions.", "I repeated the main point back.", "I changed my tone and wording for the audience."]
+  },
+  {
+    key: "results",
+    label: "R",
+    term: "Results",
+    lead: "Now finish it off. What was the outcome or result?",
+    prompt: "What changed, what feedback did you receive, or what evidence shows it worked?",
+    examples: ["The group completed the task on time.", "The customer understood the options and thanked me.", "My teacher said the explanation was clear."]
+  }
+];
+
+let starBuilderState = null;
+
+function getSkillStarEvidenceMap() {
+  const entries = readJsonStorage(STAR_EVIDENCE_STORAGE_KEY, []);
+  return (Array.isArray(entries) ? entries : []).reduce((acc, entry) => {
+    if (!entry?.skillId) return acc;
+    acc[entry.skillId] = acc[entry.skillId] || [];
+    acc[entry.skillId].push(entry);
+    return acc;
+  }, {});
+}
+
+function saveSkillStarEvidence(entry) {
+  const entries = readJsonStorage(STAR_EVIDENCE_STORAGE_KEY, []);
+  const safeEntries = Array.isArray(entries) ? entries : [];
+  localStorage.setItem(STAR_EVIDENCE_STORAGE_KEY, JSON.stringify([entry, ...safeEntries]));
+}
+
+function calculateSkillEvidenceProgress(entries) {
+  return clampPercent((entries || []).length * STAR_EVIDENCE_SKILL_POINTS);
+}
+
+function applySkillEvidenceProgress(progressMap, evidenceMap) {
+  return Object.entries(evidenceMap || {}).reduce((acc, [skillId, entries]) => {
+    acc[skillId] = Math.max(Number(acc[skillId] || 0), calculateSkillEvidenceProgress(entries));
+    return acc;
+  }, { ...progressMap });
+}
+
+function getStarContextLabel(contextId) {
+  return STAR_CONTEXTS.find(context => context.id === contextId)?.label || "School";
+}
+
+function bankStarEvidenceSalary(entry) {
+  const session = getCurrentPlayerSession() || {};
+  const currentSalary = Number(session.annualSalary || session.salary || 25000);
+  const nextSalary = currentSalary + STAR_EVIDENCE_SALARY_REWARD;
+  const economyLog = Array.isArray(session.economyLog) ? session.economyLog : [];
+  const nextSession = {
+    ...session,
+    annualSalary: nextSalary,
+    salary: nextSalary,
+    economyLog: [
+      {
+        id: entry.id,
+        timestamp: entry.createdAt,
+        moduleId: "employability-skills",
+        eventType: "star-evidence",
+        label: `${entry.skillTitle} STAR evidence`,
+        detail: `${getStarContextLabel(entry.contextId)} example banked for ${entry.skillTitle}.`,
+        earnedDelta: STAR_EVIDENCE_SALARY_REWARD,
+        annualSalaryAfter: nextSalary
+      },
+      ...economyLog
+    ].slice(0, 20)
+  };
+  localStorage.setItem("career-empire-session", JSON.stringify(nextSession));
+}
+
 function deriveEmployabilityProgress(record) {
   if (!record) {
     return {
@@ -629,11 +734,13 @@ function buildEconomyTimelineItems(session) {
       entry.moduleId === "lifelong-learning" ? "Lifelong Learning" :
       entry.moduleId === "megatrends" ? "Megatrends" :
       entry.moduleId === "global-shop" ? "Shop" :
+      entry.moduleId === "employability-skills" ? "Employability" :
       "Platform";
 
     const eventLabel =
       entry.eventType === "purchase" ? "Spend event" :
       entry.eventType === "reward-awarded" ? "Reward awarded" :
+      entry.eventType === "star-evidence" ? "STAR evidence banked" :
       entry.eventType === "scenario-choice" ? "Scenario reward" :
       "Profile saved";
     const iconPath =
@@ -1153,47 +1260,73 @@ function renderTeacherModuleHealth(items) {
   `).join("");
 }
 
-function renderSkills(skillsData, targetId, progressMap) {
+function renderStarRows(rows) {
+  return rows.map(row => `
+    <div class="skill-star-row">
+      <span class="skill-star-marker">
+        <strong>${escapeHtml(row.label)}</strong>
+        <small>${escapeHtml(row.term)}</small>
+      </span>
+      <p>${escapeHtml(row.text)}</p>
+    </div>
+  `).join("");
+}
+
+function renderSkills(skillsData, targetId, progressMap, skillEvidenceMap = {}) {
   const container = document.getElementById(targetId);
   if (!container) return;
 
   container.innerHTML = skillsData.categories.map(category => {
     const progress = clampPercent(progressMap[category.id] || 0);
     const meta = EMPLOYABILITY_SKILL_META[category.id] || EMPLOYABILITY_SKILL_META.communication;
+    const isStudentGrid = targetId === "student-skill-grid";
     const subskills = category.subskills.slice(0, 4);
     const parentLogoPath = getEmployabilityLogoPath(meta.logoFile) || category.logoPath || "";
+    const studentEvidenceEntries = isStudentGrid ? (skillEvidenceMap[category.id] || []) : [];
+    const bankedEvidenceMarkup = studentEvidenceEntries.map(entry => `
+      <article class="skill-star-entry skill-star-entry-banked">
+        <div class="skill-star-entry-meta">
+          <span>${escapeHtml(getStarContextLabel(entry.contextId))}</span>
+          <time>${escapeHtml(formatDateTime(entry.createdAt))}</time>
+        </div>
+        <div class="skill-star-grid">
+          ${renderStarRows([
+            { label: "S", term: "Situation", text: entry.responses?.situation || "" },
+            { label: "T", term: "Task", text: entry.responses?.task || "" },
+            { label: "A", term: "Actions", text: entry.responses?.actions || "" },
+            { label: "R", term: "Results", text: entry.responses?.results || "" }
+          ])}
+        </div>
+        <div class="skill-star-reward">Salary signal +${formatCurrency(entry.salaryReward || STAR_EVIDENCE_SALARY_REWARD)}</div>
+      </article>
+    `).join("");
+    const starActionMarkup = isStudentGrid && meta.starExample ? `
+      <div class="skill-star-actions">
+        <span>Build STAR evidence from</span>
+        <div class="skill-star-action-list">
+          ${STAR_CONTEXTS.map(context => `
+            <button class="skill-star-action" type="button" data-star-builder-context="${escapeHtml(context.id)}" data-star-builder-skill="${escapeHtml(category.id)}" data-star-builder-title="${escapeHtml(category.title)}">
+              ${escapeHtml(context.label)}
+            </button>
+          `).join("")}
+        </div>
+      </div>
+    ` : "";
     const starExampleMarkup = meta.starExample ? `
       <div class="skill-star-example">
         <div class="skill-star-header">
           <div>
             <div class="skill-star-title">${escapeHtml(meta.starExample.title)}</div>
-            <p>Competence grows from plausible STAR evidence students bank from school, work, community, or gameplay.</p>
+            <p>${studentEvidenceEntries.length ? "Newest student evidence appears first. The preset example stays underneath for reference." : "The preset example stays here until students bank their own STAR evidence."}</p>
           </div>
           <span>Evidence stream</span>
         </div>
         <div class="skill-star-scroll">
+          ${bankedEvidenceMarkup}
           <article class="skill-star-entry">
             <div class="skill-star-entry-label">Predetermined example</div>
             <div class="skill-star-grid">
-              ${meta.starExample.rows.map(row => `
-                <div class="skill-star-row">
-                  <span class="skill-star-marker">
-                    <strong>${escapeHtml(row.label)}</strong>
-                    <small>${escapeHtml(row.term)}</small>
-                  </span>
-                  <p>${escapeHtml(row.text)}</p>
-                </div>
-              `).join("")}
-            </div>
-          </article>
-          <article class="skill-star-entry skill-star-entry-next">
-            <div class="skill-star-entry-label">Collected student evidence</div>
-            <p>Student-written STAR fragments will stack here across the year, starting with glossary, school, workplace, and community examples.</p>
-            <div class="skill-evidence-tags">
-              <span>Glossary check</span>
-              <span>School</span>
-              <span>Workplace</span>
-              <span>Community</span>
+              ${renderStarRows(meta.starExample.rows)}
             </div>
           </article>
         </div>
@@ -1223,6 +1356,7 @@ function renderSkills(skillsData, targetId, progressMap) {
           </div>
         </div>
         <p class="skill-description">${escapeHtml(category.description)}</p>
+        ${starActionMarkup}
         ${starExampleMarkup}
         ${createProgressBar(progress)}
         <div class="skill-subskill-grid">
@@ -1236,6 +1370,142 @@ function renderSkills(skillsData, targetId, progressMap) {
       </article>
     `;
   }).join("");
+
+  container.querySelectorAll("[data-star-builder-context]").forEach(button => {
+    button.addEventListener("click", () => {
+      openSkillStarBuilder(
+        button.dataset.starBuilderSkill,
+        button.dataset.starBuilderTitle,
+        button.dataset.starBuilderContext
+      );
+    });
+  });
+}
+
+function ensureSkillStarBuilderModal() {
+  let modal = document.getElementById("skill-star-builder-modal");
+  if (modal) return modal;
+  modal = document.createElement("div");
+  modal.id = "skill-star-builder-modal";
+  modal.className = "skill-star-builder-modal";
+  modal.hidden = true;
+  document.body.appendChild(modal);
+  return modal;
+}
+
+function openSkillStarBuilder(skillId, skillTitle, contextId) {
+  starBuilderState = {
+    skillId,
+    skillTitle,
+    contextId,
+    stepIndex: 0,
+    responses: {
+      situation: "",
+      task: "",
+      actions: "",
+      results: ""
+    },
+    error: ""
+  };
+  renderSkillStarBuilder();
+}
+
+function closeSkillStarBuilder() {
+  starBuilderState = null;
+  const modal = ensureSkillStarBuilderModal();
+  modal.hidden = true;
+  modal.innerHTML = "";
+}
+
+function updateSkillStarBuilderResponse(value) {
+  if (!starBuilderState) return;
+  const step = STAR_BUILDER_STEPS[starBuilderState.stepIndex];
+  starBuilderState.responses[step.key] = value;
+  starBuilderState.error = "";
+}
+
+function renderSkillStarBuilder() {
+  const modal = ensureSkillStarBuilderModal();
+  if (!starBuilderState) {
+    modal.hidden = true;
+    return;
+  }
+
+  const step = STAR_BUILDER_STEPS[starBuilderState.stepIndex];
+  const contextLabel = getStarContextLabel(starBuilderState.contextId).toLowerCase();
+  const currentValue = starBuilderState.responses[step.key] || "";
+  const isFinalStep = starBuilderState.stepIndex === STAR_BUILDER_STEPS.length - 1;
+
+  modal.hidden = false;
+  modal.innerHTML = `
+    <div class="skill-star-builder-dialog" role="dialog" aria-modal="true" aria-labelledby="skill-star-builder-title">
+      <button class="skill-star-builder-close" type="button" data-star-builder-close aria-label="Close STAR builder">Close</button>
+      <div class="skill-star-builder-topline">
+        <span>${escapeHtml(starBuilderState.skillTitle)}</span>
+        <span>${escapeHtml(getStarContextLabel(starBuilderState.contextId))}</span>
+      </div>
+      <div class="skill-star-builder-progress" aria-label="STAR builder progress">
+        ${STAR_BUILDER_STEPS.map((item, index) => `
+          <span class="${index === starBuilderState.stepIndex ? "is-active" : index < starBuilderState.stepIndex ? "is-complete" : ""}">${escapeHtml(item.label)}</span>
+        `).join("")}
+      </div>
+      <h2 id="skill-star-builder-title">So you improved ${escapeHtml(starBuilderState.skillTitle)} in a ${escapeHtml(contextLabel)} context?</h2>
+      <p class="skill-star-builder-lead">${escapeHtml(step.lead)}</p>
+      <label class="skill-star-builder-field">
+        <span>${escapeHtml(step.term)}</span>
+        <small>${escapeHtml(step.prompt)}</small>
+        <textarea rows="5" data-star-builder-input>${escapeHtml(currentValue)}</textarea>
+      </label>
+      <div class="skill-star-builder-examples">
+        <span>Examples</span>
+        ${step.examples.map(example => `<p>${escapeHtml(example)}</p>`).join("")}
+      </div>
+      ${starBuilderState.error ? `<div class="skill-star-builder-error">${escapeHtml(starBuilderState.error)}</div>` : ""}
+      <div class="skill-star-builder-actions">
+        <button class="module-link" type="button" data-star-builder-back ${starBuilderState.stepIndex === 0 ? "disabled" : ""}>Back</button>
+        <button class="module-link primary" type="button" data-star-builder-next>${isFinalStep ? "Bank STAR evidence" : "Next"}</button>
+      </div>
+    </div>
+  `;
+
+  const input = modal.querySelector("[data-star-builder-input]");
+  input?.focus();
+  input?.addEventListener("input", event => updateSkillStarBuilderResponse(event.target.value));
+  modal.querySelector("[data-star-builder-close]")?.addEventListener("click", closeSkillStarBuilder);
+  modal.querySelector("[data-star-builder-back]")?.addEventListener("click", () => {
+    if (!starBuilderState || starBuilderState.stepIndex === 0) return;
+    starBuilderState.stepIndex -= 1;
+    starBuilderState.error = "";
+    renderSkillStarBuilder();
+  });
+  modal.querySelector("[data-star-builder-next]")?.addEventListener("click", () => {
+    if (!starBuilderState) return;
+    const latestValue = modal.querySelector("[data-star-builder-input]")?.value || "";
+    updateSkillStarBuilderResponse(latestValue);
+    if (latestValue.trim().length < 12) {
+      starBuilderState.error = "Add a little more detail so this feels like usable evidence.";
+      renderSkillStarBuilder();
+      return;
+    }
+    if (!isFinalStep) {
+      starBuilderState.stepIndex += 1;
+      renderSkillStarBuilder();
+      return;
+    }
+    const entry = {
+      id: `star-${Date.now()}`,
+      skillId: starBuilderState.skillId,
+      skillTitle: starBuilderState.skillTitle,
+      contextId: starBuilderState.contextId,
+      responses: { ...starBuilderState.responses },
+      salaryReward: STAR_EVIDENCE_SALARY_REWARD,
+      createdAt: new Date().toISOString()
+    };
+    saveSkillStarEvidence(entry);
+    bankStarEvidenceSalary(entry);
+    closeSkillStarBuilder();
+    initDashboards().catch(console.error);
+  });
 }
 
 function setText(id, value) {
@@ -1870,7 +2140,8 @@ async function renderStudentLiveData(players, skillsData) {
   const hasESTProgress = hasMeaningfulModuleProgress(estProgressRow) || hasLocalESTProgress(session);
   const hasAnySavedProgress = hasPlayerProgress || hasLifelongProgress || hasESTProgress;
   const progressRecord = hasPlayerProgress ? record : null;
-  const progressMap = deriveEmployabilityProgress(progressRecord);
+  const skillEvidenceMap = getSkillStarEvidenceMap();
+  const progressMap = applySkillEvidenceProgress(deriveEmployabilityProgress(progressRecord), skillEvidenceMap);
   const employabilityScore = average(Object.values(progressMap));
   const weakestSkillId = getWeakestSkill(progressMap)[0];
   const strongestSkillId = getStrongestSkill(progressMap)[0];
@@ -1975,7 +2246,7 @@ async function renderStudentLiveData(players, skillsData) {
     }))
   });
 
-  renderSkills(skillsData, "student-skill-grid", progressMap);
+  renderSkills(skillsData, "student-skill-grid", progressMap, skillEvidenceMap);
   renderStudentModules([
     {
       title: "Megatrends",
