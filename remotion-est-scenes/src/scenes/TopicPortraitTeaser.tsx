@@ -435,9 +435,9 @@ const TopicPortraitTeaser: React.FC<{config: TopicTeaserConfig}> = ({config}) =>
           position: "absolute",
           left: 62,
           right: 252,
-          bottom: 76,
-          padding: "28px 34px",
-          borderRadius: 34,
+          bottom: 208,
+          padding: "20px 28px",
+          borderRadius: 28,
           background: "rgba(4, 47, 85, 0.72)",
           border: "4px solid rgba(255,255,255,0.62)",
           boxShadow: "0 22px 46px rgba(0,0,0,0.24)",
@@ -448,7 +448,7 @@ const TopicPortraitTeaser: React.FC<{config: TopicTeaserConfig}> = ({config}) =>
       >
         <div
           style={{
-            fontSize: 31,
+            fontSize: 26,
             lineHeight: 1,
             fontWeight: 1000,
             color: config.accent.glow,
@@ -460,9 +460,9 @@ const TopicPortraitTeaser: React.FC<{config: TopicTeaserConfig}> = ({config}) =>
         </div>
         <div
           style={{
-            marginTop: 12,
-            fontSize: 40,
-            lineHeight: 1.05,
+            marginTop: 8,
+            fontSize: 34,
+            lineHeight: 1,
             fontWeight: 1000,
             color: "#ffffff",
             textShadow: "0 5px 0 rgba(7,55,94,0.78)"
@@ -476,10 +476,10 @@ const TopicPortraitTeaser: React.FC<{config: TopicTeaserConfig}> = ({config}) =>
         src={config.icon}
         style={{
           position: "absolute",
-          right: 54,
-          bottom: 78,
-          width: 176,
-          height: 176,
+          right: 62,
+          bottom: 214,
+          width: 132,
+          height: 132,
           objectFit: "contain",
           transform: `translateY(${iconFloat}px) scale(${0.74 + crestPop * 0.26})`,
           opacity: enter(frame, 154, 20, 0, 1),

@@ -439,9 +439,9 @@ export const InitiativePortraitTeaser: React.FC = () => {
           position: "absolute",
           left: 62,
           right: 250,
-          bottom: 76,
-          padding: "28px 34px",
-          borderRadius: 34,
+          bottom: 208,
+          padding: "20px 28px",
+          borderRadius: 28,
           background: "rgba(4, 47, 85, 0.72)",
           border: "4px solid rgba(255,255,255,0.62)",
           boxShadow: "0 22px 46px rgba(0,0,0,0.24)",
@@ -452,7 +452,7 @@ export const InitiativePortraitTeaser: React.FC = () => {
       >
         <div
           style={{
-            fontSize: 32,
+            fontSize: 26,
             lineHeight: 1,
             fontWeight: 1000,
             color: "#aaffd6",
@@ -464,9 +464,9 @@ export const InitiativePortraitTeaser: React.FC = () => {
         </div>
         <div
           style={{
-            marginTop: 12,
-            fontSize: 43,
-            lineHeight: 1.06,
+            marginTop: 8,
+            fontSize: 34,
+            lineHeight: 1,
             fontWeight: 1000,
             color: "#ffffff",
             textShadow: "0 5px 0 rgba(7,55,94,0.78)"
@@ -480,10 +480,10 @@ export const InitiativePortraitTeaser: React.FC = () => {
         src={estAssets.images.eccLogo}
         style={{
           position: "absolute",
-          right: 52,
-          bottom: 72,
-          width: 142,
-          height: 170,
+          right: 62,
+          bottom: 214,
+          width: 116,
+          height: 138,
           objectFit: "contain",
           transform: `scale(${0.72 + crestPop * 0.28})`,
           opacity: enter(frame, 154, 20, 0, 1),
