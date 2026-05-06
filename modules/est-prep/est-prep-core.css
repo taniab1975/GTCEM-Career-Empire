@@ -155,10 +155,10 @@ body.est-lab-mode {
   grid-column: 1 / -1;
   grid-template-columns: minmax(0, 1fr);
   justify-items: center;
-  gap: 12px;
+  gap: 20px;
   align-items: start;
   min-height: 0;
-  padding: 34px 24px;
+  padding: 26px;
   overflow: hidden;
   background:
     radial-gradient(circle at 78% 22%, rgba(97, 240, 255, 0.22), transparent 34%),
@@ -241,6 +241,33 @@ body.est-lab-mode {
   height: 100%;
   display: block;
   object-fit: cover;
+}
+
+.hero-video-label {
+  position: absolute;
+  left: 16px;
+  right: 16px;
+  bottom: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 12px 14px;
+  border-radius: 18px;
+  background: rgba(7, 15, 34, 0.78);
+  border: 1px solid rgba(151, 187, 255, 0.22);
+  backdrop-filter: blur(10px);
+}
+
+.hero-video-label span {
+  color: var(--muted);
+  font-size: 0.86rem;
+  font-weight: 700;
+}
+
+.hero-video-label strong {
+  color: var(--green);
+  font-size: 0.92rem;
 }
 
 .hero-card--cinema .badge-row {
