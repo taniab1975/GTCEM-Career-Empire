@@ -54,6 +54,7 @@ const state = {
   glossaryRoundCelebration: null,
   glossaryRoundRewards: {},
   glossaryRoundVotes: {},
+  glossaryCommunityAssetReady: {},
   glossaryMissionMode: false,
   glossaryRoundStartedAt: 0,
   glossaryRunStartedAt: 0,

@@ -87,6 +87,10 @@
     grid-template-columns: 1fr;
   }
 
+  .glossary-community-growth {
+    grid-template-columns: 1fr;
+  }
+
   .glossary-chamber-rail,
   .glossary-mastery-strip,
   .glossary-escape-console,

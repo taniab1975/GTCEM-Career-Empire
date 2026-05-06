@@ -5,6 +5,8 @@ let glossaryRecallAdvanceTimeout = null;
 
 let glossaryInvaderShotTimeout = null;
 
+let glossaryCommunityAssetTimeout = null;
+
 const GLOSSARY_TERMS_PER_ROUND = 4;
 const GLOSSARY_MASTERY_TARGET = FULL_GLOSSARY_TERMS.length;
 const GLOSSARY_MASTERY_ACCURACY = 1;
@@ -28,6 +30,29 @@ const GLOSSARY_GUIDE_ASSETS = {
   recall: "../../Assets/Images and Animations/Emmanuel Student Characters/MacKillop/MacKillop Encouraging.png",
   study: "../../Assets/EST Preparation/guide-character/guide-thinking-top.png",
   reward: "../../Assets/EST Preparation/guide-character/guide-celebration.png"
+};
+
+const GLOSSARY_COMMUNITY_ASSETS = {
+  climate: {
+    image: "../../Assets/Images and Animations/Community Page/community-path-green-futures.png",
+    title: "Green Futures Hub",
+    detail: "The class contribution grows a shared climate and sustainability asset."
+  },
+  tech: {
+    image: "../../Assets/Images and Animations/Community Page/community-path-digital-access.png",
+    title: "Digital Access Lab",
+    detail: "The class contribution grows a shared tech education and inclusion asset."
+  },
+  diversity: {
+    image: "../../Assets/Images and Animations/Community Page/community-path-fairer-starts.png",
+    title: "Fairer Starts Fund",
+    detail: "The class contribution grows a shared diversity and economic equity asset."
+  },
+  global: {
+    image: "../../Assets/Images and Animations/Community Page/community-path-wider-horizons.png",
+    title: "Wider Horizons Bridge",
+    detail: "The class contribution grows a shared global opportunity access asset."
+  }
 };
 
 const GLOSSARY_SCENE_VISUALS = {
@@ -79,6 +104,26 @@ function clearGlossaryInvaderShotTimeout() {
     delete state.answers.glossaryInvaderTarget;
     delete state.answers.glossaryInvaderFiring;
   }
+}
+
+function clearGlossaryCommunityAssetTimeout() {
+  if (glossaryCommunityAssetTimeout) {
+    clearTimeout(glossaryCommunityAssetTimeout);
+    glossaryCommunityAssetTimeout = null;
+  }
+}
+
+function setGlossaryCommunityAssetReady(roundNumber, ready) {
+  state.glossaryCommunityAssetReady = state.glossaryCommunityAssetReady || {};
+  state.glossaryCommunityAssetReady[roundNumber] = ready;
+}
+
+function isGlossaryCommunityAssetReady(roundNumber) {
+  return state.glossaryCommunityAssetReady?.[roundNumber] !== false;
+}
+
+function getGlossaryCommunityAssetDelay() {
+  return window.matchMedia?.("(prefers-reduced-motion: reduce)")?.matches ? 0 : 1450;
 }
 
 function formatSecondsAsClock(totalSeconds) {
@@ -369,9 +414,11 @@ function syncMissionMode() {
 }
 
 function resetGlossaryRewardLoop() {
+  clearGlossaryCommunityAssetTimeout();
   state.glossaryRoundCelebration = null;
   state.glossaryRoundRewards = {};
   state.glossaryRoundVotes = {};
+  state.glossaryCommunityAssetReady = {};
   state.glossaryRoundStartedAt = 0;
   state.glossaryRunStartedAt = 0;
 }
@@ -418,6 +465,7 @@ function startNewGlossaryPracticeRun() {
 function clearGlossaryRoundState(roundIndex) {
   clearGlossaryRecallAdvanceTimeout();
   clearGlossaryInvaderShotTimeout();
+  clearGlossaryCommunityAssetTimeout();
   const roundBatchKey = `glossary-r${roundIndex}-b0`;
   delete state.glossaryAssignments[roundBatchKey];
 
@@ -849,7 +897,20 @@ function buildGlossaryCelebration(roundNumber, scoreText) {
 
 function setGlossaryRoundVote(optionId) {
   if (!state.glossaryRoundCelebration) return;
-  state.glossaryRoundVotes[state.glossaryRoundCelebration.roundNumber] = optionId;
+  const roundNumber = state.glossaryRoundCelebration.roundNumber;
+  state.glossaryRoundVotes[roundNumber] = optionId;
+  setGlossaryCommunityAssetReady(roundNumber, false);
+  const option = (state.stageDeck?.communityOptions || []).find(item => item.id === optionId);
+  state.glossaryPulse = `${option?.label || "Community asset"} is growing from the class tax contribution.`;
+  state.glossaryPulseType = "good";
+  clearGlossaryCommunityAssetTimeout();
+  glossaryCommunityAssetTimeout = setTimeout(() => {
+    glossaryCommunityAssetTimeout = null;
+    setGlossaryCommunityAssetReady(roundNumber, true);
+    state.glossaryPulse = "Community asset built. Choose another practice game or return to the lab.";
+    state.glossaryPulseType = "good";
+    renderGlossaryStage();
+  }, getGlossaryCommunityAssetDelay());
   persistESTProgressSnapshot();
   renderGlossaryStage();
 }
@@ -872,6 +933,8 @@ function continueGlossaryRound() {
     return;
   }
   state.answers[`glossaryVoteRound${roundNumber}`] = voteKey;
+  clearGlossaryCommunityAssetTimeout();
+  setGlossaryCommunityAssetReady(roundNumber, true);
   state.glossaryRoundCelebration = null;
   state.glossarySelectedTermId = "";
   state.glossaryDraggedTermId = "";
@@ -887,6 +950,7 @@ function continueGlossaryRound() {
 }
 
 function returnToLab() {
+  clearGlossaryCommunityAssetTimeout();
   setLabMode(false);
   setStageMenuMode(false);
   setGameplayViewportMode(false);
@@ -1931,6 +1995,9 @@ function renderGlossaryCelebration() {
   const celebration = state.glossaryRoundCelebration;
   if (!celebration) return "";
   const voteKey = state.glossaryRoundVotes[celebration.roundNumber] || "";
+  const selectedOption = (state.stageDeck?.communityOptions || []).find(option => option.id === voteKey) || null;
+  const selectedAsset = selectedOption ? GLOSSARY_COMMUNITY_ASSETS[selectedOption.id] : null;
+  const assetReady = voteKey ? isGlossaryCommunityAssetReady(celebration.roundNumber) : false;
   const communityOptions = (state.stageDeck?.communityOptions || []).map(option => `
     <button
       type="button"
@@ -1983,7 +2050,22 @@ function renderGlossaryCelebration() {
             <h2>Choose how your class tax helps the community</h2>
             <p>All pooled taxes go toward building something bigger than one student run.</p>
           </div>
-          <div class="choice-grid">${communityOptions}</div>
+          ${voteKey && selectedOption ? `
+            <article class="glossary-community-growth ${assetReady ? "is-complete" : "is-growing"}">
+              <div class="glossary-community-growth-art">
+                <img src="${escapeHtml(selectedAsset?.image || GLOSSARY_VISUAL_ASSETS.reward)}" alt="">
+                <span class="glossary-community-growth-ring glossary-community-growth-ring--one"></span>
+                <span class="glossary-community-growth-ring glossary-community-growth-ring--two"></span>
+              </div>
+              <div class="glossary-community-growth-copy">
+                <div class="kicker">${assetReady ? "Community asset ready" : "Community asset growing"}</div>
+                <h3>${escapeHtml(selectedAsset?.title || selectedOption.label || selectedOption.id)}</h3>
+                <p>${escapeHtml(selectedAsset?.detail || "The class contribution grows a shared community asset.")} ${formatCurrency(celebration.tax)} has been allocated here.</p>
+              </div>
+            </article>
+          ` : `
+            <div class="choice-grid">${communityOptions}</div>
+          `}
         </div>
         ${voteKey ? "" : `
           <div class="feedback-box warn">
@@ -1991,14 +2073,12 @@ function renderGlossaryCelebration() {
             <p>Your game reward is ready, but the class tax allocation has to be chosen first.</p>
           </div>
         `}
-        <div class="builder-actions">
-          <button class="submit-button" type="button" onclick="window.ESTPrep.continueGlossaryRound()">
-            ${voteKey
-              ? "Choose Another Practice Game"
-              : "Choose a Tax Destination to Continue"}
-          </button>
-          <button class="choice-button" type="button" onclick="window.ESTPrep.returnToLab()">Save and return to EST Lab</button>
-        </div>
+        ${voteKey && assetReady ? `
+          <div class="builder-actions glossary-community-next-actions">
+            <button class="submit-button" type="button" onclick="window.ESTPrep.continueGlossaryRound()">Choose Another Practice Game</button>
+            <button class="choice-button" type="button" onclick="window.ESTPrep.returnToLab()">Save and return to EST Lab</button>
+          </div>
+        ` : ""}
       </div>
     </section>
   `;
@@ -2070,7 +2150,6 @@ function renderGlossaryStage() {
             <div class="kicker">Glossary Mission Access</div>
             <h3>Reward chamber</h3>
           </div>
-          <button class="choice-button" type="button" onclick="window.ESTPrep.returnToLab()">Save and return</button>
         </div>
         ${renderGlossaryCelebration()}
       </div>
