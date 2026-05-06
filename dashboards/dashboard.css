@@ -783,13 +783,20 @@ h1 {
 
 .student-dashboard-page .two-column {
   grid-template-columns: minmax(0, 1.18fr) minmax(300px, 0.82fr);
-  align-items: start;
+  align-items: stretch;
+}
+
+.module-map-panel {
+  min-height: 0;
 }
 
 .student-side-stack {
   display: grid;
-  gap: 20px;
-  align-content: start;
+  grid-template-rows: minmax(0, 1fr) auto;
+  gap: 16px;
+  align-content: stretch;
+  height: 100%;
+  min-height: 0;
 }
 
 .student-dashboard-page .module-grid {
@@ -828,15 +835,24 @@ h1 {
 }
 
 .student-dashboard-page .student-side-stack .module-card--image-bg {
-  min-height: 230px;
+  min-height: 170px;
 }
 
 .student-dashboard-page .student-side-stack .module-card--image-bg .module-card-body {
-  padding-top: 74px;
+  padding: 62px 14px 14px;
 }
 
 .student-dashboard-page .student-side-stack .module-card h3 {
-  font-size: 20px;
+  font-size: 18px;
+}
+
+.student-dashboard-page .student-side-dropdown .dashboard-dropdown-summary {
+  min-height: 72px;
+  padding: 18px 18px 12px;
+}
+
+.student-dashboard-page .student-side-dropdown .dashboard-dropdown-content {
+  padding: 0 18px 18px;
 }
 
 .student-dashboard-page .module-card--image-bg::before {
@@ -896,7 +912,37 @@ h1 {
 }
 
 .student-dashboard-page .timeline-panel {
+  display: flex;
+  flex-direction: column;
   min-height: 0;
+}
+
+.student-dashboard-page .timeline-panel .section-title {
+  flex-shrink: 0;
+}
+
+.student-dashboard-page #student-timeline {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding-right: 4px;
+  scrollbar-color: rgba(104, 210, 255, 0.54) rgba(255, 255, 255, 0.08);
+  scrollbar-width: thin;
+}
+
+.student-dashboard-page #student-timeline::-webkit-scrollbar {
+  width: 8px;
+}
+
+.student-dashboard-page #student-timeline::-webkit-scrollbar-track {
+  background: rgba(255, 255, 255, 0.08);
+  border-radius: 999px;
+}
+
+.student-dashboard-page #student-timeline::-webkit-scrollbar-thumb {
+  background: rgba(104, 210, 255, 0.54);
+  border-radius: 999px;
 }
 
 .student-dashboard-page .timeline-item {
@@ -905,7 +951,7 @@ h1 {
 }
 
 .student-dashboard-page .timeline-empty-state {
-  min-height: 270px;
+  min-height: 100%;
   display: grid;
   align-content: end;
   justify-items: start;
@@ -1583,6 +1629,15 @@ textarea {
   .student-hero-card,
   .student-dashboard-page .two-column {
     grid-template-columns: 1fr;
+  }
+
+  .student-side-stack {
+    grid-template-rows: auto;
+    height: auto;
+  }
+
+  .student-dashboard-page #student-timeline {
+    max-height: 320px;
   }
 
   .student-hero-card {
