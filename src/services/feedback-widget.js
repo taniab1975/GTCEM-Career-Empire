@@ -199,17 +199,21 @@
     };
   }
 
-  function getTeacherIdentity(state) {
+  function getTeacherIdentity(state, teacherSession = {}) {
     const teacher = state?.teacher || {};
     const teacherLogin = state?.teacherLogin || {};
     const email = teacherLogin.email || teacher.email || "";
-    const display = email || teacher.fullName || teacherLogin.fullName || "";
+    const display = email || teacher.fullName || teacherLogin.fullName || teacherSession.classCode || "";
     if (!display) return null;
 
     return {
       role: "teacher",
-      stamp: display,
-      title: teacher.fullName && email ? teacher.fullName : "Teacher login",
+      stamp: email || display,
+      title: teacher.fullName && email
+        ? teacher.fullName
+        : teacherSession.classCode
+          ? `Teacher session - Class ${teacherSession.classCode}`
+          : "Teacher login",
       mode: "Teacher"
     };
   }
@@ -382,11 +386,12 @@
 
     const state = readJsonStorage(AUTH_STATE_KEY, {});
     const session = readJsonStorage(PLAYER_SESSION_KEY, {});
+    const teacherSession = readJsonStorage(TEACHER_SESSION_KEY, {});
     const studentIdentity = getStudentIdentity(state, session);
-    const teacherIdentity = getTeacherIdentity(state);
+    const teacherIdentity = getTeacherIdentity(state, teacherSession);
     const scope = getPageSessionScope();
     const identities = scope === "teacher"
-      ? [teacherIdentity || studentIdentity].filter(Boolean)
+      ? [teacherIdentity].filter(Boolean)
       : scope === "student"
         ? [studentIdentity || teacherIdentity].filter(Boolean)
         : [studentIdentity, teacherIdentity].filter(Boolean);

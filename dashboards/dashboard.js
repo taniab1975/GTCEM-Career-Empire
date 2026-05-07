@@ -165,8 +165,14 @@ function getTeacherSession() {
   return readJsonStorage("career-empire-teacher-session", null);
 }
 
+let hasTeacherDashboardFilterInteraction = false;
+
 function getTeacherDashboardFilter() {
-  return readJsonStorage("career-empire-teacher-dashboard-filter", { scope: "all", classId: "all" });
+  const filter = readJsonStorage("career-empire-teacher-dashboard-filter", { scope: "all", classId: "all", studentId: "all" });
+  if (!hasTeacherDashboardFilterInteraction && document.getElementById("teacher-class-selector")) {
+    return { ...filter, scope: "all", classId: "all", studentId: "all" };
+  }
+  return filter;
 }
 
 function requireStudentHubAccess() {
@@ -179,6 +185,7 @@ function requireStudentHubAccess() {
 }
 
 function setTeacherDashboardFilter(nextFilter) {
+  hasTeacherDashboardFilterInteraction = true;
   localStorage.setItem("career-empire-teacher-dashboard-filter", JSON.stringify(nextFilter));
 }
 
@@ -449,7 +456,9 @@ function clampPercent(value) {
 }
 
 function getEmployabilityLogoPath(fileName) {
-  return fileName ? `../Assets/Images and Animations/Employability Skill Logos/${fileName}` : "";
+  if (!fileName) return "";
+  const normalizedFileName = fileName.replace("LIteracy", "Literacy");
+  return `../Assets/employability-logos/futuristic-suite/png/${normalizedFileName}?v=20260507-ecc-future`;
 }
 
 const STAR_EVIDENCE_STORAGE_KEY = "career-empire-star-evidence";
@@ -1352,6 +1361,178 @@ function renderTeacherStudentCompareList(items) {
   `).join("");
 }
 
+function buildDonutGradient(segments) {
+  const total = segments.reduce((sum, item) => sum + Number(item.value || 0), 0);
+  if (!total) return "conic-gradient(rgba(136, 173, 255, 0.18) 0 100%)";
+  let cursor = 0;
+  const stops = segments.map(item => {
+    const start = cursor;
+    const end = cursor + (Number(item.value || 0) / total) * 100;
+    cursor = end;
+    return `${item.color} ${start.toFixed(2)}% ${end.toFixed(2)}%`;
+  });
+  return `conic-gradient(${stops.join(", ")})`;
+}
+
+function renderTeacherChartBars(rows) {
+  const maxValue = Math.max(1, ...rows.map(row => Number(row.value || 0)));
+  return rows.map(row => {
+    const width = Math.max(4, Math.round((Number(row.value || 0) / maxValue) * 100));
+    return `
+      <div class="teacher-chart-row">
+        <span>${escapeHtml(row.label)}</span>
+        <div class="teacher-chart-track">
+          <div class="teacher-chart-fill ${row.variant || ""}" style="width: ${width}%"></div>
+        </div>
+        <strong>${escapeHtml(row.valueLabel)}</strong>
+      </div>
+    `;
+  }).join("");
+}
+
+function renderTeacherStudentProfile(data) {
+  const container = document.getElementById("teacher-student-profile");
+  if (!container) return;
+
+  if (!data.students.length) {
+    container.innerHTML = `
+      <div class="timeline-item">
+        <strong>No student profiles yet</strong>
+        <p>Create or sync student records first, then this panel will show an individual learning profile.</p>
+      </div>
+    `;
+    return;
+  }
+
+  if (!data.selectedStudent) {
+    const needsSupport = data.engagementRows.filter(row => ["No interaction", "Needs support", "Review evidence"].includes(row.status)).length;
+    container.innerHTML = `
+      <article class="module-card student-learning-card">
+        <div class="section-title">
+          <div>
+            <h3>All students selected</h3>
+            <p>${data.students.length} learner profile${data.students.length === 1 ? "" : "s"} in this scope</p>
+          </div>
+          <p>Choose a student above</p>
+        </div>
+        <p>Select a student in the drill-down menu to see their learning profile, latest evidence, module progress, and suggested next step.</p>
+        <div class="pill-row">
+          <span class="pill">${needsSupport} need support</span>
+          <span class="pill">${data.engagementRows.filter(row => row.status === "Active").length} active</span>
+          <span class="pill">${data.studentCompareRows.length} profiles compared</span>
+        </div>
+      </article>
+    `;
+    return;
+  }
+
+  const compare = data.studentCompareRows.find(row => row.studentId === data.selectedStudent.id);
+  const engagement = data.engagementRows.find(row => row.studentId === data.selectedStudent.id);
+  const details = compare?.details || [];
+  container.innerHTML = `
+    <article class="module-card student-learning-card spotlight">
+      <div class="section-title">
+        <div>
+          <h3>${escapeHtml(getStudentDisplayName(data.selectedStudent))}</h3>
+          <p>${escapeHtml(compare?.meta || engagement?.detail || "Student profile")}</p>
+        </div>
+        <p>${escapeHtml(compare?.status || engagement?.status || "Profile")}</p>
+      </div>
+      <p>${escapeHtml(compare?.summary || "This student has a profile but needs more module evidence before deeper diagnostics appear.")}</p>
+      <div class="pill-row">
+        ${(compare?.pills || []).map(pill => `<span class="pill">${escapeHtml(pill)}</span>`).join("")}
+      </div>
+      <div class="list student-learning-detail-list">
+        ${details.map(detail => `
+          <div class="timeline-item">
+            <strong>${escapeHtml(detail.title)}</strong>
+            <p>${escapeHtml(detail.detail)}</p>
+          </div>
+        `).join("")}
+      </div>
+    </article>
+  `;
+}
+
+function renderTeacherClassCharts(data) {
+  const container = document.getElementById("teacher-class-chart-grid");
+  if (!container) return;
+
+  const statusCounts = data.engagementRows.reduce((acc, row) => {
+    if (row.status === "No interaction") acc.noInteraction += 1;
+    else if (row.status === "Needs support" || row.status === "Review evidence") acc.needsSupport += 1;
+    else if (row.status === "Just started") acc.started += 1;
+    else acc.active += 1;
+    return acc;
+  }, { active: 0, started: 0, needsSupport: 0, noInteraction: 0 });
+  const engagementTotal = Object.values(statusCounts).reduce((sum, value) => sum + value, 0);
+  const activeTotal = statusCounts.active + statusCounts.started;
+  const engagementGradient = buildDonutGradient([
+    { value: statusCounts.active, color: "#80ed99" },
+    { value: statusCounts.started, color: "#ffd166" },
+    { value: statusCounts.needsSupport, color: "#ff9770" },
+    { value: statusCounts.noInteraction, color: "#ff7b72" }
+  ]);
+  const moduleBars = renderTeacherChartBars(data.moduleRows.map(row => ({
+    label: row.label,
+    value: row.completion,
+    valueLabel: `${row.completion}%`,
+    variant: row.variant
+  })));
+  const timeBars = data.timeRows.length
+    ? renderTeacherChartBars(data.timeRows.map(row => ({
+      label: row.label,
+      value: row.seconds,
+      valueLabel: formatDurationSeconds(row.seconds, "0m"),
+      variant: row.variant
+    })))
+    : `<div class="teacher-chart-empty">No timed task evidence yet</div>`;
+  const glossaryAttempted = data.glossary.totalTermsAttempted || 0;
+  const glossaryCorrect = data.glossary.totalTermsCorrect || 0;
+  const glossaryGap = Math.max(0, glossaryAttempted - glossaryCorrect);
+  const glossaryGradient = buildDonutGradient([
+    { value: glossaryCorrect, color: "#80ed99" },
+    { value: glossaryGap, color: "#ff7b72" }
+  ]);
+
+  container.innerHTML = `
+    <article class="teacher-chart-card">
+      <div class="teacher-donut" style="--donut-bg: ${engagementGradient}">
+        <span>${engagementTotal ? Math.round((activeTotal / engagementTotal) * 100) : 0}%</span>
+      </div>
+      <div>
+        <div class="kicker">Engagement</div>
+        <h3>Interaction split</h3>
+        <p>${activeTotal} active or started • ${statusCounts.needsSupport} need support • ${statusCounts.noInteraction} no interaction.</p>
+      </div>
+    </article>
+    <article class="teacher-chart-card teacher-chart-card-wide">
+      <div>
+        <div class="kicker">Modules</div>
+        <h3>Completion by module</h3>
+      </div>
+      <div class="teacher-chart-bars">${moduleBars}</div>
+    </article>
+    <article class="teacher-chart-card teacher-chart-card-wide">
+      <div>
+        <div class="kicker">Task Time</div>
+        <h3>Time by strand or stage</h3>
+      </div>
+      <div class="teacher-chart-bars">${timeBars}</div>
+    </article>
+    <article class="teacher-chart-card">
+      <div class="teacher-donut" style="--donut-bg: ${glossaryGradient}">
+        <span>${glossaryAttempted ? Math.round((glossaryCorrect / glossaryAttempted) * 100) : 0}%</span>
+      </div>
+      <div>
+        <div class="kicker">Glossary</div>
+        <h3>Terms correct</h3>
+        <p>${glossaryCorrect}/${glossaryAttempted || 0} final-round terms correct across captured glossary runs.</p>
+      </div>
+    </article>
+  `;
+}
+
 function getSkillCategoryById(skillsData, skillId) {
   return skillsData.categories.find(category => category.id === skillId) || null;
 }
@@ -1661,9 +1842,9 @@ function parseStructuredEvidence(row) {
   }
 }
 
-function formatDurationSeconds(value) {
+function formatDurationSeconds(value, emptyLabel = "Not yet") {
   const seconds = Number(value || 0);
-  if (!seconds) return "Time not captured";
+  if (!seconds) return emptyLabel;
   if (seconds < 60) return `${seconds}s`;
   const minutes = Math.floor(seconds / 60);
   const remainder = seconds % 60;
@@ -2193,6 +2374,7 @@ async function getTeacherDashboardData() {
       context,
       availableClasses: [],
       selectedClassId: "all",
+      selectedStudentId: dashboardFilter.studentId || "all",
       selectedClassName: "No classes found",
       students: [],
       moduleProgress: [],
@@ -2209,6 +2391,7 @@ async function getTeacherDashboardData() {
       context,
       availableClasses: [],
       selectedClassId: "all",
+      selectedStudentId: dashboardFilter.studentId || "all",
       selectedClassName: "No classes found",
       students: [],
       moduleProgress: [],
@@ -2321,6 +2504,7 @@ async function getTeacherDashboardData() {
     context,
     availableClasses,
     selectedClassId,
+    selectedStudentId: dashboardFilter.studentId || "all",
     selectedClassName,
     students: students || [],
     moduleProgress: moduleProgress || [],
@@ -2331,28 +2515,144 @@ async function getTeacherDashboardData() {
   };
 }
 
-function renderTeacherClassSelector(teacherData) {
+function getFallbackClassId(classCode) {
+  return `fallback-class-${String(classCode || "unassigned")
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-|-$/g, "") || "unassigned"}`;
+}
+
+function buildFallbackTeacherDashboardData(players, context) {
+  const dashboardFilter = getTeacherDashboardFilter();
+  const latestPlayers = dedupeLatestPlayers(players || []).map((player, index) => ({
+    ...player,
+    id: player.id || `local-student-${index + 1}`
+  }));
+  const classMap = new Map();
+
+  latestPlayers.forEach(player => {
+    const classCode = player.class_code || context?.teacherSession?.classCode || "Unassigned";
+    const classId = getFallbackClassId(classCode);
+    if (!classMap.has(classId)) {
+      classMap.set(classId, {
+        id: classId,
+        name: classCode === "Unassigned" ? "Unassigned class" : `Class ${classCode}`,
+        class_code: classCode === "Unassigned" ? "" : classCode,
+        school_id: context?.teacher?.schoolId || null,
+        fallback: true
+      });
+    }
+  });
+
+  if (context?.teacherSession?.classCode) {
+    const classId = getFallbackClassId(context.teacherSession.classCode);
+    if (!classMap.has(classId)) {
+      classMap.set(classId, {
+        id: classId,
+        name: `Class ${context.teacherSession.classCode}`,
+        class_code: context.teacherSession.classCode,
+        school_id: context?.teacher?.schoolId || null,
+        fallback: true
+      });
+    }
+  }
+
+  const availableClasses = [...classMap.values()].sort((a, b) => {
+    return String(a.name || "").localeCompare(String(b.name || ""));
+  });
+  const requestedClassId = dashboardFilter.classId || "all";
+  const selectedClassId = requestedClassId !== "all" && availableClasses.some(row => row.id === requestedClassId)
+    ? requestedClassId
+    : "all";
+  const selectedCodes = selectedClassId === "all"
+    ? null
+    : new Set(availableClasses.filter(row => row.id === selectedClassId).map(row => row.class_code || ""));
+  const profileRows = selectedCodes
+    ? latestPlayers.filter(player => selectedCodes.has(player.class_code || ""))
+    : latestPlayers;
+  const students = profileRows.map(player => {
+    const classCode = player.class_code || context?.teacherSession?.classCode || "";
+    return {
+      id: player.id,
+      display_name: player.player_name || "Student",
+      username: player.username || player.player_name || "Student",
+      created_at: player.timestamp || new Date().toISOString(),
+      last_login_at: player.timestamp || null,
+      class_id: getFallbackClassId(classCode)
+    };
+  });
+
+  return {
+    context,
+    availableClasses,
+    selectedClassId,
+    selectedStudentId: dashboardFilter.studentId || "all",
+    selectedClassName: selectedClassId === "all"
+      ? `All classes at ${context?.teacher?.schoolName || "school"}`
+      : availableClasses.find(row => row.id === selectedClassId)?.name || "Selected class",
+    students,
+    moduleProgress: [],
+    evidenceRows: [],
+    voteRows: [],
+    profileRows,
+    feedbackRows: [],
+    isFallback: true
+  };
+}
+
+function getStudentDisplayName(student) {
+  return student?.display_name || student?.username || "Student";
+}
+
+function renderTeacherClassSelector(teacherData, studentRows = []) {
   const selector = document.getElementById("teacher-class-selector");
+  const studentSelector = document.getElementById("teacher-student-selector");
   const summary = document.getElementById("teacher-class-summary");
   const note = document.getElementById("teacher-class-scope-note");
   if (!selector || !summary || !note) return;
 
   const classes = teacherData?.availableClasses || [];
   const selectedClassId = teacherData?.selectedClassId || "all";
+  const selectedStudentId = teacherData?.selectedStudentId || getTeacherDashboardFilter().studentId || "all";
+  const selectedStudent = studentRows.find(student => student.id === selectedStudentId);
+  const selectedClassName = selectedClassId === "all"
+    ? "All classes"
+    : teacherData?.selectedClassName || classes.find(classroom => classroom.id === selectedClassId)?.name || "Selected class";
 
   selector.innerHTML = [
-    '<option value="all">All Classes At School</option>',
+    `<option value="all" ${selectedClassId === "all" ? "selected" : ""}>All Classes At School</option>`,
     ...classes.map(classroom => `<option value="${classroom.id}" ${classroom.id === selectedClassId ? "selected" : ""}>${escapeHtml(classroom.name)} (${escapeHtml(classroom.class_code || "No code")})</option>`)
   ].join("");
-  summary.value = teacherData?.selectedClassName || "No class selected";
+
+  if (studentSelector) {
+    const sortedStudents = [...studentRows].sort((a, b) => getStudentDisplayName(a).localeCompare(getStudentDisplayName(b)));
+    studentSelector.innerHTML = [
+      `<option value="all" ${selectedStudentId === "all" || !selectedStudent ? "selected" : ""}>All Students</option>`,
+      ...sortedStudents.map(student => `<option value="${student.id}" ${student.id === selectedStudentId ? "selected" : ""}>${escapeHtml(getStudentDisplayName(student))}</option>`)
+    ].join("");
+    studentSelector.disabled = !sortedStudents.length;
+    studentSelector.onchange = () => {
+      const currentFilter = getTeacherDashboardFilter();
+      setTeacherDashboardFilter({
+        ...currentFilter,
+        studentId: studentSelector.value
+      });
+      initDashboards().catch(console.error);
+    };
+  }
+
+  summary.value = selectedStudent
+    ? `${selectedClassName} - ${getStudentDisplayName(selectedStudent)}`
+    : `${selectedClassName} - all students`;
   note.textContent = classes.length
-    ? `${classes.length} class option(s) found for this teacher/school context.`
-    : "No classes found for this teacher yet.";
+    ? `${classes.length} class option(s) found. Showing ${studentRows.length} student${studentRows.length === 1 ? "" : "s"} in the current scope.`
+    : "No live class records found yet. The dashboard will still show any saved local student profiles it can find.";
 
   selector.onchange = () => {
     setTeacherDashboardFilter({
       scope: selector.value === "all" ? "all" : "class",
-      classId: selector.value
+      classId: selector.value,
+      studentId: "all"
     });
     initDashboards().catch(console.error);
   };
@@ -2556,34 +2856,55 @@ async function renderStudentLiveData(players, skillsData) {
 
 function renderTeacherLiveData(players, skillsData, teacherData = null) {
   const teacherContext = getActiveTeacherContext();
-  const safeTeacherData = teacherData || {
+  const fallbackTeacherData = buildFallbackTeacherDashboardData(players, teacherContext);
+  const shouldUseFallbackData = !teacherData || (!(teacherData.availableClasses || []).length && (players || []).length);
+  const safeTeacherData = shouldUseFallbackData ? fallbackTeacherData : (teacherData || {
     context: teacherContext,
     availableClasses: [],
     selectedClassId: "all",
     selectedClassName: "No classes found",
+    selectedStudentId: "all",
     students: [],
     moduleProgress: [],
     evidenceRows: [],
     voteRows: [],
     profileRows: [],
     feedbackRows: []
-  };
+  });
+  const dashboardContext = safeTeacherData.context || teacherContext;
   const skillCategories = Array.isArray(skillsData?.categories) ? skillsData.categories : [];
 
-  renderTeacherClassSelector(safeTeacherData);
+  const allStudents = safeTeacherData?.students || [];
+  renderTeacherClassSelector(safeTeacherData, allStudents);
 
-  const selectedClassCode = teacherData?.selectedClassId && teacherData.selectedClassId !== "all"
-    ? (teacherData.availableClasses || []).find(row => row.id === teacherData.selectedClassId)?.class_code || ""
+  const selectedClassId = safeTeacherData?.selectedClassId || "all";
+  const selectedStudentId = safeTeacherData?.selectedStudentId || getTeacherDashboardFilter().studentId || "all";
+  const selectedStudent = selectedStudentId !== "all"
+    ? allStudents.find(student => student.id === selectedStudentId) || null
+    : null;
+  const selectedClassCode = selectedClassId !== "all"
+    ? (safeTeacherData.availableClasses || []).find(row => row.id === selectedClassId)?.class_code || ""
     : "";
-  const classCodeFilter = selectedClassCode || teacherContext.classroom?.classCode || teacherContext.teacherSession?.classCode || "";
-  const latestPlayers = teacherData?.profileRows?.length
-    ? dedupeLatestPlayers(teacherData.profileRows)
+  const classCodeFilter = selectedClassId === "all"
+    ? ""
+    : selectedClassCode || dashboardContext.classroom?.classCode || dashboardContext.teacherSession?.classCode || "";
+  const allLatestPlayers = safeTeacherData?.profileRows?.length
+    ? dedupeLatestPlayers(safeTeacherData.profileRows)
     : dedupeLatestPlayers(players).filter(player => !classCodeFilter || player.class_code === classCodeFilter);
-  const students = teacherData?.students || [];
-  const moduleProgressRows = teacherData?.moduleProgress || [];
-  const evidenceRows = teacherData?.evidenceRows || [];
-  const voteRows = teacherData?.voteRows || [];
-  const feedbackRows = teacherData?.feedbackRows || [];
+  const latestPlayers = selectedStudent
+    ? allLatestPlayers.filter(player => player.id === selectedStudent.id)
+    : allLatestPlayers;
+  const students = selectedStudent ? [selectedStudent] : allStudents;
+  const allModuleProgressRows = safeTeacherData?.moduleProgress || [];
+  const allEvidenceRows = safeTeacherData?.evidenceRows || [];
+  const moduleProgressRows = selectedStudent
+    ? allModuleProgressRows.filter(row => row.student_id === selectedStudent.id)
+    : allModuleProgressRows;
+  const evidenceRows = selectedStudent
+    ? allEvidenceRows.filter(row => row.student_id === selectedStudent.id)
+    : allEvidenceRows;
+  const voteRows = safeTeacherData?.voteRows || [];
+  const feedbackRows = safeTeacherData?.feedbackRows || [];
   const megatrendsProgressRows = moduleProgressRows.filter(row => (row.module_id || row.module_slug) === "megatrends");
   const estProgressRows = moduleProgressRows.filter(row => (row.module_id || row.module_slug) === "est-prep");
   const lifelongProgressRows = moduleProgressRows.filter(row => (row.module_id || row.module_slug) === "lifelong-learning");
@@ -2661,6 +2982,9 @@ function renderTeacherLiveData(players, skillsData, teacherData = null) {
     .sort((a, b) => b.seconds - a.seconds)
     .slice(0, 4)
     .map(row => ({
+      label: `${row.moduleLabel}: ${row.label}`,
+      seconds: row.seconds,
+      variant: row.moduleLabel === "EST Prep" ? "green" : row.moduleLabel === "Lifelong Learning" ? "gold" : "",
       title: `${row.moduleLabel} • ${row.label}`,
       detail: `${formatDurationSeconds(row.seconds)} captured • ${row.count} submission${row.count === 1 ? "" : "s"} • ${row.students.size} student${row.students.size === 1 ? "" : "s"}${row.scores.length ? ` • Average score ${average(row.scores)}%` : ""}`
     }));
@@ -2746,6 +3070,7 @@ function renderTeacherLiveData(players, skillsData, teacherData = null) {
       ? item.score - longAnswerScoreAverage
       : null;
     return {
+      studentId: item.entry.row.student_id || "",
       studentName: getEvidenceStudentName(item.entry.row),
       meta: `${getModuleLabel(getEvidenceModuleId(item.entry.row, item.entry.payload))} • ${item.taskLabel} • ${formatDateTime(item.entry.row.created_at)}`,
       band: getTeacherAnswerBand(item.score, item.wordCount),
@@ -2791,6 +3116,7 @@ function renderTeacherLiveData(players, skillsData, teacherData = null) {
       sortWeight = 1;
     }
     return {
+      studentId: student.id,
       title: `${student.display_name || student.username} • ${status}`,
       detail: [
         `Last activity ${formatRelativeAge(lastActivity)}`,
@@ -2822,7 +3148,7 @@ function renderTeacherLiveData(players, skillsData, teacherData = null) {
     .filter(Boolean)
     .filter(request => {
       const matchesClass = !classCodeFilter || request.classCode === classCodeFilter;
-      const teacherSchool = teacherContext.teacherLogin?.schoolName || teacherContext.teacher?.schoolName || "";
+      const teacherSchool = dashboardContext.teacherLogin?.schoolName || dashboardContext.teacher?.schoolName || "";
       const matchesSchool = !teacherSchool || request.schoolName === teacherSchool;
       return matchesClass || matchesSchool;
     });
@@ -2870,6 +3196,7 @@ function renderTeacherLiveData(players, skillsData, teacherData = null) {
       : "No written evidence yet";
 
     return {
+      studentId: student.id,
       name: student.display_name || student.username || "Student",
       meta: [
         student.username || "No username",
@@ -2923,19 +3250,25 @@ function renderTeacherLiveData(players, skillsData, teacherData = null) {
     return bScore - aScore;
   });
 
-  setText("teacher-hero-title", teacherData?.selectedClassId === "all" ? `All classes at ${teacherContext.teacher?.schoolName || "your school"}` : (classCodeFilter ? `Class ${classCodeFilter} overview` : "Teacher dashboard for all active records"));
+  const scopeLabel = selectedStudent
+    ? `${getStudentDisplayName(selectedStudent)} learning profile`
+    : selectedClassId === "all"
+      ? `all classes at ${dashboardContext.teacher?.schoolName || "your school"}`
+      : (classCodeFilter ? `Class ${classCodeFilter}` : "selected class");
+  setText("teacher-hero-title", "Data-Informed Interventions and Engagement Information");
   setText(
     "teacher-hero-subtitle",
     students.length
-      ? `Tracking ${students.length} student accounts with ${loggedInStudents} logged in, ${evidenceCount} evidence item(s), and live module data feeding the ${teacherData?.selectedClassId === "all" ? "school-wide" : "class"} view.`
+      ? `Showing ${scopeLabel}: ${students.length} student account${students.length === 1 ? "" : "s"}, ${loggedInStudents} logged in, ${evidenceCount} evidence item(s), and module data feeding the current intervention view.`
       : "Unlock the teacher area in the game or create student progress first to populate this dashboard."
   );
 
   const badgeStack = document.getElementById("teacher-badge-stack");
   if (badgeStack) {
     badgeStack.innerHTML = students.length ? [
-      renderBadge(`Class: ${classCodeFilter || "Current class"}`),
-      renderBadge(`Scope: ${teacherData?.selectedClassId === "all" ? "All classes" : "Single class"}`),
+      renderBadge(`Class: ${classCodeFilter || "All classes"}`),
+      renderBadge(`Scope: ${selectedStudent ? "Student drill-down" : selectedClassId === "all" ? "All classes" : "Single class"}`),
+      ...(selectedStudent ? [renderBadge(`Student: ${getStudentDisplayName(selectedStudent)}`)] : []),
       renderBadge(`Students: ${students.length}`),
       renderBadge(`Logged in: ${loggedInStudents}`),
       renderBadge(`Average mastery: ${classMastery}%`),
@@ -2959,14 +3292,15 @@ function renderTeacherLiveData(players, skillsData, teacherData = null) {
   );
   setText("teacher-students-on-track", String(studentsOnTrack));
   setText("teacher-students-at-risk", String(studentsAtRisk));
-  setText("teacher-captured-time", formatDurationSeconds(totalTaskSeconds));
+  setText("teacher-captured-time", formatDurationSeconds(totalTaskSeconds, "0m"));
   setText("teacher-average-completion", `${moduleCompletion}%`);
   setText("teacher-average-score", evidenceScores.length ? `${averageEvidenceScore}%` : "N/A");
   setText("teacher-evidence-count", String(evidenceCount));
 
   renderSkills({ categories: skillCategories }, "teacher-skill-grid", classSkillMap);
-  renderTeacherModuleHealth([
+  const teacherModuleRows = [
     {
+      label: "Megatrends",
       title: "Megatrends",
       status: megatrendsProgressRows.length || latestPlayers.length ? "Live module" : "Awaiting class data",
       summary: megatrendsProgressRows.length || latestPlayers.length ? `Tracking ${megatrendsProgressRows.length || latestPlayers.length} Megatrends progress signal(s), ${voteCount} community vote(s), and ${formatCurrency(classFund)} in saved community tax contributions.` : "Once students play, this module health card will populate automatically.",
@@ -2979,6 +3313,7 @@ function renderTeacherLiveData(players, skillsData, teacherData = null) {
       logoLabel: "Digital Literacy"
     },
     {
+      label: "EST Prep",
       title: "EST Prep",
       status: estProgressRows.length ? "Prototype live" : "Awaiting EST submissions",
       summary: estProgressRows.length
@@ -2993,6 +3328,7 @@ function renderTeacherLiveData(players, skillsData, teacherData = null) {
       logoLabel: "Critical Thinking"
     },
     {
+      label: "Lifelong Learning",
       title: "Lifelong Learning",
       status: lifelongProgressRows.length ? "Live module" : "Awaiting reflections",
       summary: lifelongProgressRows.length
@@ -3006,7 +3342,8 @@ function renderTeacherLiveData(players, skillsData, teacherData = null) {
       logoPath: getSkillCategoryById(skillsData, "time-management")?.logoPath,
       logoLabel: "Time Management"
     }
-  ]);
+  ];
+  renderTeacherModuleHealth(teacherModuleRows);
   renderTeacherInterventions([
     ...(topInactive ? [{
       title: `Re-engage ${topInactive.title.split(" • ")[0]}`,
@@ -3044,6 +3381,18 @@ function renderTeacherLiveData(players, skillsData, teacherData = null) {
   renderTeacherLongAnswerComparison(longAnswerRows);
   renderTeacherTaskTimeList(taskTimingRows);
   renderTeacherStudentCompareList(studentCompareRows);
+  renderTeacherStudentProfile({
+    students: allStudents,
+    selectedStudent,
+    engagementRows,
+    studentCompareRows
+  });
+  renderTeacherClassCharts({
+    engagementRows,
+    moduleRows: teacherModuleRows,
+    timeRows: strandTimeRows,
+    glossary: glossaryData
+  });
   renderTeacherStoreRequestList(storeRequests);
 }
 

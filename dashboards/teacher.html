@@ -3,11 +3,11 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Career Empire Teacher Dashboard</title>
+  <title>Data-Informed Interventions and Engagement Information</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="./dashboard.css">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Outfit:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="./dashboard.css?v=20260508-teacher-analytics">
 </head>
 <body class="teacher-dashboard-page" data-teacher-nav-active="teacher-dashboard">
   <main class="page-shell">
@@ -25,8 +25,9 @@
 
     <section class="hero">
       <article class="hero-card teacher-hero-card">
-        <span class="eyebrow">Teacher Dashboard</span>
-        <h1 id="teacher-hero-title">See the class, not just the clicks.</h1>
+        <img class="teacher-hero-logo" src="../Assets/landing-screenshots/ecc-logo.png" alt="Emmanuel Catholic College logo">
+        <span class="eyebrow">Teacher Analytics</span>
+        <h1 id="teacher-hero-title">Data-Informed Interventions and Engagement Information</h1>
         <p id="teacher-hero-subtitle" class="subtitle">
           Live engagement, module time, strand results, glossary gaps, long-answer comparison, and next-step signals across the Career Empire ecosystem.
         </p>
@@ -64,9 +65,9 @@
         <div class="metric-note">No login, no progress, or low mastery</div>
       </article>
       <article class="metric metric-card--art" style="--metric-art: url('../Assets/Images and Animations/Animated Buttons/animated_progress_bar_fill.gif');">
-        <div class="metric-label">Captured Task Time</div>
+        <div class="metric-label">Session & Task Time</div>
         <div id="teacher-captured-time" class="metric-value">0m</div>
-        <div class="metric-note">Timed module stages saved as evidence</div>
+        <div class="metric-note">Shows timed module activity once saved</div>
       </article>
       <article class="metric metric-card--art" style="--metric-art: url('../Assets/Images and Animations/Progress Bar/All steps complete.png');">
         <div class="metric-label">Average Completion</div>
@@ -88,7 +89,7 @@
     <section class="panel">
       <div class="section-title">
         <h2>Class Scope</h2>
-        <p>Select one class or view the whole school</p>
+        <p>Default view is all classes; refine by class, then by student</p>
       </div>
       <div class="teacher-grid">
         <div>
@@ -96,11 +97,31 @@
           <select id="teacher-class-selector"></select>
         </div>
         <div>
+          <label for="teacher-student-selector">Student drill-down</label>
+          <select id="teacher-student-selector"></select>
+        </div>
+        <div>
           <label for="teacher-class-summary">Selection summary</label>
           <input id="teacher-class-summary" type="text" readonly>
         </div>
       </div>
       <p class="footer-note" id="teacher-class-scope-note">The dashboard will load classes linked to the logged-in teacher's school.</p>
+    </section>
+
+    <section class="panel teacher-profile-panel">
+      <div class="section-title">
+        <h2>Student Learning Profile</h2>
+        <p>Individual progress, engagement, evidence, and suggested next step</p>
+      </div>
+      <div id="teacher-student-profile" class="student-profile-grid"></div>
+    </section>
+
+    <section class="panel">
+      <div class="section-title">
+        <h2>Class Trends</h2>
+        <p>Graphs for engagement, module completion, task time, and glossary recall</p>
+      </div>
+      <div id="teacher-class-chart-grid" class="teacher-chart-grid"></div>
     </section>
 
     <section class="two-column">
@@ -184,8 +205,8 @@
   <script src="../config/supabase-config.js"></script>
   <script src="../src/services/supabase-browser.js"></script>
   <script src="../auth/auth.js?v=20260507-wa-domain-live"></script>
-  <script src="./dashboard.js"></script>
-  <script src="../src/services/session-banner.js?v=20260507-session-banner"></script>
-  <script src="../src/services/feedback-widget.js?v=20260507-session-banner"></script>
+  <script src="./dashboard.js?v=20260508-teacher-analytics"></script>
+  <script src="../src/services/session-banner.js?v=20260508-teacher-analytics"></script>
+  <script src="../src/services/feedback-widget.js?v=20260508-teacher-analytics"></script>
 </body>
 </html>
