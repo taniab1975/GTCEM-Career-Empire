@@ -276,7 +276,8 @@
       inset: 0;
       background:
         linear-gradient(180deg, rgba(2, 6, 23, 0.62), rgba(2, 6, 23, 0.88)),
-        url('./Assets/landing-screenshots/global-shop.png') center/cover no-repeat;
+        radial-gradient(circle at 24% 30%, rgba(125, 211, 252, 0.22), transparent 24%),
+        radial-gradient(circle at 78% 62%, rgba(253, 230, 138, 0.16), transparent 26%);
       filter: blur(3px) brightness(0.68);
       transform: scale(1.03);
       z-index: 0;
@@ -1533,8 +1534,8 @@
       border-radius: 20px;
       border: 1px solid rgba(125, 211, 252, 0.18);
       background:
-        linear-gradient(180deg, rgba(2, 6, 23, 0.1), rgba(2, 6, 23, 0.78)),
-        url("./Assets/landing-screenshots/student-hub.png") center center / cover no-repeat;
+        radial-gradient(circle at 50% 40%, rgba(125, 211, 252, 0.22), transparent 22%),
+        linear-gradient(145deg, rgba(4, 24, 38, 0.94), rgba(2, 8, 23, 0.88));
     }
     .platform-role-button.active {
       border-color: rgba(253, 230, 138, 0.4);
@@ -1543,6 +1544,311 @@
     @keyframes platformShotFloat {
       0%, 100% { transform: translateY(0) rotate(0deg); }
       50% { transform: translateY(-10px) rotate(-0.45deg); }
+    }
+
+    /* Landing repair: campus-first, no screenshot frames, separated role pages. */
+    .platform-home-shell {
+      background:
+        linear-gradient(180deg, rgba(2, 8, 23, 0.08), rgba(2, 8, 23, 0.82) 72%, #020817 100%),
+        url("./Assets/landing-screenshots/ecc-future-campus-hero.png") center center / cover fixed no-repeat,
+        #020817;
+    }
+    .platform-home-shell::before {
+      background:
+        linear-gradient(90deg, rgba(2, 8, 23, 0.84), rgba(2, 8, 23, 0.34) 48%, rgba(2, 8, 23, 0.74)),
+        radial-gradient(circle at 76% 16%, rgba(253, 230, 138, 0.12), transparent 28%);
+    }
+    .platform-home-grid {
+      max-width: 1280px;
+    }
+    .platform-brand-strip {
+      width: fit-content;
+      max-width: calc(100% - 24px);
+      margin-bottom: 18px;
+      padding: 10px 14px;
+      border-radius: 18px;
+      background: rgba(2, 8, 23, 0.56);
+    }
+    .platform-logo-lockup img {
+      width: 54px;
+    }
+    .platform-campus-tag {
+      display: none;
+    }
+    .platform-welcome-hero {
+      min-height: min(780px, calc(100vh - 120px));
+      grid-template-columns: minmax(0, 0.9fr) minmax(360px, 0.72fr);
+      align-items: end;
+      background:
+        linear-gradient(90deg, rgba(2, 8, 23, 0.92), rgba(2, 8, 23, 0.5) 58%, rgba(2, 8, 23, 0.28)),
+        linear-gradient(180deg, rgba(2, 8, 23, 0.05), rgba(2, 8, 23, 0.78)),
+        url("./Assets/landing-screenshots/ecc-future-campus-hero.png") center center / cover no-repeat;
+    }
+    .platform-welcome-hero::after {
+      opacity: 0.14;
+      mask-image: linear-gradient(90deg, #000, transparent 78%);
+    }
+    .platform-hero-ecc-badge {
+      display: none;
+    }
+    .platform-welcome-copy {
+      max-width: 760px;
+      padding-top: 0;
+      align-self: end;
+    }
+    .platform-welcome-copy h1 {
+      max-width: 700px;
+      font-size: clamp(3.4rem, 7.6vw, 7.4rem);
+    }
+    .platform-welcome-copy p {
+      max-width: 620px;
+    }
+    .platform-feature-stage {
+      align-self: stretch;
+      display: grid;
+      align-content: center;
+    }
+    .platform-shot-stack,
+    .platform-shot-card,
+    .platform-shot-label {
+      display: none;
+    }
+    .platform-cinematic-stage {
+      display: grid;
+      gap: 16px;
+      padding: 20px;
+      border: 1px solid rgba(125, 211, 252, 0.18);
+      border-radius: 26px;
+      background: rgba(2, 8, 23, 0.54);
+      box-shadow: 0 28px 60px rgba(2, 8, 23, 0.36);
+      backdrop-filter: blur(18px);
+    }
+    .platform-signal-orbit {
+      position: relative;
+      min-height: 280px;
+      border-radius: 22px;
+      overflow: hidden;
+      border: 1px solid rgba(253, 230, 138, 0.16);
+      background:
+        radial-gradient(circle at 50% 50%, rgba(125, 211, 252, 0.34), transparent 12%),
+        radial-gradient(circle at 50% 50%, transparent 0 28%, rgba(253, 230, 138, 0.18) 29%, transparent 31%),
+        radial-gradient(circle at 50% 50%, transparent 0 46%, rgba(125, 211, 252, 0.14) 47%, transparent 49%),
+        linear-gradient(145deg, rgba(4, 24, 38, 0.95), rgba(2, 8, 23, 0.86));
+    }
+    .platform-signal-orbit::before,
+    .platform-signal-orbit::after {
+      content: "";
+      position: absolute;
+      inset: 24%;
+      border: 1px solid rgba(125, 211, 252, 0.24);
+      border-radius: 50%;
+      animation: platformOrbit 12s linear infinite;
+    }
+    .platform-signal-orbit::after {
+      inset: 12%;
+      border-color: rgba(253, 230, 138, 0.18);
+      animation-duration: 18s;
+      animation-direction: reverse;
+    }
+    .platform-signal-node {
+      position: absolute;
+      display: grid;
+      place-items: center;
+      width: 58px;
+      height: 58px;
+      border-radius: 18px;
+      border: 1px solid rgba(125, 211, 252, 0.22);
+      background: rgba(2, 8, 23, 0.72);
+      color: #fde68a;
+      box-shadow: 0 18px 34px rgba(0, 0, 0, 0.28);
+    }
+    .platform-signal-node i {
+      width: 24px;
+      height: 24px;
+    }
+    .platform-signal-node.one { top: 12%; left: 16%; }
+    .platform-signal-node.two { top: 18%; right: 14%; }
+    .platform-signal-node.three { bottom: 16%; right: 22%; }
+    .platform-signal-node.four { bottom: 14%; left: 22%; }
+    .platform-signal-core {
+      position: absolute;
+      left: 50%;
+      top: 50%;
+      transform: translate(-50%, -50%);
+      width: 116px;
+      height: 116px;
+      display: grid;
+      place-items: center;
+      border-radius: 34px;
+      border: 1px solid rgba(253, 230, 138, 0.26);
+      background: rgba(4, 28, 40, 0.76);
+      color: white;
+      font-size: 0.82rem;
+      font-weight: 800;
+      text-align: center;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      box-shadow: 0 0 42px rgba(125, 211, 252, 0.16);
+    }
+    .platform-cinematic-caption {
+      display: grid;
+      gap: 5px;
+      padding: 16px 18px;
+      border-radius: 18px;
+      border: 1px solid rgba(125, 211, 252, 0.16);
+      background: rgba(2, 8, 23, 0.58);
+    }
+    .platform-cinematic-caption strong {
+      color: #ffffff;
+      font-size: 1.05rem;
+      font-weight: 800;
+    }
+    .platform-cinematic-caption span {
+      color: #dbeafe;
+      font-size: 0.92rem;
+      line-height: 1.45;
+    }
+    .platform-feature-chips {
+      grid-template-columns: 1fr;
+    }
+    .platform-feature-chip {
+      min-height: 54px;
+      background: rgba(2, 8, 23, 0.56);
+    }
+    .platform-home-shell.platform-role-active .platform-brand-strip,
+    .platform-home-shell.platform-role-active .platform-welcome-hero {
+      display: none;
+    }
+    .platform-pathway-panel.active {
+      min-height: calc(100vh - 64px);
+      padding: clamp(24px, 4vw, 52px);
+      border-radius: 28px;
+      background:
+        linear-gradient(90deg, rgba(2, 8, 23, 0.9), rgba(2, 8, 23, 0.58)),
+        linear-gradient(180deg, rgba(2, 8, 23, 0.18), rgba(2, 8, 23, 0.78)),
+        url("./Assets/landing-screenshots/ecc-future-campus-hero.png") center center / cover no-repeat;
+    }
+    .platform-pathway-head {
+      grid-template-columns: 1fr;
+      align-items: start;
+    }
+    .platform-pathway-head h2 {
+      max-width: 900px;
+      font-size: clamp(2.6rem, 5.8vw, 5.8rem);
+    }
+    .platform-back-button {
+      width: fit-content;
+      min-height: 42px;
+      gap: 8px;
+      margin-bottom: 4px;
+    }
+    .platform-pathway-grid,
+    #platform-teacher-pathway .platform-pathway-grid {
+      grid-template-columns: 1fr;
+    }
+    #platform-teacher-pathway .platform-video-panel {
+      max-width: 1120px;
+      margin: 0 auto;
+      width: 100%;
+      background: rgba(2, 8, 23, 0.76);
+    }
+    #platform-teacher-pathway .platform-video-header h1 {
+      font-size: clamp(2rem, 4vw, 4.4rem);
+    }
+    #platform-teacher-pathway .platform-embed-frame {
+      aspect-ratio: 16 / 9;
+      min-height: 0;
+    }
+    .platform-teacher-actions {
+      max-width: 1120px;
+      margin: 0 auto;
+      width: 100%;
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 16px;
+    }
+    .platform-pathway-card {
+      background: rgba(2, 8, 23, 0.68);
+      backdrop-filter: blur(18px);
+    }
+    .platform-student-preview {
+      position: relative;
+      min-height: 420px;
+      overflow: hidden;
+      background:
+        radial-gradient(circle at 50% 42%, rgba(125, 211, 252, 0.32), transparent 14%),
+        linear-gradient(145deg, rgba(4, 24, 38, 0.95), rgba(2, 8, 23, 0.86));
+    }
+    .platform-student-preview > * {
+      position: relative;
+      z-index: 1;
+    }
+    .platform-student-preview::before {
+      content: "";
+      position: absolute;
+      inset: 14%;
+      border-radius: 42px;
+      border: 1px solid rgba(125, 211, 252, 0.22);
+      background:
+        linear-gradient(90deg, rgba(125, 211, 252, 0.12) 1px, transparent 1px),
+        linear-gradient(180deg, rgba(253, 230, 138, 0.1) 1px, transparent 1px);
+      background-size: 42px 42px;
+      transform: perspective(700px) rotateX(58deg);
+      transform-origin: center bottom;
+    }
+    .platform-student-preview::after {
+      content: "STUDENT LAUNCH";
+      position: absolute;
+      left: 50%;
+      top: 50%;
+      transform: translate(-50%, -50%);
+      padding: 16px 22px;
+      border: 1px solid rgba(253, 230, 138, 0.26);
+      border-radius: 20px;
+      background: rgba(2, 8, 23, 0.72);
+      color: #ffffff;
+      font-weight: 800;
+      letter-spacing: 0.16em;
+    }
+    .platform-student-console {
+      position: absolute;
+      left: clamp(18px, 7%, 42px);
+      right: clamp(18px, 7%, 42px);
+      bottom: clamp(18px, 7%, 42px);
+      display: grid;
+      gap: 14px;
+      padding: 20px;
+      border: 1px solid rgba(125, 211, 252, 0.2);
+      border-radius: 22px;
+      background: rgba(2, 8, 23, 0.72);
+      backdrop-filter: blur(16px);
+    }
+    .platform-student-console strong {
+      color: #ffffff;
+      font-size: clamp(1.45rem, 3vw, 2.25rem);
+      line-height: 1;
+    }
+    .platform-student-lanes {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 10px;
+    }
+    .platform-student-lanes span {
+      min-height: 46px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 10px;
+      border: 1px solid rgba(253, 230, 138, 0.18);
+      border-radius: 14px;
+      background: rgba(255, 255, 255, 0.055);
+      color: #e2e8f0;
+      font-size: 0.82rem;
+      font-weight: 800;
+      text-align: center;
+    }
+    @keyframes platformOrbit {
+      to { transform: rotate(360deg); }
     }
 
     body { box-sizing: border-box; }
@@ -1632,6 +1938,16 @@
       .platform-pathway-head {
         align-items: start;
       }
+      .platform-teacher-actions,
+      .platform-student-lanes {
+        grid-template-columns: 1fr;
+      }
+      .platform-signal-orbit {
+        min-height: 240px;
+      }
+      .platform-student-preview {
+        min-height: 360px;
+      }
     }
   </style>
 </head>
@@ -1653,10 +1969,6 @@
           <div class="platform-hero-card">
             <div class="platform-landing-grid">
               <section class="platform-welcome-hero" aria-labelledby="platform-welcome-title">
-                <div class="platform-hero-ecc-badge">
-                  <img src="./Assets/landing-screenshots/ecc-logo.png" alt="Emmanuel Catholic College crest">
-                  <span>Emmanuel Catholic College</span>
-                </div>
                 <div class="platform-welcome-copy">
                   <span class="platform-kicker">Welcome to the next stage</span>
                   <h1 id="platform-welcome-title">Year 12 Careers just levelled up.</h1>
@@ -1666,20 +1978,19 @@
                     <button class="platform-ghost platform-entry-btn platform-role-button" type="button" data-platform-role-button="teacher"><i data-lucide="presentation"></i>I'm a teacher</button>
                   </div>
                 </div>
-                <div class="platform-feature-stage" aria-label="Career Empire feature preview">
-                  <div class="platform-shot-stack">
-                    <figure class="platform-shot-card primary">
-                      <img src="./Assets/landing-screenshots/student-hub.png" alt="Career Empire student hub screenshot">
-                      <figcaption class="platform-shot-label">Student hub</figcaption>
-                    </figure>
-                    <figure class="platform-shot-card secondary">
-                      <img src="./Assets/landing-screenshots/global-shop.png" alt="Career Empire global shop screenshot">
-                      <figcaption class="platform-shot-label">Career world</figcaption>
-                    </figure>
-                    <figure class="platform-shot-card tertiary">
-                      <img src="./Assets/landing-screenshots/lifelong-learning.png" alt="Career Empire Lifelong Learning module screenshot">
-                      <figcaption class="platform-shot-label">Playable modules</figcaption>
-                    </figure>
+                <div class="platform-feature-stage" aria-label="Career Empire gameplay preview">
+                  <div class="platform-cinematic-stage" aria-hidden="true">
+                    <div class="platform-signal-orbit">
+                      <span class="platform-signal-node one"><i data-lucide="map"></i></span>
+                      <span class="platform-signal-node two"><i data-lucide="sparkles"></i></span>
+                      <span class="platform-signal-node three"><i data-lucide="badge-check"></i></span>
+                      <span class="platform-signal-node four"><i data-lucide="radar"></i></span>
+                      <span class="platform-signal-core">Career<br>Empire</span>
+                    </div>
+                    <div class="platform-cinematic-caption">
+                      <strong>Playable learning world</strong>
+                      <span>Scenarios, choices, skill evidence and class momentum moving together.</span>
+                    </div>
                   </div>
                   <div class="platform-feature-chips">
                     <span class="platform-feature-chip"><i data-lucide="gamepad-2"></i>Playable modules</span>
@@ -1693,9 +2004,10 @@
                 <article id="platform-student-pathway" class="platform-pathway-panel" data-platform-role-panel="student" aria-labelledby="platform-student-title">
                   <div class="platform-pathway-head">
                     <div>
+                      <button class="platform-ghost platform-entry-btn platform-back-button" type="button" data-platform-role-button=""><i data-lucide="arrow-left"></i>Back to welcome</button>
                       <span class="platform-kicker">Student pathway</span>
                       <h2 id="platform-student-title">Your Career Empire starts here.</h2>
-                  <p>Students can go straight to their own login and demo spaces without the teacher setup links. A student welcome video can slot in here when it is ready.</p>
+                      <p>Students can step straight into their own login and demo spaces. A dedicated student welcome video can slot in here when it is ready.</p>
                     </div>
                     <div class="platform-pathway-actions">
                       <a class="btn-primary text-white font-bold py-3 px-6 rounded-lg platform-entry-btn" href="./auth/student-login.html"><i data-lucide="log-in"></i>Student Login</a>
@@ -1703,7 +2015,17 @@
                     </div>
                   </div>
                   <div class="platform-pathway-grid">
-                    <div class="platform-student-preview" role="img" aria-label="Career Empire student hub preview"></div>
+                    <div class="platform-student-preview" role="img" aria-label="Cinematic Career Empire student launch preview">
+                      <div class="platform-student-console">
+                        <span class="platform-kicker">Student launch</span>
+                        <strong>Choose your first mission.</strong>
+                        <div class="platform-student-lanes">
+                          <span>Megatrends</span>
+                          <span>EST Prep</span>
+                          <span>Career evidence</span>
+                        </div>
+                      </div>
+                    </div>
                     <div class="platform-student-guide">
                       <h3>How students get online</h3>
                       <ol>
@@ -1723,22 +2045,19 @@
                 <article id="platform-teacher-pathway" class="platform-pathway-panel" data-platform-role-panel="teacher" aria-labelledby="platform-teacher-title">
                   <div class="platform-pathway-head">
                     <div>
+                      <button class="platform-ghost platform-entry-btn platform-back-button" type="button" data-platform-role-button=""><i data-lucide="arrow-left"></i>Back to welcome</button>
                       <span class="platform-kicker">Teacher pathway</span>
-                      <h2 id="platform-teacher-title">See the platform, test the student flow, then create your class.</h2>
-                      <p>Watch the overview, try the demo student pathways, then register a teacher account when you are ready to set up your own class.</p>
-                    </div>
-                    <div class="platform-pathway-actions">
-                      <a class="btn-primary text-white font-bold py-3 px-6 rounded-lg platform-entry-btn" href="./auth/teacher-signup.html"><i data-lucide="user-plus"></i>Create Teacher Account</a>
-                      <a class="platform-ghost platform-entry-btn" href="./auth/teacher-login.html"><i data-lucide="log-in"></i>Teacher Login</a>
+                      <h2 id="platform-teacher-title">Watch the overview first.</h2>
+                      <p>Start with the platform video, then test the student demo pathways. Create or open a teacher account once the flow makes sense.</p>
                     </div>
                   </div>
-                  <div class="platform-pathway-grid">
+                  <div class="platform-pathway-grid platform-teacher-video-grid">
                     <div class="platform-video-panel platform-video-panel--lead" aria-label="Career Empire teacher overview video">
                       <div class="platform-video-header">
                         <div>
                           <span class="platform-kicker">Platform overview</span>
                           <h1>What is Career Empire?</h1>
-                          <p>The existing overview video sits here for staff onboarding before account creation.</p>
+                          <p>The staff overview stays front and centre before account creation.</p>
                         </div>
                       </div>
                       <div class="platform-embed-frame">
@@ -1748,13 +2067,23 @@
                         </video>
                       </div>
                     </div>
+                  </div>
+                  <div class="platform-teacher-actions" aria-label="Teacher next steps">
                     <div class="platform-pathway-card">
-                      <h3>Teacher preview links</h3>
-                      <p>These links keep staff onboarding together: account setup, login, and temporary demo student experiences.</p>
+                      <h3>Try the student flow</h3>
+                      <p>Use temporary demo student spaces to see the platform before setting up your own class.</p>
                       <div class="platform-pathway-actions">
                         <button class="btn-primary text-white font-bold py-3 px-6 rounded-lg platform-entry-btn" type="button" data-demo-student-launch="true" data-demo-student-target="./dashboards/student.html"><i data-lucide="play-circle"></i>Student Hub Demo</button>
                         <button class="btn-primary text-white font-bold py-3 px-6 rounded-lg platform-entry-btn" type="button" data-demo-student-launch="true" data-demo-student-target="./modules/est-prep/index.html"><i data-lucide="flask-conical"></i>EST Prep Demo</button>
                         <a class="platform-ghost platform-entry-btn" href="./promo-video.html" target="_blank" rel="noopener noreferrer"><i data-lucide="maximize-2"></i>Open Video Page</a>
+                      </div>
+                    </div>
+                    <div class="platform-pathway-card">
+                      <h3>Create your teacher space</h3>
+                      <p>When you are ready, register a teacher account or return through teacher login.</p>
+                      <div class="platform-pathway-actions">
+                        <a class="btn-primary text-white font-bold py-3 px-6 rounded-lg platform-entry-btn" href="./auth/teacher-signup.html"><i data-lucide="user-plus"></i>Create Teacher Account</a>
+                        <a class="platform-ghost platform-entry-btn" href="./auth/teacher-login.html"><i data-lucide="log-in"></i>Teacher Login</a>
                       </div>
                     </div>
                   </div>
@@ -2523,9 +2852,15 @@
 
     function setPlatformRole(role, shouldScroll = false) {
       const validRole = role === 'student' || role === 'teacher' ? role : '';
+      const home = document.getElementById('platform-home');
+
+      home?.classList.toggle('platform-role-active', Boolean(validRole));
+      home?.classList.toggle('platform-role-student', validRole === 'student');
+      home?.classList.toggle('platform-role-teacher', validRole === 'teacher');
 
       document.querySelectorAll('[data-platform-role-button]').forEach(button => {
-        const isActive = button.dataset.platformRoleButton === validRole;
+        const buttonRole = button.dataset.platformRoleButton || '';
+        const isActive = Boolean(validRole) && buttonRole === validRole;
         button.classList.toggle('active', isActive);
         button.setAttribute('aria-pressed', isActive ? 'true' : 'false');
       });
@@ -2534,17 +2869,19 @@
         panel.classList.toggle('active', panel.dataset.platformRolePanel === validRole);
       });
 
-      if (!validRole) return;
-
       if (window.history?.replaceState) {
         const url = new URL(window.location.href);
-        url.searchParams.set('role', validRole);
+        if (validRole) {
+          url.searchParams.set('role', validRole);
+        } else {
+          url.searchParams.delete('role');
+        }
         window.history.replaceState({}, '', url);
       }
 
       if (shouldScroll) {
-        const panel = document.querySelector(`[data-platform-role-panel="${validRole}"]`);
-        panel?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        const target = validRole ? document.querySelector(`[data-platform-role-panel="${validRole}"]`) : home;
+        target?.scrollIntoView({ behavior: 'smooth', block: 'start' });
       }
     }
 
