@@ -436,6 +436,11 @@
   backdrop-filter: blur(8px);
 }
 
+.topic-media-stage--initiative .topic-media-status,
+.training-scene-preview--initiative.training-scene-preview--neutral .training-scene-badge {
+  display: none;
+}
+
 .topic-media-progress {
   position: absolute;
   z-index: 4;
