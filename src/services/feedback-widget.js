@@ -221,6 +221,22 @@
     return "dashboard-nav-link";
   }
 
+  function getPageSessionScope() {
+    const path = windowObj.location.pathname;
+    if (
+      documentObj.body?.dataset?.teacherNavActive ||
+      path.includes("/dashboards/teacher.html") ||
+      path.includes("/auth/teacher-") ||
+      path.includes("/auth/create-class") ||
+      path.includes("/auth/add-students") ||
+      path.includes("/auth/manage-students")
+    ) {
+      return "teacher";
+    }
+    if (path.includes("/auth/index.html")) return "mixed";
+    return "student";
+  }
+
   function ensureSessionBannerStyles() {
     if (documentObj.getElementById("career-empire-session-banner-style")) return;
     const style = documentObj.createElement("style");
@@ -331,10 +347,14 @@
 
     const state = readJsonStorage(AUTH_STATE_KEY, {});
     const session = readJsonStorage(PLAYER_SESSION_KEY, {});
-    const identities = [
-      getStudentIdentity(state, session),
-      getTeacherIdentity(state)
-    ].filter(Boolean);
+    const studentIdentity = getStudentIdentity(state, session);
+    const teacherIdentity = getTeacherIdentity(state);
+    const scope = getPageSessionScope();
+    const identities = scope === "teacher"
+      ? [teacherIdentity || studentIdentity].filter(Boolean)
+      : scope === "student"
+        ? [studentIdentity || teacherIdentity].filter(Boolean)
+        : [studentIdentity, teacherIdentity].filter(Boolean);
 
     if (!identities.length) return;
 
