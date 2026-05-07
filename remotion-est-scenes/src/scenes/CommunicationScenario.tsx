@@ -6,7 +6,7 @@ export const CommunicationScenario: React.FC = () => {
   return (
     <ScenarioFrame
       title="Communication Saves The Team"
-      subtitle="EST Scenario • Communication Skills"
+      subtitle="EST Scenario • SCSA Careers and Employability Skills"
       prompt="A teammate looks confused during a fast task. The strongest response is to listen, clarify, and explain clearly before mistakes grow."
       accent={{
         primary: "#1ca36c",

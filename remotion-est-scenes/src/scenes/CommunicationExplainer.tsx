@@ -5,8 +5,8 @@ import {estAssets} from "../assets";
 export const CommunicationExplainer: React.FC = () => {
   return (
     <ScenarioFrame
-      title="Communication Skills"
-      subtitle="Employability Explainer • Parent Skill and Subskills"
+      title="SCSA Careers and Employability Skills"
+      subtitle="Communication • Parent Skill and Subskills"
       prompt="Communication helps workers listen carefully, choose the right message for the audience, use clear language, and support meaning with non-verbal cues."
       accent={{
         primary: "#21b77b",

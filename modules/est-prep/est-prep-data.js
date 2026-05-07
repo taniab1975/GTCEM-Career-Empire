@@ -176,7 +176,7 @@ const DEFAULT_CONTENT_TOPIC_GROUPS = [
   },
   {
     id: "communication",
-    title: "Communication Skills",
+    title: "SCSA Careers and Employability Skills",
     introTitle: "Communication That Moves Work Forward",
     introSummary: "This strand focuses on clear messages, active listening, and communication that suits the audience and situation.",
     introImage: "../../remotion-est-scenes/public/est-assets/game-images/Teresa.png",

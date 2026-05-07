@@ -5,8 +5,8 @@ import {estAssets} from "../assets";
 export const TeamworkExplainer: React.FC = () => {
   return (
     <ScenarioFrame
-      title="Teamwork Skills"
-      subtitle="Employability Explainer • Parent Skill and Subskills"
+      title="SCSA Careers and Employability Skills"
+      subtitle="Teamwork • Parent Skill and Subskills"
       prompt="Teamwork is about contributing reliably, understanding roles, building rapport, and helping a group reach shared goals."
       accent={{
         primary: "#2aa8ff",
