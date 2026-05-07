@@ -292,6 +292,7 @@
         line-height: 1.15;
       }
       .session-logout-button {
+        -webkit-appearance: none;
         appearance: none;
         cursor: pointer;
         font: inherit;
@@ -299,9 +300,16 @@
         font-weight: 800;
         line-height: 1;
         border-radius: 8px;
+        border: 1px solid rgba(126, 168, 255, 0.28);
+        color: #e9f1ff;
+        background: rgba(12, 22, 39, 0.58);
+        box-shadow: none;
+        text-decoration: none;
       }
       .session-logout-button[disabled] {
         cursor: wait;
+        color: rgba(233, 241, 255, 0.72);
+        background: rgba(12, 22, 39, 0.48);
         opacity: 0.68;
       }
       .auth-topbar .top-links {
