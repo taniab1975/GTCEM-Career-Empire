@@ -5,8 +5,8 @@ import {estAssets} from "../assets";
 export const ProblemSolvingExplainer: React.FC = () => {
   return (
     <ScenarioFrame
-      title="Problem-Solving"
-      subtitle="Employability Explainer • Parent Skill and Subskills"
+      title="SCSA Careers and Employability Skills"
+      subtitle="Problem-Solving • Parent Skill and Subskills"
       prompt="Problem-solving means understanding the issue clearly, generating options, and using a decision-making process to choose and review a solution."
       accent={{
         primary: "#ffb84d",

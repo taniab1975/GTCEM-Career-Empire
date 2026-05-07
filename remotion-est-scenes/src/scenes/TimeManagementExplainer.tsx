@@ -5,8 +5,8 @@ import {estAssets} from "../assets";
 export const TimeManagementExplainer: React.FC = () => {
   return (
     <ScenarioFrame
-      title="Time Management"
-      subtitle="Employability Explainer • Parent Skill and Subskills"
+      title="SCSA Careers and Employability Skills"
+      subtitle="Time Management • Parent Skill and Subskills"
       prompt="Time management helps workers plan ahead, use tools to stay organised, and adjust priorities when unexpected changes happen."
       accent={{
         primary: "#ffd247",

@@ -5,8 +5,8 @@ import {estAssets} from "../assets";
 export const DigitalLiteracyExplainer: React.FC = () => {
   return (
     <ScenarioFrame
-      title="Digital Literacy"
-      subtitle="Employability Explainer • Parent Skill and Subskills"
+      title="SCSA Careers and Employability Skills"
+      subtitle="Digital Literacy • Parent Skill and Subskills"
       prompt="Digital literacy means using online tools safely and effectively for research, communication, and everyday work tasks."
       accent={{
         primary: "#40b8ff",

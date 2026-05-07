@@ -216,7 +216,7 @@ export const ScenarioFrame: React.FC<ScenarioFrameProps> = ({
                 color: accent.glow
               }}
             >
-              {eyebrow ?? "Employability Skills"}
+              {eyebrow ?? "SCSA Careers and Employability Skills"}
             </div>
             <div style={{fontSize: 16, color: "rgba(255,255,255,0.72)"}}>{subtitle}</div>
           </div>

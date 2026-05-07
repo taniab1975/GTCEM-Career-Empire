@@ -5,8 +5,8 @@ import {estAssets} from "../assets";
 export const CriticalThinkingExplainer: React.FC = () => {
   return (
     <ScenarioFrame
-      title="Critical Thinking"
-      subtitle="Employability Explainer • Parent Skill and Subskills"
+      title="SCSA Careers and Employability Skills"
+      subtitle="Critical Thinking • Parent Skill and Subskills"
       prompt="Critical thinking means gathering reliable information, comparing evidence carefully, and reflecting on bias before making a judgment."
       accent={{
         primary: "#6ad69f",
