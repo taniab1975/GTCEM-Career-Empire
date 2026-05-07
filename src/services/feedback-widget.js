@@ -1,5 +1,9 @@
 (function attachCareerEmpireFeedback(windowObj, documentObj) {
   const FEEDBACK_FALLBACK_KEY = "career-empire-feedback-fallback";
+  const AUTH_STATE_KEY = "career-empire-auth-demo";
+  const PLAYER_SESSION_KEY = "career-empire-session";
+  const TEACHER_SESSION_KEY = "career-empire-teacher-session";
+  const TEACHER_FILTER_KEY = "career-empire-teacher-dashboard-filter";
 
   function readJsonStorage(key, fallback) {
     try {
@@ -141,6 +145,290 @@
     documentObj.head.appendChild(style);
   }
 
+  function persistAuthState(nextState) {
+    const cleaned = Object.fromEntries(
+      Object.entries(nextState || {}).filter(([, value]) => value !== undefined && value !== null)
+    );
+    if (Object.keys(cleaned).length) {
+      localStorage.setItem(AUTH_STATE_KEY, JSON.stringify(cleaned));
+    } else {
+      localStorage.removeItem(AUTH_STATE_KEY);
+    }
+  }
+
+  function escapeHtml(value) {
+    return String(value ?? "")
+      .replaceAll("&", "&amp;")
+      .replaceAll("<", "&lt;")
+      .replaceAll(">", "&gt;")
+      .replaceAll('"', "&quot;")
+      .replaceAll("'", "&#039;");
+  }
+
+  function getAppRootPrefix() {
+    const path = windowObj.location.pathname;
+    if (path.includes("/modules/")) return "../../";
+    if (path.includes("/auth/") || path.includes("/dashboards/") || path.includes("/shop/")) return "../";
+    return "./";
+  }
+
+  function getAppPath(pathFromRoot) {
+    return `${getAppRootPrefix()}${pathFromRoot}`;
+  }
+
+  function getStudentIdentity(state, session) {
+    const login = state?.studentLogin || {};
+    const hasStudent = login.id || login.username || login.displayName || session?.studentId || session?.username || session?.playerName;
+    if (!hasStudent) return null;
+
+    const isDemo = Boolean(login.demo || session?.demoMode);
+    const isPreview = Boolean(login.preview && !isDemo);
+    return {
+      role: "student",
+      stamp: isDemo
+        ? "Demo Student"
+        : login.username || session?.username || login.displayName || session?.playerName || "Student",
+      title: isDemo
+        ? "Demo student preview"
+        : isPreview
+          ? "Teacher test-student preview"
+          : login.displayName && login.username && login.displayName !== login.username
+            ? login.displayName
+            : "Student login",
+      mode: isDemo ? "Demo" : isPreview ? "Preview" : "Student"
+    };
+  }
+
+  function getTeacherIdentity(state) {
+    const teacher = state?.teacher || {};
+    const teacherLogin = state?.teacherLogin || {};
+    const email = teacherLogin.email || teacher.email || "";
+    const display = email || teacher.fullName || teacherLogin.fullName || "";
+    if (!display) return null;
+
+    return {
+      role: "teacher",
+      stamp: display,
+      title: teacher.fullName && email ? teacher.fullName : "Teacher login",
+      mode: "Teacher"
+    };
+  }
+
+  function getContainerButtonClass(container) {
+    if (container.classList.contains("workflow-links")) return "workflow-link";
+    if (container.classList.contains("module-nav")) return "module-nav-link";
+    if (container.classList.contains("top-links")) return "ghost-link";
+    return "dashboard-nav-link";
+  }
+
+  function ensureSessionBannerStyles() {
+    if (documentObj.getElementById("career-empire-session-banner-style")) return;
+    const style = documentObj.createElement("style");
+    style.id = "career-empire-session-banner-style";
+    style.textContent = `
+      .session-banner-actions {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        justify-content: flex-end;
+        gap: 8px;
+        margin-left: auto;
+        min-width: min(100%, 250px);
+      }
+      .session-stamp {
+        min-width: 0;
+        max-width: 100%;
+        min-height: 38px;
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        padding: 8px 11px;
+        border-radius: 8px;
+        border: 1px solid rgba(128, 237, 153, 0.32);
+        color: inherit;
+        background: rgba(128, 237, 153, 0.1);
+        line-height: 1;
+      }
+      .session-stamp-label {
+        color: rgba(199, 216, 247, 0.82);
+        font-size: 10px;
+        font-weight: 800;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+      }
+      .session-stamp strong {
+        display: block;
+        max-width: 220px;
+        overflow: hidden;
+        color: inherit;
+        font-size: 13px;
+        font-weight: 800;
+        line-height: 1.15;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+      }
+      .session-stamp small {
+        display: block;
+        margin-top: 3px;
+        color: rgba(199, 216, 247, 0.76);
+        font-size: 11px;
+        font-weight: 600;
+        line-height: 1.15;
+      }
+      .session-logout-button {
+        appearance: none;
+        cursor: pointer;
+        font: inherit;
+        font-size: 13px;
+        font-weight: 800;
+        line-height: 1;
+        border-radius: 8px;
+      }
+      .session-logout-button[disabled] {
+        cursor: wait;
+        opacity: 0.68;
+      }
+      @media (max-width: 680px) {
+        .session-banner-actions {
+          width: 100%;
+          justify-content: flex-start;
+          margin-left: 0;
+        }
+        .session-stamp strong {
+          max-width: 170px;
+        }
+      }
+    `;
+    documentObj.head.appendChild(style);
+  }
+
+  function createSessionStamp(identity) {
+    const stamp = documentObj.createElement("span");
+    stamp.className = "session-stamp";
+    stamp.title = `${identity.mode}: ${identity.title}`;
+    stamp.innerHTML = `
+      <span class="session-stamp-label">${escapeHtml(identity.mode)}</span>
+      <span>
+        <strong>${escapeHtml(identity.stamp)}</strong>
+        <small>${escapeHtml(identity.title)}</small>
+      </span>
+    `;
+    return stamp;
+  }
+
+  function createLogoutButton(identity, buttonClass) {
+    const button = documentObj.createElement("button");
+    button.type = "button";
+    button.className = `${buttonClass} session-logout-button`;
+    button.dataset.sessionLogoutRole = identity.role;
+    button.textContent = identity.role === "teacher" ? "Teacher Logout" : "Student Logout";
+    return button;
+  }
+
+  function renderSessionBanner() {
+    ensureSessionBannerStyles();
+    documentObj.querySelectorAll("[data-session-banner-actions='true']").forEach(element => element.remove());
+
+    const state = readJsonStorage(AUTH_STATE_KEY, {});
+    const session = readJsonStorage(PLAYER_SESSION_KEY, {});
+    const identities = [
+      getStudentIdentity(state, session),
+      getTeacherIdentity(state)
+    ].filter(Boolean);
+
+    if (!identities.length) return;
+
+    const primaryContainers = Array.from(documentObj.querySelectorAll(".dashboard-nav, .workflow-links, .module-nav"));
+    const fallbackContainers = primaryContainers.length ? [] : Array.from(documentObj.querySelectorAll(".top-links"));
+    [...primaryContainers, ...fallbackContainers].forEach(container => {
+      const buttonClass = getContainerButtonClass(container);
+      const group = documentObj.createElement("div");
+      group.className = "session-banner-actions";
+      group.dataset.sessionBannerActions = "true";
+      identities.forEach(identity => {
+        group.appendChild(createSessionStamp(identity));
+        group.appendChild(createLogoutButton(identity, buttonClass));
+      });
+      container.appendChild(group);
+    });
+  }
+
+  async function signOutTeacherIfPossible() {
+    const supabase = await getSupabaseClientOrNull();
+    if (supabase?.auth?.signOut) {
+      await supabase.auth.signOut();
+    }
+  }
+
+  function clearStudentSession() {
+    const state = readJsonStorage(AUTH_STATE_KEY, {});
+    delete state.studentLogin;
+    persistAuthState(state);
+    localStorage.removeItem(PLAYER_SESSION_KEY);
+    sessionStorage.removeItem("student-login-error");
+  }
+
+  async function clearTeacherSession() {
+    try {
+      await signOutTeacherIfPossible();
+    } catch (error) {
+      console.error("Teacher Supabase sign-out failed:", error);
+    }
+    const state = readJsonStorage(AUTH_STATE_KEY, {});
+    delete state.teacherLogin;
+    delete state.teacher;
+    delete state.classroom;
+    if (state.studentLogin?.preview) {
+      delete state.studentLogin;
+      localStorage.removeItem(PLAYER_SESSION_KEY);
+    }
+    persistAuthState(state);
+    localStorage.removeItem(TEACHER_SESSION_KEY);
+    localStorage.removeItem(TEACHER_FILTER_KEY);
+  }
+
+  async function handleSessionLogout(role, button) {
+    if (button) {
+      button.disabled = true;
+      button.textContent = "Logging out...";
+    }
+
+    if (role === "teacher") {
+      await clearTeacherSession();
+      windowObj.location.href = getAppPath("auth/teacher-login.html");
+      return;
+    }
+
+    clearStudentSession();
+    windowObj.location.href = getAppPath("auth/student-login.html");
+  }
+
+  function initSessionBannerFallback() {
+    if (windowObj.CareerEmpireSessionBanner?.render) {
+      windowObj.CareerEmpireSessionBanner.render();
+      return;
+    }
+
+    windowObj.CareerEmpireSessionBanner = {
+      render: renderSessionBanner,
+      clearStudentSession,
+      clearTeacherSession
+    };
+
+    documentObj.addEventListener("click", event => {
+      const button = event.target.closest("[data-session-logout-role]");
+      if (!button) return;
+      event.preventDefault();
+      handleSessionLogout(button.dataset.sessionLogoutRole, button).catch(error => {
+        console.error("Logout failed:", error);
+        button.disabled = false;
+        button.textContent = button.dataset.sessionLogoutRole === "teacher" ? "Teacher Logout" : "Student Logout";
+      });
+    });
+
+    renderSessionBanner();
+  }
+
   function createModal() {
     const backdrop = documentObj.createElement("div");
     backdrop.className = "ce-feedback-backdrop";
@@ -192,6 +480,7 @@
 
   function init() {
     ensureStyles();
+    initSessionBannerFallback();
     const launcher = documentObj.createElement("button");
     launcher.className = "ce-feedback-launcher";
     launcher.type = "button";

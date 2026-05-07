@@ -41,6 +41,7 @@ function readState() {
 function writeState(patch) {
   const next = { ...readState(), ...patch };
   localStorage.setItem(AUTH_DEMO_STATE_KEY, JSON.stringify(next));
+  window.CareerEmpireSessionBanner?.render?.();
   return next;
 }
 
