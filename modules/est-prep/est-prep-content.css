@@ -370,7 +370,7 @@
   display: block;
   object-fit: cover;
   border-radius: 20px;
-  opacity: 0.44;
+  opacity: 0.96;
   filter: saturate(1.08) contrast(1.04);
   background:
     radial-gradient(circle at top right, rgba(97, 240, 255, 0.12), transparent 28%),
@@ -384,8 +384,8 @@
   inset: 0;
   border-radius: 20px;
   background:
-    radial-gradient(circle at 50% 40%, transparent 0 34%, rgba(5, 11, 26, 0.42) 72%),
-    linear-gradient(180deg, rgba(6, 12, 28, 0.08), rgba(6, 12, 28, 0.46));
+    radial-gradient(circle at 50% 40%, transparent 0 42%, rgba(5, 11, 26, 0.2) 76%),
+    linear-gradient(180deg, rgba(6, 12, 28, 0.02), rgba(6, 12, 28, 0.18));
   pointer-events: none;
 }
 

@@ -1,6 +1,6 @@
 /* EST Prep stylesheet manifest. Keep imports ordered from shared rules to overrides. */
 @import url("./est-prep-core.css?v=est-progress-labels");
-@import url("./est-prep-content.css?v=est-media-fix");
+@import url("./est-prep-content.css?v=est-logo-layer-fix");
 @import url("./est-prep-glossary.css?v=glossary-cloze-sprint");
 @import url("./est-prep-boss.css?v=est-media-fix");
 @import url("./est-prep-responsive.css?v=est-progress-labels");

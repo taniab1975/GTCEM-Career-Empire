@@ -1285,11 +1285,12 @@ function renderContentTopicIntro(group) {
   const mediaStage = `
     <div class="topic-media-stage topic-media-stage--${escapeHtml(topicClass)} ${hasVideo ? "topic-media-stage--video" : ""}">
       ${hasVideo ? `
-        <video class="topic-media-video ${usesPortraitMedia ? "topic-media-video--portrait" : ""}" autoplay muted loop playsinline poster="${escapeHtml(introImage)}" aria-hidden="true">
+        <video class="topic-media-video ${usesPortraitMedia ? "topic-media-video--portrait" : ""}" autoplay muted loop playsinline aria-hidden="true">
           <source src="${escapeHtml(group.introVideo)}" type="video/mp4">
         </video>
-      ` : ""}
-      <img class="topic-media topic-media-image" src="${escapeHtml(introImage)}" alt="${escapeHtml(group.title)}">
+      ` : `
+        <img class="topic-media topic-media-image" src="${escapeHtml(introImage)}" alt="${escapeHtml(group.title)}">
+      `}
       <span class="topic-media-scan" aria-hidden="true"></span>
       <span class="topic-media-status">${escapeHtml(sceneLabel)}</span>
       <span class="topic-media-progress" aria-hidden="true"><span></span></span>
