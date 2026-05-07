@@ -912,6 +912,7 @@ body.glossary-mission-active .glossary-chamber-card strong {
   color: #ffd86c;
   border-bottom: 2px solid rgba(255, 216, 108, 0.75);
   text-shadow: 0 0 18px rgba(255, 216, 108, 0.26);
+  animation: glossaryClozeBlankPulse 1.1s ease-in-out infinite;
 }
 
 .glossary-arcade-options {
@@ -1114,6 +1115,40 @@ body.glossary-mission-active .glossary-chamber-card strong {
   box-shadow: inset 0 0 0 1px rgba(255,255,255,0.035), 0 24px 52px rgba(3, 8, 22, 0.34);
 }
 
+.glossary-cloze-shell .glossary-slice-game {
+  min-height: 520px;
+  background:
+    radial-gradient(circle at 16% 20%, rgba(114, 247, 184, 0.16), transparent 28%),
+    radial-gradient(circle at 84% 18%, rgba(255, 216, 108, 0.15), transparent 28%),
+    linear-gradient(180deg, rgba(9, 17, 40, 0.97), rgba(5, 10, 25, 0.99));
+}
+
+.glossary-cloze-shell .glossary-slice-game::before,
+.glossary-cloze-shell .glossary-slice-game::after {
+  content: "";
+  position: absolute;
+  inset: 18px;
+  z-index: 1;
+  pointer-events: none;
+  border-radius: 22px;
+}
+
+.glossary-cloze-shell .glossary-slice-game::before {
+  border: 1px solid rgba(97, 240, 255, 0.14);
+  background:
+    linear-gradient(90deg, rgba(97, 240, 255, 0.06) 1px, transparent 1px),
+    linear-gradient(0deg, rgba(255, 255, 255, 0.04) 1px, transparent 1px);
+  background-size: 54px 54px;
+  animation: glossaryClozeGridSlide 5.6s linear infinite;
+}
+
+.glossary-cloze-shell .glossary-slice-game::after {
+  background:
+    radial-gradient(circle at 50% 44%, rgba(255, 216, 108, 0.13), transparent 16%),
+    radial-gradient(circle at 50% 44%, rgba(97, 240, 255, 0.09), transparent 30%);
+  opacity: 0.9;
+}
+
 .glossary-slice-vault {
   position: absolute;
   left: 18px;
@@ -1164,9 +1199,32 @@ body.glossary-mission-active .glossary-chamber-card strong {
   line-height: 1.15;
 }
 
+.glossary-cloze-slots {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 11px;
+}
+
+.glossary-cloze-slots span {
+  display: inline-flex;
+  gap: 3px;
+}
+
+.glossary-cloze-slots i {
+  width: 11px;
+  height: 14px;
+  border-radius: 4px;
+  border: 1px solid rgba(255, 216, 108, 0.48);
+  background: rgba(255, 216, 108, 0.14);
+  box-shadow: 0 0 12px rgba(255, 216, 108, 0.12);
+  animation: glossaryClozeSlotBlink 1.2s ease-in-out infinite;
+}
+
 .glossary-slice-field {
   position: absolute;
   inset: 0 0 122px;
+  z-index: 2;
   overflow: hidden;
   background:
     repeating-linear-gradient(135deg, rgba(255,255,255,0.045) 0 1px, transparent 1px 28px),
@@ -1193,6 +1251,19 @@ body.glossary-mission-active .glossary-chamber-card strong {
   top: 62%;
   transform: rotate(9deg);
   animation-delay: 0.8s;
+}
+
+.glossary-cloze-target-ring {
+  position: absolute;
+  left: 50%;
+  top: 48%;
+  width: 168px;
+  height: 168px;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 216, 108, 0.28);
+  box-shadow: inset 0 0 28px rgba(97, 240, 255, 0.12), 0 0 36px rgba(255, 216, 108, 0.08);
+  transform: translate(-50%, -50%);
+  animation: glossaryClozeTargetPulse 1.45s ease-in-out infinite;
 }
 
 .glossary-slice-token {
@@ -1246,6 +1317,17 @@ body.glossary-mission-active .glossary-chamber-card strong {
   line-height: 1.18;
 }
 
+.glossary-cloze-shell .glossary-slice-token {
+  width: min(23%, 205px);
+  min-height: 68px;
+  border-color: rgba(114, 247, 184, 0.3);
+  animation-timing-function: cubic-bezier(0.2, 0.72, 0.16, 1);
+}
+
+.glossary-cloze-shell .glossary-slice-token strong {
+  font-size: clamp(0.88rem, 1.05vw, 1.04rem);
+}
+
 .glossary-slice-definition {
   position: absolute;
   left: 18px;
@@ -1263,10 +1345,49 @@ body.glossary-mission-active .glossary-chamber-card strong {
   box-shadow: 0 -14px 28px rgba(2, 6, 18, 0.26);
 }
 
+.glossary-slice-definition strong {
+  color: #ffffff;
+}
+
 .glossary-slice-definition p {
   margin: 0;
   color: #e8f3ff;
   line-height: 1.45;
+}
+
+.glossary-cloze-shell .glossary-slice-definition p {
+  max-width: 92ch;
+  font-size: clamp(1.02rem, 1.25vw, 1.2rem);
+  line-height: 1.55;
+}
+
+.glossary-cloze-burst {
+  position: absolute;
+  z-index: 6;
+  left: 50%;
+  top: 44%;
+  width: 18px;
+  height: 18px;
+  border-radius: 999px;
+  background: #72f7b8;
+  box-shadow:
+    0 0 0 12px rgba(114, 247, 184, 0.1),
+    0 0 36px rgba(114, 247, 184, 0.72);
+  animation: glossaryClozeBurst 0.78s ease-out both;
+}
+
+.glossary-cloze-burst--two {
+  left: 58%;
+  top: 35%;
+  background: #ffd86c;
+  animation-delay: 0.08s;
+}
+
+.glossary-cloze-burst--three {
+  left: 43%;
+  top: 55%;
+  background: #61f0ff;
+  animation-delay: 0.14s;
 }
 
 .glossary-scene-shell,
@@ -1483,6 +1604,495 @@ body.glossary-mission-active .glossary-chamber-card strong {
   background: linear-gradient(135deg, #72f7b8, #61f0ff);
   font-size: 0.78rem;
   letter-spacing: 0.04em;
+}
+
+.glossary-story-scene {
+  min-height: 360px;
+  isolation: isolate;
+  background:
+    radial-gradient(circle at 74% 24%, rgba(255, 216, 108, 0.14), transparent 28%),
+    radial-gradient(circle at 20% 72%, rgba(114, 247, 184, 0.13), transparent 30%),
+    linear-gradient(135deg, rgba(6, 15, 38, 0.98), rgba(10, 18, 42, 0.98));
+}
+
+.glossary-story-bg {
+  position: absolute;
+  inset: -8%;
+  z-index: 0;
+  width: 116%;
+  height: 116%;
+  object-fit: cover;
+  opacity: 0.5;
+  filter: saturate(1.22) contrast(1.05) brightness(0.72);
+  animation: glossaryStoryBgDrift 8s ease-in-out infinite;
+}
+
+.glossary-story-grid {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  background:
+    linear-gradient(90deg, rgba(97, 240, 255, 0.08) 1px, transparent 1px),
+    linear-gradient(180deg, rgba(255,255,255,0.045) 1px, transparent 1px);
+  background-size: 42px 42px;
+  -webkit-mask-image: linear-gradient(180deg, transparent, #000 16%, #000 84%, transparent);
+  mask-image: linear-gradient(180deg, transparent, #000 16%, #000 84%, transparent);
+  opacity: 0.74;
+  animation: glossaryStoryGridSlide 7s linear infinite;
+}
+
+.glossary-story-holo {
+  position: absolute;
+  z-index: 2;
+  border-radius: 999px;
+  pointer-events: none;
+}
+
+.glossary-story-holo--one {
+  inset: 10% 8% auto 27%;
+  height: 38%;
+  border: 1px solid rgba(97, 240, 255, 0.22);
+  box-shadow: inset 0 0 32px rgba(97, 240, 255, 0.08), 0 0 26px rgba(97, 240, 255, 0.08);
+  animation: glossaryStoryHoloPulse 3.8s ease-in-out infinite;
+}
+
+.glossary-story-holo--two {
+  left: 10%;
+  right: 10%;
+  bottom: 15%;
+  height: 26px;
+  background: radial-gradient(ellipse, rgba(114, 247, 184, 0.44), transparent 68%);
+  filter: blur(3px);
+  animation: glossaryStoryGroundGlow 3s ease-in-out infinite;
+}
+
+.glossary-story-character {
+  position: absolute;
+  left: -4%;
+  bottom: -8%;
+  z-index: 5;
+  width: min(48%, 300px);
+  height: 90%;
+  object-fit: contain;
+  object-position: center bottom;
+  filter: drop-shadow(0 18px 24px rgba(0, 0, 0, 0.48));
+  animation: glossaryStoryCharacterFloat 4.8s ease-in-out infinite;
+}
+
+.glossary-story-display {
+  position: absolute;
+  inset: 72px 24px 98px 32%;
+  z-index: 4;
+}
+
+.glossary-story-object {
+  position: absolute;
+  display: block;
+  border: 1px solid rgba(255,255,255,0.16);
+  box-shadow: 0 18px 30px rgba(2, 6, 18, 0.26), inset 0 0 0 1px rgba(255,255,255,0.05);
+}
+
+.glossary-story-object::before,
+.glossary-story-object::after {
+  content: "";
+  position: absolute;
+  pointer-events: none;
+}
+
+.glossary-story-signal {
+  position: absolute;
+  top: 16px;
+  left: 18px;
+  right: 18px;
+  z-index: 7;
+  width: fit-content;
+  max-width: calc(100% - 36px);
+  padding: 8px 12px;
+  border-radius: 999px;
+  border: 1px solid rgba(97, 240, 255, 0.28);
+  background: rgba(6, 13, 30, 0.72);
+  color: #e9f7ff;
+  font-size: 0.78rem;
+  font-weight: 900;
+  line-height: 1.2;
+  text-transform: uppercase;
+  overflow-wrap: anywhere;
+  box-shadow: 0 10px 20px rgba(2, 6, 18, 0.24);
+}
+
+.glossary-story-chip-row {
+  position: absolute;
+  left: 18px;
+  right: 18px;
+  bottom: 18px;
+  z-index: 7;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.glossary-story-chip {
+  padding: 7px 10px;
+  border-radius: 999px;
+  border: 1px solid rgba(255,255,255,0.14);
+  background: rgba(6, 13, 30, 0.68);
+  color: #eaf7ff;
+  font-size: 0.68rem;
+  font-weight: 900;
+  line-height: 1.1;
+  text-transform: uppercase;
+  box-shadow: 0 8px 16px rgba(2, 6, 18, 0.24);
+  animation: glossaryStoryChipGlow 3.6s ease-in-out infinite;
+  animation-delay: calc(var(--chip-delay, 0) * 0.18s);
+}
+
+.glossary-story-chip--2 { --chip-delay: 1; }
+.glossary-story-chip--3 { --chip-delay: 2; }
+.glossary-story-chip--4 { --chip-delay: 3; }
+.glossary-story-chip--5 { --chip-delay: 4; }
+
+.glossary-story-badge {
+  z-index: 8;
+}
+
+.glossary-story-scene--arbitration .glossary-story-character {
+  left: -2%;
+  width: min(46%, 285px);
+}
+
+.glossary-story-scene--arbitration .glossary-story-object--one,
+.glossary-story-scene--arbitration .glossary-story-object--two {
+  top: 36%;
+  width: 28%;
+  height: 44%;
+  border-radius: 18px;
+  background:
+    linear-gradient(180deg, rgba(255,255,255,0.08), rgba(255,255,255,0.02)),
+    rgba(14, 28, 62, 0.86);
+  animation: glossaryStoryEvidenceFloat 3.8s ease-in-out infinite;
+}
+
+.glossary-story-scene--arbitration .glossary-story-object--one {
+  left: 1%;
+}
+
+.glossary-story-scene--arbitration .glossary-story-object--two {
+  right: 1%;
+  animation-delay: 0.42s;
+}
+
+.glossary-story-scene--arbitration .glossary-story-object--one::before,
+.glossary-story-scene--arbitration .glossary-story-object--two::before {
+  left: 16%;
+  right: 16%;
+  top: 28%;
+  height: 5px;
+  border-radius: 999px;
+  background: rgba(97, 240, 255, 0.72);
+  box-shadow: 0 16px 0 rgba(255,255,255,0.18), 0 32px 0 rgba(255,255,255,0.1);
+}
+
+.glossary-story-scene--arbitration .glossary-story-object--three {
+  left: 38%;
+  top: 14%;
+  width: 24%;
+  height: 56%;
+  border-radius: 999px 999px 28px 28px;
+  background:
+    radial-gradient(circle at 50% 22%, rgba(255, 216, 108, 0.78), transparent 18%),
+    linear-gradient(180deg, rgba(114, 247, 184, 0.28), rgba(97, 240, 255, 0.16));
+  animation: glossaryStoryDecisionLock 2.8s ease-in-out infinite;
+}
+
+.glossary-story-scene--arbitration .glossary-story-object--three::before {
+  left: 50%;
+  top: 16%;
+  width: 3px;
+  height: 55%;
+  border-radius: 999px;
+  background: #ffd86c;
+  transform: translateX(-50%);
+  box-shadow: -34px 30px 0 -1px rgba(255, 216, 108, 0.72), 34px 30px 0 -1px rgba(255, 216, 108, 0.72);
+}
+
+.glossary-story-scene--arbitration .glossary-story-object--four {
+  left: 27%;
+  right: 27%;
+  bottom: 10%;
+  height: 7px;
+  border: 0;
+  border-radius: 999px;
+  background: linear-gradient(90deg, transparent, rgba(114, 247, 184, 0.9), transparent);
+  animation: glossaryStoryPathFlow 2.7s ease-in-out infinite;
+}
+
+.glossary-story-scene--career-map .glossary-story-character,
+.glossary-story-scene--future-growth .glossary-story-character {
+  left: -8%;
+  width: min(50%, 320px);
+}
+
+.glossary-story-scene--career-map .glossary-story-display {
+  inset: 82px 22px 104px 30%;
+}
+
+.glossary-story-scene--career-map .glossary-story-object--one {
+  left: 4%;
+  right: 4%;
+  bottom: 33%;
+  height: 12px;
+  border: 0;
+  border-radius: 999px;
+  background: linear-gradient(90deg, #61f0ff, #72f7b8, #ffd86c, #ff9f7d);
+  transform: rotate(-7deg);
+  animation: glossaryStoryPathFlow 2.8s ease-in-out infinite;
+}
+
+.glossary-story-scene--career-map .glossary-story-object--two,
+.glossary-story-scene--career-map .glossary-story-object--three,
+.glossary-story-scene--career-map .glossary-story-object--four,
+.glossary-story-scene--career-map .glossary-story-object--five {
+  width: 58px;
+  height: 58px;
+  border-radius: 18px;
+  background:
+    radial-gradient(circle at 50% 30%, rgba(255,255,255,0.2), transparent 24%),
+    linear-gradient(135deg, rgba(97, 240, 255, 0.9), rgba(64, 95, 196, 0.96));
+  animation: glossaryStoryNodePop 4.2s ease-in-out infinite;
+}
+
+.glossary-story-scene--career-map .glossary-story-object--two { left: 6%; top: 42%; }
+.glossary-story-scene--career-map .glossary-story-object--three { left: 31%; top: 27%; animation-delay: 0.25s; }
+.glossary-story-scene--career-map .glossary-story-object--four { right: 28%; top: 34%; animation-delay: 0.5s; }
+.glossary-story-scene--career-map .glossary-story-object--five { right: 5%; top: 19%; animation-delay: 0.75s; }
+
+.glossary-story-scene--career-pivot .glossary-story-character {
+  left: -8%;
+  width: min(48%, 310px);
+}
+
+.glossary-story-scene--career-pivot .glossary-story-object--one {
+  left: 3%;
+  top: 14%;
+  width: 34%;
+  height: 36%;
+  border-radius: 18px;
+  background:
+    linear-gradient(180deg, rgba(255,255,255,0.08), transparent 34%),
+    repeating-linear-gradient(90deg, rgba(255, 125, 125, 0.22) 0 10px, transparent 10px 20px),
+    rgba(68, 21, 40, 0.86);
+  border-color: rgba(255, 125, 125, 0.58);
+  animation: glossaryStoryWarningPulse 2.2s ease-in-out infinite;
+}
+
+.glossary-story-scene--career-pivot .glossary-story-object--one::before {
+  content: "ATAR";
+  left: 14px;
+  top: 12px;
+  padding: 7px 10px;
+  border-radius: 999px;
+  background: rgba(255, 125, 125, 0.24);
+  color: #ffe8e8;
+  font-size: 0.78rem;
+  font-weight: 900;
+}
+
+.glossary-story-scene--career-pivot .glossary-story-object--one::after {
+  content: "UNI GATE CLOSED";
+  left: 14px;
+  right: 14px;
+  bottom: 14px;
+  padding: 8px 10px;
+  border-radius: 12px;
+  background: rgba(6, 13, 30, 0.72);
+  color: #ffffff;
+  font-size: 0.74rem;
+  font-weight: 900;
+  text-align: center;
+  letter-spacing: 0.04em;
+}
+
+.glossary-story-scene--career-pivot .glossary-story-object--two {
+  left: 16%;
+  right: 12%;
+  bottom: 22%;
+  height: 14px;
+  border: 0;
+  border-radius: 999px;
+  background: linear-gradient(90deg, rgba(255, 125, 125, 0.44), #ffd86c 36%, #61f0ff 68%, #72f7b8);
+  transform: rotate(-16deg);
+  animation: glossaryStoryDetourGlow 2.6s ease-in-out infinite;
+}
+
+.glossary-story-scene--career-pivot .glossary-story-object--two::before {
+  right: -2px;
+  top: -9px;
+  width: 0;
+  height: 0;
+  border-top: 16px solid transparent;
+  border-bottom: 16px solid transparent;
+  border-left: 26px solid #72f7b8;
+  filter: drop-shadow(0 0 12px rgba(114, 247, 184, 0.54));
+}
+
+.glossary-story-scene--career-pivot .glossary-story-object--three {
+  right: 3%;
+  top: 12%;
+  width: 178px;
+  height: 112px;
+  border-radius: 20px;
+  background:
+    linear-gradient(180deg, rgba(114, 247, 184, 0.26), transparent 42%),
+    rgba(7, 27, 42, 0.9);
+  border-color: rgba(114, 247, 184, 0.52);
+  animation: glossaryStoryJobsSignPulse 3s ease-in-out infinite;
+}
+
+.glossary-story-scene--career-pivot .glossary-story-object--three::before {
+  content: "MORE JOBS";
+  left: 16px;
+  top: 14px;
+  color: #dffcff;
+  font-size: 0.86rem;
+  font-weight: 900;
+  letter-spacing: 0.04em;
+}
+
+.glossary-story-scene--career-pivot .glossary-story-object--three::after {
+  left: 20px;
+  bottom: 16px;
+  width: 18px;
+  height: 34px;
+  border-radius: 4px 4px 0 0;
+  background: #61f0ff;
+  box-shadow:
+    28px -14px 0 #72f7b8,
+    56px -4px 0 #ffd86c,
+    84px -22px 0 #61f0ff,
+    112px -9px 0 #72f7b8;
+}
+
+.glossary-story-scene--career-pivot .glossary-story-object--four {
+  right: 18%;
+  bottom: 9%;
+  width: 120px;
+  height: 64px;
+  border-radius: 16px;
+  background:
+    linear-gradient(180deg, rgba(255,255,255,0.22), transparent 38%),
+    linear-gradient(135deg, #72f7b8, #61f0ff);
+  animation: glossaryStoryNodePop 3.4s ease-in-out infinite;
+}
+
+.glossary-story-scene--career-pivot .glossary-story-object--four::before {
+  content: "TAFE";
+  left: 14px;
+  top: 12px;
+  color: #06101f;
+  font-size: 1rem;
+  font-weight: 900;
+}
+
+.glossary-story-scene--career-pivot .glossary-story-object--four::after {
+  content: "WORK";
+  right: 12px;
+  bottom: 10px;
+  color: #06101f;
+  font-size: 0.72rem;
+  font-weight: 900;
+}
+
+.glossary-story-scene--career-pivot .glossary-story-object--five {
+  left: 46%;
+  bottom: 27%;
+  width: 34px;
+  height: 34px;
+  border-radius: 999px;
+  background: #ffd86c;
+  border-color: rgba(255, 216, 108, 0.72);
+  box-shadow: 0 0 22px rgba(255, 216, 108, 0.7);
+  animation: glossaryStoryRerouteDot 2.6s ease-in-out infinite;
+}
+
+.glossary-story-scene--competency-kit .glossary-story-character {
+  left: -6%;
+  width: min(50%, 314px);
+}
+
+.glossary-story-scene--competency-kit .glossary-story-object--one {
+  left: 35%;
+  top: 30%;
+  width: 132px;
+  height: 92px;
+  border-radius: 24px 24px 16px 16px;
+  background:
+    linear-gradient(180deg, rgba(255, 216, 108, 0.95) 0 16px, transparent 16px),
+    linear-gradient(135deg, rgba(97, 240, 255, 0.88), rgba(64, 95, 196, 0.96));
+  animation: glossaryStoryToolkitLift 3.8s ease-in-out infinite;
+}
+
+.glossary-story-scene--competency-kit .glossary-story-object--one::before {
+  left: 35%;
+  top: -20px;
+  width: 30%;
+  height: 28px;
+  border: 5px solid rgba(255, 216, 108, 0.86);
+  border-bottom: 0;
+  border-radius: 999px 999px 0 0;
+}
+
+.glossary-story-scene--competency-kit .glossary-story-object--two,
+.glossary-story-scene--competency-kit .glossary-story-object--three,
+.glossary-story-scene--competency-kit .glossary-story-object--four,
+.glossary-story-scene--competency-kit .glossary-story-object--five {
+  width: 62px;
+  height: 62px;
+  border-radius: 999px;
+  background: linear-gradient(135deg, rgba(114, 247, 184, 0.92), rgba(97, 240, 255, 0.88));
+  animation: glossaryStoryOrbitTool 4.8s ease-in-out infinite;
+}
+
+.glossary-story-scene--competency-kit .glossary-story-object--two { left: 12%; top: 18%; }
+.glossary-story-scene--competency-kit .glossary-story-object--three { right: 16%; top: 18%; animation-delay: 0.4s; }
+.glossary-story-scene--competency-kit .glossary-story-object--four { left: 18%; bottom: 14%; animation-delay: 0.8s; }
+.glossary-story-scene--competency-kit .glossary-story-object--five { right: 12%; bottom: 16%; animation-delay: 1.2s; }
+
+.glossary-story-scene--future-growth .glossary-story-object--one {
+  left: 8%;
+  right: 8%;
+  bottom: 18%;
+  height: 16px;
+  border: 0;
+  border-radius: 999px;
+  background: linear-gradient(90deg, #405fc4, #61f0ff, #72f7b8, #ffd86c);
+  transform: rotate(-10deg);
+  animation: glossaryStoryPathFlow 3s ease-in-out infinite;
+}
+
+.glossary-story-scene--future-growth .glossary-story-object--two,
+.glossary-story-scene--future-growth .glossary-story-object--three,
+.glossary-story-scene--future-growth .glossary-story-object--four {
+  width: 62px;
+  height: 62px;
+  border-radius: 18px;
+  background: linear-gradient(135deg, rgba(97, 240, 255, 0.9), rgba(114, 247, 184, 0.86));
+  animation: glossaryStoryNodePop 3.7s ease-in-out infinite;
+}
+
+.glossary-story-scene--future-growth .glossary-story-object--two { left: 12%; top: 46%; }
+.glossary-story-scene--future-growth .glossary-story-object--three { left: 42%; top: 30%; animation-delay: 0.35s; }
+.glossary-story-scene--future-growth .glossary-story-object--four { right: 14%; top: 14%; animation-delay: 0.7s; }
+
+.glossary-story-scene--future-growth .glossary-story-object--five {
+  right: 4%;
+  top: 2%;
+  width: 140px;
+  height: 140px;
+  border-radius: 999px;
+  background:
+    radial-gradient(circle at 50% 50%, rgba(255, 216, 108, 0.58), transparent 34%),
+    conic-gradient(from 90deg, rgba(255, 216, 108, 0.84), rgba(114, 247, 184, 0.68), rgba(97, 240, 255, 0.72), rgba(255, 216, 108, 0.84));
+  animation: glossaryStoryPortalSpin 7s linear infinite;
 }
 
 .glossary-scene-shape {
@@ -2630,6 +3240,31 @@ body.glossary-mission-active #stage-section.gameplay-viewport #stage-root {
   100% { opacity: 0; transform: translateY(-42px) scale(0.75); }
 }
 
+@keyframes glossaryClozeBlankPulse {
+  0%, 100% { border-color: rgba(255, 216, 108, 0.55); filter: brightness(1); }
+  50% { border-color: rgba(114, 247, 184, 0.95); filter: brightness(1.18); }
+}
+
+@keyframes glossaryClozeGridSlide {
+  to { background-position: 54px 0, 0 54px; }
+}
+
+@keyframes glossaryClozeSlotBlink {
+  0%, 100% { opacity: 0.48; transform: translateY(0); }
+  50% { opacity: 1; transform: translateY(-2px); }
+}
+
+@keyframes glossaryClozeTargetPulse {
+  0%, 100% { opacity: 0.38; transform: translate(-50%, -50%) scale(0.92); }
+  50% { opacity: 0.84; transform: translate(-50%, -50%) scale(1.05); }
+}
+
+@keyframes glossaryClozeBurst {
+  0% { opacity: 0; transform: translate(-50%, -50%) scale(0.2); }
+  45% { opacity: 1; transform: translate(-50%, -50%) scale(1.7); }
+  100% { opacity: 0; transform: translate(-50%, -50%) scale(3.2); }
+}
+
 @keyframes glossaryCommunityPanelIn {
   from { opacity: 0; transform: translateY(12px); }
   to { opacity: 1; transform: translateY(0); }
@@ -2656,6 +3291,91 @@ body.glossary-mission-active #stage-section.gameplay-viewport #stage-root {
 @keyframes glossaryCommunityActionsIn {
   from { opacity: 0; transform: translateY(10px); }
   to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes glossaryStoryBgDrift {
+  0%, 100% { transform: scale(1) translateX(0); }
+  50% { transform: scale(1.04) translateX(-10px); }
+}
+
+@keyframes glossaryStoryGridSlide {
+  to { background-position: 42px 42px; }
+}
+
+@keyframes glossaryStoryHoloPulse {
+  0%, 100% { opacity: 0.32; transform: scale(0.97); }
+  50% { opacity: 0.84; transform: scale(1.02); }
+}
+
+@keyframes glossaryStoryGroundGlow {
+  0%, 100% { opacity: 0.42; transform: scaleX(0.86); }
+  50% { opacity: 0.92; transform: scaleX(1.04); }
+}
+
+@keyframes glossaryStoryCharacterFloat {
+  0%, 100% { transform: translateY(0) rotate(-0.5deg); }
+  50% { transform: translateY(-8px) rotate(0.5deg); }
+}
+
+@keyframes glossaryStoryChipGlow {
+  0%, 100% { border-color: rgba(255,255,255,0.14); transform: translateY(0); }
+  50% { border-color: rgba(114, 247, 184, 0.44); transform: translateY(-2px); }
+}
+
+@keyframes glossaryStoryEvidenceFloat {
+  0%, 100% { transform: translateY(0) rotate(-1deg); }
+  50% { transform: translateY(-8px) rotate(1deg); }
+}
+
+@keyframes glossaryStoryDecisionLock {
+  0%, 100% { transform: scale(0.98); filter: saturate(1); }
+  50% { transform: scale(1.04); filter: saturate(1.25); }
+}
+
+@keyframes glossaryStoryPathFlow {
+  0%, 100% { opacity: 0.6; filter: brightness(0.9); }
+  50% { opacity: 1; filter: brightness(1.3); }
+}
+
+@keyframes glossaryStoryNodePop {
+  0%, 100% { transform: translateY(0) scale(0.94); filter: saturate(0.96); }
+  50% { transform: translateY(-8px) scale(1.05); filter: saturate(1.24); }
+}
+
+@keyframes glossaryStoryWarningPulse {
+  0%, 100% { opacity: 0.62; transform: translateX(0); }
+  50% { opacity: 0.95; transform: translateX(-5px); }
+}
+
+@keyframes glossaryStoryDetourGlow {
+  0%, 100% { opacity: 0.62; transform: rotate(-16deg) scaleX(0.82); transform-origin: left center; }
+  50% { opacity: 1; transform: rotate(-16deg) scaleX(1.02); transform-origin: left center; }
+}
+
+@keyframes glossaryStoryPortalSpin {
+  to { transform: rotate(360deg); }
+}
+
+@keyframes glossaryStoryJobsSignPulse {
+  0%, 100% { transform: translateY(0); filter: saturate(1); }
+  50% { transform: translateY(-6px); filter: saturate(1.24); }
+}
+
+@keyframes glossaryStoryRerouteDot {
+  0% { opacity: 0; transform: translate(-80px, -12px) scale(0.74); }
+  22% { opacity: 1; }
+  58% { opacity: 1; transform: translate(72px, -42px) scale(1); }
+  100% { opacity: 0; transform: translate(160px, -74px) scale(0.82); }
+}
+
+@keyframes glossaryStoryToolkitLift {
+  0%, 100% { transform: translateY(0) rotate(-1deg); }
+  50% { transform: translateY(-9px) rotate(1deg); }
+}
+
+@keyframes glossaryStoryOrbitTool {
+  0%, 100% { transform: translateY(0) scale(0.9); }
+  50% { transform: translateY(-10px) scale(1.06); }
 }
 
 @keyframes glossaryTermDrop {
@@ -2818,6 +3538,11 @@ body.glossary-mission-active #stage-section.gameplay-viewport #stage-root {
   .glossary-slice-token,
   .glossary-slice-vault-ring,
   .glossary-slice-beam,
+  .glossary-cloze-blank,
+  .glossary-cloze-slots i,
+  .glossary-cloze-target-ring,
+  .glossary-cloze-burst,
+  .glossary-cloze-shell .glossary-slice-game::before,
   .glossary-flight-bg,
   .glossary-flight-star,
   .glossary-flight-gate,
@@ -2829,7 +3554,13 @@ body.glossary-mission-active #stage-section.gameplay-viewport #stage-root {
   .glossary-invader-ship::after,
   .glossary-invader-laser,
   .glossary-scene-prompt > .glossary-scene-art::after,
-  .glossary-scene-motion {
+  .glossary-scene-motion,
+  .glossary-story-bg,
+  .glossary-story-grid,
+  .glossary-story-holo,
+  .glossary-story-character,
+  .glossary-story-chip,
+  .glossary-story-object {
     animation: none;
   }
 }

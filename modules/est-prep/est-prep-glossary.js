@@ -32,6 +32,17 @@ const GLOSSARY_GUIDE_ASSETS = {
   reward: "../../Assets/EST Preparation/guide-character/guide-celebration.png"
 };
 
+const GLOSSARY_STORY_ASSETS = {
+  vault: "../../Assets/Images and Animations/EST backgrounds/Background Neutral.png",
+  romeroPointing: "../../Assets/Images and Animations/Emmanuel Student Characters/Romero/Romero Pointing.png",
+  romeroThinking: "../../Assets/Images and Animations/Emmanuel Student Characters/Romero/Romero Thinking.png",
+  mackillopThinking: "../../Assets/Images and Animations/Emmanuel Student Characters/MacKillop/MacKillop Thinking.png",
+  mackillopEncouraging: "../../Assets/Images and Animations/Emmanuel Student Characters/MacKillop/MacKillop encouraging.png",
+  mackillopCelebrating: "../../Assets/Images and Animations/Emmanuel Student Characters/MacKillop/Mackillop Celebrating.png",
+  francis: "../../Assets/Images and Animations/Emmanuel Student Characters/Francis.png",
+  lisieux: "../../Assets/Images and Animations/Emmanuel Student Characters/Lisieux.png"
+};
+
 const GLOSSARY_COMMUNITY_ASSETS = {
   climate: {
     image: "../../Assets/Images and Animations/Community Page/community-path-green-futures.png",
@@ -56,11 +67,56 @@ const GLOSSARY_COMMUNITY_ASSETS = {
 };
 
 const GLOSSARY_SCENE_VISUALS = {
-  Arbitration: { motif: "dispute", badge: "FAIR", title: "Neutral decision", caption: "A referee figure hears both sides and makes a binding call.", tags: ["neutral", "evidence", "binding"] },
-  Career: { motif: "pathway", badge: "PATH", title: "Life role pathway", caption: "Paid work, unpaid roles, learning, leisure and community form one long path.", tags: ["roles", "life", "work"] },
-  "Career adaptability": { motif: "pivot", badge: "PIVOT", title: "Switches route", caption: "A worker changes direction when the work landscape shifts.", tags: ["adjust", "opportunity", "transition"] },
-  "Career competencies": { motif: "toolkit", badge: "TOOLS", title: "Career toolkit", caption: "Knowledge, skills and attitudes are packed ready for future decisions.", tags: ["skills", "attitudes", "balance"] },
-  "Career development": { motif: "growth-path", badge: "GROW", title: "Future path grows", caption: "A person builds behaviours and knowledge toward a preferred future.", tags: ["lifelong", "future", "manage"] },
+  Arbitration: {
+    variant: "story",
+    motif: "arbitration",
+    badge: "BINDING",
+    title: "Fair decision chamber",
+    caption: "A neutral decision-maker weighs both sides, checks the evidence, then locks a fair outcome for everyone.",
+    tags: ["neutral", "evidence", "binding"],
+    character: GLOSSARY_STORY_ASSETS.romeroPointing,
+    chips: ["Party A", "Party B", "Evidence", "Outcome locked"]
+  },
+  Career: {
+    variant: "story",
+    motif: "career-map",
+    badge: "LIFE MAP",
+    title: "Many roles, one lifetime path",
+    caption: "Paid work, unpaid roles, learning, leisure, community and family responsibilities all connect across a life.",
+    tags: ["roles", "life", "work"],
+    character: GLOSSARY_STORY_ASSETS.mackillopEncouraging,
+    chips: ["Paid work", "Learning", "Leisure", "Family", "Community"]
+  },
+  "Career adaptability": {
+    variant: "story",
+    motif: "career-pivot",
+    badge: "ADAPT",
+    title: "ATAR gate blocked, new pathway found",
+    caption: "The planned university route is blocked by entry criteria, so the learner redirects toward training, work and more job opportunities.",
+    tags: ["adjust", "opportunity", "transition"],
+    character: GLOSSARY_STORY_ASSETS.romeroThinking,
+    chips: ["ATAR gate", "Reroute", "TAFE / work", "More jobs"]
+  },
+  "Career competencies": {
+    variant: "story",
+    motif: "competency-kit",
+    badge: "TOOLKIT",
+    title: "Skills packed for future decisions",
+    caption: "Knowledge, skills and attitudes become a toolkit for intentional choices, lifelong learning and work life balance.",
+    tags: ["skills", "attitudes", "balance"],
+    character: GLOSSARY_STORY_ASSETS.mackillopThinking,
+    chips: ["Knowledge", "Skills", "Attitudes", "Balance"]
+  },
+  "Career development": {
+    variant: "story",
+    motif: "future-growth",
+    badge: "FUTURE",
+    title: "The preferred future keeps evolving",
+    caption: "A person builds knowledge, skills, attributes and behaviours across life, learning, leisure and work.",
+    tags: ["lifelong", "future", "manage"],
+    character: GLOSSARY_STORY_ASSETS.mackillopCelebrating,
+    chips: ["Life", "Learning", "Work", "Future"]
+  },
   "Cover letter": { motif: "document", badge: "NOTE", title: "Applicant message", caption: "A targeted note travels with the resume and highlights suitability.", tags: ["interest", "skills", "job"] },
   "Demographic shift": { motif: "population", badge: "POP", title: "Population pattern changes", caption: "Groups grow, shrink or move as migration, births and deaths change.", tags: ["migration", "births", "rates"] },
   "Dispute resolution": { motif: "dispute", badge: "SOLVE", title: "Fair solution table", caption: "People work through conflict toward a solution all sides can accept.", tags: ["conflict", "fair", "solution"] },
@@ -276,6 +332,18 @@ function getGlossaryCloze(item) {
 
 function renderGlossaryClozeText(item) {
   return escapeHtml(getGlossaryCloze(item).text).replace("_____", '<span class="glossary-cloze-blank">_____</span>');
+}
+
+function renderGlossaryTermSilhouette(value) {
+  const words = String(value || "")
+    .trim()
+    .split(/\s+/)
+    .filter(Boolean);
+  return words.map(word => `
+    <span>
+      ${Array.from(word).map(() => "<i></i>").join("")}
+    </span>
+  `).join("");
 }
 
 function recordGlossaryAttempt(item, answer, correct, mode) {
@@ -519,17 +587,17 @@ function buildGlossaryChallengeOptions(roundId, item, batch = getCurrentGlossary
   }
 
   if (roundId === "signal-slice") {
-    const correctFragments = [...new Set(item.keywords || [])].slice(0, 3);
+    const cloze = getGlossaryCloze(item);
     const keywordPool = glossarySource
       .filter(candidate => candidate.id !== item.id)
       .flatMap(candidate => candidate.keywords || []);
     const distractors = pickRandom([...new Set(keywordPool.filter(keyword => {
-      return !correctFragments.some(fragment => normaliseGlossaryTermText(fragment) === normaliseGlossaryTermText(keyword));
-    }))], Math.max(3, 7 - correctFragments.length));
-    return shuffle([...correctFragments, ...distractors]).map(option => ({
+      return normaliseGlossaryTermText(keyword) !== normaliseGlossaryTermText(cloze.keyword);
+    }))], 5);
+    return shuffle([cloze.keyword, ...distractors]).map(option => ({
       value: option,
       title: option,
-      detail: "Meaning fragment"
+      detail: "Blank tile"
     }));
   }
 
@@ -703,8 +771,7 @@ function fireGlossaryInvaderShipEncoded(targetId, encodedValue) {
 function isGlossaryChoiceCorrect(roundId, item, value) {
   if (!item) return false;
   if (roundId === "signal-slice") {
-    return normaliseGlossaryTermText(value) === normaliseGlossaryTermText(item.term)
-      || (item.keywords || []).some(keyword => normaliseGlossaryTermText(value) === normaliseGlossaryTermText(keyword));
+    return normaliseGlossaryTermText(value) === normaliseGlossaryTermText(getGlossaryCloze(item).keyword);
   }
   if (roundId === "keyword-cloze") {
     return normaliseGlossaryTermText(value) === normaliseGlossaryTermText(getGlossaryCloze(item).keyword);
@@ -725,12 +792,15 @@ function submitGlossaryChallengeChoiceEncoded(targetId, encodedValue) {
   recordGlossaryAttempt(item, answer, correct, round.id);
 
   if (correct) {
+    const cloze = getGlossaryCloze(item);
     assignments[targetId] = targetId;
     state.glossaryAssignments[getGlossaryBatchKey()] = assignments;
     state.glossaryStreak += 1;
     state.glossaryBestStreak = Math.max(state.glossaryBestStreak, state.glossaryStreak);
     state.glossaryPulse = round.id === "recall"
       ? `${item.term} gate captured. Vault flight path is stabilising.`
+      : round.id === "signal-slice"
+        ? `${cloze.keyword} locked into the ${item.term} definition. Nice fast recall.`
       : `${item.term} restored. Another glossary signal is back online.`;
     state.glossaryPulseType = "good";
     state.recentReward = {
@@ -744,7 +814,7 @@ function submitGlossaryChallengeChoiceEncoded(targetId, encodedValue) {
     state.glossaryPulse = round.id === "term-catch"
       ? "Wrong catch. Track the definition at the bottom and grab the matching term next pass."
       : round.id === "signal-slice"
-        ? "Wrong term. Watch the animated scene again, then choose the key term it represents."
+        ? "Wrong tile. Read the blank out loud and tap the keyword that repairs the definition."
         : round.id === "keyword-cloze"
           ? "Blank mismatch. Read the definition rhythm and try the missing keyword again."
           : round.id === "plain-match"
@@ -838,7 +908,7 @@ function formatGlossaryRoundTitle(roundNumber) {
   return roundNumber === 1
     ? "Termfall Dash cleared. The first glossary game is banked."
     : roundNumber === 2
-      ? "Visual Match cleared. Animated meanings are locking into memory."
+      ? "Cloze Sprint cleared. Missing-keyword recall is locking into memory."
       : roundNumber === 3
         ? "Definition Invaders cleared. Meaning-to-term recognition is stronger."
         : "Vault Flight complete. Retrieval practice is banked.";
@@ -1344,16 +1414,16 @@ function getGlossaryGuideCopy(roundId, item) {
       body: `Watch the falling options. The definition points toward ${term}; catch it before the memory road resets.`
     },
     "signal-slice": {
-      title: "Picture the meaning",
-      body: `The vault has loaded ${term}. Choose the image scene that best represents what this term looks like in action.`
+      title: "Fill the blank fast",
+      body: `The vault hides one keyword from ${term}. Tap the moving tile that repairs the definition before the rhythm resets.`
     },
     "colour-shape": {
       title: "Scan the clue trail",
       body: `Start with cues. The keywords point toward ${term}, and the same term will come back with less support.`
     },
     "keyword-cloze": {
-      title: "Repair the missing word",
-      body: `Blank repair is the memory workout. Read the definition rhythm, predict the keyword, then choose it.`
+      title: "Fill the blank fast",
+      body: `Cloze practice is the memory workout. Read the definition rhythm, predict the keyword, then choose it.`
     },
     "plain-match": {
       title: "Shoot the right term",
@@ -1480,11 +1550,11 @@ function renderGlossaryRecallForge(batch, batchNumber, totalBatches) {
       <div class="glossary-mission-topbar glossary-escape-topbar">
         <div>
           <div class="kicker">System Recovery Protocol</div>
-          <h3>Recall Forge</h3>
+          <h3>Vault Flight</h3>
           <p class="small-copy">This game turns recognition into retrieval. Restore each term signal, then restore one key concept from memory.</p>
         </div>
         <div class="glossary-mission-actions">
-          <span class="badge">Recall game</span>
+          <span class="badge">Lane recall</span>
           <span class="badge">Target 30/30 secure</span>
           <span class="badge">Timer <strong id="glossary-round-timer">${formatSecondsAsClock(getGlossaryRoundElapsedSeconds())}</strong></span>
           <button class="choice-button" type="button" onclick="window.ESTPrep.startNewGlossaryPracticeRun()">New timed set</button>
@@ -1515,7 +1585,7 @@ function renderGlossaryRecallForge(batch, batchNumber, totalBatches) {
       </div>
       <div class="panel glossary-command-panel">
         <div class="section-title">
-          <h2>How to clear Recall Forge</h2>
+          <h2>How to clear Vault Flight</h2>
           <p>${readyCores}/${batch.length} signal cores fully locked</p>
         </div>
         <p class="small-copy">Work one signal at a time. A wrong term stops the sequence. A correct term unlocks the repair token step.</p>
@@ -1639,11 +1709,13 @@ function renderGlossaryCatchGame(round, promptItem, optionSet, batch, batchNumbe
 
 function renderGlossarySignalSliceGame(round, promptItem, optionSet, batch, batchNumber, totalBatches, matchedCount, roundScore, progressPercent) {
   const guideImage = GLOSSARY_GUIDE_ASSETS["signal-slice"];
+  const cloze = getGlossaryCloze(promptItem);
+  const isCelebrating = state.glossaryPulseType === "good";
   return `
-    <div class="panel glossary-command-panel glossary-arcade-shell glossary-slice-shell">
+    <div class="panel glossary-command-panel glossary-arcade-shell glossary-slice-shell glossary-cloze-shell">
       <div class="section-title">
-        <h2>Signal Slice</h2>
-        <p>${matchedCount}/${batch.length} term signals sliced</p>
+        <h2>Cloze Sprint</h2>
+        <p>${matchedCount}/${batch.length} blanks repaired</p>
       </div>
       <div class="badge-row" style="margin-bottom:14px;">
         <span class="badge">Current streak: x${state.glossaryStreak}</span>
@@ -1656,22 +1728,29 @@ function renderGlossarySignalSliceGame(round, promptItem, optionSet, batch, batc
         <div class="glossary-progress-bar" style="width:${progressPercent}%;"></div>
       </div>
       <div class="glossary-slice-game">
+        ${isCelebrating ? `
+          <span class="glossary-cloze-burst glossary-cloze-burst--one"></span>
+          <span class="glossary-cloze-burst glossary-cloze-burst--two"></span>
+          <span class="glossary-cloze-burst glossary-cloze-burst--three"></span>
+        ` : ""}
         <div class="glossary-slice-vault">
           <img src="${escapeHtml(guideImage)}" alt="">
           <span class="glossary-slice-vault-ring"></span>
           <div>
-            <span class="kicker">Active term</span>
+            <span class="kicker">Term file</span>
             <strong>${escapeHtml(promptItem.term)}</strong>
+            <div class="glossary-cloze-slots" aria-hidden="true">${renderGlossaryTermSilhouette(cloze.keyword)}</div>
           </div>
         </div>
-        <div class="glossary-slice-field" aria-label="Slice the matching meaning fragments">
+        <div class="glossary-slice-field" aria-label="Tap the moving keyword that fills the definition blank">
           <span class="glossary-slice-beam glossary-slice-beam--one"></span>
           <span class="glossary-slice-beam glossary-slice-beam--two"></span>
+          <span class="glossary-cloze-target-ring"></span>
           ${optionSet.map((option, index) => `
             <button
               type="button"
               class="glossary-slice-token glossary-slice-token--${(index % 4) + 1}"
-              style="--slice-top:${14 + ((index * 13) % 64)}%; --slice-delay:${(index * 0.34).toFixed(2)}s; --slice-duration:${(5.2 + ((index % 3) * 0.55)).toFixed(2)}s;"
+              style="--slice-top:${15 + ((index * 11) % 58)}%; --slice-delay:${(index * 0.22).toFixed(2)}s; --slice-duration:${(3.55 + ((index % 3) * 0.32)).toFixed(2)}s;"
               onclick="window.ESTPrep.submitGlossaryChallengeChoiceEncoded('${promptItem.id}', '${encodeForInlineHandler(option.value)}')"
             >
               <span>${escapeHtml(option.detail)}</span>
@@ -1680,20 +1759,49 @@ function renderGlossarySignalSliceGame(round, promptItem, optionSet, batch, batc
           `).join("")}
         </div>
         <div class="glossary-slice-definition">
-          <span class="kicker">Explanation anchor</span>
-          <p>${escapeHtml(clampText(promptItem.definition, 190))}</p>
+          <span class="kicker">Definition target</span>
+          <strong>Fill the blank:</strong>
+          <p>${renderGlossaryClozeText(promptItem)}</p>
         </div>
       </div>
     </div>
     <div class="written-stage glossary-finale-stage">
-      <strong>Slice exit</strong>
-      <p class="small-copy">Slice one true meaning fragment for each active term to unlock the next vault layer.</p>
+      <strong>Cloze exit</strong>
+      <p class="small-copy">Repair every moving blank tile in this set to unlock the next vault layer.</p>
       <button class="submit-button" type="button" onclick="window.ESTPrep.nextGlossaryPhase()" ${isGlossaryBatchMatched() ? "" : "disabled"}>Finish Game</button>
     </div>
   `;
 }
 
+function renderGlossaryStoryScene(scene) {
+  const chips = Array.isArray(scene.chips) ? scene.chips : [];
+  return `
+    <div class="glossary-scene-art glossary-story-scene glossary-story-scene--${escapeHtml(scene.motif)}" aria-hidden="true">
+      <img class="glossary-story-bg" src="${escapeHtml(GLOSSARY_STORY_ASSETS.vault)}" alt="">
+      <span class="glossary-story-grid"></span>
+      <span class="glossary-story-holo glossary-story-holo--one"></span>
+      <span class="glossary-story-holo glossary-story-holo--two"></span>
+      <div class="glossary-story-display">
+        <span class="glossary-story-object glossary-story-object--one"></span>
+        <span class="glossary-story-object glossary-story-object--two"></span>
+        <span class="glossary-story-object glossary-story-object--three"></span>
+        <span class="glossary-story-object glossary-story-object--four"></span>
+        <span class="glossary-story-object glossary-story-object--five"></span>
+      </div>
+      <img class="glossary-story-character" src="${escapeHtml(scene.character || GLOSSARY_STORY_ASSETS.mackillopThinking)}" alt="">
+      <span class="glossary-story-signal">${escapeHtml(scene.title || "Visual meaning")}</span>
+      <div class="glossary-story-chip-row">
+        ${chips.map((chip, index) => `<span class="glossary-story-chip glossary-story-chip--${index + 1}">${escapeHtml(chip)}</span>`).join("")}
+      </div>
+      <strong class="glossary-story-badge">${escapeHtml(scene.badge)}</strong>
+    </div>
+  `;
+}
+
 function renderGlossarySceneArt(scene) {
+  if (scene.variant === "story") {
+    return renderGlossaryStoryScene(scene);
+  }
   return `
     <div class="glossary-scene-art glossary-scene-art--${escapeHtml(scene.motif)}" aria-hidden="true">
       <span class="glossary-scene-shape glossary-scene-shape--one"></span>
@@ -1711,7 +1819,7 @@ function renderGlossarySceneMatchGame(round, promptItem, optionSet, batch, batch
   return `
     <div class="panel glossary-command-panel glossary-arcade-shell glossary-scene-shell">
       <div class="section-title">
-        <h2>Visual Match</h2>
+        <h2>Cloze Sprint</h2>
         <p>${matchedCount}/${batch.length} animated meanings decoded</p>
       </div>
       <div class="badge-row" style="margin-bottom:14px;">
@@ -1909,7 +2017,7 @@ function renderGlossaryChallengeArena(round, batch, batchNumber, totalBatches, m
   }
 
   if (round.id === "signal-slice") {
-    return renderGlossarySceneMatchGame(round, promptItem, buildGlossarySceneMatchOptions(promptItem), batch, batchNumber, totalBatches, matchedCount, roundScore, progressPercent);
+    return renderGlossarySignalSliceGame(round, promptItem, buildGlossaryChallengeOptions(round.id, promptItem, batch), batch, batchNumber, totalBatches, matchedCount, roundScore, progressPercent);
   }
 
   const optionSet = buildGlossaryChallengeOptions(round.id, promptItem, batch);
@@ -1931,14 +2039,14 @@ function renderGlossaryChallengeArena(round, batch, batchNumber, totalBatches, m
       }
     : round.id === "keyword-cloze"
       ? {
-          kicker: "Blank repair",
+          kicker: "Cloze Sprint",
           title: "Fill the missing keyword from the definition",
           prompt: getGlossaryCloze(promptItem).text,
           promptHtml: renderGlossaryClozeText(promptItem),
           support: `The term is ${promptItem.term}. Pick the missing word that makes the definition work.`
         }
       : {
-          kicker: "Corruption sweep",
+          kicker: "Definition Invaders",
           title: "Match the definition back to the correct term",
           prompt: clampText(promptItem.definition, 180),
           promptHtml: escapeHtml(clampText(promptItem.definition, 180)),
