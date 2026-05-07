@@ -441,17 +441,34 @@
   display: none;
 }
 
-.topic-media-progress {
+.topic-media-toggle {
   position: absolute;
-  z-index: 4;
-  right: 16px;
-  bottom: 22px;
-  width: min(30%, 160px);
-  height: 8px;
+  z-index: 5;
+  top: 14px;
+  right: 14px;
+  min-width: 74px;
+  min-height: 38px;
+  padding: 8px 12px;
+  border: 1px solid rgba(206, 224, 255, 0.38);
   border-radius: 999px;
-  overflow: hidden;
-  border: 1px solid rgba(255, 255, 255, 0.12);
-  background: rgba(7, 15, 34, 0.9);
+  background: rgba(5, 11, 26, 0.76);
+  color: #eef7ff;
+  font: inherit;
+  font-size: 0.82rem;
+  font-weight: 800;
+  cursor: pointer;
+  backdrop-filter: blur(10px);
+}
+
+.topic-media-toggle:hover,
+.topic-media-toggle:focus-visible {
+  border-color: rgba(104, 210, 255, 0.82);
+  box-shadow: 0 0 0 3px rgba(104, 210, 255, 0.18);
+  outline: none;
+}
+
+.topic-media-progress {
+  display: none;
 }
 
 .topic-media-progress span {

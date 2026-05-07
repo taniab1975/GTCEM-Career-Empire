@@ -150,6 +150,7 @@ window.ESTPrep = {
   startNewGlossaryPracticeRun,
   jumpToGlossaryRound,
   toggleReveal,
+  toggleTopicIntroVideo,
   setGlossaryRecallAnswer,
   setGlossaryRecallChoiceEncoded,
   setGlossaryRecallTermChoiceEncoded,

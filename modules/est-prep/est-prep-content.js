@@ -1273,6 +1273,22 @@ function toggleReveal(key) {
   if (state.selectedStageId === "boss") renderBossStage();
 }
 
+function toggleTopicIntroVideo(button) {
+  const video = button?.closest(".topic-media-stage")?.querySelector(".topic-media-video");
+  if (!video) return;
+  if (video.paused) {
+    video.play();
+    button.textContent = "Pause";
+    button.setAttribute("aria-label", "Pause topic animation");
+    button.classList.remove("is-paused");
+  } else {
+    video.pause();
+    button.textContent = "Play";
+    button.setAttribute("aria-label", "Play topic animation");
+    button.classList.add("is-paused");
+  }
+}
+
 function renderContentTopicIntro(group) {
   const highlights = group.introHighlights || [];
   const hasVideo = Boolean(group.introVideo);
@@ -1289,12 +1305,12 @@ function renderContentTopicIntro(group) {
         <video class="topic-media-video ${usesPortraitMedia ? "topic-media-video--portrait" : ""}" autoplay muted loop playsinline aria-hidden="true">
           <source src="${escapeHtml(group.introVideo)}" type="video/mp4">
         </video>
+        <button class="topic-media-toggle" type="button" aria-label="Pause topic animation" onclick="window.ESTPrep.toggleTopicIntroVideo(this)">Pause</button>
       ` : `
         <img class="topic-media topic-media-image" src="${escapeHtml(introImage)}" alt="${escapeHtml(group.title)}">
       `}
       <span class="topic-media-scan" aria-hidden="true"></span>
       ${sceneLabel ? `<span class="topic-media-status">${escapeHtml(sceneLabel)}</span>` : ""}
-      <span class="topic-media-progress" aria-hidden="true"><span></span></span>
     </div>
   `;
   return `
