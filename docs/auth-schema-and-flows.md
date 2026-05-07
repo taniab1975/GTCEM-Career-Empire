@@ -82,7 +82,7 @@ Fields:
 
 Validation:
 
-- email must end with `cewa.edu.au` or `education.wa.edu.au`
+- email domain must be `cewa.edu.au` or end with `.wa.edu.au`
 
 ### Class
 
@@ -220,12 +220,12 @@ Later:
 Allowed teacher domains:
 
 - `cewa.edu.au`
-- `education.wa.edu.au`
+- any domain ending in `.wa.edu.au`
 
 Pseudo-rule:
 
 ```text
-if email ends with allowed domain -> permit teacher registration
+if email domain is cewa.edu.au or ends with .wa.edu.au -> permit teacher registration
 else -> reject
 ```
 
@@ -355,7 +355,7 @@ These are the first auth-related screens that should exist.
 
 ### Teacher Sign Up
 
-`Only school staff with a cewa.edu.au or education.wa.edu.au email can create teacher accounts.`
+`Only school staff with a cewa.edu.au email or a WA school email can create teacher accounts.`
 
 ### Student Login
 

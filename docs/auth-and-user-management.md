@@ -21,7 +21,7 @@ These rules are intended to keep the platform appropriate for school use, reduce
 Teacher self-registration is allowed only when the email address ends with one of these domains:
 
 - `cewa.edu.au`
-- `education.wa.edu.au`
+- any domain ending in `.wa.edu.au`
 
 ### Teacher Registration Requirements
 
@@ -40,6 +40,7 @@ Examples:
 
 - `teacher@cewa.edu.au` -> allowed
 - `teacher@education.wa.edu.au` -> allowed
+- `teacher@tkc.wa.edu.au` -> allowed
 - `teacher@gmail.com` -> rejected
 - `teacher@student.school` -> rejected
 
@@ -248,7 +249,7 @@ This gives the system clear ownership for dashboards, analytics, and permissions
 
 Recommended examples:
 
-- `Only school staff with a cewa.edu.au or education.wa.edu.au email can register as a teacher.`
+- `Only school staff with a cewa.edu.au email or a WA school email can register as a teacher.`
 - `Student accounts are created by teachers only.`
 - `Student usernames should use a first name or initials plus a number, such as Mia27 or TB14.`
 

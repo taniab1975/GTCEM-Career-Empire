@@ -15,7 +15,7 @@ create table if not exists teachers (
   id uuid primary key default gen_random_uuid(),
   full_name text not null,
   email text not null unique,
-  email_domain text not null check (email_domain in ('cewa.edu.au', 'education.wa.edu.au')),
+  email_domain text not null check (email_domain = 'cewa.edu.au' or email_domain like '%.wa.edu.au'),
   password_hash text not null,
   school_id uuid not null references schools(id),
   is_active boolean not null default true,

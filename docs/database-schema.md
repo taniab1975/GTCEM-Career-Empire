@@ -88,7 +88,7 @@ Validation rule:
 
 - `email_domain` must be one of:
   - `cewa.edu.au`
-  - `education.wa.edu.au`
+  - any domain ending in `.wa.edu.au`
 
 ## 3. classes
 
@@ -388,7 +388,7 @@ create table feedback_reports (
 Enforce at application level and optionally with a database check:
 
 ```sql
-check (email_domain in ('cewa.edu.au', 'education.wa.edu.au'))
+check (email_domain = 'cewa.edu.au' or email_domain like '%.wa.edu.au')
 ```
 
 ### Student Username Constraint

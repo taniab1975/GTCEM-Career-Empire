@@ -1,4 +1,6 @@
-const ALLOWED_TEACHER_DOMAINS = ["cewa.edu.au", "education.wa.edu.au"];
+const ALLOWED_TEACHER_DOMAINS = ["cewa.edu.au"];
+const ALLOWED_TEACHER_DOMAIN_SUFFIXES = [".wa.edu.au"];
+const TEACHER_EMAIL_REQUIREMENT = "Use a staff email ending in `@cewa.edu.au` or any school domain ending in `.wa.edu.au`.";
 const AUTH_DEMO_STATE_KEY = "career-empire-auth-demo";
 const PLAYER_SESSION_KEY = "career-empire-session";
 const DEMO_STUDENT_PROFILE = {
@@ -236,8 +238,9 @@ function setHtml(id, value) {
 }
 
 function isAllowedTeacherEmail(email) {
-  const lower = String(email || "").trim().toLowerCase();
-  return ALLOWED_TEACHER_DOMAINS.some(domain => lower.endsWith(`@${domain}`));
+  const domain = extractEmailDomain(email);
+  return ALLOWED_TEACHER_DOMAINS.includes(domain)
+    || ALLOWED_TEACHER_DOMAIN_SUFFIXES.some(suffix => domain.endsWith(suffix));
 }
 
 function isValidStudentUsername(username) {
@@ -628,7 +631,7 @@ function initTeacherSignup() {
       feedback.textContent = "";
       if (help) {
         help.className = "helper";
-        help.innerHTML = "Use a staff email ending in `@cewa.edu.au` or `@education.wa.edu.au`.";
+        help.innerHTML = TEACHER_EMAIL_REQUIREMENT;
       }
       return;
     }
@@ -637,14 +640,14 @@ function initTeacherSignup() {
       feedback.textContent = "Approved school domain. This teacher account would be allowed.";
       if (help) {
         help.className = "helper";
-        help.innerHTML = "Use a staff email ending in `@cewa.edu.au` or `@education.wa.edu.au`.";
+        help.innerHTML = TEACHER_EMAIL_REQUIREMENT;
       }
     } else {
       feedback.className = "feedback bad";
-      feedback.textContent = "Only staff emails ending in cewa.edu.au or education.wa.edu.au are allowed.";
+      feedback.textContent = "Only staff emails ending in cewa.edu.au or .wa.edu.au are allowed.";
       if (help) {
         help.className = "feedback warn";
-        help.innerHTML = "If you're a teacher and your email address doesn't end in `@cewa.edu.au` or `@education.wa.edu.au`, please email <a href=\"mailto:tania.byrnes@cewa.edu.au\" style=\"color: inherit; font-weight: 700;\">tania.byrnes@cewa.edu.au</a> to add your email to the list of eligible registrations.";
+        help.innerHTML = "If you're a teacher and your email address doesn't end in `@cewa.edu.au` or `.wa.edu.au`, please email <a href=\"mailto:tania.byrnes@cewa.edu.au\" style=\"color: inherit; font-weight: 700;\">tania.byrnes@cewa.edu.au</a> to add your email to the list of eligible registrations.";
       }
     }
   });
@@ -734,7 +737,7 @@ function initTeacherLogin() {
     const feedback = document.getElementById("teacher-login-feedback");
     if (!isAllowedTeacherEmail(email)) {
       feedback.className = "feedback bad";
-      feedback.textContent = "This prototype only allows teacher emails from approved school domains.";
+      feedback.textContent = "This prototype only allows teacher emails ending in cewa.edu.au or .wa.edu.au.";
       return;
     }
 
