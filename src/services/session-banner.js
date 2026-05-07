@@ -178,7 +178,25 @@
         opacity: 0.68;
       }
 
+      .auth-topbar .top-links {
+        align-items: center;
+        justify-content: flex-end;
+      }
+
+      .auth-topbar .session-banner-actions {
+        flex: 0 1 auto;
+        min-width: 0;
+      }
+
       @media (max-width: 680px) {
+        .auth-topbar {
+          flex-wrap: wrap;
+        }
+
+        .auth-topbar .top-links {
+          justify-content: flex-start;
+        }
+
         .session-banner-actions {
           width: 100%;
           justify-content: flex-start;
@@ -216,6 +234,19 @@
     return button;
   }
 
+  function getSessionBannerContainers(scope) {
+    const path = window.location.pathname;
+    const authTopbarContainers = Array.from(document.querySelectorAll(".auth-topbar .top-links"));
+    if (path.includes("/auth/") && authTopbarContainers.length) {
+      return authTopbarContainers;
+    }
+
+    const primaryContainers = Array.from(document.querySelectorAll(".dashboard-nav, .workflow-links, .module-nav"));
+    if (primaryContainers.length) return primaryContainers;
+
+    return Array.from(document.querySelectorAll(".top-links"));
+  }
+
   function render() {
     installStyles();
     document.querySelectorAll("[data-session-banner-actions='true']").forEach(element => element.remove());
@@ -233,9 +264,7 @@
 
     if (!identities.length) return;
 
-    const primaryContainers = Array.from(document.querySelectorAll(".dashboard-nav, .workflow-links, .module-nav"));
-    const fallbackContainers = primaryContainers.length ? [] : Array.from(document.querySelectorAll(".top-links"));
-    [...primaryContainers, ...fallbackContainers].forEach(container => {
+    getSessionBannerContainers(scope).forEach(container => {
       const buttonClass = getContainerButtonClass(container);
       const group = document.createElement("div");
       group.className = "session-banner-actions";
