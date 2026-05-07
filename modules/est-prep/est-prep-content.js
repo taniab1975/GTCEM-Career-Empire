@@ -1274,7 +1274,7 @@ function toggleReveal(key) {
 }
 
 function toggleTopicIntroVideo(button) {
-  const video = button?.closest(".topic-media-stage")?.querySelector(".topic-media-video");
+  const video = button?.closest(".topic-media-card")?.querySelector(".topic-media-video");
   if (!video) return;
   if (video.paused) {
     video.play();
@@ -1305,7 +1305,6 @@ function renderContentTopicIntro(group) {
         <video class="topic-media-video ${usesPortraitMedia ? "topic-media-video--portrait" : ""}" autoplay muted loop playsinline aria-hidden="true">
           <source src="${escapeHtml(group.introVideo)}" type="video/mp4">
         </video>
-        <button class="topic-media-toggle" type="button" aria-label="Pause topic animation" onclick="window.ESTPrep.toggleTopicIntroVideo(this)">Pause</button>
       ` : `
         <img class="topic-media topic-media-image" src="${escapeHtml(introImage)}" alt="${escapeHtml(group.title)}">
       `}
@@ -1313,11 +1312,17 @@ function renderContentTopicIntro(group) {
       ${sceneLabel ? `<span class="topic-media-status">${escapeHtml(sceneLabel)}</span>` : ""}
     </div>
   `;
+  const videoControls = hasVideo ? `
+    <div class="topic-media-controls">
+      <button class="topic-media-toggle" type="button" aria-label="Pause topic animation" onclick="window.ESTPrep.toggleTopicIntroVideo(this)">Pause</button>
+    </div>
+  ` : "";
   return `
     <section class="est-scene-shell est-scene-shell--intro est-scene-shell--topic est-scene-shell--topic-${escapeHtml(topicClass)}" ${buildESTSceneStyle("neutral")}>
       <div class="topic-intro-grid topic-intro-grid--compact topic-intro-grid--visual topic-intro-grid--${escapeHtml(topicClass)} ${usesPortraitMedia ? "topic-intro-grid--portrait" : ""}">
         <div class="topic-media-card topic-media-card--${escapeHtml(topicClass)} ${usesPortraitMedia ? "topic-media-card--portrait" : ""} ${hasVideo ? "topic-media-card--video" : "topic-media-card--animated"}">
           ${mediaStage}
+          ${videoControls}
         </div>
         <div class="topic-intro-copy panel">
           <div class="kicker">Topic intro</div>

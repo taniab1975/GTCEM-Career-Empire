@@ -306,6 +306,14 @@
     radial-gradient(circle at top right, var(--topic-accent-soft), transparent 34%);
 }
 
+.topic-media-card--video {
+  display: grid;
+  grid-template-rows: minmax(0, 1fr) auto;
+  align-items: stretch;
+  justify-content: stretch;
+  gap: 10px;
+}
+
 .topic-intro-grid--compact .topic-media-card {
   aspect-ratio: 16 / 9;
   max-height: 460px;
@@ -441,11 +449,15 @@
   display: none;
 }
 
+.topic-media-controls {
+  display: flex;
+  justify-content: flex-end;
+  min-height: 38px;
+}
+
 .topic-media-toggle {
-  position: absolute;
+  position: static;
   z-index: 5;
-  top: 14px;
-  right: 14px;
   min-width: 74px;
   min-height: 38px;
   padding: 8px 12px;
@@ -458,6 +470,10 @@
   font-weight: 800;
   cursor: pointer;
   backdrop-filter: blur(10px);
+}
+
+.topic-media-stage > .topic-media-toggle {
+  display: none;
 }
 
 .topic-media-toggle:hover,
