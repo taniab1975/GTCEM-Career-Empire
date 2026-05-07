@@ -9,7 +9,7 @@
   <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="./dashboard.css">
 </head>
-<body data-teacher-nav-active="teacher-dashboard">
+<body class="teacher-dashboard-page" data-teacher-nav-active="teacher-dashboard">
   <main class="page-shell">
     <div class="dashboard-nav">
       <a class="dashboard-nav-link" href="../auth/teacher-login.html">Teacher Login</a>
@@ -24,12 +24,11 @@
     </div>
 
     <section class="hero">
-      <article class="hero-card">
+      <article class="hero-card teacher-hero-card">
         <span class="eyebrow">Teacher Dashboard</span>
         <h1 id="teacher-hero-title">See the class, not just the clicks.</h1>
         <p id="teacher-hero-subtitle" class="subtitle">
-          This shell is designed to become the teacher control center for classes, modules, interventions,
-          evidence review, and employability-skill diagnostics across the entire Year 12 ecosystem.
+          Live engagement, module time, strand results, glossary gaps, long-answer comparison, and next-step signals across the Career Empire ecosystem.
         </p>
         <div id="teacher-badge-stack" class="badge-stack">
           <span class="badge">Loading class data...</span>
@@ -54,25 +53,35 @@
     </section>
 
     <section class="metrics-grid">
-      <article class="metric">
+      <article class="metric metric-card--art" style="--metric-art: url('../Assets/Images and Animations/Celebration Reward Icons/Signal restored.png');">
         <div class="metric-label">Students On Track</div>
         <div id="teacher-students-on-track" class="metric-value">0</div>
-        <div class="metric-note">Students above 50% overall mastery</div>
+        <div class="metric-note">Active students with saved progress</div>
       </article>
-      <article class="metric">
+      <article class="metric metric-card--art" style="--metric-art: url('../Assets/Images and Animations/Feedback Images/Feedback hint.png');">
         <div class="metric-label">Students At Risk</div>
         <div id="teacher-students-at-risk" class="metric-value">0</div>
-        <div class="metric-note">Need intervention or scaffolded re-entry</div>
+        <div class="metric-note">No login, no progress, or low mastery</div>
       </article>
-      <article class="metric">
-        <div class="metric-label">Evidence Tasks Reviewed</div>
+      <article class="metric metric-card--art" style="--metric-art: url('../Assets/Images and Animations/Animated Buttons/animated_progress_bar_fill.gif');">
+        <div class="metric-label">Captured Task Time</div>
+        <div id="teacher-captured-time" class="metric-value">0m</div>
+        <div class="metric-note">Timed module stages saved as evidence</div>
+      </article>
+      <article class="metric metric-card--art" style="--metric-art: url('../Assets/Images and Animations/Progress Bar/All steps complete.png');">
+        <div class="metric-label">Average Completion</div>
+        <div id="teacher-average-completion" class="metric-value">0%</div>
+        <div class="metric-note">Across active module progress rows</div>
+      </article>
+      <article class="metric metric-card--art" style="--metric-art: url('../Assets/Images and Animations/Feedback Images/Feedback tick.png');">
+        <div class="metric-label">Avg Evidence Score</div>
+        <div id="teacher-average-score" class="metric-value">N/A</div>
+        <div class="metric-note">Auto-scored teacher-visible tasks</div>
+      </article>
+      <article class="metric metric-card--art" style="--metric-art: url('../Assets/Images and Animations/Celebration Reward Icons/Topic Complete.png');">
+        <div class="metric-label">Evidence Captured</div>
         <div id="teacher-evidence-count" class="metric-value">0</div>
         <div class="metric-note">Typed responses, lock-ins, and reflections</div>
-      </article>
-      <article class="metric">
-        <div class="metric-label">Class Fund</div>
-        <div id="teacher-class-fund" class="metric-value">$0</div>
-        <div class="metric-note">Generated through module participation</div>
       </article>
     </section>
 
@@ -114,7 +123,7 @@
 
     <section class="panel">
       <div class="section-title">
-        <h2>Class Employability Profile</h2>
+        <h2>SCSA Careers and Employability Skills</h2>
         <p>Category-level diagnostics</p>
       </div>
       <div id="teacher-skill-grid" class="skill-grid"></div>
@@ -124,7 +133,7 @@
     <section class="panel">
       <div class="section-title">
         <h2>Student Compare View</h2>
-        <p>Per-student comparison across Megatrends and EST Prep</p>
+        <p>Per-student comparison across Megatrends, Lifelong Learning, and EST Prep</p>
       </div>
       <div id="teacher-student-compare-list" class="module-grid"></div>
     </section>
@@ -132,33 +141,33 @@
     <section class="two-column">
       <article class="panel">
         <div class="section-title">
-          <h2>Roster Activity</h2>
-          <p>Recent student engagement</p>
+          <h2>Engagement & Interaction</h2>
+          <p>Login recency, captured task time, and progress status</p>
         </div>
         <div id="teacher-roster-activity" class="list"></div>
       </article>
 
       <article class="panel">
         <div class="section-title">
-          <h2>Evidence Snapshot</h2>
-          <p>Latest assessed work</p>
+          <h2>Glossary Results & Gaps</h2>
+          <p>Term recall, keyword accuracy, and class reteach signals</p>
         </div>
-        <div id="teacher-evidence-list" class="list"></div>
+        <div id="teacher-glossary-gap-list" class="list"></div>
       </article>
     </section>
 
     <section class="panel">
       <div class="section-title">
-        <h2>EST Response Review</h2>
-        <p>Teacher view of submitted short answers</p>
+        <h2>Long Answer Comparison</h2>
+        <p>Compare extended submissions with score signals, class averages, and suggested feedback</p>
       </div>
-      <div id="teacher-est-response-list" class="list"></div>
+      <div id="teacher-long-answer-compare-list" class="teacher-answer-grid"></div>
     </section>
 
     <section class="panel">
       <div class="section-title">
-        <h2>Task Time Review</h2>
-        <p>Recent stage durations across Megatrends and EST Prep</p>
+        <h2>Module & Strand Time</h2>
+        <p>Captured time-on-task by module, stage, and EST content strand</p>
       </div>
       <div id="teacher-task-time-list" class="list"></div>
     </section>

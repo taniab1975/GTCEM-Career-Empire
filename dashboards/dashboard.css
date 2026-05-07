@@ -602,7 +602,7 @@ h1 {
 
 .metrics-grid {
   display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
   gap: 16px;
   margin-bottom: 20px;
 }
@@ -630,6 +630,76 @@ h1 {
   font-size: 14px;
 }
 
+.teacher-dashboard-page {
+  background:
+    linear-gradient(135deg, rgba(5, 13, 26, 0.96), rgba(7, 22, 39, 0.96) 44%, rgba(14, 39, 39, 0.94)),
+    #07111f;
+}
+
+.teacher-dashboard-page .page-shell {
+  width: min(1280px, calc(100% - 36px));
+}
+
+.teacher-dashboard-page .teacher-hero-card {
+  position: relative;
+  overflow: hidden;
+  min-height: 360px;
+  display: grid;
+  align-content: end;
+  background:
+    linear-gradient(90deg, rgba(5, 13, 26, 0.98), rgba(7, 18, 34, 0.82) 52%, rgba(5, 13, 26, 0.36)),
+    linear-gradient(180deg, rgba(5, 13, 26, 0.02), rgba(5, 13, 26, 0.9)),
+    url("../Assets/Images and Animations/Student Hub/student-hub-hero-career-empire.png") right center / cover no-repeat;
+}
+
+.teacher-dashboard-page .teacher-hero-card::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background:
+    linear-gradient(90deg, rgba(104, 210, 255, 0.18) 1px, transparent 1px),
+    linear-gradient(180deg, rgba(128, 237, 153, 0.1) 1px, transparent 1px);
+  background-size: 48px 48px;
+  -webkit-mask-image: linear-gradient(90deg, transparent, #000 42%, transparent);
+  mask-image: linear-gradient(90deg, transparent, #000 42%, transparent);
+  opacity: 0.26;
+  pointer-events: none;
+}
+
+.teacher-dashboard-page .teacher-hero-card > * {
+  position: relative;
+  z-index: 1;
+}
+
+.teacher-dashboard-page .metric-card--art {
+  position: relative;
+  overflow: hidden;
+  min-height: 168px;
+  padding-right: 96px;
+}
+
+.teacher-dashboard-page .metric-card--art::after {
+  content: "";
+  position: absolute;
+  right: -12px;
+  bottom: -16px;
+  width: 118px;
+  height: 118px;
+  background: var(--metric-art) center / contain no-repeat;
+  opacity: 0.54;
+  filter: drop-shadow(0 16px 22px rgba(0, 0, 0, 0.28));
+  pointer-events: none;
+}
+
+.teacher-dashboard-page .metric-card--art::before {
+  content: "";
+  position: absolute;
+  inset: auto 0 0;
+  height: 4px;
+  background: linear-gradient(90deg, var(--accent), var(--accent-2), var(--accent-3));
+  opacity: 0.72;
+}
+
 .two-column {
   display: grid;
   grid-template-columns: 1.25fr 0.95fr;
@@ -647,6 +717,10 @@ h1 {
 
 .module-grid {
   grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.teacher-dashboard-page #teacher-module-health {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
 }
 
 .skill-grid {
@@ -672,6 +746,49 @@ h1 {
 .community-card h3 {
   margin-bottom: 8px;
   font-size: 20px;
+}
+
+.teacher-dashboard-page .teacher-module-card {
+  position: relative;
+  overflow: hidden;
+  min-height: 260px;
+  display: grid;
+  align-content: end;
+  padding-top: 76px;
+  background:
+    linear-gradient(180deg, rgba(7, 16, 31, 0.1), rgba(7, 16, 31, 0.92)),
+    linear-gradient(90deg, rgba(7, 16, 31, 0.92), rgba(7, 16, 31, 0.42) 62%, rgba(7, 16, 31, 0.86)),
+    var(--module-image) center center / cover no-repeat;
+}
+
+.teacher-dashboard-page .teacher-module-card::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background:
+    linear-gradient(90deg, rgba(104, 210, 255, 0.18), transparent 46%),
+    linear-gradient(180deg, transparent 60%, rgba(128, 237, 153, 0.12));
+  pointer-events: none;
+}
+
+.teacher-dashboard-page .teacher-module-card > * {
+  position: relative;
+  z-index: 1;
+}
+
+.teacher-module-logo {
+  position: absolute;
+  z-index: 2;
+  top: 16px;
+  right: 16px;
+  width: 56px;
+  height: 56px;
+  object-fit: contain;
+  padding: 8px;
+  border: 1px solid rgba(206, 224, 255, 0.22);
+  border-radius: 14px;
+  background: rgba(5, 13, 26, 0.72);
+  box-shadow: 0 16px 34px rgba(0, 0, 0, 0.28);
 }
 
 .community-card {
@@ -1819,8 +1936,84 @@ textarea {
   gap: 12px;
 }
 
+.teacher-answer-grid {
+  display: grid;
+  gap: 14px;
+}
+
+.answer-compare-card {
+  display: grid;
+  gap: 12px;
+}
+
+.answer-compare-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.answer-response {
+  max-height: 220px;
+  overflow: auto;
+  white-space: pre-wrap;
+  padding: 14px;
+  border: 1px solid rgba(136, 173, 255, 0.16);
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.045);
+  color: #dbe8ff;
+  font-size: 14px;
+  line-height: 1.55;
+}
+
 .timeline-item {
   padding: 16px 18px;
+}
+
+.teacher-dashboard-page .teacher-signal-item {
+  position: relative;
+  overflow: hidden;
+  border-left: 3px solid rgba(104, 210, 255, 0.62);
+}
+
+.teacher-dashboard-page .teacher-signal-item::after {
+  content: "";
+  position: absolute;
+  right: -36px;
+  top: -36px;
+  width: 108px;
+  height: 108px;
+  background: url("../Assets/Images and Animations/Celebration Reward Icons/Signal restored.png") center / contain no-repeat;
+  opacity: 0.14;
+  pointer-events: none;
+}
+
+.teacher-glossary-summary {
+  position: relative;
+  overflow: hidden;
+  min-height: 190px;
+  padding-right: 118px;
+  background:
+    linear-gradient(90deg, rgba(7, 16, 31, 0.9), rgba(8, 24, 43, 0.72)),
+    url("../Assets/Images and Animations/Glossary Check/glossary-recall-forge.svg") right bottom / 150px auto no-repeat,
+    var(--panel);
+}
+
+.answer-compare-card {
+  position: relative;
+  overflow: hidden;
+  border-left: 3px solid rgba(255, 209, 102, 0.68);
+}
+
+.answer-compare-card::after {
+  content: "";
+  position: absolute;
+  right: -20px;
+  bottom: -26px;
+  width: 130px;
+  height: 130px;
+  background: url("../Assets/Images and Animations/Feedback Images/Feedback Burst.png") center / contain no-repeat;
+  opacity: 0.12;
+  pointer-events: none;
 }
 
 .student-dashboard-page .timeline-item.with-icon {
@@ -1929,6 +2122,10 @@ textarea {
     grid-template-columns: 1fr;
   }
 
+  .teacher-dashboard-page #teacher-module-health {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
   .community-pathway-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
@@ -2032,6 +2229,14 @@ textarea {
 @media (max-width: 680px) {
   .page-shell {
     width: min(100% - 20px, 1240px);
+  }
+
+  .teacher-dashboard-page #teacher-module-health {
+    grid-template-columns: 1fr;
+  }
+
+  .teacher-dashboard-page .metric-card--art {
+    padding-right: 78px;
   }
 
   .student-dashboard-page .page-shell {

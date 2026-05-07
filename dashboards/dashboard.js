@@ -1171,12 +1171,12 @@ function renderTeacherInterventions(items) {
   if (!container) return;
 
   container.innerHTML = items.map(item => `
-    <div class="timeline-item">
+    <div class="timeline-item teacher-signal-item">
       <div class="timeline-header">
         ${item.logoPath ? `<img class="timeline-logo" src="${item.logoPath}" alt="${escapeHtml(item.logoLabel || item.title)} logo">` : ""}
-        <strong>${item.title}</strong>
+        <strong>${escapeHtml(item.title)}</strong>
       </div>
-      <p>${item.detail}</p>
+      <p>${escapeHtml(item.detail)}</p>
     </div>
   `).join("");
 }
@@ -1191,9 +1191,9 @@ function renderTeacherRosterActivity(items) {
   }
 
   container.innerHTML = items.map(item => `
-    <div class="timeline-item">
-      <strong>${item.title}</strong>
-      <p>${item.detail}</p>
+    <div class="timeline-item teacher-signal-item">
+      <strong>${escapeHtml(item.title)}</strong>
+      <p>${escapeHtml(item.detail)}</p>
     </div>
   `).join("");
 }
@@ -1209,8 +1209,8 @@ function renderTeacherEvidenceList(items) {
 
   container.innerHTML = items.map(item => `
     <div class="timeline-item">
-      <strong>${item.title}</strong>
-      <p>${item.detail}</p>
+      <strong>${escapeHtml(item.title)}</strong>
+      <p>${escapeHtml(item.detail)}</p>
     </div>
   `).join("");
 }
@@ -1226,8 +1226,8 @@ function renderTeacherESTResponseList(items) {
 
   container.innerHTML = items.map(item => `
     <div class="timeline-item">
-      <strong>${item.title}</strong>
-      <p>${item.detail}</p>
+      <strong>${escapeHtml(item.title)}</strong>
+      <p>${escapeHtml(item.detail)}</p>
     </div>
   `).join("");
 }
@@ -1237,15 +1237,76 @@ function renderTeacherTaskTimeList(items) {
   if (!container) return;
 
   if (!items.length) {
-    container.innerHTML = '<div class="timeline-item"><strong>No task timing yet</strong><p>Once students complete Megatrends and EST stages, their recent time-on-task entries will appear here.</p></div>';
+    container.innerHTML = '<div class="timeline-item"><strong>No task timing yet</strong><p>Once students complete timed module stages, captured time-on-task will appear here by module and strand.</p></div>';
     return;
   }
 
   container.innerHTML = items.map(item => `
     <div class="timeline-item">
-      <strong>${item.title}</strong>
-      <p>${item.detail}</p>
+      <strong>${escapeHtml(item.title)}</strong>
+      <p>${escapeHtml(item.detail)}</p>
     </div>
+  `).join("");
+}
+
+function renderTeacherGlossaryGapList(data) {
+  const container = document.getElementById("teacher-glossary-gap-list");
+  if (!container) return;
+
+  if (!data?.studentRows?.length) {
+    container.innerHTML = '<div class="timeline-item"><strong>No glossary results yet</strong><p>Glossary recall scores and term gaps will appear after students bank a Glossary Check run.</p></div>';
+    return;
+  }
+
+  const gapCopy = data.gapRows.length
+    ? data.gapRows.map(row => `${row.term} (${row.misses} gap${row.misses === 1 ? "" : "s"})`).join(" • ")
+    : "No common term gaps yet.";
+
+  container.innerHTML = [
+    `<div class="timeline-item teacher-glossary-summary">
+      <strong>Class glossary snapshot</strong>
+      <p>${data.averageScore}% average recall score • ${data.totalTermsCorrect}/${data.totalTermsAttempted} terms correct • ${data.totalKeywordCorrect}/${data.totalTermsAttempted} keyword checks correct.</p>
+      <div class="pill-row">
+        ${data.gapRows.slice(0, 4).map(row => `<span class="pill">${escapeHtml(row.term)}: ${row.misses} gap${row.misses === 1 ? "" : "s"}</span>`).join("")}
+      </div>
+      <p class="footer-note">Reteach focus: ${escapeHtml(gapCopy)}</p>
+    </div>`,
+    ...data.studentRows.slice(0, 6).map(row => `
+      <div class="timeline-item teacher-signal-item">
+        <strong>${escapeHtml(row.studentName)} • ${row.scoreLabel}</strong>
+        <p>${row.termCorrect}/${row.termTotal} terms correct • ${row.keywordCorrect}/${row.termTotal} keyword checks correct • ${row.durationLabel} • ${escapeHtml(row.gapText)}</p>
+      </div>
+    `)
+  ].join("");
+}
+
+function renderTeacherLongAnswerComparison(rows) {
+  const container = document.getElementById("teacher-long-answer-compare-list");
+  if (!container) return;
+
+  if (!rows.length) {
+    container.innerHTML = '<div class="timeline-item"><strong>No long answers yet</strong><p>Extended EST, Megatrends, and Lifelong Learning responses will appear here for side-by-side teacher review.</p></div>';
+    return;
+  }
+
+  container.innerHTML = rows.map(row => `
+    <article class="module-card answer-compare-card">
+      <div class="section-title">
+        <div>
+          <h3>${escapeHtml(row.studentName)}</h3>
+          <p>${escapeHtml(row.meta)}</p>
+        </div>
+        <p>${escapeHtml(row.band)}</p>
+      </div>
+      <div class="answer-compare-meta">
+        <span class="pill">${escapeHtml(row.scoreLabel)}</span>
+        <span class="pill">${escapeHtml(row.classCompare)}</span>
+        <span class="pill">${row.wordCount} words</span>
+      </div>
+      <p><strong>Prompt:</strong> ${escapeHtml(row.prompt)}</p>
+      <div class="answer-response">${escapeHtml(row.response)}</div>
+      <p><strong>Suggested feedback:</strong> ${escapeHtml(row.feedback || "Read for accuracy, specificity, and clear cause-and-effect reasoning.")}</p>
+    </article>
   `).join("");
 }
 
@@ -1273,9 +1334,11 @@ function renderTeacherStudentCompareList(items) {
       </div>
       <div class="section-title" style="margin-top: 12px;">
         <p>Megatrends ${item.megatrendsCompletion}% complete</p>
+        <p>Lifelong ${item.lifelongCompletion}% complete</p>
         <p>EST ${item.estCompletion}% complete</p>
       </div>
       ${createProgressBar(item.megatrendsCompletion)}
+      ${createProgressBar(item.lifelongCompletion, "gold")}
       ${createProgressBar(item.estCompletion, "green")}
       <div class="list" style="margin-top: 14px;">
         ${item.details.map(detail => `
@@ -1298,10 +1361,11 @@ function renderTeacherModuleHealth(items) {
   if (!container) return;
 
   container.innerHTML = items.map(item => `
-    <article class="module-card ${item.spotlight ? "spotlight" : ""}">
-      <div class="kicker">${item.status}</div>
-      <h3>${item.title}</h3>
-      <p>${item.summary}</p>
+    <article class="module-card teacher-module-card ${item.spotlight ? "spotlight" : ""}" style="${item.imagePath ? `--module-image: url('${item.imagePath}');` : ""}">
+      ${item.logoPath ? `<img class="teacher-module-logo" src="${item.logoPath}" alt="${escapeHtml(item.logoLabel || item.title)} logo">` : ""}
+      <div class="kicker">${escapeHtml(item.status)}</div>
+      <h3>${escapeHtml(item.title)}</h3>
+      <p>${escapeHtml(item.summary)}</p>
       ${createProgressBar(item.completion, item.variant)}
       <div class="section-title">
         <p>${item.completion}% completion</p>
@@ -1604,6 +1668,111 @@ function formatDurationSeconds(value) {
   const minutes = Math.floor(seconds / 60);
   const remainder = seconds % 60;
   return remainder ? `${minutes}m ${remainder}s` : `${minutes}m`;
+}
+
+function getModuleLabel(moduleId) {
+  const labels = {
+    "megatrends": "Megatrends",
+    "est-prep": "EST Prep",
+    "lifelong-learning": "Lifelong Learning"
+  };
+  return labels[moduleId] || String(moduleId || "Module");
+}
+
+function getEvidenceModuleId(row, payload = null) {
+  return payload?.module_id || row?.module_id || row?.module_slug || "";
+}
+
+function getEvidenceScorePercent(row, payload = null) {
+  const raw = payload?.score_percent ?? row?.auto_score;
+  if (raw === null || raw === undefined || raw === "") return null;
+  const numeric = Number(raw);
+  if (!Number.isFinite(numeric)) return null;
+  return clampPercent(numeric > 0 && numeric <= 1 ? numeric * 100 : numeric);
+}
+
+function getEvidenceStudentName(row) {
+  return row?.students?.display_name || row?.students?.username || "Student";
+}
+
+function extractLongResponseText(text) {
+  const value = String(text || "").trim();
+  const responseMatch = value.match(/(?:^|\n)Response:\s*([\s\S]*)$/i);
+  return (responseMatch ? responseMatch[1] : value).trim();
+}
+
+function getEvidenceResponseText(row, payload = null) {
+  const value = payload?.built_response
+    || payload?.written_response
+    || payload?.response_text
+    || row?.response_text
+    || "";
+  return extractLongResponseText(value);
+}
+
+function getEvidencePromptText(row, payload = null) {
+  return payload?.prompt_text || row?.prompt || "Saved task";
+}
+
+function getEvidenceTaskLabel(row, payload = null) {
+  return payload?.topic_group || payload?.task_name || row?.evidence_type || "Saved task";
+}
+
+function getLastActivityTime(student, progressRows, evidenceRows) {
+  const values = [
+    student?.last_login_at,
+    student?.created_at,
+    ...progressRows.map(row => row.last_played_at || row.updated_at || row.created_at),
+    ...evidenceRows.map(entry => entry.row?.created_at)
+  ].map(parseTime).filter(Boolean);
+  return values.length ? Math.max(...values) : 0;
+}
+
+function formatRelativeAge(timestamp) {
+  if (!timestamp) return "No activity yet";
+  const diff = Date.now() - timestamp;
+  if (diff < 0) return "Just now";
+  const minutes = Math.floor(diff / 60000);
+  if (minutes < 1) return "Just now";
+  if (minutes < 60) return `${minutes}m ago`;
+  const hours = Math.floor(minutes / 60);
+  if (hours < 24) return `${hours}h ago`;
+  const days = Math.floor(hours / 24);
+  return `${days}d ago`;
+}
+
+function getTeacherAnswerBand(score, wordCount) {
+  if (typeof score === "number") {
+    if (score >= 85) return "Strong";
+    if (score >= 60) return "Developing";
+    return "Needs support";
+  }
+  if (wordCount >= 80) return "Ready to review";
+  if (wordCount >= 35) return "Developing";
+  return "Needs expansion";
+}
+
+function buildTeacherFeedbackSuggestion(answer, score, classAverage) {
+  const text = String(answer || "");
+  const lower = text.toLowerCase();
+  const wordCount = text.split(/\s+/).filter(Boolean).length;
+  const notes = [];
+  if (typeof score === "number" && classAverage) {
+    const gap = score - classAverage;
+    notes.push(`${Math.abs(gap)} points ${gap >= 0 ? "above" : "below"} the current class average.`);
+  }
+  if (wordCount < 35) {
+    notes.push("Ask for a fuller explanation with a second sentence that explains why the point matters.");
+  }
+  if (!/(because|therefore|this means|as a result|for example|evidence)/i.test(lower)) {
+    notes.push("Prompt cause-and-effect language or a concrete example so the answer shows reasoning, not just recall.");
+  }
+  if (typeof score === "number" && score < 60) {
+    notes.push("Revisit the command word, the key content point, and the glossary term before they retry.");
+  } else if (typeof score === "number" && score >= 80) {
+    notes.push("Extension: add a second linked reason or a more precise syllabus term.");
+  }
+  return notes.slice(0, 3).join(" ");
 }
 
 function parseStructuredFeedback(row) {
@@ -2415,12 +2584,14 @@ function renderTeacherLiveData(players, skillsData, teacherData = null) {
   const evidenceRows = teacherData?.evidenceRows || [];
   const voteRows = teacherData?.voteRows || [];
   const feedbackRows = teacherData?.feedbackRows || [];
+  const megatrendsProgressRows = moduleProgressRows.filter(row => (row.module_id || row.module_slug) === "megatrends");
   const estProgressRows = moduleProgressRows.filter(row => (row.module_id || row.module_slug) === "est-prep");
+  const lifelongProgressRows = moduleProgressRows.filter(row => (row.module_id || row.module_slug) === "lifelong-learning");
   const estEvidenceRows = evidenceRows.filter(row => (row.module_id || row.module_slug) === "est-prep");
   const parsedEvidenceRows = evidenceRows.map(row => ({
     row,
     payload: parseStructuredEvidence(row)
-  }));
+  })).sort((a, b) => parseTime(b.row?.created_at) - parseTime(a.row?.created_at));
   const skillProgressRows = latestPlayers.map(deriveEmployabilityProgress);
   const classSkillMap = {
     "communication": average(skillProgressRows.map(row => row.communication || 0)),
@@ -2432,16 +2603,26 @@ function renderTeacherLiveData(players, skillsData, teacherData = null) {
   };
   const weakestSkillId = getWeakestSkill(classSkillMap)[0];
   const weakestSkill = skillCategories.find(category => category.id === weakestSkillId);
-  const moduleMasteries = latestPlayers.map(player => average([
+  const getPlayerMastery = player => average([
     Number(player.tech_mastery || 0),
     Number(player.climate_mastery || 0),
     Number(player.demo_mastery || 0),
     Number(player.economic_mastery || 0)
-  ]));
+  ]);
+  const moduleMasteries = students.map(student => {
+    const player = latestPlayers.find(entry => entry.id === student.id);
+    if (player) return getPlayerMastery(player);
+    const studentProgress = moduleProgressRows.filter(row => row.student_id === student.id);
+    return average(studentProgress.map(row => Number(row.mastery_percent || 0)));
+  }).filter(value => value > 0);
   let studentsOnTrack = moduleMasteries.filter(value => value >= 50).length;
   let studentsAtRisk = moduleMasteries.filter(value => value < 35).length;
   const evidenceCount = evidenceRows.length;
-  const classFund = latestPlayers.reduce((sum, player) => sum + Math.floor(Number(player.annual_salary || 0) * 0.1), 0);
+  const evidenceScores = parsedEvidenceRows
+    .map(entry => getEvidenceScorePercent(entry.row, entry.payload))
+    .filter(value => typeof value === "number");
+  const averageEvidenceScore = average(evidenceScores);
+  const classFund = latestPlayers.reduce((sum, player) => sum + Number(player.tax_paid || 0), 0);
   let classMastery = average(moduleMasteries);
   let averageSecurity = average(latestPlayers.map(player => Number(player.job_security || 0)));
   const loggedInStudents = students.filter(student => student.last_login_at).length;
@@ -2453,64 +2634,179 @@ function renderTeacherLiveData(players, skillsData, teacherData = null) {
     classMastery = Math.max(classMastery, 78);
     averageSecurity = Math.max(averageSecurity, 84);
   }
-  const latestEvidence = evidenceRows.slice(0, 4).map(row => ({
-    title: `${row.module_id || row.module_slug || "module"} • ${formatDateTime(row.created_at)}`,
-    detail: `${row.prompt || "Reflection submitted"}${row.response_text ? ` — ${String(row.response_text).slice(0, 120)}${String(row.response_text).length > 120 ? "..." : ""}` : ""}`
-  }));
-  const estResponses = estEvidenceRows.slice(0, 8).map(row => {
-    const payload = parseStructuredEvidence(row);
-    const responseText = payload?.response_text || row.response_text || "";
-    const promptText = payload?.prompt_text || row.prompt || "";
-    const topicLabel = payload?.topic_group || "";
-    const score = typeof payload?.score_percent === "number"
-      ? Math.round(payload.score_percent)
-      : typeof row.auto_score === "number"
-        ? Math.round(row.auto_score)
-        : null;
-
+  const totalTaskSeconds = parsedEvidenceRows.reduce((sum, entry) => sum + Number(entry.payload?.duration_seconds || 0), 0);
+  const timedEvidenceRows = parsedEvidenceRows.filter(entry => Number(entry.payload?.duration_seconds || 0) > 0);
+  const strandTimeMap = timedEvidenceRows.reduce((acc, entry) => {
+    const moduleId = getEvidenceModuleId(entry.row, entry.payload);
+    const label = entry.payload?.topic_group || entry.payload?.task_name || entry.row.evidence_type || "Task";
+    const key = `${moduleId || "module"}::${label}`;
+    if (!acc[key]) {
+      acc[key] = {
+        moduleLabel: getModuleLabel(moduleId),
+        label,
+        seconds: 0,
+        count: 0,
+        scores: [],
+        students: new Set()
+      };
+    }
+    acc[key].seconds += Number(entry.payload.duration_seconds || 0);
+    acc[key].count += 1;
+    acc[key].students.add(entry.row.student_id || getEvidenceStudentName(entry.row));
+    const score = getEvidenceScorePercent(entry.row, entry.payload);
+    if (typeof score === "number") acc[key].scores.push(score);
+    return acc;
+  }, {});
+  const strandTimeRows = Object.values(strandTimeMap)
+    .sort((a, b) => b.seconds - a.seconds)
+    .slice(0, 4)
+    .map(row => ({
+      title: `${row.moduleLabel} • ${row.label}`,
+      detail: `${formatDurationSeconds(row.seconds)} captured • ${row.count} submission${row.count === 1 ? "" : "s"} • ${row.students.size} student${row.students.size === 1 ? "" : "s"}${row.scores.length ? ` • Average score ${average(row.scores)}%` : ""}`
+    }));
+  const recentTaskTimeRows = timedEvidenceRows.slice(0, 6).map(({ row, payload }) => {
+    const moduleLabel = getModuleLabel(getEvidenceModuleId(row, payload));
+    const score = getEvidenceScorePercent(row, payload);
+    const topicLabel = payload.topic_group ? ` • ${payload.topic_group}` : "";
     return {
-      title: `${row.students?.display_name || row.students?.username || "Student"} • ${topicLabel || payload?.task_name || row.evidence_type || "response"} • ${score !== null ? `${score}%` : "Unscored"} • ${formatDateTime(row.created_at)}`,
-      detail: [
-        topicLabel ? `Topic: ${topicLabel}` : "",
-        promptText ? `Prompt: ${promptText}` : "",
-        responseText ? `Response: ${String(responseText).slice(0, 220)}${String(responseText).length > 220 ? "..." : ""}` : "No response text stored yet.",
-        typeof payload?.training_score_percent === "number" ? `Practice Bay: ${Math.round(payload.training_score_percent)}%` : "",
-        payload?.sample_response ? `Sample shown: ${String(payload.sample_response).slice(0, 140)}${String(payload.sample_response).length > 140 ? "..." : ""}` : ""
-      ].filter(Boolean).join(" • ")
+      title: `${getEvidenceStudentName(row)} • ${moduleLabel} • ${payload.task_name || row.evidence_type || "Task"}${topicLabel}`,
+      detail: `${formatDurationSeconds(payload.duration_seconds)}${typeof score === "number" ? ` • ${score}%` : ""}${typeof payload.training_score_percent === "number" ? ` • Practice Bay ${Math.round(payload.training_score_percent)}%` : ""} • ${formatDateTime(row.created_at)}`
     };
   });
-  const taskTimingRows = parsedEvidenceRows
-    .filter(entry => entry.payload?.duration_seconds)
-    .slice(0, 10)
-    .map(({ row, payload }) => {
-      const studentName = row.students?.display_name || row.students?.username || "Student";
-      const moduleLabel = payload.module_id === "est-prep" ? "EST Prep" : payload.module_id === "megatrends" ? "Megatrends" : (payload.module_id || row.module_id || "Module");
-      const score = typeof payload.score_percent === "number" ? ` • ${Math.round(payload.score_percent)}%` : "";
-      const topicLabel = payload.topic_group ? ` • ${payload.topic_group}` : "";
-      return {
-        title: `${studentName} • ${moduleLabel} • ${payload.task_name || row.evidence_type || "Task"}${topicLabel}`,
-        detail: `${formatDurationSeconds(payload.duration_seconds)}${score}${typeof payload.training_score_percent === "number" ? ` • Practice Bay ${Math.round(payload.training_score_percent)}%` : ""} • ${formatDateTime(row.created_at)}${payload.prompt_text ? ` • Prompt: ${String(payload.prompt_text).slice(0, 120)}${String(payload.prompt_text).length > 120 ? "..." : ""}` : ""}`
-      };
+  const taskTimingRows = [
+    ...strandTimeRows,
+    ...recentTaskTimeRows
+  ];
+  const glossaryGapCounts = {};
+  const glossaryRowsByStudent = new Map();
+  parsedEvidenceRows
+    .filter(entry => entry.row.evidence_type === "glossary-check" || entry.payload?.final_round_results || entry.payload?.round_summary)
+    .forEach(entry => {
+      const studentKey = entry.row.student_id || getEvidenceStudentName(entry.row);
+      if (!glossaryRowsByStudent.has(studentKey)) glossaryRowsByStudent.set(studentKey, entry);
     });
-  const rosterActivity = students.slice()
-    .sort((a, b) => parseTime(b.last_login_at || b.created_at) - parseTime(a.last_login_at || a.created_at))
-    .slice(0, 6)
-    .map(student => {
-      const player = latestPlayers.find(entry => entry.id === student.id);
-      return {
-        title: `${student.display_name || student.username} • ${student.last_login_at ? "Logged in" : "Account ready"}`,
-        detail: [
-          `Username: ${student.username}`,
-          student.last_login_at ? `Last login ${formatDateTime(student.last_login_at)}` : `Created ${formatDateTime(student.created_at)}`,
-          player ? `Salary ${formatCurrency(player.annual_salary)} • Mastery ${average([
-            Number(player.tech_mastery || 0),
-            Number(player.climate_mastery || 0),
-            Number(player.demo_mastery || 0),
-            Number(player.economic_mastery || 0)
-          ])}%` : "No gameplay saved yet"
-        ].join(" • ")
-      };
+  const glossaryStudentRows = [...glossaryRowsByStudent.values()].map(entry => {
+    const results = Array.isArray(entry.payload?.final_round_results) ? entry.payload.final_round_results : [];
+    const termTotal = results.length;
+    const termCorrect = results.filter(item => item.termCorrect).length;
+    const keywordCorrect = results.filter(item => item.keywordCorrect).length;
+    const gaps = results
+      .filter(item => !item.termCorrect || !item.keywordCorrect)
+      .map(item => item.term || "Glossary term");
+    gaps.forEach(term => {
+      glossaryGapCounts[term] = (glossaryGapCounts[term] || 0) + 1;
     });
+    const score = getEvidenceScorePercent(entry.row, entry.payload);
+    const summary = entry.payload?.round_summary || {};
+    return {
+      studentName: getEvidenceStudentName(entry.row),
+      score: typeof score === "number" ? score : Number(summary.accuracy_percent || 0),
+      scoreLabel: typeof score === "number" ? `${score}% recall` : `${Number(summary.accuracy_percent || 0)}% accuracy`,
+      termCorrect,
+      keywordCorrect,
+      termTotal,
+      durationLabel: formatDurationSeconds(entry.payload?.duration_seconds),
+      gapText: gaps.length ? `Gaps: ${gaps.slice(0, 4).join(", ")}` : "No final-round term gaps recorded."
+    };
+  }).sort((a, b) => a.score - b.score);
+  const glossaryTotals = glossaryStudentRows.reduce((acc, row) => {
+    acc.totalTermsCorrect += row.termCorrect;
+    acc.totalKeywordCorrect += row.keywordCorrect;
+    acc.totalTermsAttempted += row.termTotal;
+    return acc;
+  }, { totalTermsCorrect: 0, totalKeywordCorrect: 0, totalTermsAttempted: 0 });
+  const glossaryData = {
+    studentRows: glossaryStudentRows,
+    averageScore: average(glossaryStudentRows.map(row => row.score).filter(value => value > 0)),
+    totalTermsCorrect: glossaryTotals.totalTermsCorrect,
+    totalKeywordCorrect: glossaryTotals.totalKeywordCorrect,
+    totalTermsAttempted: glossaryTotals.totalTermsAttempted,
+    gapRows: Object.entries(glossaryGapCounts)
+      .map(([term, misses]) => ({ term, misses }))
+      .sort((a, b) => b.misses - a.misses)
+  };
+  const longAnswerCandidates = parsedEvidenceRows
+    .map(entry => {
+      const response = getEvidenceResponseText(entry.row, entry.payload);
+      const wordCount = response.split(/\s+/).filter(Boolean).length;
+      const score = getEvidenceScorePercent(entry.row, entry.payload);
+      const taskLabel = getEvidenceTaskLabel(entry.row, entry.payload);
+      return {
+        entry,
+        response,
+        wordCount,
+        score,
+        taskLabel
+      };
+    })
+    .filter(item => item.wordCount >= 25 && !String(item.entry.row.evidence_type || "").includes("glossary"));
+  const longAnswerScoreAverage = average(longAnswerCandidates.map(item => item.score).filter(value => typeof value === "number"));
+  const longAnswerRows = longAnswerCandidates.slice(0, 8).map(item => {
+    const scoreGap = typeof item.score === "number" && longAnswerScoreAverage
+      ? item.score - longAnswerScoreAverage
+      : null;
+    return {
+      studentName: getEvidenceStudentName(item.entry.row),
+      meta: `${getModuleLabel(getEvidenceModuleId(item.entry.row, item.entry.payload))} • ${item.taskLabel} • ${formatDateTime(item.entry.row.created_at)}`,
+      band: getTeacherAnswerBand(item.score, item.wordCount),
+      scoreLabel: typeof item.score === "number" ? `${item.score}%` : "Unscored",
+      classCompare: typeof scoreGap === "number" ? `${Math.abs(scoreGap)} points ${scoreGap >= 0 ? "above" : "below"} class average` : "No class score comparison",
+      wordCount: item.wordCount,
+      prompt: getEvidencePromptText(item.entry.row, item.entry.payload),
+      response: item.response,
+      feedback: buildTeacherFeedbackSuggestion(item.response, item.score, longAnswerScoreAverage)
+    };
+  });
+  const engagementRows = students.map(student => {
+    const player = latestPlayers.find(entry => entry.id === student.id) || null;
+    const studentProgress = moduleProgressRows.filter(row => row.student_id === student.id);
+    const studentEvidence = parsedEvidenceRows.filter(entry => entry.row.student_id === student.id);
+    const mastery = player
+      ? getPlayerMastery(player)
+      : average(studentProgress.map(row => Number(row.mastery_percent || 0)));
+    const completion = average(studentProgress.map(row => Number(row.completion_percent || 0)));
+    const capturedSeconds = studentEvidence.reduce((sum, entry) => sum + Number(entry.payload?.duration_seconds || 0), 0);
+    const lastActivity = getLastActivityTime(student, studentProgress, studentEvidence);
+    const latestScore = studentEvidence
+      .map(entry => getEvidenceScorePercent(entry.row, entry.payload))
+      .find(value => typeof value === "number");
+    let status = "Active";
+    let nextStep = "Continue current pathway and add extension evidence.";
+    let sortWeight = 3;
+    if (!student.last_login_at && !studentProgress.length && !studentEvidence.length) {
+      status = "No interaction";
+      nextStep = "Check login details, then start Megatrends or EST Prep in class.";
+      sortWeight = 0;
+    } else if (mastery && mastery < 40) {
+      status = "Needs support";
+      nextStep = "Use scaffolded replay on the weakest module before new content.";
+      sortWeight = 1;
+    } else if (studentProgress.length && completion < 25) {
+      status = "Just started";
+      nextStep = "Nudge them to finish the first full module stage.";
+      sortWeight = 2;
+    } else if (typeof latestScore === "number" && latestScore < 60) {
+      status = "Review evidence";
+      nextStep = "Review latest written evidence and give targeted feedback.";
+      sortWeight = 1;
+    }
+    return {
+      title: `${student.display_name || student.username} • ${status}`,
+      detail: [
+        `Last activity ${formatRelativeAge(lastActivity)}`,
+        student.last_login_at ? `Last login ${formatDateTime(student.last_login_at)}` : "No login recorded",
+        `Captured task time ${formatDurationSeconds(capturedSeconds)}`,
+        `Progress ${completion || 0}%`,
+        `Mastery ${mastery || 0}%`,
+        `Next: ${nextStep}`
+      ].join(" • "),
+      sortWeight,
+      lastActivity,
+      status
+    };
+  }).sort((a, b) => a.sortWeight - b.sortWeight || b.lastActivity - a.lastActivity);
+  studentsOnTrack = engagementRows.filter(row => ["Active", "Just started"].includes(row.status) && !row.detail.includes("Mastery 0%")).length;
+  studentsAtRisk = engagementRows.filter(row => ["No interaction", "Needs support", "Review evidence"].includes(row.status)).length;
   const voteCount = voteRows.length;
   const voteLeader = (() => {
     const counts = voteRows.reduce((acc, row) => {
@@ -2534,12 +2830,16 @@ function renderTeacherLiveData(players, skillsData, teacherData = null) {
     const player = latestPlayers.find(entry => entry.id === student.id) || null;
     const studentProgress = moduleProgressRows.filter(row => row.student_id === student.id);
     const megatrendsProgress = studentProgress.find(row => (row.module_id || row.module_slug) === "megatrends") || null;
+    const lifelongProgress = studentProgress.find(row => (row.module_id || row.module_slug) === "lifelong-learning") || null;
     const estProgress = studentProgress.find(row => (row.module_id || row.module_slug) === "est-prep") || null;
     const studentEvidence = parsedEvidenceRows.filter(entry => entry.row.student_id === student.id);
     const estEvidence = studentEvidence.filter(entry => (entry.row.module_id || entry.row.module_slug || entry.payload?.module_id) === "est-prep");
     const megatrendsEvidence = studentEvidence.filter(entry => (entry.row.module_id || entry.row.module_slug || entry.payload?.module_id) === "megatrends");
+    const lifelongEvidence = studentEvidence.filter(entry => (entry.row.module_id || entry.row.module_slug || entry.payload?.module_id) === "lifelong-learning");
     const latestEST = estEvidence[0]?.payload || null;
     const latestMegatrends = megatrendsEvidence[0]?.payload || null;
+    const latestLifelong = lifelongEvidence[0] || null;
+    const latestAnyEvidence = studentEvidence[0] || null;
     const latestESTTopicRows = estEvidence
       .filter(entry => entry.payload?.topic_group)
       .slice(0, 3)
@@ -2563,9 +2863,11 @@ function renderTeacherLiveData(players, skillsData, teacherData = null) {
       "problem-solving": 0
     })[0];
     const strongestSkill = skillCategories.find(category => category.id === strongestSkillId);
-    const recentResponseText = latestEST?.response_text || latestMegatrends?.response_text || "";
-    const recentPrompt = latestEST?.prompt_text || latestMegatrends?.prompt_text || "";
-    const recentModule = latestEST ? "EST Prep" : latestMegatrends ? "Megatrends" : "No written evidence yet";
+    const recentResponseText = latestAnyEvidence ? getEvidenceResponseText(latestAnyEvidence.row, latestAnyEvidence.payload) : "";
+    const recentPrompt = latestAnyEvidence ? getEvidencePromptText(latestAnyEvidence.row, latestAnyEvidence.payload) : "";
+    const recentModule = latestAnyEvidence
+      ? getModuleLabel(getEvidenceModuleId(latestAnyEvidence.row, latestAnyEvidence.payload))
+      : "No written evidence yet";
 
     return {
       name: student.display_name || student.username || "Student",
@@ -2573,25 +2875,33 @@ function renderTeacherLiveData(players, skillsData, teacherData = null) {
         student.username || "No username",
         student.last_login_at ? `Last login ${formatDateTime(student.last_login_at)}` : "Not logged in yet"
       ].join(" • "),
-      status: overallMastery >= 60 ? "On track" : estProgress || megatrendsProgress ? "Building" : "Not started",
+      status: overallMastery >= 60 ? "On track" : estProgress || megatrendsProgress || lifelongProgress ? "Building" : "Not started",
       summary: player
         ? `${player.career_title || "Career Builder"} with ${overallMastery}% overall megatrend mastery, ${formatCurrency(player.annual_salary || 0)} salary, and ${formatCurrency(player.cumulative_net_worth || 0)} net worth.`
         : "No live profile yet. This student needs first-play data to unlock deeper comparison.",
       pills: [
         `Megatrends mastery: ${Number(megatrendsProgress?.mastery_percent || overallMastery)}%`,
+        `Lifelong mastery: ${Number(lifelongProgress?.mastery_percent || 0)}%`,
         `EST mastery: ${Number(estProgress?.mastery_percent || 0)}%`,
         `Avg task time: ${averageTaskTime ? formatDurationSeconds(averageTaskTime) : "No timings yet"}`,
         `Strongest skill: ${strongestSkill?.title || "Not clear yet"}`
       ],
       megatrendsCompletion: Number(megatrendsProgress?.completion_percent || Math.min(100, Number(player?.years_played || 0) * 18 || 0)),
+      lifelongCompletion: Number(lifelongProgress?.completion_percent || 0),
       estCompletion: Number(estProgress?.completion_percent || 0),
-      spotlight: Boolean(estProgress && megatrendsProgress),
+      spotlight: Boolean((estProgress || lifelongProgress) && megatrendsProgress),
       details: [
         {
           title: "Megatrends snapshot",
           detail: player
             ? `Years played ${Number(player.years_played || 0)} • Job security ${Number(player.job_security || 0)}% • Work-life balance ${Number(player.work_life_balance || 0)}%`
             : "No Megatrends profile saved yet."
+        },
+        {
+          title: "Lifelong Learning snapshot",
+          detail: lifelongProgress
+            ? `Completion ${Number(lifelongProgress.completion_percent || 0)}% • Mastery ${Number(lifelongProgress.mastery_percent || 0)}% • Attempts ${Number(lifelongProgress.attempts || 0)}${latestLifelong ? ` • Latest reflection ${formatDateTime(latestLifelong.row.created_at)}` : ""}`
+            : "No Lifelong Learning progress saved yet."
         },
         {
           title: "EST snapshot",
@@ -2602,14 +2912,14 @@ function renderTeacherLiveData(players, skillsData, teacherData = null) {
         {
           title: `Latest response • ${recentModule}`,
           detail: recentResponseText
-            ? `${latestEST?.topic_group ? `${latestEST.topic_group} • ` : ""}${recentPrompt ? `${String(recentPrompt).slice(0, 70)}${String(recentPrompt).length > 70 ? "..." : ""} • ` : ""}${String(recentResponseText).slice(0, 120)}${String(recentResponseText).length > 120 ? "..." : ""}`
+            ? `${latestAnyEvidence?.payload?.topic_group ? `${latestAnyEvidence.payload.topic_group} • ` : ""}${recentPrompt ? `${String(recentPrompt).slice(0, 70)}${String(recentPrompt).length > 70 ? "..." : ""} • ` : ""}${String(recentResponseText).slice(0, 120)}${String(recentResponseText).length > 120 ? "..." : ""}`
             : "No written response stored yet."
         }
       ]
     };
   }).sort((a, b) => {
-    const aScore = Number(a.megatrendsCompletion || 0) + Number(a.estCompletion || 0);
-    const bScore = Number(b.megatrendsCompletion || 0) + Number(b.estCompletion || 0);
+    const aScore = Number(a.megatrendsCompletion || 0) + Number(a.lifelongCompletion || 0) + Number(a.estCompletion || 0);
+    const bScore = Number(b.megatrendsCompletion || 0) + Number(b.lifelongCompletion || 0) + Number(b.estCompletion || 0);
     return bScore - aScore;
   });
 
@@ -2635,22 +2945,38 @@ function renderTeacherLiveData(players, skillsData, teacherData = null) {
     ].join("") : '<span class="badge">No class data yet</span>';
   }
 
-  setText("teacher-priority-text", weakestSkill ? `${weakestSkill.title} is currently the weakest class-wide employability area. This is the best place to target the next intervention.` : "No class skill data is available yet.");
+  const topInactive = engagementRows.find(row => row.status === "No interaction");
+  const topGlossaryGap = glossaryData.gapRows[0];
+  setText(
+    "teacher-priority-text",
+    topInactive
+      ? `${topInactive.title.split(" • ")[0]} has no recorded interaction yet. Start with login support or a guided first module launch.`
+      : topGlossaryGap
+        ? `${topGlossaryGap.term} is the biggest glossary gap across recent recall runs. Reteach this before the next EST response task.`
+        : weakestSkill
+          ? `${weakestSkill.title} is currently the weakest employability area. Use the next intervention to target that skill.`
+          : "No class skill data is available yet."
+  );
   setText("teacher-students-on-track", String(studentsOnTrack));
   setText("teacher-students-at-risk", String(studentsAtRisk));
+  setText("teacher-captured-time", formatDurationSeconds(totalTaskSeconds));
+  setText("teacher-average-completion", `${moduleCompletion}%`);
+  setText("teacher-average-score", evidenceScores.length ? `${averageEvidenceScore}%` : "N/A");
   setText("teacher-evidence-count", String(evidenceCount));
-  setText("teacher-class-fund", formatCurrency(classFund));
 
   renderSkills({ categories: skillCategories }, "teacher-skill-grid", classSkillMap);
   renderTeacherModuleHealth([
     {
       title: "Megatrends",
-      status: moduleProgressRows.length ? "Live module" : "Awaiting class data",
-      summary: moduleProgressRows.length ? `Built from ${moduleProgressRows.length} saved module progress row(s), ${evidenceCount} evidence item(s), and ${voteCount} community vote(s).` : "Once students play, this module health card will populate automatically.",
-      completion: moduleCompletion || average(latestPlayers.map(player => Math.min(100, Number(player.years_played || 0) * 18))),
-      mastery: moduleMastery || classMastery,
+      status: megatrendsProgressRows.length || latestPlayers.length ? "Live module" : "Awaiting class data",
+      summary: megatrendsProgressRows.length || latestPlayers.length ? `Tracking ${megatrendsProgressRows.length || latestPlayers.length} Megatrends progress signal(s), ${voteCount} community vote(s), and ${formatCurrency(classFund)} in saved community tax contributions.` : "Once students play, this module health card will populate automatically.",
+      completion: average(megatrendsProgressRows.map(row => Number(row.completion_percent || 0))) || average(latestPlayers.map(player => Math.min(100, Number(player.years_played || 0) * 18))),
+      mastery: average(megatrendsProgressRows.map(row => Number(row.mastery_percent || 0))) || classMastery,
       variant: "",
-      spotlight: true
+      spotlight: true,
+      imagePath: "../Assets/Images and Animations/Student Hub/module-megatrends-thumb.png",
+      logoPath: getSkillCategoryById(skillsData, "digital-literacy")?.logoPath,
+      logoLabel: "Digital Literacy"
     },
     {
       title: "EST Prep",
@@ -2661,19 +2987,39 @@ function renderTeacherLiveData(players, skillsData, teacherData = null) {
       completion: average(estProgressRows.map(row => Number(row.completion_percent || 0))),
       mastery: average(estProgressRows.map(row => Number(row.mastery_percent || 0))),
       variant: "green",
-      spotlight: false
+      spotlight: false,
+      imagePath: "../Assets/Images and Animations/Student Hub/module-est-prep-thumb.png",
+      logoPath: getSkillCategoryById(skillsData, "critical-thinking")?.logoPath,
+      logoLabel: "Critical Thinking"
     },
     {
       title: "Lifelong Learning",
-      status: "Next build target",
-      summary: "This module should be used to lift planning, reflection, and self-management once it is live.",
-      completion: 0,
-      mastery: 0,
-      variant: "green",
-      spotlight: false
+      status: lifelongProgressRows.length ? "Live module" : "Awaiting reflections",
+      summary: lifelongProgressRows.length
+        ? `Tracking ${lifelongProgressRows.length} Lifelong Learning progress row(s) and ${parsedEvidenceRows.filter(entry => getEvidenceModuleId(entry.row, entry.payload) === "lifelong-learning").length} reflection artifact(s).`
+        : "Once students complete Lifelong Learning rounds, planning, reflection, and self-management evidence will appear here.",
+      completion: average(lifelongProgressRows.map(row => Number(row.completion_percent || 0))),
+      mastery: average(lifelongProgressRows.map(row => Number(row.mastery_percent || 0))),
+      variant: "gold",
+      spotlight: false,
+      imagePath: "../Assets/Images and Animations/Student Hub/module-lifelong-learning-thumb.png",
+      logoPath: getSkillCategoryById(skillsData, "time-management")?.logoPath,
+      logoLabel: "Time Management"
     }
   ]);
   renderTeacherInterventions([
+    ...(topInactive ? [{
+      title: `Re-engage ${topInactive.title.split(" • ")[0]}`,
+      detail: "This student has no recorded interaction. Check login access, then sit them beside a guided first module task.",
+      logoPath: getSkillCategoryById(skillsData, "communication")?.logoPath,
+      logoLabel: "Communication"
+    }] : []),
+    ...(topGlossaryGap ? [{
+      title: `Reteach glossary term: ${topGlossaryGap.term}`,
+      detail: `${topGlossaryGap.misses} student gap${topGlossaryGap.misses === 1 ? "" : "s"} appeared for this term in final recall. Use a two-minute retrieval check before long-answer writing.`,
+      logoPath: getSkillCategoryById(skillsData, "critical-thinking")?.logoPath,
+      logoLabel: "Critical Thinking"
+    }] : []),
     {
       title: weakestSkill ? `Target ${weakestSkill.title} next` : "Activate first class module",
       detail: weakestSkill ? `The class average for ${weakestSkill.title} is the lowest, so this is the best immediate teaching focus.` : "Students need live gameplay records before diagnostics can run.",
@@ -2692,10 +3038,10 @@ function renderTeacherLiveData(players, skillsData, teacherData = null) {
       logoPath: getSkillCategoryById(skillsData, "critical-thinking")?.logoPath,
       logoLabel: "Critical Thinking"
     }
-  ]);
-  renderTeacherRosterActivity(rosterActivity);
-  renderTeacherEvidenceList(latestEvidence);
-  renderTeacherESTResponseList(estResponses);
+  ].slice(0, 5));
+  renderTeacherRosterActivity(engagementRows.slice(0, 8));
+  renderTeacherGlossaryGapList(glossaryData);
+  renderTeacherLongAnswerComparison(longAnswerRows);
   renderTeacherTaskTimeList(taskTimingRows);
   renderTeacherStudentCompareList(studentCompareRows);
   renderTeacherStoreRequestList(storeRequests);
