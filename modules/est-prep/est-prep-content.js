@@ -215,7 +215,7 @@ function getTopicClassName(groupId) {
 function getContentTopicSceneLabel(groupId, scene) {
   const labels = {
     initiative: {
-      neutral: "Workplace scanner",
+      neutral: "",
       challenge: "Opportunity spotted",
       success: "Initiative locked"
     },
@@ -409,6 +409,7 @@ function renderArcGuideAside({ config, groupId, scene, flow, currentStep, curren
     : currentItem
       ? `Flash card ${questionNumber} of ${questionCount}. ${stepProgress.correct}/${stepProgress.total} restored in this step.`
       : `${completedSteps}/${totalStepCount} steps complete.`;
+  const sceneLabel = getContentTopicSceneLabel(groupId, scene);
   return `
     <aside class="training-focus-aside training-focus-aside--arc" aria-label="Reactor guide">
       <div class="training-guide-mini training-guide-mini--arc est-guide-${escapeHtml(guideContext)}">
@@ -426,7 +427,7 @@ function renderArcGuideAside({ config, groupId, scene, flow, currentStep, curren
       <div class="training-scene-preview training-scene-preview--arc training-scene-preview--${escapeHtml(topicClass)} training-scene-preview--${escapeHtml(scene)}">
         <img src="${escapeHtml(sceneImage)}" alt="${escapeHtml(config.title)} scene">
         <span class="training-scene-scan" aria-hidden="true"></span>
-        <span class="training-scene-badge">${escapeHtml(getContentTopicSceneLabel(groupId, scene))}</span>
+        ${sceneLabel ? `<span class="training-scene-badge">${escapeHtml(sceneLabel)}</span>` : ""}
       </div>
       ${config.memoryHook ? `
         <details class="training-memory-hook" open>
@@ -1292,7 +1293,7 @@ function renderContentTopicIntro(group) {
         <img class="topic-media topic-media-image" src="${escapeHtml(introImage)}" alt="${escapeHtml(group.title)}">
       `}
       <span class="topic-media-scan" aria-hidden="true"></span>
-      <span class="topic-media-status">${escapeHtml(sceneLabel)}</span>
+      ${sceneLabel ? `<span class="topic-media-status">${escapeHtml(sceneLabel)}</span>` : ""}
       <span class="topic-media-progress" aria-hidden="true"><span></span></span>
     </div>
   `;
