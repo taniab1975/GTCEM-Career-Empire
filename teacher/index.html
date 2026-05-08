@@ -11,17 +11,13 @@
   <style>
     :root {
       --bg: #06101f;
-      --panel: rgba(6, 16, 31, 0.82);
-      --panel-strong: rgba(4, 12, 25, 0.94);
       --line: rgba(125, 211, 252, 0.28);
-      --line-soft: rgba(226, 232, 240, 0.16);
+      --line-soft: rgba(255, 255, 255, 0.12);
       --text: #f8fbff;
       --muted: #dbeafe;
-      --accent: #68d2ff;
-      --gold: #f7d879;
-      --green: #80ed99;
-      --button: #3b82f6;
-      --shadow: 0 28px 80px rgba(0, 0, 0, 0.42);
+      --accent: #7dd3fc;
+      --gold: #fde68a;
+      --shadow: 0 30px 80px rgba(2, 8, 23, 0.48);
     }
 
     * {
@@ -39,8 +35,8 @@
       color: var(--text);
       font-family: "Outfit", "Avenir Next", "Segoe UI", sans-serif;
       background:
-        linear-gradient(90deg, rgba(2, 7, 17, 0.97), rgba(5, 15, 30, 0.82) 50%, rgba(2, 7, 17, 0.94)),
-        linear-gradient(180deg, rgba(2, 7, 17, 0.12), rgba(2, 7, 17, 0.96) 72%),
+        radial-gradient(circle at 16% 0%, rgba(59, 130, 246, 0.16), transparent 28%),
+        linear-gradient(90deg, rgba(2, 8, 23, 0.95), rgba(2, 8, 23, 0.76) 52%, rgba(2, 8, 23, 0.92)),
         url("../Assets/landing-screenshots/ecc-future-campus-hero.png") center top / cover fixed no-repeat,
         var(--bg);
     }
@@ -50,10 +46,10 @@
       position: fixed;
       inset: 0;
       background:
-        linear-gradient(90deg, rgba(104, 210, 255, 0.11) 1px, transparent 1px),
-        linear-gradient(180deg, rgba(104, 210, 255, 0.08) 1px, transparent 1px);
-      background-size: 72px 72px;
-      opacity: 0.18;
+        linear-gradient(90deg, rgba(125, 211, 252, 0.08) 1px, transparent 1px),
+        linear-gradient(180deg, rgba(253, 230, 138, 0.05) 1px, transparent 1px);
+      background-size: 64px 64px;
+      opacity: 0.14;
       pointer-events: none;
     }
 
@@ -66,32 +62,73 @@
       color: inherit;
     }
 
-    .teacher-landing-shell {
+    .teacher-shell {
       position: relative;
-      width: min(1120px, calc(100% - 48px));
+      width: min(1080px, calc(100% - 48px));
       margin: 0 auto;
-      padding: 18px 0 64px;
+      padding: 24px 0 64px;
     }
 
-    .teacher-topbar,
-    .hero-actions,
+    .teacher-landing {
+      position: relative;
+      overflow: hidden;
+      display: grid;
+      gap: clamp(18px, 3vw, 28px);
+      padding: clamp(18px, 3.6vw, 42px);
+      border: 1px solid rgba(125, 211, 252, 0.24);
+      border-radius: 28px;
+      background:
+        radial-gradient(circle at 68% 24%, rgba(14, 165, 233, 0.22), transparent 30%),
+        radial-gradient(circle at 50% 64%, rgba(16, 185, 129, 0.14), transparent 24%),
+        linear-gradient(110deg, rgba(2, 8, 23, 0.98), rgba(4, 16, 30, 0.88) 56%, rgba(2, 8, 23, 0.72)),
+        url("../Assets/landing-screenshots/ecc-future-campus-hero.png") center center / cover no-repeat;
+      box-shadow: var(--shadow);
+    }
+
+    .teacher-landing::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background:
+        linear-gradient(90deg, rgba(2, 8, 23, 0.82), rgba(2, 8, 23, 0.32) 48%, rgba(2, 8, 23, 0.82)),
+        linear-gradient(180deg, rgba(2, 8, 23, 0.24), rgba(2, 8, 23, 0.92));
+      pointer-events: none;
+    }
+
+    .teacher-landing::after {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background:
+        linear-gradient(90deg, rgba(125, 211, 252, 0.08) 1px, transparent 1px),
+        linear-gradient(180deg, rgba(253, 230, 138, 0.05) 1px, transparent 1px);
+      background-size: 64px 64px;
+      mask-image: linear-gradient(90deg, transparent, #000 28%, #000 76%, transparent);
+      opacity: 0.16;
+      pointer-events: none;
+    }
+
+    .teacher-landing > * {
+      position: relative;
+      z-index: 1;
+    }
+
+    .teacher-topline,
+    .teacher-actions,
     .button,
     .back-link,
-    .badge,
-    .screen-label,
-    .video-meta {
+    .kicker {
       display: flex;
       align-items: center;
     }
 
-    .teacher-topbar {
-      gap: 10px;
-      margin-bottom: 16px;
+    .teacher-topline {
       flex-wrap: wrap;
+      gap: 10px;
     }
 
     .back-link,
-    .badge,
+    .kicker,
     .button {
       justify-content: center;
       text-decoration: none;
@@ -100,285 +137,221 @@
     .back-link {
       min-height: 42px;
       gap: 8px;
-      padding: 10px 16px;
-      border: 1px solid rgba(226, 232, 240, 0.2);
-      border-radius: 10px;
-      background: rgba(15, 23, 42, 0.58);
+      padding: 10px 14px;
+      border: 1px solid rgba(255, 255, 255, 0.14);
+      border-radius: 12px;
+      background: rgba(255, 255, 255, 0.055);
       color: #ffffff;
-      font-size: 0.9rem;
+      font-size: 0.82rem;
       font-weight: 800;
-      box-shadow: 0 14px 32px rgba(0, 0, 0, 0.18);
+      line-height: 1.1;
     }
 
-    .badge {
+    .kicker {
+      width: fit-content;
       min-height: 30px;
       padding: 7px 12px;
-      border: 1px solid rgba(104, 210, 255, 0.36);
+      border: 1px solid rgba(125, 211, 252, 0.28);
       border-radius: 999px;
-      background: rgba(8, 47, 73, 0.52);
+      background: rgba(14, 165, 233, 0.08);
       color: #b9ecff;
       font-size: 0.72rem;
-      font-weight: 800;
-      letter-spacing: 0.04em;
-      text-transform: uppercase;
-    }
-
-    .teacher-stage {
-      overflow: hidden;
-      padding: clamp(20px, 3vw, 34px);
-      border: 1px solid var(--line);
-      border-radius: 18px;
-      background:
-        linear-gradient(145deg, rgba(4, 12, 25, 0.94), rgba(8, 23, 43, 0.82)),
-        rgba(4, 12, 25, 0.86);
-      box-shadow: var(--shadow);
-      backdrop-filter: blur(18px);
-    }
-
-    .teacher-hero {
-      display: grid;
-      grid-template-columns: minmax(0, 0.85fr) minmax(0, 1.15fr);
-      gap: clamp(20px, 4vw, 38px);
-      align-items: center;
-    }
-
-    .teacher-copy {
-      display: grid;
-      gap: 18px;
-    }
-
-    .teacher-kicker {
-      width: max-content;
-      max-width: 100%;
-      padding: 7px 12px;
-      border: 1px solid rgba(247, 216, 121, 0.34);
-      border-radius: 999px;
-      background: rgba(247, 216, 121, 0.08);
-      color: #ffe7a0;
-      font-size: 0.74rem;
       font-weight: 800;
       letter-spacing: 0.05em;
       text-transform: uppercase;
     }
 
+    .teacher-stage {
+      display: grid;
+      grid-template-columns: minmax(230px, 0.54fr) minmax(0, 1.46fr);
+      gap: clamp(18px, 4vw, 54px);
+      align-items: center;
+    }
+
+    .teacher-hero {
+      display: grid;
+      gap: 18px;
+      align-content: center;
+    }
+
     h1,
     h2,
+    h3,
     p {
       margin: 0;
     }
 
-    .teacher-copy h1 {
+    .teacher-hero h1 {
+      max-width: 560px;
       color: #ffffff;
-      font-size: clamp(3rem, 7vw, 6.6rem);
-      line-height: 0.96;
+      font-size: clamp(3.1rem, 6vw, 6.15rem);
       font-weight: 800;
+      line-height: 0.9;
       letter-spacing: 0;
     }
 
-    .teacher-copy p {
-      max-width: 520px;
-      color: var(--muted);
-      font-size: 1rem;
-      font-weight: 700;
-      line-height: 1.55;
+    .teacher-hero p {
+      width: fit-content;
+      max-width: 360px;
+      padding: 10px 13px;
+      border: 1px solid rgba(253, 230, 138, 0.22);
+      border-radius: 999px;
+      background: rgba(2, 8, 23, 0.54);
+      color: var(--gold);
+      font-size: 0.95rem;
+      font-weight: 800;
+      line-height: 1.2;
     }
 
-    .hero-actions {
-      gap: 12px;
+    .teacher-overview {
+      display: grid;
+      gap: 14px;
+      padding: clamp(14px, 2vw, 22px);
+      border: 1px solid rgba(125, 211, 252, 0.28);
+      border-radius: 24px;
+      background: rgba(2, 8, 23, 0.68);
+      box-shadow:
+        0 0 70px rgba(14, 165, 233, 0.18),
+        0 28px 70px rgba(2, 8, 23, 0.5);
+    }
+
+    .teacher-overview h2 {
+      color: #ffffff;
+      font-size: clamp(1.7rem, 3vw, 3.1rem);
+      font-weight: 800;
+      line-height: 1;
+      letter-spacing: 0;
+    }
+
+    .teacher-overview p {
+      color: var(--muted);
+      font-size: 0.95rem;
+      font-weight: 700;
+      line-height: 1.35;
+    }
+
+    .embed-frame {
+      aspect-ratio: 16 / 9;
+      min-height: 0;
+      padding: 8px;
+      border: 1px solid rgba(253, 230, 138, 0.18);
+      border-radius: 20px;
+      background: rgba(2, 6, 23, 0.84);
+    }
+
+    .embed-frame video {
+      width: 100%;
+      height: 100%;
+      min-height: 0;
+      display: block;
+      border-radius: 14px;
+      background: #020817;
+      object-fit: cover;
+    }
+
+    .action-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 18px;
+    }
+
+    .action-card {
+      display: flex;
+      flex-direction: column;
+      min-height: 172px;
+      padding: clamp(18px, 2vw, 24px);
+      border: 1px solid var(--line-soft);
+      border-radius: 18px;
+      background: rgba(2, 8, 23, 0.58);
+      box-shadow: 0 20px 46px rgba(2, 8, 23, 0.26);
+    }
+
+    .action-card h3 {
+      margin-bottom: 10px;
+      color: #ffffff;
+      font-size: 1.45rem;
+      font-weight: 800;
+      line-height: 1.1;
+    }
+
+    .action-card p {
+      color: var(--muted);
+      font-weight: 700;
+      line-height: 1.42;
+    }
+
+    .teacher-actions {
       flex-wrap: wrap;
-      margin-top: 6px;
+      gap: 12px;
+      margin-top: auto;
+      padding-top: 22px;
     }
 
     .button {
       min-height: 46px;
       gap: 9px;
       padding: 12px 18px;
-      border: 1px solid rgba(226, 232, 240, 0.22);
+      border: 1px solid rgba(255, 255, 255, 0.14);
       border-radius: 8px;
-      color: #ffffff;
-      background: rgba(15, 23, 42, 0.62);
+      background: rgba(255, 255, 255, 0.055);
+      color: #e2e8f0;
       cursor: pointer;
-      font-size: 0.92rem;
+      font-size: 0.9rem;
       font-weight: 800;
-      box-shadow: 0 16px 34px rgba(0, 0, 0, 0.2);
+      line-height: 1.15;
     }
 
     .button-primary {
       border-color: rgba(147, 197, 253, 0.42);
       background: linear-gradient(135deg, #3b82f6, #2563eb);
-      box-shadow: 0 18px 38px rgba(37, 99, 235, 0.36);
+      color: #ffffff;
+      box-shadow: 0 18px 38px rgba(37, 99, 235, 0.3);
     }
 
-    .button-gold {
-      border-color: rgba(247, 216, 121, 0.42);
-      background: linear-gradient(135deg, #d99c2b, #a96a12);
-      box-shadow: 0 18px 38px rgba(217, 156, 43, 0.28);
+    .button-safety {
+      border-color: rgba(253, 230, 138, 0.34);
+      color: var(--gold);
     }
 
     .button:hover,
     .back-link:hover {
-      border-color: rgba(125, 211, 252, 0.5);
-      transform: translateY(-1px);
+      border-color: rgba(125, 211, 252, 0.48);
+      background: rgba(255, 255, 255, 0.08);
     }
 
     .button svg,
-    .back-link svg,
-    .screen-label svg,
-    .video-meta svg {
+    .back-link svg {
       width: 18px;
       height: 18px;
       flex-shrink: 0;
     }
 
-    .teacher-media {
-      display: grid;
-      gap: 14px;
-    }
-
-    .video-card {
-      overflow: hidden;
-      padding: 12px;
-      border: 1px solid rgba(104, 210, 255, 0.28);
-      border-radius: 16px;
-      background: rgba(3, 10, 21, 0.88);
-      box-shadow: 0 24px 60px rgba(0, 0, 0, 0.32);
-    }
-
-    .video-card video {
-      width: 100%;
-      aspect-ratio: 16 / 9;
-      display: block;
-      border: 1px solid rgba(226, 232, 240, 0.16);
-      border-radius: 12px;
-      background: #020817;
-      object-fit: cover;
-    }
-
-    .video-meta {
-      justify-content: space-between;
-      gap: 14px;
-      padding: 2px 2px 12px;
-      color: #b9ecff;
-      font-size: 0.75rem;
-      font-weight: 800;
-      text-transform: uppercase;
-    }
-
-    .screen-grid {
-      display: grid;
-      grid-template-columns: repeat(3, minmax(0, 1fr));
-      gap: 12px;
-      margin-top: 22px;
-    }
-
-    .screen-card {
-      position: relative;
-      overflow: hidden;
-      min-height: 190px;
-      margin: 0;
-      border: 1px solid rgba(104, 210, 255, 0.24);
-      border-radius: 12px;
-      background: rgba(4, 12, 25, 0.86);
-      box-shadow: 0 18px 42px rgba(0, 0, 0, 0.24);
-    }
-
-    .screen-card img {
-      width: 100%;
-      height: 100%;
-      min-height: 190px;
-      display: block;
-      object-fit: cover;
-      filter: saturate(1.04) contrast(1.02);
-    }
-
-    .screen-card::after {
-      content: "";
-      position: absolute;
-      inset: 0;
-      background: linear-gradient(180deg, rgba(2, 7, 17, 0.04), rgba(2, 7, 17, 0.74));
-      pointer-events: none;
-    }
-
-    .screen-label {
-      position: absolute;
-      left: 12px;
-      bottom: 12px;
-      z-index: 1;
-      gap: 8px;
-      padding: 8px 10px;
-      border: 1px solid rgba(226, 232, 240, 0.18);
-      border-radius: 8px;
-      background: rgba(2, 7, 17, 0.74);
-      color: #ffffff;
-      font-size: 0.76rem;
-      font-weight: 800;
-    }
-
-    .quick-panel {
-      display: grid;
-      grid-template-columns: repeat(3, minmax(0, 1fr));
-      gap: 12px;
-      margin-top: 14px;
-    }
-
-    .quick-card {
-      display: grid;
-      gap: 8px;
-      padding: 16px;
-      border: 1px solid var(--line-soft);
-      border-radius: 12px;
-      background: rgba(7, 17, 31, 0.72);
-      color: inherit;
-      text-decoration: none;
-    }
-
-    .quick-card strong {
-      color: #ffffff;
-      font-size: 0.94rem;
-      font-weight: 800;
-    }
-
-    .quick-card span {
-      color: #d6e5fb;
-      font-size: 0.82rem;
-      font-weight: 700;
-      line-height: 1.45;
-    }
-
-    @media (max-width: 920px) {
+    @media (max-width: 900px) {
       body {
         background-attachment: scroll;
       }
 
-      .teacher-landing-shell {
+      .teacher-shell {
         width: min(100% - 24px, 1120px);
+        padding-bottom: 40px;
       }
 
-      .teacher-hero,
-      .screen-grid,
-      .quick-panel {
+      .teacher-stage,
+      .action-grid {
         grid-template-columns: 1fr;
       }
 
-      .screen-card {
-        min-height: 220px;
-      }
-
-      .screen-card img {
-        min-height: 220px;
+      .teacher-hero h1 {
+        font-size: clamp(3.2rem, 14vw, 5rem);
       }
     }
 
     @media (max-width: 520px) {
-      .teacher-stage {
+      .teacher-landing {
         padding: 16px;
       }
 
-      .teacher-copy h1 {
-        font-size: 3rem;
-      }
-
-      .hero-actions {
+      .teacher-actions {
         display: grid;
         grid-template-columns: 1fr;
       }
@@ -391,81 +364,77 @@
   </style>
 </head>
 <body>
-  <main class="teacher-landing-shell">
-    <div class="teacher-topbar">
-      <a class="back-link" href="../index.html" aria-label="Back to welcome page">
-        <i data-lucide="arrow-left"></i>
-        Back to welcome
-      </a>
-      <span class="badge">Teacher pathway</span>
-    </div>
+  <main class="teacher-shell">
+    <article class="teacher-landing" aria-labelledby="teacher-title">
+      <div class="teacher-topline">
+        <a class="back-link" href="../index.html" aria-label="Back to welcome page">
+          <i data-lucide="arrow-left"></i>
+          Back
+        </a>
+        <span class="kicker">Teacher pathway</span>
+      </div>
 
-    <section class="teacher-stage" aria-labelledby="teacher-title">
-      <div class="teacher-hero">
-        <div class="teacher-copy">
-          <span class="teacher-kicker">Press play. Step inside.</span>
+      <section class="teacher-stage" aria-label="Career Empire teacher overview video">
+        <header class="teacher-hero">
           <h1 id="teacher-title">Enter the teaching universe.</h1>
-          <p>Launch the newest Career Empire teacher welcome, see the world before setup, then move into class creation, student previews, and analytics.</p>
-          <div class="hero-actions" aria-label="Teacher entry actions">
-            <a class="button button-primary" href="../auth/teacher-login.html">
-              <i data-lucide="log-in"></i>
-              Teacher Login
-            </a>
-            <a class="button button-gold" href="../auth/teacher-signup.html">
-              <i data-lucide="user-plus"></i>
-              Create Teacher Account
-            </a>
-            <button class="button" type="button" data-demo-target="../dashboards/student.html">
-              <i data-lucide="play-circle"></i>
-              Student Hub Demo
-            </button>
-          </div>
-        </div>
+          <p>Press play. Step inside.</p>
+        </header>
 
-        <div class="teacher-media">
-          <article class="video-card" aria-labelledby="teacher-video-title">
-            <div class="video-meta">
-              <span id="teacher-video-title">The overview</span>
-              <span><i data-lucide="sparkles"></i>Career Empire Explainer</span>
-            </div>
-            <video controls playsinline preload="metadata" poster="../Assets/landing-screenshots/homepage.png">
+        <div class="teacher-overview">
+          <div>
+            <span class="kicker">Start here</span>
+            <h2>The overview</h2>
+            <p>See the world before you build the class.</p>
+          </div>
+          <div class="embed-frame">
+            <video controls playsinline preload="metadata" poster="../Assets/Images and Animations/Student Hub/student-hub-hero-career-empire.png">
               <source src="../Assets/videos/Career%20Empire%20Explainer%202026.mp4" type="video/mp4">
               Your browser does not support the video tag.
             </video>
-          </article>
+          </div>
         </div>
-      </div>
+      </section>
 
-      <div class="screen-grid" aria-label="Teacher welcome previews">
-        <figure class="screen-card">
-          <img src="../Assets/landing-screenshots/teacher-dashboard.png" alt="Career Empire teacher dashboard screenshot">
-          <figcaption class="screen-label"><i data-lucide="bar-chart-3"></i>Teacher dashboard</figcaption>
-        </figure>
-        <figure class="screen-card">
-          <img src="../Assets/landing-screenshots/manage-students.png" alt="Career Empire student management screenshot">
-          <figcaption class="screen-label"><i data-lucide="users-round"></i>Class setup</figcaption>
-        </figure>
-        <figure class="screen-card">
-          <img src="../Assets/landing-screenshots/student-hub.png" alt="Career Empire student hub screenshot">
-          <figcaption class="screen-label"><i data-lucide="graduation-cap"></i>Student view</figcaption>
-        </figure>
-      </div>
+      <div class="action-grid">
+        <section class="action-card" aria-labelledby="teacher-demo-flow-title">
+          <h3 id="teacher-demo-flow-title">Preview as a student</h3>
+          <p>Borrow the learner lens before setup.</p>
+          <div class="teacher-actions">
+            <button class="button button-primary" type="button" data-demo-target="../dashboards/student.html">
+              <i data-lucide="play-circle"></i>
+              Student Hub Demo
+            </button>
+            <button class="button button-primary" type="button" data-demo-target="../modules/est-prep/index.html">
+              <i data-lucide="flask-conical"></i>
+              EST Prep Demo
+            </button>
+            <a class="button" href="../promo-video.html" target="_blank" rel="noopener noreferrer">
+              <i data-lucide="maximize-2"></i>
+              Open Video Page
+            </a>
+          </div>
+        </section>
 
-      <div class="quick-panel" aria-label="Teacher quick actions">
-        <a class="quick-card" href="../auth/create-class.html">
-          <strong>Create a class</strong>
-          <span>Set up the class space before students enter Career Empire.</span>
-        </a>
-        <a class="quick-card" href="../dashboards/teacher.html">
-          <strong>Open teacher dashboard</strong>
-          <span>Review engagement, evidence, and intervention signals.</span>
-        </a>
-        <a class="quick-card" href="../auth/manage-students.html">
-          <strong>Manage students</strong>
-          <span>Add students, check accounts, and keep the cohort tidy.</span>
-        </a>
+        <section class="action-card" aria-labelledby="teacher-space-title">
+          <h3 id="teacher-space-title">Open your teacher space</h3>
+          <p>Build the class when the story clicks.</p>
+          <div class="teacher-actions">
+            <a class="button button-primary" href="../auth/teacher-signup.html">
+              <i data-lucide="user-plus"></i>
+              Create Teacher Account
+            </a>
+            <a class="button" href="../auth/teacher-login.html">
+              <i data-lucide="log-in"></i>
+              Teacher Login
+            </a>
+            <button class="button button-safety" type="button">
+              <i data-lucide="shield-check"></i>
+              Online safety concerns addressed
+            </button>
+          </div>
+        </section>
       </div>
-    </section>
+    </article>
   </main>
 
   <script>
