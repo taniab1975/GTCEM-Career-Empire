@@ -163,8 +163,8 @@
 
     .teacher-stage {
       display: grid;
-      grid-template-columns: minmax(230px, 0.54fr) minmax(0, 1.46fr);
-      gap: clamp(18px, 4vw, 54px);
+      grid-template-columns: minmax(310px, 0.62fr) minmax(0, 1.38fr);
+      gap: clamp(24px, 4vw, 56px);
       align-items: center;
     }
 
@@ -182,12 +182,16 @@
     }
 
     .teacher-hero h1 {
-      max-width: 560px;
+      max-width: 420px;
       color: #ffffff;
-      font-size: clamp(3.1rem, 6vw, 6.15rem);
+      font-size: clamp(3rem, 5.1vw, 5.45rem);
       font-weight: 800;
       line-height: 0.9;
       letter-spacing: 0;
+    }
+
+    .teacher-hero h1 span {
+      display: block;
     }
 
     .teacher-hero p {
@@ -342,7 +346,8 @@
       }
 
       .teacher-hero h1 {
-        font-size: clamp(3.2rem, 14vw, 5rem);
+        max-width: 620px;
+        font-size: clamp(3rem, 12vw, 4.8rem);
       }
     }
 
@@ -376,7 +381,12 @@
 
       <section class="teacher-stage" aria-label="Career Empire teacher overview video">
         <header class="teacher-hero">
-          <h1 id="teacher-title">Enter the teaching universe.</h1>
+          <h1 id="teacher-title">
+            <span>Enter</span>
+            <span>the</span>
+            <span>teaching</span>
+            <span>universe.</span>
+          </h1>
           <p>Press play. Step inside.</p>
         </header>
 
