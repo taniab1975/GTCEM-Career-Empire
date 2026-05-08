@@ -516,6 +516,78 @@
       animation: splashPop 820ms ease-out;
     }
 
+    .portal-effect {
+      position: absolute;
+      right: 8%;
+      top: 22%;
+      z-index: 12;
+      width: clamp(190px, 21vw, 330px);
+      aspect-ratio: 1;
+      border-radius: 999px;
+      pointer-events: none;
+      opacity: 0;
+      transform: scale(0.64);
+      transition: opacity 360ms ease, transform 620ms cubic-bezier(0.16, 0.9, 0.2, 1);
+    }
+
+    .portal-effect.is-active {
+      opacity: 1;
+      transform: scale(1);
+    }
+
+    .portal-ring,
+    .portal-core,
+    .portal-door,
+    .portal-spark {
+      position: absolute;
+      inset: 0;
+      border-radius: inherit;
+    }
+
+    .portal-ring {
+      background:
+        conic-gradient(from 0deg, transparent 0 12%, rgba(97, 240, 255, 0.95) 16%, transparent 28%, rgba(255, 216, 108, 0.9) 38%, transparent 54%, rgba(132, 255, 209, 0.95) 66%, transparent 82%, rgba(97, 240, 255, 0.95) 96%, transparent),
+        radial-gradient(circle, transparent 44%, rgba(97, 240, 255, 0.28) 46% 51%, transparent 54%);
+      filter: drop-shadow(0 0 30px rgba(97, 240, 255, 0.7));
+      animation: portalSpin 1.9s linear infinite;
+    }
+
+    .portal-core {
+      inset: 18%;
+      background:
+        radial-gradient(circle at 50% 50%, rgba(255, 255, 255, 0.92) 0 10%, rgba(132, 255, 209, 0.78) 18%, rgba(97, 240, 255, 0.42) 34%, rgba(8, 18, 44, 0.2) 58%, transparent 70%);
+      box-shadow: inset 0 0 42px rgba(255, 255, 255, 0.42), 0 0 48px rgba(132, 255, 209, 0.5);
+      animation: portalBreathe 1.2s ease-in-out infinite;
+    }
+
+    .portal-door {
+      inset: 28%;
+      background:
+        linear-gradient(90deg, rgba(5, 12, 30, 0.96) 0 42%, transparent 42% 58%, rgba(5, 12, 30, 0.96) 58% 100%);
+      clip-path: polygon(0 0, 100% 0, 100% 100%, 0 100%);
+      opacity: 0.86;
+    }
+
+    .portal-effect.is-active .portal-door {
+      animation: portalDoorOpen 1.35s ease-in-out forwards;
+    }
+
+    .portal-spark {
+      inset: -18%;
+      background:
+        radial-gradient(circle at 12% 38%, var(--gold) 0 2%, transparent 3%),
+        radial-gradient(circle at 88% 28%, var(--mint) 0 2%, transparent 3%),
+        radial-gradient(circle at 78% 82%, var(--cyan) 0 2%, transparent 3%),
+        radial-gradient(circle at 28% 76%, #fff 0 1.7%, transparent 2.7%);
+      animation: portalSparks 900ms ease-out infinite;
+    }
+
+    .portal-effect.is-final .portal-core {
+      background:
+        radial-gradient(circle at 50% 50%, rgba(255, 255, 255, 1) 0 12%, rgba(255, 216, 108, 0.9) 20%, rgba(132, 255, 209, 0.68) 38%, rgba(97, 240, 255, 0.28) 58%, transparent 72%);
+      box-shadow: inset 0 0 58px rgba(255, 255, 255, 0.56), 0 0 78px rgba(255, 216, 108, 0.52);
+    }
+
     .round-complete {
       position: absolute;
       inset: 0;
@@ -555,6 +627,31 @@
       max-width: 480px;
       color: var(--muted);
       line-height: 1.45;
+    }
+
+    .reward-count {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 10px;
+      margin: 0 0 22px;
+    }
+
+    .reward-count span {
+      border: 1px solid rgba(132, 255, 209, 0.28);
+      border-radius: 14px;
+      background: rgba(8, 18, 44, 0.78);
+      padding: 10px;
+      color: var(--muted);
+      font-size: 0.82rem;
+      font-weight: 800;
+    }
+
+    .reward-count strong {
+      display: block;
+      color: var(--text);
+      font-size: 1.25rem;
+      line-height: 1;
+      margin-bottom: 4px;
     }
 
     .round-actions {
@@ -667,6 +764,52 @@
       }
     }
 
+    @keyframes portalSpin {
+      to {
+        transform: rotate(360deg);
+      }
+    }
+
+    @keyframes portalBreathe {
+      0%, 100% {
+        transform: scale(0.92);
+        opacity: 0.74;
+      }
+      50% {
+        transform: scale(1.08);
+        opacity: 1;
+      }
+    }
+
+    @keyframes portalDoorOpen {
+      0% {
+        clip-path: polygon(0 0, 100% 0, 100% 100%, 0 100%);
+        opacity: 0.86;
+      }
+      60% {
+        clip-path: polygon(0 0, 39% 0, 39% 100%, 0 100%, 61% 0, 100% 0, 100% 100%, 61% 100%);
+        opacity: 0.62;
+      }
+      100% {
+        clip-path: polygon(0 0, 15% 0, 15% 100%, 0 100%, 85% 0, 100% 0, 100% 100%, 85% 100%);
+        opacity: 0;
+      }
+    }
+
+    @keyframes portalSparks {
+      0% {
+        transform: scale(0.6) rotate(0deg);
+        opacity: 0;
+      }
+      35% {
+        opacity: 1;
+      }
+      100% {
+        transform: scale(1.24) rotate(24deg);
+        opacity: 0;
+      }
+    }
+
     @keyframes portalExit {
       0% {
         transform: translate(-50%, -100%) scale(1);
@@ -749,8 +892,8 @@
       <div>
         <h1>Vault Bridge</h1>
         <p>
-          Secure 5 glossary terms across five bridge rows. Correct answers lock the path, wrong answers reset the run
-          to the entrance, and a clean streak opens the salary portal.
+          Secure 30 glossary terms across six bridge levels. Correct answers lock the path, wrong answers reset the
+          current run to the entrance, and each clean streak opens the salary portal.
         </p>
       </div>
       <div class="character-switcher" aria-label="Choose character">
@@ -776,6 +919,12 @@
       </article>
 
       <div id="bridge-pieces" class="bridge-pieces" aria-label="Vault Bridge answer pieces"></div>
+      <div id="portal-effect" class="portal-effect" aria-hidden="true">
+        <span class="portal-ring"></span>
+        <span class="portal-core"></span>
+        <span class="portal-door"></span>
+        <span class="portal-spark"></span>
+      </div>
 
       <div class="path-pulse" aria-hidden="true"></div>
       <img id="player" class="player" src="../../Assets/Images%20and%20Animations/Emmanuel%20Student%20Characters/MacKillop/MacKillop%20Thinking.png" alt="MacKillop student character">
@@ -796,8 +945,13 @@
 
       <section id="round-complete" class="round-complete" aria-live="polite" aria-label="Vault Bridge round complete">
         <article class="round-card">
-          <h2>Portal clear</h2>
-          <p>Five glossary terms secured. Salary is banked, tax is paid, and the next bridge set is ready.</p>
+          <h2 id="round-complete-title">Portal clear</h2>
+          <p id="round-complete-copy">Five glossary terms secured. Salary is banked, tax is paid, and the next bridge set is ready.</p>
+          <div class="reward-count" aria-label="Vault Bridge reward summary">
+            <span><strong id="reward-level">1/6</strong>Level</span>
+            <span><strong id="reward-terms">5/30</strong>Terms</span>
+            <span><strong id="reward-salary">$4,150</strong>Salary</span>
+          </div>
           <div class="round-actions">
             <button id="keep-playing" type="button">Keep playing</button>
             <a href="./index.html">Exit to EST Prep</a>
@@ -819,43 +973,63 @@
     const salary = document.getElementById("salary");
     const burst = document.getElementById("reward-burst");
     const splash = document.getElementById("splash");
+    const portalEffect = document.getElementById("portal-effect");
     const stepDots = document.getElementById("step-dots");
     const roundComplete = document.getElementById("round-complete");
+    const roundCompleteTitle = document.getElementById("round-complete-title");
+    const roundCompleteCopy = document.getElementById("round-complete-copy");
+    const rewardLevel = document.getElementById("reward-level");
+    const rewardTerms = document.getElementById("reward-terms");
+    const rewardSalary = document.getElementById("reward-salary");
     const keepPlaying = document.getElementById("keep-playing");
     const characterButtons = Array.from(document.querySelectorAll("[data-character]"));
 
-    const roundQuestions = [
-      {
-        definition: "The ability to adjust to changing work conditions and environments by recognising and pursuing opportunities.",
-        options: ["Career", "Enterprise", "Career adaptability"],
-        correct: 2,
-        secureLine: "Career adaptability secured. The bridge recognises flexible pathway thinking."
-      },
-      {
-        definition: "Taking action without being asked, especially when a problem or opportunity is noticed.",
-        options: ["Initiative", "Arbitration", "Personal risk"],
-        correct: 0,
-        secureLine: "Initiative secured. The next platform lights because action was taken early."
-      },
-      {
-        definition: "A formal dispute resolution process where a neutral third party considers both sides and makes a decision.",
-        options: ["Career development", "Arbitration", "Enterprise"],
-        correct: 1,
-        secureLine: "Arbitration secured. The bridge locks in a formal conflict-resolution term."
-      },
-      {
-        definition: "The lifelong process of managing life, learning and work as a person builds and changes their preferred future.",
-        options: ["Career development", "Career", "Selection criteria"],
-        correct: 0,
-        secureLine: "Career development secured. The path extends because the idea is long-term."
-      },
-      {
-        definition: "The knowledge, skills and attitudes that help a person intentionally manage career development.",
-        options: ["Career competencies", "Job security", "Diversity"],
-        correct: 0,
-        secureLine: "Career competencies secured. The exit portal is ready."
-      }
+    const TERMS_PER_LEVEL = 5;
+    const BASE_SALARY = 2400;
+    const SALARY_PER_TERM = 350;
+    const LEVEL_NAMES = [
+      "Foundation Lock",
+      "Workplace Signal",
+      "Future Industries",
+      "Learning Loop",
+      "Risk Chamber",
+      "Career Mastery"
     ];
+    const glossaryTerms = [
+      { term: "Arbitration", definition: "A formal dispute resolution process whereby a neutral third party considers the arguments and evidence presented by disputing parties to determine a solution that will be binding for all involved." },
+      { term: "Career", definition: "The sequence and variety of roles which one undertakes throughout a lifetime. It encompasses all life roles, not just occupation, and includes all paid and unpaid work, learning, leisure activities, and community and family responsibilities." },
+      { term: "Career adaptability", definition: "The ability to adjust to changing work conditions and or environments by recognising and pursuing opportunities for a positive transition to new work roles." },
+      { term: "Career competencies", definition: "The knowledge, skills and attitudes that promote intentional career development, lifelong learning and work life balance that can be developed and strengthened over time." },
+      { term: "Career development", definition: "The lifelong process of gaining the knowledge, skills, attributes and behaviours to manage life, learning, leisure and work in order to move towards a personally determined and evolving preferred future." },
+      { term: "Cover letter", definition: "A document that accompanies a job applicant's resume which concisely communicates their interest in a job opportunity and highlights the skills and attributes that make them a suitable candidate." },
+      { term: "Demographic shift", definition: "The change in the size and nature of a population due to migration and changes in birth and death rates." },
+      { term: "Dispute resolution", definition: "A process which aims to settle a conflict or disagreement between two or more people by developing a solution which is believed to be fair to all parties." },
+      { term: "Diversity", definition: "The state of having or being composed of a variety of elements. In a work context, it refers to the inclusion of different types of people based on age, ethnicity, gender, religion and or ability disability." },
+      { term: "Economic power shift", definition: "The long term global shift away from established advanced economies to emerging market countries." },
+      { term: "Emerging industries", definition: "Industries that are in the early stages of creating new products and services or transforming existing products and services through innovation and or technology." },
+      { term: "Enterprise", definition: "The willingness to try new things, show initiative and embrace and or promote innovative activities." },
+      { term: "Enterprise culture", definition: "The shared values, beliefs, attitudes, standards and behaviours that characterise a work environment." },
+      { term: "Impactful technology", definition: "The emergence of technologies that have the capacity to improve products, services and processes, but to also cause disruption and uncertainty for society and the economy." },
+      { term: "Green industries", definition: "Industries that actively participate in protecting or improving the environment by adopting processes that reduce waste and or pollution or by producing sustainable products using environmentally friendly processes and materials." },
+      { term: "Grievance", definition: "Any real or perceived problem an employee has about their work, the workplace or someone they work with." },
+      { term: "Growth industry", definition: "An industry that is experiencing a higher than average growth rate compared to other industries." },
+      { term: "Initiative", definition: "Taking a proactive approach to completing work tasks, overcoming challenges and dealing with unexpected events." },
+      { term: "Learning opportunity", definition: "A situation that allows a person to develop knowledge, understanding and skills." },
+      { term: "Lifelong learning", definition: "The ongoing, voluntary and self motivated pursuit of knowledge, understanding and skill development for either personal or professional reasons." },
+      { term: "Mediation", definition: "A dispute resolution process whereby a neutral third party facilitates communication and negotiation between disputing parties, helping them to reach a compromised solution." },
+      { term: "Megatrend", definition: "A significant and long lasting development that has a transformative impact on the way we live, work and do business." },
+      { term: "Performance management", definition: "The continuous process of feedback and communication between an employer and an employee, so that the employee is supported in performing their work role to the best of their ability." },
+      { term: "Personal risk", definition: "A risk that directly impacts on the individual and or their family." },
+      { term: "Professional development", definition: "Undertaking learning and training to develop, refine and enhance skills, knowledge and understandings." },
+      { term: "Professional risk", definition: "A risk taken during career development which can result in improved outcomes for the individual." },
+      { term: "Resilience", definition: "The ability to endure adversity and bounce back from challenging life events." },
+      { term: "Selection criteria", definition: "The qualities, skills, abilities, knowledge and qualifications needed to perform a job role effectively." },
+      { term: "Skills shortage", definition: "A situation that occurs when employers cannot fill vacancies in an occupation or in a specialisation within that occupation." },
+      { term: "Work environment", definition: "The physical conditions, procedures and processes, and social dynamics which comprise a place of work." }
+    ];
+    const levels = Array.from({ length: Math.ceil(glossaryTerms.length / TERMS_PER_LEVEL) }, (_, index) => (
+      glossaryTerms.slice(index * TERMS_PER_LEVEL, (index + 1) * TERMS_PER_LEVEL)
+    ));
 
     const homePosition = { x: 50, y: 91 };
     const portalPosition = { x: 83, y: 55 };
@@ -894,9 +1068,64 @@
 
     let activeCharacter = "mackillop";
     let busy = false;
+    let activeLevel = 0;
+    let roundQuestions = buildLevelQuestions(activeLevel);
     let secured = 0;
     let lockedSelections = Array(roundQuestions.length).fill(null);
     let tiles = [];
+
+    function getLevelName(levelIndex = activeLevel) {
+      return LEVEL_NAMES[levelIndex] || `Level ${levelIndex + 1}`;
+    }
+
+    function getTotalSecured() {
+      return Math.min(glossaryTerms.length, (activeLevel * TERMS_PER_LEVEL) + secured);
+    }
+
+    function getCurrentSalary() {
+      return BASE_SALARY + (getTotalSecured() * SALARY_PER_TERM);
+    }
+
+    function isFinalLevel() {
+      return activeLevel >= levels.length - 1;
+    }
+
+    function getDistractors(globalIndex) {
+      const offsets = [7, 13, 19, 5, 11, 17, 23];
+      const picked = [];
+      offsets.forEach((offset) => {
+        const candidate = glossaryTerms[(globalIndex + offset) % glossaryTerms.length];
+        if (candidate.term !== glossaryTerms[globalIndex].term && !picked.some(item => item.term === candidate.term)) {
+          picked.push(candidate);
+        }
+      });
+      return picked.slice(0, 2);
+    }
+
+    function buildLevelQuestions(levelIndex) {
+      const levelTerms = levels[levelIndex] || levels[0];
+      return levelTerms.map((item, index) => {
+        const globalIndex = (levelIndex * TERMS_PER_LEVEL) + index;
+        const correct = (globalIndex + levelIndex) % 3;
+        const distractors = getDistractors(globalIndex);
+        const options = Array(3);
+        let distractorIndex = 0;
+        options[correct] = item.term;
+        for (let optionIndex = 0; optionIndex < options.length; optionIndex += 1) {
+          if (!options[optionIndex]) {
+            options[optionIndex] = distractors[distractorIndex]?.term || glossaryTerms[(globalIndex + optionIndex + 3) % glossaryTerms.length].term;
+            distractorIndex += 1;
+          }
+        }
+        return {
+          term: item.term,
+          definition: item.definition,
+          options,
+          correct,
+          secureLine: `${item.term} secured. ${index + 1} of ${levelTerms.length} signals locked for ${getLevelName(levelIndex)}.`
+        };
+      });
+    }
 
     function setPlayerPosition(x, y) {
       player.style.left = `${x}%`;
@@ -1006,11 +1235,12 @@
     }
 
     function updateProgress() {
-      const percent = Math.round((secured / roundQuestions.length) * 100);
+      const totalSecured = getTotalSecured();
+      const percent = Math.round((totalSecured / glossaryTerms.length) * 100);
       progressFill.style.width = `${percent}%`;
-      progressCopy.textContent = `${secured} of ${roundQuestions.length} bridge rows secured. Wrong answers reset the run to the entrance.`;
-      roundStep.textContent = `${secured}/${roundQuestions.length}`;
-      salary.textContent = `$${(2400 + secured * 350).toLocaleString()}`;
+      progressCopy.textContent = `Level ${activeLevel + 1} of ${levels.length}: ${secured}/${roundQuestions.length} rows secured. Total glossary bank: ${totalSecured}/${glossaryTerms.length}.`;
+      roundStep.textContent = `L${activeLevel + 1} ${secured}/${roundQuestions.length}`;
+      salary.textContent = `$${getCurrentSalary().toLocaleString()}`;
       renderStepDots();
     }
 
@@ -1077,7 +1307,7 @@
         setCharacterPose("ready");
         player.classList.remove("is-celebrating");
         moveTo(landing);
-        setFeedback("Next row", "The wrong pieces dropped away. New options have appeared on the next bridge row.");
+        setFeedback("Next row", `Level ${activeLevel + 1}: the wrong pieces dropped away. New options have appeared on the next bridge row.`);
         setTilesDisabled(false);
         busy = false;
       }, 1050);
@@ -1100,7 +1330,7 @@
       splash.classList.remove("is-active");
       void splash.offsetWidth;
       splash.classList.add("is-active");
-      setFeedback("Bridge reset", "Not that one. The answer row collapses and the run restarts from the entrance.");
+      setFeedback("Bridge reset", "Not that one. The answer row collapses and this level run restarts from the entrance.");
       window.setTimeout(() => {
         secured = 0;
         lockedSelections = Array(roundQuestions.length).fill(null);
@@ -1109,18 +1339,38 @@
         moveTo(homePosition);
         setCharacterPose("ready");
         player.classList.remove("is-resetting");
-        setFeedback("Try again", "The bridge has rebuilt. Start from row one and keep the streak clean.");
+        setFeedback("Try again", `The ${getLevelName()} bridge has rebuilt. Start from row one and keep the streak clean.`);
         setTilesDisabled(false);
         busy = false;
       }, 1350);
     }
 
+    function renderRoundCompleteCard() {
+      const final = isFinalLevel();
+      const totalSecured = getTotalSecured();
+      roundCompleteTitle.textContent = final ? "Glossary vault mastered" : "Portal clear";
+      roundCompleteCopy.textContent = final
+        ? "All 30 glossary terms are secured. Salary is banked, tax is paid, and the full vault route is open."
+        : `${getLevelName()} cleared. Five terms are banked, tax is paid, and the next bridge level is ready.`;
+      rewardLevel.textContent = `${activeLevel + 1}/${levels.length}`;
+      rewardTerms.textContent = `${totalSecured}/${glossaryTerms.length}`;
+      rewardSalary.textContent = `$${getCurrentSalary().toLocaleString()}`;
+      keepPlaying.textContent = final ? "Replay levels" : "Next level";
+    }
+
     function completeRound() {
-      setFeedback("Portal unlock", "Five words secured. Moving through the salary portal now.");
+      const final = isFinalLevel();
+      setFeedback(final ? "Vault unlock" : "Portal unlock", final
+        ? "All glossary levels secured. The final salary portal is opening now."
+        : `Level ${activeLevel + 1} clear. Moving through the salary portal now.`);
       setCharacterPose("success");
       player.classList.remove("is-celebrating");
       player.classList.add("is-hopping");
       moveTo(portalPosition);
+      portalEffect.classList.toggle("is-final", final);
+      portalEffect.classList.remove("is-active");
+      void portalEffect.offsetWidth;
+      portalEffect.classList.add("is-active");
       window.setTimeout(() => {
         player.classList.remove("is-hopping");
         player.classList.add("is-exiting");
@@ -1129,23 +1379,32 @@
         burst.classList.add("is-active");
       }, 740);
       window.setTimeout(() => {
+        renderRoundCompleteCard();
         roundComplete.classList.add("is-visible");
         busy = false;
-      }, 1380);
+      }, 1680);
     }
 
-    function resetRound() {
+    function startLevel(levelIndex) {
+      activeLevel = Math.max(0, Math.min(levelIndex, levels.length - 1));
+      roundQuestions = buildLevelQuestions(activeLevel);
       secured = 0;
       lockedSelections = Array(roundQuestions.length).fill(null);
       busy = false;
       roundComplete.classList.remove("is-visible");
+      portalEffect.classList.remove("is-active", "is-final");
       player.classList.remove("is-hopping", "is-celebrating", "is-resetting", "is-exiting");
       setCharacterPose("ready");
       moveTo(homePosition);
       renderQuestion();
       updateProgress();
-      setFeedback("Ready", "Start from the arrow runway. Secure 5 bridge rows to open the portal.");
+      setFeedback(`Level ${activeLevel + 1}: ${getLevelName()}`, "Start from the arrow runway. Secure five glossary rows to open this portal.");
       setTilesDisabled(false);
+    }
+
+    function continueAfterPortal() {
+      const nextLevel = isFinalLevel() ? 0 : activeLevel + 1;
+      startLevel(nextLevel);
     }
 
     function handleTileClick(tile) {
@@ -1172,12 +1431,10 @@
       });
     });
 
-    keepPlaying.addEventListener("click", resetRound);
+    keepPlaying.addEventListener("click", continueAfterPortal);
 
     createBridgePieces();
-    renderQuestion();
-    updateProgress();
-    moveTo(homePosition);
+    startLevel(0);
   </script>
 </body>
 </html>
