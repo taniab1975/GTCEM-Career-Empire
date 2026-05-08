@@ -47,8 +47,9 @@ This matches the platform rule that student email addresses are not collected.
 6. Run `data/sql/add-feedback-reports.sql`
 7. Run `data/sql/add-game-progress-fields.sql`
 8. Run `data/sql/seed-schools.sql`
-9. Copy `config/supabase-config.example.js` to a real config file
-10. Paste your project URL and anon key into that config file
+9. For production privacy hardening, run `data/sql/rls-policies-school-privacy.sql`
+10. Copy `config/supabase-config.example.js` to a real config file
+11. Paste your project URL and anon key into that config file
 
 ## Suggested Config File
 
@@ -76,3 +77,5 @@ Then include it in any page that needs Supabase before `src/services/supabase-br
 Do not commit your real Supabase anon key if you later move to a private deployment workflow with environment variables.
 
 For the browser prototype phase, the anon key is expected to be public, but keep service-role keys out of the front end.
+
+Before using live student data, apply `data/sql/rls-policies-school-privacy.sql` so teacher reads are scoped to their school and the Global Index has aggregate-only RPC summaries available.
