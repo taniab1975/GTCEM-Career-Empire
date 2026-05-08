@@ -288,13 +288,17 @@
 
     .player {
       position: absolute;
-      left: 49%;
-      top: 73%;
+      left: 50%;
+      top: 91%;
       z-index: 7;
       width: clamp(170px, 17vw, 260px);
       transform: translate(-50%, -100%);
       filter: drop-shadow(0 22px 24px rgba(0, 0, 0, 0.5));
-      transition: left 720ms cubic-bezier(0.18, 0.88, 0.24, 1), top 720ms cubic-bezier(0.18, 0.88, 0.24, 1);
+      transition:
+        left 720ms cubic-bezier(0.18, 0.88, 0.24, 1),
+        top 720ms cubic-bezier(0.18, 0.88, 0.24, 1),
+        opacity 420ms ease,
+        width 420ms ease;
       will-change: left, top, transform;
     }
 
@@ -308,6 +312,28 @@
 
     .player.is-resetting {
       animation: resetDrop 760ms ease-in-out;
+    }
+
+    .player.is-exiting {
+      width: clamp(120px, 10vw, 170px);
+      opacity: 0;
+      animation: portalExit 880ms ease-in-out forwards;
+    }
+
+    .path-pulse {
+      position: absolute;
+      left: 50%;
+      top: 87%;
+      z-index: 2;
+      width: 160px;
+      height: 16px;
+      border-radius: 999px;
+      background: linear-gradient(90deg, transparent, var(--cyan), var(--mint), transparent);
+      box-shadow: 0 0 26px rgba(97, 240, 255, 0.5);
+      transform: translate(-50%, -50%);
+      opacity: 0.56;
+      animation: runwayPulse 1.8s ease-in-out infinite;
+      pointer-events: none;
     }
 
     .guide-panel {
@@ -359,6 +385,32 @@
       letter-spacing: 0.06em;
       text-transform: uppercase;
       margin-bottom: 12px;
+    }
+
+    .progress-panel p {
+      margin-bottom: 12px;
+      color: var(--muted);
+      font-size: 0.9rem;
+      line-height: 1.35;
+    }
+
+    .step-dots {
+      display: grid;
+      grid-template-columns: repeat(5, 1fr);
+      gap: 8px;
+      margin-top: 12px;
+    }
+
+    .step-dot {
+      height: 11px;
+      border-radius: 999px;
+      background: rgba(255, 255, 255, 0.12);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+    }
+
+    .step-dot.is-secured {
+      background: linear-gradient(90deg, var(--cyan), var(--mint));
+      box-shadow: 0 0 16px rgba(132, 255, 209, 0.3);
     }
 
     .progress-track {
@@ -413,6 +465,72 @@
 
     .splash.is-active {
       animation: splashPop 820ms ease-out;
+    }
+
+    .round-complete {
+      position: absolute;
+      inset: 0;
+      z-index: 20;
+      display: none;
+      place-items: center;
+      padding: 28px;
+      background: rgba(3, 6, 16, 0.68);
+      backdrop-filter: blur(10px);
+    }
+
+    .round-complete.is-visible {
+      display: grid;
+    }
+
+    .round-card {
+      width: min(620px, 100%);
+      border: 1px solid rgba(255, 216, 108, 0.55);
+      border-radius: 28px;
+      background:
+        radial-gradient(circle at 50% 0%, rgba(255, 216, 108, 0.18), transparent 38%),
+        rgba(6, 13, 32, 0.95);
+      padding: 28px;
+      text-align: center;
+      box-shadow: 0 32px 80px rgba(0, 0, 0, 0.46), 0 0 42px rgba(255, 216, 108, 0.22);
+    }
+
+    .round-card h2 {
+      margin: 0 0 10px;
+      font-size: clamp(2rem, 4vw, 3.4rem);
+      line-height: 0.98;
+      letter-spacing: 0;
+    }
+
+    .round-card p {
+      margin: 0 auto 22px;
+      max-width: 480px;
+      color: var(--muted);
+      line-height: 1.45;
+    }
+
+    .round-actions {
+      display: flex;
+      justify-content: center;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+
+    .round-actions button,
+    .round-actions a {
+      border: 1px solid rgba(132, 255, 209, 0.45);
+      border-radius: 16px;
+      padding: 13px 18px;
+      color: var(--text);
+      background: rgba(12, 27, 61, 0.95);
+      text-decoration: none;
+      font-weight: 900;
+      cursor: pointer;
+    }
+
+    .round-actions button:first-child {
+      color: #041120;
+      background: linear-gradient(135deg, var(--mint), var(--gold));
+      border-color: rgba(255, 216, 108, 0.75);
     }
 
     @keyframes characterHop {
@@ -500,6 +618,32 @@
       }
     }
 
+    @keyframes portalExit {
+      0% {
+        transform: translate(-50%, -100%) scale(1);
+        opacity: 1;
+      }
+      58% {
+        transform: translate(-50%, -108%) scale(0.82);
+        opacity: 0.78;
+      }
+      100% {
+        transform: translate(-50%, -120%) scale(0.38);
+        opacity: 0;
+      }
+    }
+
+    @keyframes runwayPulse {
+      0%, 100% {
+        opacity: 0.24;
+        transform: translate(-50%, -50%) scaleX(0.82);
+      }
+      50% {
+        opacity: 0.72;
+        transform: translate(-50%, -50%) scaleX(1.18);
+      }
+    }
+
     @media (max-width: 900px) {
       .preview-header {
         grid-template-columns: 1fr;
@@ -560,8 +704,8 @@
       <div>
         <h1>Vault Bridge</h1>
         <p>
-          Click an answer tile. The ECC character crosses to the choice, then the scene branches into a correct
-          celebration or incorrect reset.
+          Secure 5 glossary terms. Correct answers move the character forward, wrong answers send them back one step,
+          and a clean run opens the salary portal.
         </p>
       </div>
       <div class="character-switcher" aria-label="Choose character">
@@ -576,29 +720,30 @@
       <div class="game-vignette" aria-hidden="true"></div>
 
       <div class="hud" aria-label="Game status">
-        <div class="hud-card"><span>Lives</span><b id="lives">3</b></div>
+        <div class="hud-card"><span>Secured</span><b id="round-step">0/5</b></div>
         <div class="hud-card hud-title">Vault Bridge</div>
         <div class="hud-card"><span>Salary / tax</span><b id="salary">$2,400</b></div>
       </div>
 
       <article class="question-card">
         <strong>Definition target</strong>
-        <p>The ability to adjust to changing work conditions and environments by recognising and pursuing opportunities.</p>
+        <p id="question-text">The ability to adjust to changing work conditions and environments by recognising and pursuing opportunities.</p>
       </article>
 
-      <button class="tile tile-a" type="button" data-answer="wrong" data-x="23" data-y="58">
+      <button class="tile tile-a" type="button" data-answer="wrong" data-x="23" data-y="58" data-option-index="0">
         <span class="tile-letter">A</span>
         <span class="tile-term">Career</span>
       </button>
-      <button class="tile tile-b" type="button" data-answer="wrong" data-x="50" data-y="58">
+      <button class="tile tile-b" type="button" data-answer="wrong" data-x="50" data-y="58" data-option-index="1">
         <span class="tile-letter">B</span>
         <span class="tile-term">Enterprise</span>
       </button>
-      <button class="tile tile-c" type="button" data-answer="correct" data-x="77" data-y="58">
+      <button class="tile tile-c" type="button" data-answer="correct" data-x="77" data-y="58" data-option-index="2">
         <span class="tile-letter">C</span>
         <span class="tile-term">Career adaptability</span>
       </button>
 
+      <div class="path-pulse" aria-hidden="true"></div>
       <img id="player" class="player" src="../../Assets/Images%20and%20Animations/Emmanuel%20Student%20Characters/MacKillop/MacKillop%20Thinking.png" alt="MacKillop student character">
       <div id="reward-burst" class="reward-burst" aria-hidden="true"></div>
       <div id="splash" class="splash" aria-hidden="true"></div>
@@ -610,22 +755,77 @@
 
       <article class="progress-panel">
         <strong>Bridge charge</strong>
+        <p id="progress-copy">0 of 5 words secured. Wrong answers move you back one safe step.</p>
         <div class="progress-track" aria-hidden="true"><div id="progress-fill" class="progress-fill"></div></div>
+        <div id="step-dots" class="step-dots" aria-hidden="true"></div>
       </article>
+
+      <section id="round-complete" class="round-complete" aria-live="polite" aria-label="Vault Bridge round complete">
+        <article class="round-card">
+          <h2>Portal clear</h2>
+          <p>Five glossary terms secured. Salary is banked, tax is paid, and the next bridge set is ready.</p>
+          <div class="round-actions">
+            <button id="keep-playing" type="button">Keep playing</button>
+            <a href="./index.html">Exit to EST Prep</a>
+          </div>
+        </article>
+      </section>
     </section>
   </main>
 
   <script>
     const player = document.getElementById("player");
     const tiles = Array.from(document.querySelectorAll(".tile"));
+    const questionText = document.getElementById("question-text");
     const feedbackTitle = document.getElementById("feedback-title");
     const feedbackCopy = document.getElementById("feedback-copy");
     const progressFill = document.getElementById("progress-fill");
+    const progressCopy = document.getElementById("progress-copy");
+    const roundStep = document.getElementById("round-step");
     const salary = document.getElementById("salary");
-    const lives = document.getElementById("lives");
     const burst = document.getElementById("reward-burst");
     const splash = document.getElementById("splash");
+    const stepDots = document.getElementById("step-dots");
+    const roundComplete = document.getElementById("round-complete");
+    const keepPlaying = document.getElementById("keep-playing");
     const characterButtons = Array.from(document.querySelectorAll("[data-character]"));
+
+    const roundQuestions = [
+      {
+        definition: "The ability to adjust to changing work conditions and environments by recognising and pursuing opportunities.",
+        options: ["Career", "Enterprise", "Career adaptability"],
+        correct: 2,
+        secureLine: "Career adaptability secured. The bridge recognises flexible pathway thinking."
+      },
+      {
+        definition: "Taking action without being asked, especially when a problem or opportunity is noticed.",
+        options: ["Initiative", "Arbitration", "Personal risk"],
+        correct: 0,
+        secureLine: "Initiative secured. The next platform lights because action was taken early."
+      },
+      {
+        definition: "A formal dispute resolution process where a neutral third party considers both sides and makes a decision.",
+        options: ["Career development", "Arbitration", "Enterprise"],
+        correct: 1,
+        secureLine: "Arbitration secured. The bridge locks in a formal conflict-resolution term."
+      },
+      {
+        definition: "The lifelong process of managing life, learning and work as a person builds and changes their preferred future.",
+        options: ["Career development", "Career", "Selection criteria"],
+        correct: 0,
+        secureLine: "Career development secured. The path extends because the idea is long-term."
+      },
+      {
+        definition: "The knowledge, skills and attitudes that help a person intentionally manage career development.",
+        options: ["Career competencies", "Job security", "Diversity"],
+        correct: 0,
+        secureLine: "Career competencies secured. The exit portal is ready."
+      }
+    ];
+
+    const homePosition = { x: 50, y: 91 };
+    const portalPosition = { x: 83, y: 43 };
+    const tileLandingOffset = 12;
 
     const characters = {
       mackillop: {
@@ -653,8 +853,8 @@
 
     let activeCharacter = "mackillop";
     let busy = false;
-    let charge = 18;
-    let currentLives = 3;
+    let secured = 0;
+    let safePositions = [homePosition];
 
     function setPlayerPosition(x, y) {
       player.style.left = `${x}%`;
@@ -679,20 +879,66 @@
       });
     }
 
+    function renderStepDots() {
+      stepDots.innerHTML = "";
+      roundQuestions.forEach((_, index) => {
+        const dot = document.createElement("span");
+        dot.className = `step-dot${index < secured ? " is-secured" : ""}`;
+        stepDots.append(dot);
+      });
+    }
+
+    function updateProgress() {
+      const percent = Math.round((secured / roundQuestions.length) * 100);
+      progressFill.style.width = `${percent}%`;
+      progressCopy.textContent = `${secured} of ${roundQuestions.length} words secured. Wrong answers move you back one safe step.`;
+      roundStep.textContent = `${secured}/${roundQuestions.length}`;
+      salary.textContent = `$${(2400 + secured * 350).toLocaleString()}`;
+      renderStepDots();
+    }
+
+    function renderQuestion() {
+      const question = roundQuestions[Math.min(secured, roundQuestions.length - 1)];
+      questionText.textContent = question.definition;
+      tiles.forEach((tile, index) => {
+        tile.dataset.answer = index === question.correct ? "correct" : "wrong";
+        tile.dataset.optionIndex = String(index);
+        tile.querySelector(".tile-letter").textContent = String.fromCharCode(65 + index);
+        tile.querySelector(".tile-term").textContent = question.options[index];
+      });
+    }
+
+    function landingPositionFor(tile) {
+      return {
+        x: Number(tile.dataset.x),
+        y: Number(tile.dataset.y) + tileLandingOffset
+      };
+    }
+
+    function moveTo(position) {
+      setPlayerPosition(position.x, position.y);
+    }
+
+    function setTilesDisabled(disabled) {
+      tiles.forEach((tile) => {
+        tile.disabled = disabled;
+      });
+    }
+
     function beginMove(tile) {
       busy = true;
       resetTiles();
-      tiles.forEach((item) => {
-        item.disabled = true;
-      });
+      setTilesDisabled(true);
       setCharacterPose("action");
-      player.classList.remove("is-celebrating", "is-resetting");
+      player.classList.remove("is-celebrating", "is-resetting", "is-exiting");
       player.classList.add("is-hopping");
-      setPlayerPosition(tile.dataset.x, Number(tile.dataset.y) + 12);
-      setFeedback("Crossing", "Good. The character moves to the selected term platform before the answer is judged.");
+      moveTo(landingPositionFor(tile));
+      setFeedback("Crossing", "The character moves to the selected term platform before the answer is judged.");
     }
 
     function finishCorrect(tile) {
+      const question = roundQuestions[Math.min(secured, roundQuestions.length - 1)];
+      const landing = landingPositionFor(tile);
       tile.classList.add("is-correct");
       setCharacterPose("success");
       player.classList.remove("is-hopping");
@@ -700,16 +946,23 @@
       burst.classList.remove("is-active");
       void burst.offsetWidth;
       burst.classList.add("is-active");
-      charge = Math.min(100, charge + 34);
-      progressFill.style.width = `${charge}%`;
-      salary.textContent = "$3,100";
-      setFeedback("Correct", "Career adaptability is secured. The bridge charges, salary rises, and this term moves closer to mastery.");
+      secured += 1;
+      safePositions.push(landing);
+      updateProgress();
+      setFeedback("Correct", question.secureLine);
       window.setTimeout(() => {
+        if (secured >= roundQuestions.length) {
+          completeRound();
+          return;
+        }
+        renderQuestion();
+        resetTiles();
+        setCharacterPose("ready");
+        player.classList.remove("is-celebrating");
+        setFeedback("Next word", "New definition loaded. Pick the platform that keeps the bridge moving.");
+        setTilesDisabled(false);
         busy = false;
-        tiles.forEach((item) => {
-          item.disabled = false;
-        });
-      }, 950);
+      }, 1050);
     }
 
     function finishWrong(tile) {
@@ -724,17 +977,56 @@
       splash.classList.remove("is-active");
       void splash.offsetWidth;
       splash.classList.add("is-active");
-      currentLives = Math.max(0, currentLives - 1);
-      lives.textContent = currentLives;
-      setFeedback("Reset", "Not that one. The tile glitches, the character drops back, and the correction moment is immediate.");
+      if (secured > 0) {
+        secured -= 1;
+        safePositions.pop();
+      }
+      updateProgress();
+      setFeedback("Step back", "Not that one. The bridge sends the character back one safe step, then the same word stays in play.");
       window.setTimeout(() => {
-        setPlayerPosition(49, 73);
+        moveTo(safePositions[safePositions.length - 1]);
         setCharacterPose("ready");
         player.classList.remove("is-resetting");
+        renderQuestion();
         resetTiles();
-        setFeedback("Try again", "The reset is quick so the round stays fast. Choose the matching term to charge the bridge.");
+        setFeedback("Try again", "Choose the matching term to regain the lost step.");
+        setTilesDisabled(false);
         busy = false;
       }, 1350);
+    }
+
+    function completeRound() {
+      setFeedback("Portal unlock", "Five words secured. Moving through the salary portal now.");
+      setCharacterPose("success");
+      player.classList.remove("is-celebrating");
+      player.classList.add("is-hopping");
+      moveTo(portalPosition);
+      window.setTimeout(() => {
+        player.classList.remove("is-hopping");
+        player.classList.add("is-exiting");
+        burst.classList.remove("is-active");
+        void burst.offsetWidth;
+        burst.classList.add("is-active");
+      }, 740);
+      window.setTimeout(() => {
+        roundComplete.classList.add("is-visible");
+        busy = false;
+      }, 1380);
+    }
+
+    function resetRound() {
+      secured = 0;
+      safePositions = [homePosition];
+      busy = false;
+      roundComplete.classList.remove("is-visible");
+      player.classList.remove("is-hopping", "is-celebrating", "is-resetting", "is-exiting");
+      setCharacterPose("ready");
+      moveTo(homePosition);
+      renderQuestion();
+      resetTiles();
+      updateProgress();
+      setFeedback("Ready", "Start from the arrow runway. Secure 5 terms to open the portal.");
+      setTilesDisabled(false);
     }
 
     tiles.forEach((tile) => {
@@ -757,11 +1049,17 @@
         activeCharacter = button.dataset.character;
         characterButtons.forEach((item) => item.setAttribute("aria-pressed", String(item === button)));
         setCharacterPose("ready");
-        setPlayerPosition(49, 73);
+        moveTo(safePositions[safePositions.length - 1]);
         resetTiles();
         setFeedback("Ready", `${characters[activeCharacter].name} is loaded. Choose a term platform to test the movement.`);
       });
     });
+
+    keepPlaying.addEventListener("click", resetRound);
+
+    renderQuestion();
+    updateProgress();
+    moveTo(homePosition);
   </script>
 </body>
 </html>
