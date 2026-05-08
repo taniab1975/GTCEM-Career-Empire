@@ -2249,7 +2249,7 @@
 
   <div id="teacher-modal" class="hidden fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center z-50 p-4">
     <div class="bg-slate-900 rounded-xl p-8 max-w-2xl w-full border border-red-500 max-h-screen overflow-auto">
-      <h2 class="text-2xl font-bold text-red-300 mb-6">👨‍🏫 Teacher Dashboard</h2>
+      <h2 class="text-2xl font-bold text-red-300 mb-6">👨‍🏫 Teacher Stats Dashboard</h2>
       <div id="teacher-login-form" class="space-y-4">
         <input type="password" id="teacher-pass" placeholder="Enter teacher code" class="w-full px-4 py-2 rounded-lg bg-white bg-opacity-10 border border-white border-opacity-20 text-white mb-4 focus:outline-none">
         <div class="flex gap-3">
@@ -2278,8 +2278,8 @@
           <button onclick="resetTeacherClass()" class="w-full px-4 py-3 rounded-lg bg-red-900 hover:bg-red-800 text-red-100 font-semibold text-sm">🔄 Reset This Class Only</button>
           <p class="text-xs text-gray-400 mt-3">This will clear all student data for YOUR class code only. Other teachers' classes are unaffected.</p>
         </div>
-        <button onclick="openTeacherDashboard()" class="w-full px-4 py-2 rounded-lg bg-blue-700 hover:bg-blue-600 text-white font-semibold">Open Full Teacher Dashboard</button>
-        <button onclick="closeTeacherModal()" class="w-full px-4 py-2 rounded-lg bg-gray-700 hover:bg-gray-600 text-white font-semibold">Close Dashboard</button>
+        <button onclick="openTeacherDashboard()" class="w-full px-4 py-2 rounded-lg bg-blue-700 hover:bg-blue-600 text-white font-semibold">Open Full Teacher Stats Dashboard</button>
+        <button onclick="closeTeacherModal()" class="w-full px-4 py-2 rounded-lg bg-gray-700 hover:bg-gray-600 text-white font-semibold">Close Teacher Stats Dashboard</button>
       </div>
     </div>
   </div>
@@ -2413,6 +2413,58 @@
       return readJsonStorage(AUTH_DEMO_STATE_KEY, {});
     }
 
+    function normalizeSchoolName(value) {
+      return String(value || '').trim().toLowerCase();
+    }
+
+    function getCurrentSchoolScope() {
+      const authState = getAuthPrototypeState();
+      const session = readJsonStorage(PLAYER_SESSION_KEY, {});
+      const studentLogin = authState?.studentLogin || {};
+      const teacher = authState?.teacher || {};
+      const teacherLogin = authState?.teacherLogin || {};
+
+      return {
+        schoolId: String(
+          studentLogin.schoolId ||
+          studentLogin.school_id ||
+          teacher.schoolId ||
+          teacher.school_id ||
+          teacherLogin.schoolId ||
+          teacherLogin.school_id ||
+          session.schoolId ||
+          session.school_id ||
+          ''
+        ),
+        schoolName:
+          studentLogin.schoolName ||
+          studentLogin.school_name ||
+          teacher.schoolName ||
+          teacher.school_name ||
+          teacherLogin.schoolName ||
+          teacherLogin.school_name ||
+          session.schoolName ||
+          session.school_name ||
+          gameState.schoolName ||
+          ''
+      };
+    }
+
+    function playerMatchesCurrentSchool(player, scope) {
+      if (!scope.schoolId && !scope.schoolName) return false;
+      if (scope.schoolId && player.school_id && String(player.school_id) === scope.schoolId) return true;
+      return Boolean(scope.schoolName && normalizeSchoolName(player.school_name) === normalizeSchoolName(scope.schoolName));
+    }
+
+    function filterPlayersToCurrentSchool(players) {
+      const scope = getCurrentSchoolScope();
+      return {
+        scope,
+        hasScope: Boolean(scope.schoolId || scope.schoolName),
+        players: players.filter(player => playerMatchesCurrentSchool(player, scope))
+      };
+    }
+
     function mapRemotePlayerProfile(row) {
       const student = row.students || {};
       const classRecord = student.classes || {};
@@ -2420,7 +2472,9 @@
       return {
         id: row.student_id,
         player_name: student.display_name || student.username || 'Unknown',
+        school_id: student.school_id || '',
         school_name: schoolRecord.name || '',
+        class_id: student.class_id || '',
         class_code: classRecord.class_code || '',
         career_title: row.career_title || 'Intern',
         annual_salary: row.annual_salary || 0,
@@ -2459,6 +2513,8 @@
           last_community_vote,
           updated_at,
           students!inner(
+            school_id,
+            class_id,
             display_name,
             username,
             classes(class_code, name),
@@ -4262,11 +4318,16 @@
 
     function updateLeaderboard() {
       const list = document.getElementById('leaderboard-list');
-      if (!allPlayers.length) {
-        list.innerHTML = '<p class="text-gray-400">No players yet. Start a game to join the leaderboard!</p>';
+      const schoolLeaderboard = filterPlayersToCurrentSchool(allPlayers);
+      if (!schoolLeaderboard.hasScope) {
+        list.innerHTML = '<p class="text-gray-400">Log in as a student or teacher to see standings for your school.</p>';
         return;
       }
-      const sorted = [...allPlayers].sort((a, b) => b.cumulative_net_worth - a.cumulative_net_worth).slice(0, 10);
+      if (!schoolLeaderboard.players.length) {
+        list.innerHTML = '<p class="text-gray-400">No players from your school yet. Start a game to join your school leaderboard!</p>';
+        return;
+      }
+      const sorted = [...schoolLeaderboard.players].sort((a, b) => b.cumulative_net_worth - a.cumulative_net_worth).slice(0, 10);
       list.innerHTML = sorted.map((p, i) => `
         ${(() => {
           const strongestSkill = getStrongestEmployabilitySkillForPlayer(p);
@@ -4292,7 +4353,9 @@
     function updateCommunityFund() {
       const votes = { climate: 0, tech: 0, diversity: 0, global: 0 };
       let totalVotes = 0;
-      allPlayers.forEach(p => {
+      const schoolCommunity = filterPlayersToCurrentSchool(allPlayers);
+      const communityPlayers = schoolCommunity.hasScope ? schoolCommunity.players : [];
+      communityPlayers.forEach(p => {
         if (p.community_vote && votes[p.community_vote] !== undefined) {
           votes[p.community_vote]++;
           totalVotes++;
@@ -4486,10 +4549,13 @@
 
     function syncActivePlayerSession(source = 'manual') {
       const currentSession = readJsonStorage(PLAYER_SESSION_KEY, {});
+      const authState = getAuthPrototypeState();
+      const studentLogin = authState?.studentLogin || {};
       const overallMastery = Math.round((gameState.techMastery + gameState.climateMastery + gameState.demoMastery + gameState.economicMastery) / 4);
       const session = {
         ...currentSession,
         playerName: gameState.playerName,
+        schoolId: studentLogin.schoolId || currentSession.schoolId || null,
         schoolName: gameState.schoolName,
         classCode: gameState.classCode,
         careerTitle: gameState.careerTitle,

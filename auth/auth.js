@@ -71,7 +71,7 @@ function buildTeacherNavMarkup(activeKey) {
     { key: "create-class", label: "Create Class", href: paths.createClass },
     { key: "add-students", label: "Add Students", href: paths.addStudents },
     { key: "manage-students", label: "Manage Students", href: paths.manageStudents },
-    { key: "teacher-dashboard", label: "Teacher Dashboard", href: paths.teacherDashboard },
+    { key: "teacher-stats-dashboard", label: "Teacher Stats Dashboard", href: paths.teacherDashboard },
     { key: "test-student", label: "Play as Test Student", href: "#", testLaunch: true }
   ];
 
@@ -144,6 +144,7 @@ function launchTeacherTestStudentPreview() {
     id: null,
     username: TEACHER_TEST_STUDENT.username,
     displayName: TEACHER_TEST_STUDENT.displayName,
+    schoolId: teacher.schoolId || null,
     schoolName: teacher.schoolName || "Teacher Preview School",
     classId: classroom.id || null,
     classCode: classroom.classCode || "PREVIEW",
@@ -165,6 +166,7 @@ function launchTeacherTestStudentPreview() {
     studentId: null,
     username: studentLogin.username,
     playerName: studentLogin.displayName,
+    schoolId: studentLogin.schoolId,
     schoolName: studentLogin.schoolName,
     classId: studentLogin.classId,
     classCode: studentLogin.classCode,
@@ -214,6 +216,7 @@ function syncStudentPlayerSession(student) {
   next.studentId = student.id;
   next.username = student.username || "";
   next.playerName = student.display_name || student.username || "Student";
+  next.schoolId = student.school_id || null;
   next.schoolName = student.schools?.name || "";
   next.classId = student.class_id || null;
   next.classCode = student.classes?.class_code || "";

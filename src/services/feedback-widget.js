@@ -3,7 +3,8 @@
   const AUTH_STATE_KEY = "career-empire-auth-demo";
   const PLAYER_SESSION_KEY = "career-empire-session";
   const TEACHER_SESSION_KEY = "career-empire-teacher-session";
-  const TEACHER_FILTER_KEY = "career-empire-teacher-dashboard-filter";
+  const TEACHER_FILTER_KEY = "career-empire-teacher-stats-dashboard-filter";
+  const LEGACY_TEACHER_FILTER_KEY = "career-empire-teacher-dashboard-filter";
 
   function readJsonStorage(key, fallback) {
     try {
@@ -443,6 +444,7 @@
     persistAuthState(state);
     localStorage.removeItem(TEACHER_SESSION_KEY);
     localStorage.removeItem(TEACHER_FILTER_KEY);
+    localStorage.removeItem(LEGACY_TEACHER_FILTER_KEY);
   }
 
   async function handleSessionLogout(role, button) {

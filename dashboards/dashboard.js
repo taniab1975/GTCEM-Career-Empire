@@ -15,6 +15,9 @@ const STUDENT_STATUS_ICONS = {
   workLife: "../Assets/Images and Animations/Student Hub/empire-status-work-life-balance.png"
 };
 
+const TEACHER_STATS_FILTER_KEY = "career-empire-teacher-stats-dashboard-filter";
+const LEGACY_TEACHER_FILTER_KEY = "career-empire-teacher-dashboard-filter";
+
 async function loadEmployabilitySkills() {
   const response = await fetch("../data/employability-skills.json");
   if (!response.ok) throw new Error("Could not load employability skills.");
@@ -51,7 +54,9 @@ function mapRemotePlayerProfile(row) {
   return {
     id: row.student_id,
     player_name: student.display_name || student.username || "Unknown",
+    school_id: student.school_id || "",
     school_name: schoolRecord.name || "",
+    class_id: student.class_id || "",
     class_code: classRecord.class_code || "",
     career_title: row.career_title || "Intern",
     annual_salary: row.annual_salary || 0,
@@ -95,6 +100,8 @@ async function getPlayers() {
       last_community_vote,
       updated_at,
       students!inner(
+        school_id,
+        class_id,
         display_name,
         username,
         classes(class_code, name),
@@ -168,7 +175,9 @@ function getTeacherSession() {
 let hasTeacherDashboardFilterInteraction = false;
 
 function getTeacherDashboardFilter() {
-  const filter = readJsonStorage("career-empire-teacher-dashboard-filter", { scope: "all", classId: "all", studentId: "all" });
+  const defaultFilter = { scope: "all", classId: "all", studentId: "all" };
+  const filter = readJsonStorage(TEACHER_STATS_FILTER_KEY, null)
+    || readJsonStorage(LEGACY_TEACHER_FILTER_KEY, defaultFilter);
   if (!hasTeacherDashboardFilterInteraction && document.getElementById("teacher-class-selector")) {
     return { ...filter, scope: "all", classId: "all", studentId: "all" };
   }
@@ -186,7 +195,8 @@ function requireStudentHubAccess() {
 
 function setTeacherDashboardFilter(nextFilter) {
   hasTeacherDashboardFilterInteraction = true;
-  localStorage.setItem("career-empire-teacher-dashboard-filter", JSON.stringify(nextFilter));
+  localStorage.setItem(TEACHER_STATS_FILTER_KEY, JSON.stringify(nextFilter));
+  localStorage.removeItem(LEGACY_TEACHER_FILTER_KEY);
 }
 
 function getAuthPrototypeState() {
@@ -233,8 +243,30 @@ function getActiveTeacherContext() {
 }
 
 async function resolveTeacherDashboardContext(supabase, context) {
-  if (context?.teacher?.id && context?.teacher?.schoolId) {
-    return context;
+  const contextTeacher = context?.teacher || {};
+  const existingSchoolId = contextTeacher.schoolId
+    || contextTeacher.school_id
+    || context?.teacherLogin?.schoolId
+    || context?.teacherLogin?.school_id
+    || context?.teacherSession?.schoolId
+    || context?.teacherSession?.school_id
+    || null;
+  const teacherSchoolName = contextTeacher.schoolName || "";
+  const existingSchoolName = teacherSchoolName
+    || context?.teacherLogin?.schoolName
+    || context?.teacherLogin?.school_name
+    || context?.teacherSession?.schoolName
+    || context?.teacherSession?.school_name
+    || "";
+  if (contextTeacher.id && existingSchoolId && existingSchoolName) {
+    return {
+      ...context,
+      teacher: {
+        ...contextTeacher,
+        schoolId: existingSchoolId,
+        schoolName: existingSchoolName
+      }
+    };
   }
 
   let email = context?.teacherLogin?.email || context?.teacher?.email || "";
@@ -248,16 +280,48 @@ async function resolveTeacherDashboardContext(supabase, context) {
       console.error(error);
     }
   }
-  if (!email) return context;
+  if (!supabase) return context;
 
-  const { data, error } = await supabase
-    .from("teachers")
-    .select("id, full_name, email, school_id, schools(name)")
-    .eq("email", email)
-    .maybeSingle();
+  let data = null;
+  let error = null;
+  if (email) {
+    const result = await supabase
+      .from("teachers")
+      .select("id, full_name, email, school_id, schools(name)")
+      .eq("email", email)
+      .maybeSingle();
+    data = result.data;
+    error = result.error;
+  } else if (contextTeacher.id) {
+    const result = await supabase
+      .from("teachers")
+      .select("id, full_name, email, school_id, schools(name)")
+      .eq("id", contextTeacher.id)
+      .maybeSingle();
+    data = result.data;
+    error = result.error;
+  }
 
   if (error || !data) {
     if (error) console.error(error);
+    if (existingSchoolId && !teacherSchoolName) {
+      const { data: schoolData, error: schoolError } = await supabase
+        .from("schools")
+        .select("name")
+        .eq("id", existingSchoolId)
+        .maybeSingle();
+      if (schoolError) console.error(schoolError);
+      if (schoolData?.name) {
+        return {
+          ...context,
+          teacher: {
+            ...contextTeacher,
+            schoolId: existingSchoolId,
+            schoolName: schoolData.name
+          }
+        };
+      }
+    }
     return context;
   }
 
@@ -304,6 +368,62 @@ function dedupeLatestPlayers(players) {
     }
   });
   return [...latest.values()];
+}
+
+function normalizeSchoolName(value) {
+  return String(value || "").trim().toLowerCase();
+}
+
+function getCurrentSchoolScope() {
+  const authState = getAuthPrototypeState();
+  const session = getCurrentPlayerSession() || {};
+  const teacherSession = getTeacherSession() || {};
+  const studentLogin = authState?.studentLogin || {};
+  const teacher = authState?.teacher || {};
+  const teacherLogin = authState?.teacherLogin || {};
+
+  return {
+    schoolId: String(
+      studentLogin.schoolId ||
+      studentLogin.school_id ||
+      teacher.schoolId ||
+      teacher.school_id ||
+      teacherLogin.schoolId ||
+      teacherLogin.school_id ||
+      session.schoolId ||
+      session.school_id ||
+      teacherSession.schoolId ||
+      teacherSession.school_id ||
+      ""
+    ),
+    schoolName:
+      studentLogin.schoolName ||
+      studentLogin.school_name ||
+      teacher.schoolName ||
+      teacher.school_name ||
+      teacherLogin.schoolName ||
+      teacherLogin.school_name ||
+      session.schoolName ||
+      session.school_name ||
+      teacherSession.schoolName ||
+      teacherSession.school_name ||
+      ""
+  };
+}
+
+function playerMatchesCurrentSchool(player, scope) {
+  if (!scope.schoolId && !scope.schoolName) return false;
+  if (scope.schoolId && player.school_id && String(player.school_id) === scope.schoolId) return true;
+  return Boolean(scope.schoolName && normalizeSchoolName(player.school_name) === normalizeSchoolName(scope.schoolName));
+}
+
+function filterPlayersToCurrentSchool(players) {
+  const scope = getCurrentSchoolScope();
+  return {
+    scope,
+    hasScope: Boolean(scope.schoolId || scope.schoolName),
+    players: players.filter(player => playerMatchesCurrentSchool(player, scope))
+  };
 }
 
 function getPlayerHistory(players, session) {
@@ -919,13 +1039,23 @@ function renderSharedLeaderboard(players, skillsData) {
   const container = document.getElementById("leaderboard-page-list");
   if (!container) return;
 
-  const latestPlayers = dedupeLatestPlayers(players).sort((a, b) => Number(b.cumulative_net_worth || 0) - Number(a.cumulative_net_worth || 0));
-  if (!latestPlayers.length) {
-    container.innerHTML = '<div class="timeline-item"><strong>No leaderboard data yet</strong><p>Once students start playing, the leaderboard will begin filling automatically.</p></div>';
+  const latestPlayers = dedupeLatestPlayers(players);
+  const schoolLeaderboard = filterPlayersToCurrentSchool(latestPlayers);
+  const schoolLabel = schoolLeaderboard.scope.schoolName || "your school";
+  const rankedPlayers = schoolLeaderboard.players
+    .sort((a, b) => Number(b.cumulative_net_worth || 0) - Number(a.cumulative_net_worth || 0));
+
+  if (!schoolLeaderboard.hasScope) {
+    container.innerHTML = '<div class="timeline-item"><strong>School leaderboard locked</strong><p>Log in as a student or teacher to see standings for your school.</p></div>';
     return;
   }
 
-  container.innerHTML = latestPlayers.map((player, index) => {
+  if (!rankedPlayers.length) {
+    container.innerHTML = `<div class="timeline-item"><strong>No leaderboard data yet</strong><p>Once students from ${escapeHtml(schoolLabel)} start playing, this school leaderboard will begin filling automatically.</p></div>`;
+    return;
+  }
+
+  container.innerHTML = rankedPlayers.map((player, index) => {
     const strongestSkill = getStrongestSkillCategory(skillsData, player);
     return `
       <article class="module-card ${index === 0 ? "spotlight" : ""}">
@@ -952,7 +1082,12 @@ function renderSharedCommunityPage(players) {
   const board = document.getElementById("community-page-board");
   if (!board) return;
 
-  const latestPlayers = dedupeLatestPlayers(players);
+  const schoolCommunity = filterPlayersToCurrentSchool(dedupeLatestPlayers(players));
+  if (!schoolCommunity.hasScope) {
+    board.innerHTML = '<div class="timeline-item"><strong>Community board locked</strong><p>Log in as a student or teacher to see the community vote for your school.</p></div>';
+    return;
+  }
+  const latestPlayers = schoolCommunity.players;
   const voteLabels = getCommunityVoteLabels();
   const voteKeys = ["climate", "tech", "diversity", "global"];
   const voteCounts = voteKeys.reduce((acc, key) => {
@@ -2484,58 +2619,46 @@ async function updateStoreRequest(request, status, approvedItem = null) {
   if (error) throw error;
 }
 
+function createEmptyTeacherDashboardData(context, dashboardFilter, selectedClassName = "No classes found") {
+  return {
+    context,
+    availableClasses: [],
+    selectedClassId: "all",
+    selectedStudentId: dashboardFilter?.studentId || "all",
+    selectedClassName,
+    students: [],
+    moduleProgress: [],
+    evidenceRows: [],
+    voteRows: [],
+    profileRows: [],
+    feedbackRows: []
+  };
+}
+
 async function getTeacherDashboardData() {
   const supabase = await getSupabaseClientOrNull();
   let context = getActiveTeacherContext();
   context = await resolveTeacherDashboardContext(supabase, context);
-  const teacherId = context.teacher?.id || null;
   const schoolId = context.teacher?.schoolId || null;
-  if (!supabase || (!teacherId && !schoolId)) {
-    return null;
+  const dashboardFilter = getTeacherDashboardFilter();
+  if (!supabase || !schoolId) {
+    return createEmptyTeacherDashboardData(context, dashboardFilter, "Teacher school not resolved");
   }
 
-  const dashboardFilter = getTeacherDashboardFilter();
   const { data: classRows, error: classesError } = await supabase
     .from("classes")
     .select("id, name, class_code, year_level, school_id, teacher_id")
-    .or([
-      schoolId ? `school_id.eq.${schoolId}` : null,
-      teacherId ? `teacher_id.eq.${teacherId}` : null
-    ].filter(Boolean).join(","))
+    .eq("school_id", schoolId)
     .order("name", { ascending: true });
 
   if (classesError) {
     console.error(classesError);
-    return {
-      context,
-      availableClasses: [],
-      selectedClassId: "all",
-      selectedStudentId: dashboardFilter.studentId || "all",
-      selectedClassName: "No classes found",
-      students: [],
-      moduleProgress: [],
-      evidenceRows: [],
-      voteRows: [],
-      profileRows: [],
-      feedbackRows: []
-    };
+    return createEmptyTeacherDashboardData(context, dashboardFilter);
   }
 
   const availableClasses = classRows || [];
   if (!availableClasses.length) {
-    return {
-      context,
-      availableClasses: [],
-      selectedClassId: "all",
-      selectedStudentId: dashboardFilter.studentId || "all",
-      selectedClassName: "No classes found",
-      students: [],
-      moduleProgress: [],
-      evidenceRows: [],
-      voteRows: [],
-      profileRows: [],
-      feedbackRows: []
-    };
+    return createEmptyTeacherDashboardData(context, dashboardFilter);
   }
 
   const requestedClassId = dashboardFilter.classId || context.classroom?.id || "all";
@@ -2547,35 +2670,34 @@ async function getTeacherDashboardData() {
     : availableClasses.filter(row => row.id === selectedClassId);
   const classIds = selectedClassRows.map(row => row.id);
   const selectedClassName = selectedClassId === "all"
-    ? `All classes at ${context.teacher?.schoolName || "this school"}`
+    ? `All classes at ${context.teacher?.schoolName || "School not resolved"}`
     : (selectedClassRows[0]?.name || "Selected class");
 
-  const [studentsResult, moduleProgressResult, evidenceResult, votesResult, feedbackResult] = await Promise.allSettled([
+  const [studentsResult, votesResult, feedbackResult] = await Promise.allSettled([
     supabase
       .from("students")
-      .select("id, display_name, username, created_at, last_login_at, class_id")
+      .select("id, display_name, username, created_at, last_login_at, school_id, class_id")
+      .eq("school_id", schoolId)
       .in("class_id", classIds)
       .order("created_at", { ascending: true }),
-    supabase
-      .from("student_module_progress")
-      .select("*")
-      .in("class_id", classIds),
-    supabase
-      .from("assessment_evidence")
-      .select("*, students(display_name, username)")
-      .in("class_id", classIds)
-      .order("created_at", { ascending: false })
-      .limit(60),
     supabase
       .from("community_votes")
       .select("*")
       .in("class_id", classIds),
-    supabase
-      .from("feedback_reports")
-      .select("*")
-      .eq("feedback_type", "store-item-request")
-      .order("created_at", { ascending: false })
-      .limit(40)
+    (() => {
+      let query = supabase
+        .from("feedback_reports")
+        .select("*")
+        .eq("feedback_type", "store-item-request")
+        .order("created_at", { ascending: false })
+        .limit(40);
+      if (context.teacher?.schoolName) {
+        query = query.ilike("message", `%${context.teacher.schoolName}%`);
+      } else {
+        query = query.limit(0);
+      }
+      return query;
+    })()
   ]);
 
   const unwrapResult = (result, label) => {
@@ -2591,12 +2713,30 @@ async function getTeacherDashboardData() {
   };
 
   const students = unwrapResult(studentsResult, "students");
-  const moduleProgress = unwrapResult(moduleProgressResult, "student_module_progress");
-  const evidenceRows = unwrapResult(evidenceResult, "assessment_evidence");
   const voteRows = unwrapResult(votesResult, "community_votes");
   const feedbackRows = unwrapResult(feedbackResult, "feedback_reports");
 
   const studentIds = students.map(student => student.id);
+  const [moduleProgressResult, evidenceResult] = studentIds.length
+    ? await Promise.allSettled([
+      supabase
+        .from("student_module_progress")
+        .select("*")
+        .in("student_id", studentIds),
+      supabase
+        .from("assessment_evidence")
+        .select("*, students(display_name, username, school_id, class_id)")
+        .in("student_id", studentIds)
+        .order("created_at", { ascending: false })
+        .limit(80)
+    ])
+    : [{ status: "fulfilled", value: { data: [] } }, { status: "fulfilled", value: { data: [] } }];
+  const allowedStudentIds = new Set(studentIds);
+  const allowedClassIds = new Set(classIds);
+  const moduleProgress = unwrapResult(moduleProgressResult, "student_module_progress")
+    .filter(row => allowedStudentIds.has(row.student_id) && (!row.class_id || allowedClassIds.has(row.class_id)));
+  const evidenceRows = unwrapResult(evidenceResult, "assessment_evidence")
+    .filter(row => allowedStudentIds.has(row.student_id) && (!row.class_id || allowedClassIds.has(row.class_id)));
   let profileRows = [];
   if (studentIds.length) {
     const { data, error: profilesError } = await supabase
@@ -2724,7 +2864,7 @@ function buildFallbackTeacherDashboardData(players, context) {
     selectedClassId,
     selectedStudentId: dashboardFilter.studentId || "all",
     selectedClassName: selectedClassId === "all"
-      ? `All classes at ${context?.teacher?.schoolName || "school"}`
+      ? `All classes at ${context?.teacher?.schoolName || "School not resolved"}`
       : availableClasses.find(row => row.id === selectedClassId)?.name || "Selected class",
     students,
     moduleProgress: [],
@@ -2993,7 +3133,12 @@ async function renderStudentLiveData(players, skillsData) {
 function renderTeacherLiveData(players, skillsData, teacherData = null) {
   const teacherContext = getActiveTeacherContext();
   const fallbackTeacherData = buildFallbackTeacherDashboardData(players, teacherContext);
-  const shouldUseFallbackData = !teacherData || (!(teacherData.availableClasses || []).length && (players || []).length);
+  const hasTeacherScope = Boolean(
+    teacherData?.context?.teacher?.schoolId
+    || teacherContext?.teacher?.schoolId
+    || teacherContext?.teacherLogin?.email
+  );
+  const shouldUseFallbackData = !hasTeacherScope && (!teacherData || (!(teacherData.availableClasses || []).length && (players || []).length));
   const safeTeacherData = shouldUseFallbackData ? fallbackTeacherData : (teacherData || {
     context: teacherContext,
     availableClasses: [],
@@ -3430,12 +3575,12 @@ function renderTeacherLiveData(players, skillsData, teacherData = null) {
   const scopeLabel = selectedStudent
     ? `${getStudentDisplayName(selectedStudent)} learning profile`
     : selectedClassId === "all"
-      ? `all classes at ${dashboardContext.teacher?.schoolName || "your school"}`
+      ? `all classes at ${dashboardContext.teacher?.schoolName || dashboardContext.teacherLogin?.schoolName || "School not resolved"}`
       : (classCodeFilter ? `Class ${classCodeFilter}` : "selected class");
   const teacherSchoolName = dashboardContext.teacher?.schoolName
     || dashboardContext.teacherLogin?.schoolName
     || dashboardContext.teacherSession?.schoolName
-    || "Your School";
+    || "School not resolved";
   setText("teacher-school-name", teacherSchoolName);
   setText("teacher-hero-title", "Data-Informed Interventions and Engagement Information");
   setText(
@@ -3582,6 +3727,13 @@ async function initDashboards() {
   syncMegatrendsLaunchLinks();
   let skillsData = { categories: [] };
   let players = [];
+  const isTeacherDashboardPage = Boolean(document.getElementById("teacher-module-health"));
+  const needsSharedPlayerData = Boolean(
+    document.getElementById("student-module-grid")
+    || document.getElementById("leaderboard-page-list")
+    || document.getElementById("community-page-board")
+    || document.getElementById("global-page-metrics")
+  );
 
   try {
     skillsData = await loadEmployabilitySkills();
@@ -3589,10 +3741,12 @@ async function initDashboards() {
     console.error("Failed to load employability skills", error);
   }
 
-  try {
-    players = await getPlayers();
-  } catch (error) {
-    console.error("Failed to load player data", error);
+  if (!isTeacherDashboardPage || needsSharedPlayerData || isPromoTeacherDashboardMode()) {
+    try {
+      players = await getPlayers();
+    } catch (error) {
+      console.error("Failed to load player data", error);
+    }
   }
 
   if (document.getElementById("student-module-grid")) {
@@ -3634,14 +3788,14 @@ async function initDashboards() {
       try {
         teacherData = await getTeacherDashboardData();
       } catch (error) {
-        console.error("Failed to load teacher dashboard data", error);
+        console.error("Failed to load Teacher Stats Dashboard data", error);
       }
     }
 
     try {
       renderTeacherLiveData(players, skillsData, teacherData);
     } catch (error) {
-      console.error("Failed to render teacher dashboard", error);
+      console.error("Failed to render Teacher Stats Dashboard", error);
       renderTeacherLiveData([], { categories: [] }, teacherData || {
         context: getActiveTeacherContext(),
         availableClasses: [],
