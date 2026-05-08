@@ -1461,17 +1461,6 @@
       color: #7dd3fc;
       flex-shrink: 0;
     }
-    .platform-pathways {
-      display: grid;
-      gap: 22px;
-    }
-    body.platform-role-entry .platform-brand-strip,
-    body.platform-role-entry .platform-welcome-hero {
-      display: none;
-    }
-    body.platform-role-entry .platform-landing-grid {
-      gap: 0;
-    }
     .platform-pathway-panel {
       display: none;
       padding: clamp(20px, 3vw, 30px);
@@ -1889,8 +1878,8 @@
                   <h1 id="platform-welcome-title">Year 12 Careers just levelled up.</h1>
                   <p>Career Empire is an ECC-built learning world where careers content becomes choices, consequences, evidence, and class momentum.</p>
                   <div class="platform-role-choice" aria-label="Choose your pathway">
-                    <button class="btn-primary text-white font-bold py-3 px-6 rounded-lg platform-entry-btn platform-role-button" type="button" data-platform-role-button="student"><i data-lucide="graduation-cap"></i>I'm a student</button>
-                    <button class="platform-ghost platform-entry-btn platform-role-button" type="button" data-platform-role-button="teacher"><i data-lucide="presentation"></i>I'm a teacher</button>
+                    <a class="btn-primary text-white font-bold py-3 px-6 rounded-lg platform-entry-btn platform-role-button" href="./student/index.html"><i data-lucide="graduation-cap"></i>I'm a student</a>
+                    <a class="platform-ghost platform-entry-btn platform-role-button" href="./auth/teacher-login.html"><i data-lucide="presentation"></i>I'm a teacher</a>
                   </div>
                 </div>
                 <div class="platform-feature-stage" aria-label="Career Empire feature preview">
@@ -1916,87 +1905,6 @@
                 </div>
               </section>
 
-              <section class="platform-pathways" aria-live="polite">
-                <article id="platform-student-pathway" class="platform-pathway-panel" data-platform-role-panel="student" aria-labelledby="platform-student-title">
-                  <div class="platform-pathway-head">
-                    <div>
-                      <span class="platform-kicker">Student pathway</span>
-                      <h2 id="platform-student-title">Your Career Empire starts here.</h2>
-                      <p>Students can step into a dedicated landing page with the animated intro, their own login, demo spaces, and first mission launch links.</p>
-                    </div>
-                    <div class="platform-pathway-actions">
-                      <a class="btn-primary text-white font-bold py-3 px-6 rounded-lg platform-entry-btn" href="./student/index.html"><i data-lucide="graduation-cap"></i>Student Landing</a>
-                      <button class="platform-ghost platform-entry-btn" type="button" data-demo-student-launch="true" data-demo-student-target="./dashboards/student.html"><i data-lucide="play-circle"></i>Try Student Demo</button>
-                    </div>
-                  </div>
-                  <div class="platform-pathway-grid">
-                    <div class="platform-student-preview" role="img" aria-label="Career Empire student hub preview"></div>
-                    <div class="platform-student-guide">
-                      <h3>How students get online</h3>
-                      <ol>
-                        <li>Your teacher creates the class and gives you your student login details.</li>
-                        <li>Use Student Login to enter Career Empire with your class profile.</li>
-                        <li>Start in the Student Hub, then launch Megatrends, EST Prep, or other assigned modules.</li>
-                        <li>Your progress saves to your profile so your next module opens from the right place.</li>
-                      </ol>
-                      <div class="platform-pathway-actions">
-                        <button class="btn-primary text-white font-bold py-3 px-6 rounded-lg platform-entry-btn" type="button" data-demo-student-launch="true" data-demo-student-target="./modules/est-prep/index.html"><i data-lucide="flask-conical"></i>Try EST Prep Demo</button>
-                        <a class="platform-ghost platform-entry-btn" href="./modules/year10-megatrends/index.html"><i data-lucide="route"></i>Year 10 Quick Link</a>
-                      </div>
-                    </div>
-                  </div>
-                </article>
-
-                <article id="platform-teacher-pathway" class="platform-pathway-panel platform-teacher-landing" data-platform-role-panel="teacher" aria-labelledby="platform-teacher-title">
-                  <div class="platform-teacher-topline">
-                    <a class="platform-pathway-back" href="#platform-welcome-title"><i data-lucide="arrow-left"></i>Back</a>
-                    <span class="platform-kicker">Teacher pathway</span>
-                  </div>
-
-                  <section class="platform-teacher-stage" aria-label="Career Empire teacher overview video">
-                    <header class="platform-teacher-hero">
-                      <h2 id="platform-teacher-title">Enter the teaching universe.</h2>
-                      <p>Press play. Step inside.</p>
-                    </header>
-
-                    <div class="platform-teacher-overview">
-                      <div>
-                        <span class="platform-kicker">Start here</span>
-                        <h3>The overview</h3>
-                        <p>See the world before you build the class.</p>
-                      </div>
-                      <div class="platform-embed-frame">
-                        <video controls playsinline preload="metadata" poster="./Assets/Images and Animations/Student Hub/student-hub-hero-career-empire.png">
-                          <source src="./Assets/videos/Career%20Empire%20Explainer%202026.mp4" type="video/mp4">
-                          Your browser does not support the video tag.
-                        </video>
-                      </div>
-                    </div>
-                  </section>
-
-                  <div class="platform-teacher-action-grid">
-                    <section class="platform-teacher-action-card" aria-labelledby="teacher-demo-flow-title">
-                      <h3 id="teacher-demo-flow-title">Preview as a student</h3>
-                      <p>Borrow the learner lens before setup.</p>
-                      <div class="platform-pathway-actions">
-                        <button class="btn-primary text-white font-bold py-3 px-6 rounded-lg platform-entry-btn" type="button" data-demo-student-launch="true" data-demo-student-target="./dashboards/student.html"><i data-lucide="play-circle"></i>Student Hub Demo</button>
-                        <button class="btn-primary text-white font-bold py-3 px-6 rounded-lg platform-entry-btn" type="button" data-demo-student-launch="true" data-demo-student-target="./modules/est-prep/index.html"><i data-lucide="flask-conical"></i>EST Prep Demo</button>
-                        <a class="platform-ghost platform-entry-btn" href="./promo-video.html" target="_blank" rel="noopener noreferrer"><i data-lucide="maximize-2"></i>Open Video Page</a>
-                      </div>
-                    </section>
-
-                    <section class="platform-teacher-action-card" aria-labelledby="teacher-space-title">
-                      <h3 id="teacher-space-title">Open your teacher space</h3>
-                      <p>Build the class when the story clicks.</p>
-                      <div class="platform-pathway-actions">
-                        <a class="btn-primary text-white font-bold py-3 px-6 rounded-lg platform-entry-btn" href="./auth/teacher-signup.html"><i data-lucide="user-plus"></i>Create Teacher Account</a>
-                        <a class="platform-ghost platform-entry-btn" href="./auth/teacher-login.html"><i data-lucide="log-in"></i>Teacher Login</a>
-                        <button class="platform-ghost platform-entry-btn platform-safety-entry" type="button"><i data-lucide="shield-check"></i>Online safety concerns addressed</button>
-                      </div>
-                    </section>
-                  </div>
-                </article>
-              </section>
             </div>
           </div>
         </div>
@@ -4640,9 +4548,13 @@
         return;
       }
 
-      if (role === 'student' || role === 'teacher') {
-        document.body.classList.add('platform-role-entry');
-        setPlatformRole(role, true);
+      if (role === 'student') {
+        window.location.href = './student/index.html';
+        return;
+      }
+
+      if (role === 'teacher') {
+        window.location.href = './auth/teacher-login.html';
       }
     }
 
