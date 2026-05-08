@@ -8,6 +8,7 @@ let glossaryInvaderShotTimeout = null;
 let glossaryCommunityAssetTimeout = null;
 
 const GLOSSARY_TERMS_PER_ROUND = 4;
+const GLOSSARY_BRIDGE_TERMS_PER_LEVEL = 5;
 const GLOSSARY_MASTERY_TARGET = FULL_GLOSSARY_TERMS.length;
 const GLOSSARY_MASTERY_ACCURACY = 1;
 const GLOSSARY_MASTERY_REPS = 2;
@@ -31,6 +32,35 @@ const GLOSSARY_GUIDE_ASSETS = {
   study: "../../Assets/EST Preparation/guide-character/guide-thinking-top.png",
   reward: "../../Assets/EST Preparation/guide-character/guide-celebration.png"
 };
+
+const GLOSSARY_BRIDGE_ASSETS = {
+  backdrop: "../../Assets/Images and Animations/Glossary Check/Vault Bridge/vault-bridge-backdrop.png",
+  characterReady: "../../Assets/Images and Animations/Emmanuel Student Characters/MacKillop/MacKillop Thinking.png",
+  characterAction: "../../Assets/Images and Animations/Emmanuel Student Characters/MacKillop/MacKillop Pointing.png",
+  characterSuccess: "../../Assets/Images and Animations/Emmanuel Student Characters/MacKillop/MacKillop Celebrating.png",
+  characterReset: "../../Assets/Images and Animations/Emmanuel Student Characters/MacKillop/MacKillop Encouraging.png"
+};
+
+const GLOSSARY_BRIDGE_LEVEL_NAMES = [
+  "Foundation Lock",
+  "Workplace Signal",
+  "Future Industries",
+  "Learning Loop",
+  "Risk Chamber",
+  "Career Mastery"
+];
+
+const GLOSSARY_BRIDGE_ROWS = [
+  [{ x: 23, y: 72 }, { x: 50, y: 72 }, { x: 77, y: 72 }],
+  [{ x: 28, y: 64 }, { x: 50, y: 64 }, { x: 72, y: 64 }],
+  [{ x: 23, y: 56 }, { x: 50, y: 56 }, { x: 77, y: 56 }],
+  [{ x: 31, y: 48 }, { x: 55, y: 48 }, { x: 79, y: 48 }],
+  [{ x: 43, y: 40 }, { x: 63, y: 40 }, { x: 83, y: 40 }]
+];
+
+const GLOSSARY_BRIDGE_HOME_POSITION = { x: 50, y: 91 };
+const GLOSSARY_BRIDGE_PORTAL_POSITION = { x: 83, y: 42 };
+const GLOSSARY_BRIDGE_LANDING_OFFSET = 10;
 
 const GLOSSARY_STORY_ASSETS = {
   vault: "../../Assets/Images and Animations/EST backgrounds/Background Neutral.png",
@@ -514,6 +544,7 @@ function initialiseGlossaryBoard() {
   state.glossaryHasStarted = true;
   state.glossaryMode = "play";
   state.glossaryStudyIndex = 0;
+  clearGlossaryBridgeState();
   resetGlossaryRewardLoop();
   state.glossaryRunStartedAt = Date.now();
   syncMissionMode();
@@ -551,6 +582,7 @@ function clearGlossaryRoundState(roundIndex) {
   state.glossaryDraggedTermId = "";
   state.glossaryStreak = 0;
   state.glossaryMisses = 0;
+  if (roundIndex === 3) clearGlossaryBridgeState();
 }
 
 function getGlossaryBatchKey() {
@@ -748,6 +780,224 @@ function captureGlossaryFlightSignal() {
   submitGlossaryChallengeChoiceEncoded(item.id, encodeURIComponent(selected.value));
 }
 
+function getGlossaryBridgeLevels() {
+  const source = buildGlossarySource();
+  return Array.from({ length: Math.ceil(source.length / GLOSSARY_BRIDGE_TERMS_PER_LEVEL) }, (_, index) => {
+    return source.slice(index * GLOSSARY_BRIDGE_TERMS_PER_LEVEL, (index + 1) * GLOSSARY_BRIDGE_TERMS_PER_LEVEL);
+  }).filter(level => level.length);
+}
+
+function getGlossaryBridgeLocks() {
+  const locks = state.answers?.glossaryBridgeLocks;
+  return locks && typeof locks === "object" && !Array.isArray(locks) ? locks : {};
+}
+
+function getGlossaryBridgeState() {
+  const levels = getGlossaryBridgeLevels();
+  const rawLevel = Number(state.answers.glossaryBridgeLevel || 0);
+  const level = Math.max(0, Math.min(levels.length - 1, Number.isFinite(rawLevel) ? Math.round(rawLevel) : 0));
+  const levelTerms = levels[level] || [];
+  const rawStep = Number(state.answers.glossaryBridgeStep || 0);
+  const step = Math.max(0, Math.min(levelTerms.length, Number.isFinite(rawStep) ? Math.round(rawStep) : 0));
+  const locks = getGlossaryBridgeLocks();
+  return {
+    levels,
+    level,
+    step,
+    levelTerms,
+    locks,
+    levelLocks: Array.isArray(locks[String(level)]) ? locks[String(level)] : [],
+    levelClear: Boolean(state.answers.glossaryBridgeLevelClear) || (levelTerms.length > 0 && step >= levelTerms.length),
+    completed: Boolean(state.answers.glossaryBridgeCompleted)
+  };
+}
+
+function getGlossaryBridgeLevelName(levelIndex) {
+  return GLOSSARY_BRIDGE_LEVEL_NAMES[levelIndex] || `Bridge Level ${levelIndex + 1}`;
+}
+
+function getGlossaryBridgeTotalSecured(bridge = getGlossaryBridgeState()) {
+  const total = buildGlossarySource().length;
+  return Math.min(total, (bridge.level * GLOSSARY_BRIDGE_TERMS_PER_LEVEL) + Math.min(bridge.step, bridge.levelTerms.length));
+}
+
+function getGlossaryBridgeActiveItem() {
+  const bridge = getGlossaryBridgeState();
+  if (!bridge.levelTerms.length) return null;
+  return bridge.levelTerms[Math.min(bridge.step, bridge.levelTerms.length - 1)] || bridge.levelTerms[0];
+}
+
+function getGlossaryBridgeActivePosition(bridge = getGlossaryBridgeState()) {
+  if (bridge.levelClear) return GLOSSARY_BRIDGE_PORTAL_POSITION;
+  if (bridge.step <= 0) return GLOSSARY_BRIDGE_HOME_POSITION;
+  const optionIndex = bridge.levelLocks[bridge.step - 1];
+  const row = GLOSSARY_BRIDGE_ROWS[bridge.step - 1] || [];
+  const tile = row[Math.max(0, Math.min(row.length - 1, Number(optionIndex || 0)))] || row[0];
+  return tile ? { x: tile.x, y: tile.y + GLOSSARY_BRIDGE_LANDING_OFFSET } : GLOSSARY_BRIDGE_HOME_POSITION;
+}
+
+function buildGlossaryBridgeOptions(item, levelIndex = 0, stepIndex = 0) {
+  const source = buildGlossarySource();
+  if (!item) return [];
+  const sourceIndex = Math.max(0, source.findIndex(candidate => candidate.id === item.id));
+  const correctIndex = (sourceIndex + levelIndex + stepIndex) % 3;
+  const offsets = [7, 13, 19, 5, 11, 17, 23];
+  const distractors = [];
+
+  offsets.forEach(offset => {
+    const candidate = source[(sourceIndex + offset) % source.length];
+    if (candidate && candidate.id !== item.id && !distractors.some(entry => entry.id === candidate.id)) {
+      distractors.push(candidate);
+    }
+  });
+  source.forEach(candidate => {
+    if (distractors.length >= 2) return;
+    if (candidate.id !== item.id && !distractors.some(entry => entry.id === candidate.id)) {
+      distractors.push(candidate);
+    }
+  });
+
+  const terms = Array(3).fill("");
+  terms[correctIndex] = item.term;
+  let distractorIndex = 0;
+  terms.forEach((term, index) => {
+    if (term) return;
+    terms[index] = distractors[distractorIndex]?.term || source[(sourceIndex + index + 1) % source.length]?.term || "Review term";
+    distractorIndex += 1;
+  });
+
+  return terms.map((term, optionIndex) => ({
+    value: term,
+    title: term,
+    optionIndex,
+    correct: normaliseGlossaryTermText(term) === normaliseGlossaryTermText(item.term)
+  }));
+}
+
+function resetGlossaryBridgeLevel() {
+  const bridge = getGlossaryBridgeState();
+  const locks = { ...bridge.locks, [String(bridge.level)]: [] };
+  state.answers.glossaryBridgeLocks = locks;
+  state.answers.glossaryBridgeStep = 0;
+  state.answers.glossaryBridgeLevelClear = false;
+  state.answers.glossaryBridgeCompleted = false;
+  delete state.answers.glossaryBridgeMotion;
+  state.glossaryPulse = `${getGlossaryBridgeLevelName(bridge.level)} rebuilt. Start from the entrance and lock a clean path.`;
+  state.glossaryPulseType = "neutral";
+  persistESTProgressSnapshot();
+  renderGlossaryStage();
+}
+
+function submitGlossaryBridgeChoiceEncoded(targetId, encodedValue, optionIndexRaw) {
+  const bridge = getGlossaryBridgeState();
+  if (bridge.levelClear || !bridge.levelTerms.length) return;
+  const item = bridge.levelTerms[bridge.step];
+  if (!item || item.id !== targetId) return;
+
+  const answer = decodeURIComponent(encodedValue || "");
+  const selectedOptionIndex = Math.max(0, Math.min(2, Number(optionIndexRaw || 0)));
+  const startPosition = getGlossaryBridgeActivePosition(bridge);
+  const selectedTile = GLOSSARY_BRIDGE_ROWS[bridge.step]?.[selectedOptionIndex] || GLOSSARY_BRIDGE_ROWS[bridge.step]?.[0] || GLOSSARY_BRIDGE_HOME_POSITION;
+  const selectedPosition = {
+    x: selectedTile.x,
+    y: selectedTile.y + GLOSSARY_BRIDGE_LANDING_OFFSET
+  };
+  const correct = normaliseGlossaryTermText(answer) === normaliseGlossaryTermText(item.term);
+  recordGlossaryAttempt(item, answer, correct, "vault-bridge");
+
+  if (correct) {
+    const nextStep = Math.min(bridge.levelTerms.length, bridge.step + 1);
+    const levelLocks = [...bridge.levelLocks];
+    levelLocks[bridge.step] = selectedOptionIndex;
+    state.answers.glossaryBridgeLocks = { ...bridge.locks, [String(bridge.level)]: levelLocks };
+    state.answers.glossaryBridgeStep = nextStep;
+    state.answers.glossaryBridgeLevelClear = nextStep >= bridge.levelTerms.length;
+    state.answers.glossaryBridgeCompleted = false;
+    state.answers.glossaryBridgeMotion = {
+      kind: nextStep >= bridge.levelTerms.length ? "clear" : "correct",
+      fromX: startPosition.x,
+      fromY: startPosition.y,
+      toX: nextStep >= bridge.levelTerms.length ? GLOSSARY_BRIDGE_PORTAL_POSITION.x : selectedPosition.x,
+      toY: nextStep >= bridge.levelTerms.length ? GLOSSARY_BRIDGE_PORTAL_POSITION.y : selectedPosition.y,
+      step: bridge.step,
+      optionIndex: selectedOptionIndex,
+      at: Date.now()
+    };
+    state.glossaryStreak += 1;
+    state.glossaryBestStreak = Math.max(state.glossaryBestStreak, state.glossaryStreak);
+    state.glossaryPulse = nextStep >= bridge.levelTerms.length
+      ? `${getGlossaryBridgeLevelName(bridge.level)} cleared. The salary portal is opening.`
+      : `${item.term} locked. Wrong pieces dropped away; cross to the next row.`;
+    state.glossaryPulseType = "good";
+    state.recentReward = {
+      type: "positive",
+      title: "Bridge piece locked",
+      detail: `${item.term} is secured in the glossary vault path.`
+    };
+  } else {
+    state.answers.glossaryBridgeLocks = { ...bridge.locks, [String(bridge.level)]: [] };
+    state.answers.glossaryBridgeStep = 0;
+    state.answers.glossaryBridgeLevelClear = false;
+    state.answers.glossaryBridgeCompleted = false;
+    state.answers.glossaryBridgeMotion = {
+      kind: "wrong",
+      fromX: selectedPosition.x,
+      fromY: selectedPosition.y,
+      toX: GLOSSARY_BRIDGE_HOME_POSITION.x,
+      toY: GLOSSARY_BRIDGE_HOME_POSITION.y,
+      step: bridge.step,
+      optionIndex: selectedOptionIndex,
+      at: Date.now()
+    };
+    state.glossaryMisses += 1;
+    state.glossaryStreak = 0;
+    state.glossaryPulse = `${answer || "That tile"} collapses the bridge. The current level rebuilt from row one.`;
+    state.glossaryPulseType = "warn";
+    state.recentReward = {
+      type: "warning",
+      title: "Bridge rebuilt",
+      detail: `${answer || "That answer"} did not match ${item.term}. Start this level again.`
+    };
+  }
+
+  renderRewardPulse();
+  persistESTProgressSnapshot();
+  renderGlossaryStage();
+}
+
+function continueGlossaryBridgeLevel() {
+  const bridge = getGlossaryBridgeState();
+  if (!bridge.levelClear) return;
+
+  if (bridge.level >= bridge.levels.length - 1) {
+    state.answers.glossaryBridgeCompleted = true;
+    buildGlossaryCelebration(4, `All ${buildGlossarySource().length} Vault Bridge terms secured.`);
+    renderGlossaryStage();
+    persistESTProgressSnapshot();
+    return;
+  }
+
+  const nextLevel = bridge.level + 1;
+  state.answers.glossaryBridgeLevel = nextLevel;
+  state.answers.glossaryBridgeStep = 0;
+  state.answers.glossaryBridgeLevelClear = false;
+  state.answers.glossaryBridgeCompleted = false;
+  delete state.answers.glossaryBridgeMotion;
+  state.glossaryPulse = `Level ${nextLevel + 1}: ${getGlossaryBridgeLevelName(nextLevel)} loaded. Five new glossary rows are live.`;
+  state.glossaryPulseType = "neutral";
+  persistESTProgressSnapshot();
+  renderGlossaryStage();
+}
+
+function clearGlossaryBridgeState() {
+  delete state.answers.glossaryBridgeLevel;
+  delete state.answers.glossaryBridgeStep;
+  delete state.answers.glossaryBridgeLocks;
+  delete state.answers.glossaryBridgeLevelClear;
+  delete state.answers.glossaryBridgeCompleted;
+  delete state.answers.glossaryBridgeMotion;
+}
+
 function fireGlossaryInvaderShipEncoded(targetId, encodedValue) {
   const batch = getCurrentGlossaryBatch();
   const item = batch.find(entry => entry.id === targetId);
@@ -798,7 +1048,7 @@ function submitGlossaryChallengeChoiceEncoded(targetId, encodedValue) {
     state.glossaryStreak += 1;
     state.glossaryBestStreak = Math.max(state.glossaryBestStreak, state.glossaryStreak);
     state.glossaryPulse = round.id === "recall"
-      ? `${item.term} gate captured. Vault flight path is stabilising.`
+      ? `${item.term} bridge piece locked. The vault path is stabilising.`
       : round.id === "signal-slice"
         ? `${cloze.keyword} locked into the ${item.term} definition. Nice fast recall.`
       : `${item.term} restored. Another glossary signal is back online.`;
@@ -820,7 +1070,7 @@ function submitGlossaryChallengeChoiceEncoded(targetId, encodedValue) {
           : round.id === "plain-match"
             ? "Wrong ship. Use the definition lock and shoot the term that matches it."
             : round.id === "recall"
-              ? "Wrong gate. Move lanes, reread the definition, and capture the term that fits."
+              ? "Wrong bridge piece. Reread the definition and rebuild the safe path."
               : "Signal mismatch. Use the clue feed and restore the right glossary term.";
     state.glossaryPulseType = "warn";
     state.recentReward = {
@@ -911,7 +1161,7 @@ function formatGlossaryRoundTitle(roundNumber) {
       ? "Cloze Sprint cleared. Missing-keyword recall is locking into memory."
       : roundNumber === 3
         ? "Definition Invaders cleared. Meaning-to-term recognition is stronger."
-        : "Vault Flight complete. Retrieval practice is banked.";
+        : "Vault Bridge complete. All glossary terms are banked.";
 }
 
 function buildGlossaryCelebration(roundNumber, scoreText) {
@@ -1242,9 +1492,12 @@ function setGlossaryRecallKeywordChoiceEncoded(itemId, encodedValue) {
 
 function getGlossaryStabilityPercent() {
   const completedRounds = Object.keys(state.glossaryRoundRewards || {}).length;
-  const partial = state.glossaryRoundCelebration
+  const bridgePartial = !state.glossaryRoundCelebration && getCurrentGlossaryRound()?.id === "recall"
+    ? Math.round((getGlossaryBridgeTotalSecured() / Math.max(1, buildGlossarySource().length)) * 25)
+    : 0;
+  const partial = bridgePartial || (state.glossaryRoundCelebration
     ? 0
-    : Math.round(((state.glossaryBatchIndex + (isGlossaryBatchMatched() ? 1 : 0)) / Math.max(1, (state.stageDeck?.glossaryBatches || []).length)) * 25);
+    : Math.round(((state.glossaryBatchIndex + (isGlossaryBatchMatched() ? 1 : 0)) / Math.max(1, (state.stageDeck?.glossaryBatches || []).length)) * 25));
   return Math.min(100, (completedRounds * 25) + partial);
 }
 
@@ -1430,8 +1683,8 @@ function getGlossaryGuideCopy(roundId, item) {
       body: `Now the definition is the target lock. Fire at the moving term ship that matches the meaning.`
     },
     recall: {
-      title: "Fly the right lane",
-      body: `Final pass: steer through the vault lane holding ${term}. Use the definition, move with the arrows, then capture the gate.`
+      title: "Cross the vault bridge",
+      body: `Choose the bridge piece holding ${term}. Correct answers lock the path; a wrong answer rebuilds only the current level.`
     },
     study: {
       title: "Look, cover, retrieve",
@@ -1550,11 +1803,11 @@ function renderGlossaryRecallForge(batch, batchNumber, totalBatches) {
       <div class="glossary-mission-topbar glossary-escape-topbar">
         <div>
           <div class="kicker">System Recovery Protocol</div>
-          <h3>Vault Flight</h3>
+          <h3>Vault Bridge</h3>
           <p class="small-copy">This game turns recognition into retrieval. Restore each term signal, then restore one key concept from memory.</p>
         </div>
         <div class="glossary-mission-actions">
-          <span class="badge">Lane recall</span>
+          <span class="badge">Bridge recall</span>
           <span class="badge">Target 30/30 secure</span>
           <span class="badge">Timer <strong id="glossary-round-timer">${formatSecondsAsClock(getGlossaryRoundElapsedSeconds())}</strong></span>
           <button class="choice-button" type="button" onclick="window.ESTPrep.startNewGlossaryPracticeRun()">New timed set</button>
@@ -1585,7 +1838,7 @@ function renderGlossaryRecallForge(batch, batchNumber, totalBatches) {
       </div>
       <div class="panel glossary-command-panel">
         <div class="section-title">
-          <h2>How to clear Vault Flight</h2>
+          <h2>How to clear Vault Bridge</h2>
           <p>${readyCores}/${batch.length} signal cores fully locked</p>
         </div>
         <p class="small-copy">Work one signal at a time. A wrong term stops the sequence. A correct term unlocks the repair token step.</p>
@@ -1919,74 +2172,168 @@ function renderGlossaryInvadersGame(round, promptItem, optionSet, batch, batchNu
   `;
 }
 
-function renderGlossaryVaultFlightGame(round, promptItem, optionSet, batch, batchNumber, totalBatches, matchedCount, roundScore, progressPercent) {
-  const guideImage = GLOSSARY_GUIDE_ASSETS.recall;
-  const lane = getGlossaryFlightLane();
-  const laneY = 16.4 + (lane * 14.8);
+function renderGlossaryVaultBridgeGame(round) {
+  const bridge = getGlossaryBridgeState();
+  const sourceTotal = buildGlossarySource().length;
+  const item = getGlossaryBridgeActiveItem();
+  const totalSecured = getGlossaryBridgeTotalSecured(bridge);
+  const totalPercent = sourceTotal ? Math.round((totalSecured / sourceTotal) * 100) : 0;
+  const levelPercent = bridge.levelTerms.length ? Math.round((Math.min(bridge.step, bridge.levelTerms.length) / bridge.levelTerms.length) * 100) : 0;
+  const levelName = getGlossaryBridgeLevelName(bridge.level);
+  const bridgeSalary = 2400 + (totalSecured * 350);
+  const motion = state.answers.glossaryBridgeMotion || {};
+  const playerPosition = getGlossaryBridgeActivePosition(bridge);
+  const motionKind = String(motion.kind || "");
+  const playerClass = bridge.levelClear
+    ? "is-exiting"
+    : motionKind === "wrong"
+      ? "is-resetting"
+      : motionKind === "correct"
+        ? "is-hopping"
+        : "";
+  const characterImage = motionKind === "wrong"
+    ? GLOSSARY_BRIDGE_ASSETS.characterReset
+    : bridge.levelClear || motionKind === "correct"
+      ? GLOSSARY_BRIDGE_ASSETS.characterSuccess
+      : GLOSSARY_BRIDGE_ASSETS.characterReady;
+  const playerStyle = [
+    `--bridge-player-x:${playerPosition.x}%`,
+    `--bridge-player-y:${playerPosition.y}%`,
+    `--bridge-from-x:${Number(motion.fromX ?? playerPosition.x)}%`,
+    `--bridge-from-y:${Number(motion.fromY ?? playerPosition.y)}%`
+  ].join(";");
+
+  if (!item) {
+    return `
+      <div class="panel glossary-command-panel">
+        <div class="section-title">
+          <h2>Vault Bridge</h2>
+          <p>The bridge could not find a glossary term set.</p>
+        </div>
+        <p class="small-copy glossary-pulse warn">Reload the glossary run to rebuild the bridge terms.</p>
+      </div>
+    `;
+  }
+
+  const options = buildGlossaryBridgeOptions(item, bridge.level, bridge.step);
+  const rowMarkup = GLOSSARY_BRIDGE_ROWS.map((row, rowIndex) => {
+    return row.map((position, optionIndex) => {
+      const lockedOption = bridge.levelLocks[rowIndex];
+      const isLocked = rowIndex < bridge.step && lockedOption === optionIndex;
+      const isDropped = rowIndex < bridge.step && lockedOption !== optionIndex;
+      const isActive = rowIndex === bridge.step && !bridge.levelClear;
+      const isWaiting = rowIndex > bridge.step || bridge.levelClear;
+      const option = options[optionIndex] || { value: "", title: "", optionIndex };
+      const motionMatches = Number(motion.step) === rowIndex && Number(motion.optionIndex) === optionIndex;
+      const stateClass = isLocked
+        ? "is-locked"
+        : isDropped
+          ? "is-dropped"
+          : isActive
+            ? "is-active"
+            : "is-waiting";
+      const feedbackClass = motionMatches && motionKind === "wrong"
+        ? "is-wrong"
+        : motionMatches && (motionKind === "correct" || motionKind === "clear")
+          ? "is-correct"
+          : "";
+      return `
+        <button
+          type="button"
+          class="glossary-bridge-tile ${stateClass} ${feedbackClass}"
+          style="--bridge-tile-x:${position.x}%; --bridge-tile-y:${position.y}%;"
+          ${isActive ? `onclick="window.ESTPrep.submitGlossaryBridgeChoiceEncoded('${item.id}', '${encodeForInlineHandler(option.value)}', ${optionIndex})"` : "disabled"}
+          data-correct="${option.correct ? "true" : "false"}"
+          aria-label="${escapeHtml(isActive ? `${String.fromCharCode(65 + optionIndex)}: ${option.title}` : isLocked ? `Row ${rowIndex + 1} secured` : isDropped ? `Row ${rowIndex + 1} dropped` : `Row ${rowIndex + 1} waiting`)}"
+        >
+          <span class="glossary-bridge-letter">${isLocked ? "OK" : isWaiting ? "" : String.fromCharCode(65 + optionIndex)}</span>
+          <strong>${isActive ? escapeHtml(option.title) : ""}</strong>
+        </button>
+      `;
+    }).join("");
+  }).join("");
+
+  const stepDots = bridge.levelTerms.map((_, index) => `
+    <span class="${index < bridge.step ? "is-secured" : ""}"></span>
+  `).join("");
+  const finalLevel = bridge.level >= bridge.levels.length - 1;
+  const clearTitle = finalLevel ? "Glossary vault mastered" : "Portal clear";
+  const clearCopy = finalLevel
+    ? `All ${sourceTotal} terms are secure. Bank the salary reward, pay the community tax, and choose what to practise next.`
+    : `${levelName} cleared. Five terms are locked, the salary portal is open, and the next bridge level is ready.`;
+
   return `
-    <div class="panel glossary-command-panel glossary-arcade-shell glossary-flight-shell">
+    <div class="panel glossary-command-panel glossary-arcade-shell glossary-bridge-shell">
       <div class="section-title">
-        <h2>Vault Flight</h2>
-        <p>${matchedCount}/${batch.length} gates captured in this set</p>
+        <h2>Vault Bridge</h2>
+        <p>Level ${bridge.level + 1}/${bridge.levels.length}: ${escapeHtml(levelName)}</p>
       </div>
       <div class="badge-row" style="margin-bottom:14px;">
-        <span class="badge">Current streak: x${state.glossaryStreak}</span>
+        <span class="badge">${bridge.step}/${bridge.levelTerms.length} rows secured</span>
+        <span class="badge">${totalSecured}/${sourceTotal} total terms</span>
         <span class="badge">Best streak: x${state.glossaryBestStreak}</span>
         <span class="badge">Misses: ${state.glossaryMisses}</span>
-        <span class="badge">Score: ${roundScore}</span>
       </div>
       <p class="small-copy glossary-pulse ${state.glossaryPulseType}">${escapeHtml(state.glossaryPulse || round.cue)}</p>
       <div class="glossary-progress-track" aria-hidden="true">
-        <div class="glossary-progress-bar" style="width:${progressPercent}%;"></div>
+        <div class="glossary-progress-bar" style="width:${totalPercent}%;"></div>
       </div>
-      <div class="glossary-flight-game" style="--flight-y:${laneY}%;">
-        <img class="glossary-flight-bg" src="${escapeHtml(GLOSSARY_VISUAL_ASSETS.recall)}" alt="">
-        <span class="glossary-flight-star glossary-flight-star--one"></span>
-        <span class="glossary-flight-star glossary-flight-star--two"></span>
-        <span class="glossary-flight-star glossary-flight-star--three"></span>
-        <div class="glossary-flight-lanes" aria-hidden="true">
-          <span></span>
-          <span></span>
-          <span></span>
-          <span></span>
+      <div class="glossary-bridge-game ${bridge.levelClear ? "is-level-clear" : ""} ${motionKind ? `motion-${escapeHtml(motionKind)}` : ""}" style="${playerStyle}">
+        <img class="glossary-bridge-bg" src="${escapeHtml(GLOSSARY_BRIDGE_ASSETS.backdrop)}" alt="">
+        <span class="glossary-bridge-vignette" aria-hidden="true"></span>
+        <span class="glossary-bridge-runway" aria-hidden="true"></span>
+        <div class="glossary-bridge-hud" aria-label="Vault Bridge status">
+          <span><b>L${bridge.level + 1}</b> ${escapeHtml(levelName)}</span>
+          <span><b>${formatCurrency(bridgeSalary)}</b> salary signal</span>
         </div>
-        <div class="glossary-flight-capture-zone" aria-hidden="true">
-          <span></span>
+        <article class="glossary-bridge-question">
+          <span class="kicker">${bridge.levelClear ? "Portal target" : "Definition target"}</span>
+          <p>${escapeHtml(bridge.levelClear ? "The level route is secure. Move through the portal to unlock the next glossary set." : item.definition)}</p>
+        </article>
+        <div class="glossary-bridge-pieces" aria-label="Select the bridge piece that matches the definition">
+          ${rowMarkup}
         </div>
-        ${optionSet.map(option => `
-          <button
-            type="button"
-            class="glossary-flight-gate glossary-flight-gate--${option.lane} ${lane === option.lane ? "selected" : ""}"
-            style="--gate-delay:${(option.lane * -0.06).toFixed(2)}s;"
-            onclick="window.ESTPrep.setGlossaryFlightLane(${option.lane})"
-          >
-            <span>Lane ${option.lane + 1}</span>
-            <strong>${escapeHtml(option.title)}</strong>
-          </button>
-        `).join("")}
-        <div class="glossary-flight-player" aria-label="Flying glossary character">
-          <span class="glossary-flight-thruster"></span>
-          <img src="${escapeHtml(guideImage)}" alt="">
+        <div class="glossary-bridge-portal ${bridge.levelClear ? "is-active" : ""} ${finalLevel ? "is-final" : ""}" aria-hidden="true">
+          <span class="glossary-bridge-portal-ring"></span>
+          <span class="glossary-bridge-portal-core"></span>
+          <span class="glossary-bridge-portal-door"></span>
+          <span class="glossary-bridge-portal-sparks"></span>
         </div>
-        <div class="glossary-flight-definition">
-          <span class="kicker">Definition target</span>
-          <strong>Fly to the term that means:</strong>
-          <p>${escapeHtml(promptItem.definition)}</p>
-        </div>
-      </div>
-      <div class="glossary-flight-controls">
-        <button class="choice-button glossary-flight-arrow" type="button" onclick="window.ESTPrep.moveGlossaryFlightLane(-1)" ${lane <= 0 ? "disabled" : ""} aria-label="Move up">&uarr;</button>
-        <button class="choice-button glossary-flight-arrow" type="button" onclick="window.ESTPrep.moveGlossaryFlightLane(1)" ${lane >= 3 ? "disabled" : ""} aria-label="Move down">&darr;</button>
-        <button class="submit-button glossary-flight-capture" type="button" onclick="window.ESTPrep.captureGlossaryFlightSignal()">
-          Capture selected gate
-        </button>
-        <span>Move lanes as the gates fly in, then capture the selected term.</span>
+        <img class="glossary-bridge-player ${playerClass}" src="${escapeHtml(characterImage)}" alt="MacKillop student character crossing the bridge">
+        <span class="glossary-bridge-burst ${motionKind === "correct" || motionKind === "clear" ? "is-active" : ""}" aria-hidden="true"></span>
+        <span class="glossary-bridge-splash ${motionKind === "wrong" ? "is-active" : ""}" aria-hidden="true"></span>
+        <article class="glossary-bridge-feedback" aria-live="polite">
+          <strong>${bridge.levelClear ? clearTitle : motionKind === "wrong" ? "Bridge rebuilt" : bridge.step ? "Next row" : "Ready"}</strong>
+          <p>${escapeHtml(bridge.levelClear ? clearCopy : motionKind === "wrong" ? "A wrong tile sends you back to the entrance for this level. Previous cleared levels stay banked." : bridge.step ? "The locked bridge piece stays lit. The new row has fresh options." : "Start from the arrow runway and choose the term that matches the definition.")}</p>
+        </article>
+        <article class="glossary-bridge-progress">
+          <strong>Bridge charge</strong>
+          <p>Level ${bridge.level + 1}: ${bridge.step}/${bridge.levelTerms.length} rows. Total glossary bank: ${totalSecured}/${sourceTotal}.</p>
+          <div class="glossary-bridge-track" aria-hidden="true"><span style="width:${totalPercent}%;"></span></div>
+          <div class="glossary-bridge-dots" aria-hidden="true">${stepDots}</div>
+        </article>
+        ${bridge.levelClear ? `
+          <section class="glossary-bridge-clear" aria-live="polite">
+            <article>
+              <div class="kicker">${finalLevel ? "Final portal" : "Level portal"}</div>
+              <h3>${escapeHtml(clearTitle)}</h3>
+              <p>${escapeHtml(clearCopy)}</p>
+              <div class="glossary-bridge-reward-count">
+                <span><strong>${bridge.level + 1}/${bridge.levels.length}</strong>Level</span>
+                <span><strong>${totalSecured}/${sourceTotal}</strong>Terms</span>
+                <span><strong>${formatCurrency(bridgeSalary)}</strong>Salary</span>
+              </div>
+              <button class="submit-button" type="button" onclick="window.ESTPrep.continueGlossaryBridgeLevel()">${finalLevel ? "Bank reward" : "Next level"}</button>
+            </article>
+          </section>
+        ` : ""}
       </div>
     </div>
     <div class="written-stage glossary-finale-stage">
-      <strong>Vault exit</strong>
-      <p class="small-copy">Capture all ${batch.length} correct term gates to bank the final glossary reward for this timed set.</p>
-      <button class="submit-button" type="button" onclick="window.ESTPrep.nextGlossaryPhase()" ${isGlossaryBatchMatched() ? "" : "disabled"}>Finish Game</button>
+      <strong>Vault Bridge exit</strong>
+      <p class="small-copy">Secure five rows to open each portal. Wrong answers rebuild only the current level from the entrance.</p>
+      <button class="submit-button" type="button" onclick="window.ESTPrep.continueGlossaryBridgeLevel()" ${bridge.levelClear ? "" : "disabled"}>${finalLevel ? "Bank reward" : "Next level"}</button>
+      <button class="choice-button" type="button" onclick="window.ESTPrep.resetGlossaryBridgeLevel()">Reset current level</button>
     </div>
   `;
 }
@@ -1994,6 +2341,10 @@ function renderGlossaryVaultFlightGame(round, promptItem, optionSet, batch, batc
 function renderGlossaryChallengeArena(round, batch, batchNumber, totalBatches, matchedCount, roundScore) {
   const promptItem = getCurrentGlossaryPromptItem(batch);
   const progressPercent = Math.round((matchedCount / Math.max(1, batch.length)) * 100);
+
+  if (round.id === "recall") {
+    return renderGlossaryVaultBridgeGame(round);
+  }
 
   if (!promptItem) {
     return `
@@ -2010,10 +2361,6 @@ function renderGlossaryChallengeArena(round, batch, batchNumber, totalBatches, m
         <button class="submit-button" type="button" onclick="window.ESTPrep.nextGlossaryPhase()">Finish Game</button>
       </div>
     `;
-  }
-
-  if (round.id === "recall") {
-    return renderGlossaryVaultFlightGame(round, promptItem, buildGlossaryFlightOptions(promptItem), batch, batchNumber, totalBatches, matchedCount, roundScore, progressPercent);
   }
 
   if (round.id === "signal-slice") {
@@ -2322,28 +2669,30 @@ function renderGlossaryStage() {
       ${renderGlossaryMissionFrame(`
         ${modeSwitch}
         ${renderGlossaryChallengeArena(round, batch, batchNumber, totalBatches, matchedCount, roundScore)}
-      `, getCurrentGlossaryPromptItem(batch))}
+      `, round.id === "recall" ? getGlossaryBridgeActiveItem() : getCurrentGlossaryPromptItem(batch))}
     </div>
   `);
   startGlossaryRoundTimer();
 }
 
-if (!window.__glossaryFlightControlsBound) {
-  window.__glossaryFlightControlsBound = true;
+if (!window.__glossaryBridgeControlsBound) {
+  window.__glossaryBridgeControlsBound = true;
   window.addEventListener("keydown", event => {
     if (!document.body.classList.contains("glossary-mission-active")) return;
     if (state.glossaryRoundCelebration || getCurrentGlossaryRound()?.id !== "recall") return;
-    if (event.key === "ArrowUp" || event.key === "ArrowLeft") {
+    const bridge = getGlossaryBridgeState();
+    if (bridge.levelClear && (event.key === " " || event.key === "Enter")) {
       event.preventDefault();
-      moveGlossaryFlightLane(-1);
+      continueGlossaryBridgeLevel();
+      return;
     }
-    if (event.key === "ArrowDown" || event.key === "ArrowRight") {
+    if (!bridge.levelClear && ["1", "2", "3"].includes(event.key)) {
+      const optionIndex = Number(event.key) - 1;
+      const item = getGlossaryBridgeActiveItem();
+      const option = buildGlossaryBridgeOptions(item, bridge.level, bridge.step)[optionIndex];
+      if (!item || !option) return;
       event.preventDefault();
-      moveGlossaryFlightLane(1);
-    }
-    if (event.key === " " || event.key === "Enter") {
-      event.preventDefault();
-      captureGlossaryFlightSignal();
+      submitGlossaryBridgeChoiceEncoded(item.id, encodeURIComponent(option.value), optionIndex);
     }
   });
 }

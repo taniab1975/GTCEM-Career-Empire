@@ -1314,7 +1314,7 @@ const GLOSSARY_ROUND_CONFIGS = [
   { id: "term-catch", title: "Round 1: Termfall Dash", cue: "Catch the correct falling term for the definition before it disappears down the memory road." },
   { id: "signal-slice", title: "Round 2: Cloze Sprint", cue: "Fill the missing keyword from the definition by tapping the moving repair tile." },
   { id: "plain-match", title: "Round 3: Definition Invaders", cue: "Use the definition lock and shoot the correct term from the moving invader formation." },
-  { id: "recall", title: "Round 4: Vault Flight", cue: "Dodge the wrong moving gates, fly into the lane with the correct term, then capture it to secure recall." }
+  { id: "recall", title: "Round 4: Vault Bridge", cue: "Cross five bridge rows per level. Correct terms lock the safe path, while one wrong answer rebuilds the current level from the entrance." }
 ];
 
 const STAGES = [

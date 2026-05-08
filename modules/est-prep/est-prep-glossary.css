@@ -2845,6 +2845,642 @@ body.glossary-mission-active .glossary-chamber-card strong {
   line-height: 1.35;
 }
 
+.glossary-bridge-shell {
+  padding: 18px;
+}
+
+.glossary-bridge-game {
+  --bridge-tile-size: clamp(132px, 18%, 232px);
+  position: relative;
+  min-height: 720px;
+  margin-top: 16px;
+  overflow: hidden;
+  border-radius: 28px;
+  border: 1px solid rgba(97, 240, 255, 0.28);
+  background: #071127;
+  box-shadow: inset 0 0 0 1px rgba(255,255,255,0.045), 0 28px 58px rgba(3, 8, 22, 0.42);
+  isolation: isolate;
+}
+
+.glossary-bridge-bg {
+  position: absolute;
+  inset: 0;
+  z-index: -4;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transform: scale(1.01);
+  filter: saturate(1.08) contrast(1.02);
+}
+
+.glossary-bridge-vignette {
+  position: absolute;
+  inset: 0;
+  z-index: -3;
+  pointer-events: none;
+  background:
+    linear-gradient(180deg, rgba(3, 6, 16, 0.1), transparent 28%, rgba(3, 6, 16, 0.62)),
+    radial-gradient(circle at 50% 62%, transparent 0 32%, rgba(3, 6, 16, 0.38) 78%);
+}
+
+.glossary-bridge-runway {
+  position: absolute;
+  left: 50%;
+  bottom: 7%;
+  z-index: 2;
+  width: min(18%, 210px);
+  height: 18px;
+  border-radius: 999px;
+  background: linear-gradient(90deg, transparent, #61f0ff, #84ffd1, transparent);
+  box-shadow: 0 0 28px rgba(97, 240, 255, 0.55);
+  transform: translateX(-50%);
+  opacity: 0.62;
+  animation: glossaryBridgeRunway 1.8s ease-in-out infinite;
+}
+
+.glossary-bridge-hud {
+  position: absolute;
+  top: 18px;
+  left: 18px;
+  right: 18px;
+  z-index: 8;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 14px;
+}
+
+.glossary-bridge-hud span {
+  min-height: 58px;
+  display: grid;
+  align-content: center;
+  justify-items: center;
+  padding: 10px 16px;
+  border-radius: 18px;
+  border: 1px solid rgba(132, 255, 209, 0.34);
+  background: rgba(5, 12, 30, 0.72);
+  color: #b9c8df;
+  text-align: center;
+  font-size: 0.82rem;
+  font-weight: 900;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  backdrop-filter: blur(14px);
+}
+
+.glossary-bridge-hud b {
+  display: block;
+  color: #ffffff;
+  font-size: 1rem;
+  letter-spacing: 0;
+}
+
+.glossary-bridge-question {
+  position: absolute;
+  top: 88px;
+  left: 50%;
+  z-index: 9;
+  width: min(1080px, calc(100% - 56px));
+  transform: translateX(-50%);
+  max-height: 140px;
+  overflow: auto;
+  padding: 14px 22px;
+  border: 1px solid rgba(132, 255, 209, 0.54);
+  border-radius: 22px;
+  background: rgba(6, 13, 32, 0.9);
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.38);
+  backdrop-filter: blur(14px);
+}
+
+.glossary-bridge-question p {
+  margin: 0;
+  color: #ffffff;
+  font-size: clamp(0.98rem, 1.45vw, 1.22rem);
+  line-height: 1.28;
+  font-weight: 900;
+}
+
+.glossary-bridge-pieces {
+  position: absolute;
+  inset: 0;
+  z-index: 5;
+  pointer-events: none;
+}
+
+.glossary-bridge-tile {
+  position: absolute;
+  left: var(--bridge-tile-x);
+  top: var(--bridge-tile-y);
+  width: var(--bridge-tile-size);
+  min-height: clamp(76px, 8vw, 112px);
+  display: grid;
+  align-content: center;
+  justify-items: center;
+  gap: 8px;
+  padding: 16px 14px;
+  border: 1px solid rgba(97, 240, 255, 0.44);
+  border-radius: 18px;
+  color: #ffffff;
+  background:
+    linear-gradient(180deg, rgba(19, 40, 83, 0.7), rgba(7, 13, 30, 0.88)),
+    radial-gradient(circle at 50% 0%, rgba(97, 240, 255, 0.22), transparent 62%);
+  box-shadow:
+    inset 0 0 0 1px rgba(255, 255, 255, 0.08),
+    0 18px 36px rgba(0, 0, 0, 0.34),
+    0 0 20px rgba(97, 240, 255, 0.12);
+  cursor: default;
+  opacity: 0.46;
+  pointer-events: auto;
+  transform: translate(-50%, -50%) scale(0.96);
+  transition: transform 220ms ease, border-color 220ms ease, box-shadow 220ms ease, background 220ms ease, opacity 220ms ease, filter 220ms ease;
+}
+
+.glossary-bridge-tile.is-active {
+  opacity: 1;
+  cursor: pointer;
+  transform: translate(-50%, -50%) scale(1);
+  border-color: rgba(132, 255, 209, 0.72);
+  box-shadow:
+    inset 0 0 0 1px rgba(255, 255, 255, 0.13),
+    0 22px 42px rgba(0, 0, 0, 0.42),
+    0 0 30px rgba(97, 240, 255, 0.24);
+}
+
+.glossary-bridge-tile.is-active:hover,
+.glossary-bridge-tile.is-active:focus-visible {
+  transform: translate(-50%, -57%) scale(1.02);
+  border-color: rgba(255, 216, 108, 0.82);
+  outline: none;
+}
+
+.glossary-bridge-tile:disabled {
+  cursor: default;
+}
+
+.glossary-bridge-letter {
+  width: 34px;
+  height: 34px;
+  display: grid;
+  place-items: center;
+  border-radius: 999px;
+  color: #041120;
+  background: #84ffd1;
+  font-weight: 900;
+}
+
+.glossary-bridge-tile strong {
+  max-width: 11rem;
+  color: #ffffff;
+  text-align: center;
+  overflow-wrap: anywhere;
+  font-size: clamp(0.82rem, 1.12vw, 1.06rem);
+  line-height: 1.05;
+  font-weight: 900;
+}
+
+.glossary-bridge-tile.is-waiting .glossary-bridge-letter {
+  opacity: 0;
+}
+
+.glossary-bridge-tile.is-locked {
+  opacity: 1;
+  border-color: rgba(132, 255, 209, 0.92);
+  background:
+    linear-gradient(180deg, rgba(30, 105, 91, 0.82), rgba(7, 42, 43, 0.92)),
+    radial-gradient(circle at 50% 0%, rgba(132, 255, 209, 0.36), transparent 70%);
+  box-shadow: 0 0 30px rgba(132, 255, 209, 0.3), 0 18px 34px rgba(0, 0, 0, 0.38);
+  pointer-events: none;
+}
+
+.glossary-bridge-tile.is-locked .glossary-bridge-letter {
+  background: linear-gradient(135deg, #84ffd1, #ffd86c);
+}
+
+.glossary-bridge-tile.is-dropped {
+  opacity: 0;
+  transform: translate(-50%, 54%) scale(0.68) rotate(5deg);
+  filter: blur(2px);
+  pointer-events: none;
+}
+
+.glossary-bridge-tile.is-correct {
+  border-color: rgba(132, 255, 209, 0.98);
+  box-shadow: 0 0 42px rgba(132, 255, 209, 0.42), 0 24px 42px rgba(0, 0, 0, 0.44);
+  animation: glossaryBridgeCorrectPulse 520ms ease-in-out 2;
+}
+
+.glossary-bridge-tile.is-wrong {
+  border-color: rgba(255, 139, 123, 0.95);
+  background:
+    linear-gradient(180deg, rgba(86, 36, 42, 0.82), rgba(28, 9, 18, 0.92)),
+    radial-gradient(circle at 50% 0%, rgba(255, 139, 123, 0.4), transparent 70%);
+  box-shadow: 0 0 36px rgba(255, 139, 123, 0.38), 0 24px 42px rgba(0, 0, 0, 0.42);
+  animation: glossaryBridgeWrongShake 400ms ease-in-out 2;
+}
+
+.glossary-bridge-player {
+  position: absolute;
+  left: var(--bridge-player-x);
+  top: var(--bridge-player-y);
+  z-index: 7;
+  width: clamp(150px, 16vw, 238px);
+  transform: translate(-50%, -100%);
+  filter: drop-shadow(0 22px 24px rgba(0, 0, 0, 0.52));
+  pointer-events: none;
+  will-change: left, top, transform, opacity;
+}
+
+.glossary-bridge-player.is-hopping {
+  animation: glossaryBridgeTravel 720ms cubic-bezier(0.18, 0.88, 0.24, 1);
+}
+
+.glossary-bridge-player.is-resetting {
+  animation: glossaryBridgeReset 840ms ease-in-out;
+}
+
+.glossary-bridge-player.is-exiting {
+  animation: glossaryBridgePortalExit 1.25s ease-in-out;
+}
+
+.glossary-bridge-portal {
+  position: absolute;
+  right: 8%;
+  top: 18%;
+  z-index: 12;
+  width: clamp(170px, 20vw, 310px);
+  aspect-ratio: 1;
+  border-radius: 999px;
+  pointer-events: none;
+  opacity: 0;
+  transform: scale(0.62);
+  transition: opacity 360ms ease, transform 620ms cubic-bezier(0.16, 0.9, 0.2, 1);
+}
+
+.glossary-bridge-portal.is-active {
+  opacity: 1;
+  transform: scale(1);
+}
+
+.glossary-bridge-portal-ring,
+.glossary-bridge-portal-core,
+.glossary-bridge-portal-door,
+.glossary-bridge-portal-sparks {
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+}
+
+.glossary-bridge-portal-ring {
+  background:
+    conic-gradient(from 0deg, transparent 0 12%, rgba(97, 240, 255, 0.95) 16%, transparent 28%, rgba(255, 216, 108, 0.9) 38%, transparent 54%, rgba(132, 255, 209, 0.95) 66%, transparent 82%, rgba(97, 240, 255, 0.95) 96%, transparent),
+    radial-gradient(circle, transparent 44%, rgba(97, 240, 255, 0.28) 46% 51%, transparent 54%);
+  filter: drop-shadow(0 0 30px rgba(97, 240, 255, 0.7));
+  animation: glossaryBridgePortalSpin 1.9s linear infinite;
+}
+
+.glossary-bridge-portal-core {
+  inset: 18%;
+  background:
+    radial-gradient(circle at 50% 50%, rgba(255, 255, 255, 0.92) 0 10%, rgba(132, 255, 209, 0.78) 18%, rgba(97, 240, 255, 0.42) 34%, rgba(8, 18, 44, 0.2) 58%, transparent 70%);
+  box-shadow: inset 0 0 42px rgba(255, 255, 255, 0.42), 0 0 48px rgba(132, 255, 209, 0.5);
+  animation: glossaryBridgePortalBreathe 1.2s ease-in-out infinite;
+}
+
+.glossary-bridge-portal-door {
+  inset: 28%;
+  background:
+    linear-gradient(90deg, rgba(5, 12, 30, 0.96) 0 42%, transparent 42% 58%, rgba(5, 12, 30, 0.96) 58% 100%);
+  opacity: 0.86;
+}
+
+.glossary-bridge-portal.is-active .glossary-bridge-portal-door {
+  animation: glossaryBridgePortalDoorOpen 1.35s ease-in-out forwards;
+}
+
+.glossary-bridge-portal-sparks {
+  inset: -18%;
+  background:
+    radial-gradient(circle at 12% 38%, #ffd86c 0 2%, transparent 3%),
+    radial-gradient(circle at 88% 28%, #84ffd1 0 2%, transparent 3%),
+    radial-gradient(circle at 78% 82%, #61f0ff 0 2%, transparent 3%),
+    radial-gradient(circle at 28% 76%, #ffffff 0 1.7%, transparent 2.7%);
+  animation: glossaryBridgePortalSparks 900ms ease-out infinite;
+}
+
+.glossary-bridge-portal.is-final .glossary-bridge-portal-core {
+  background:
+    radial-gradient(circle at 50% 50%, rgba(255, 255, 255, 1) 0 12%, rgba(255, 216, 108, 0.9) 20%, rgba(132, 255, 209, 0.68) 38%, rgba(97, 240, 255, 0.28) 58%, transparent 72%);
+  box-shadow: inset 0 0 58px rgba(255, 255, 255, 0.56), 0 0 78px rgba(255, 216, 108, 0.52);
+}
+
+.glossary-bridge-burst,
+.glossary-bridge-splash {
+  position: absolute;
+  z-index: 6;
+  pointer-events: none;
+  opacity: 0;
+}
+
+.glossary-bridge-burst {
+  left: var(--bridge-player-x);
+  top: var(--bridge-player-y);
+  width: 150px;
+  height: 150px;
+  border-radius: 999px;
+  background:
+    radial-gradient(circle, #fff 0 10%, rgba(132, 255, 209, 0.75) 11% 30%, transparent 68%),
+    conic-gradient(from 0deg, transparent, rgba(255, 216, 108, 0.9), transparent, rgba(97, 240, 255, 0.8), transparent);
+  filter: blur(0.2px) drop-shadow(0 0 32px rgba(132, 255, 209, 0.6));
+  transform: translate(-50%, -90%);
+}
+
+.glossary-bridge-burst.is-active {
+  animation: glossaryBridgeBurst 840ms ease-out;
+}
+
+.glossary-bridge-splash {
+  left: var(--bridge-from-x);
+  top: var(--bridge-from-y);
+  width: 170px;
+  height: 120px;
+  border-radius: 999px;
+  background:
+    radial-gradient(circle at 30% 35%, rgba(255, 255, 255, 0.9) 0 5%, transparent 6%),
+    radial-gradient(circle at 65% 48%, rgba(255, 139, 123, 0.86) 0 12%, transparent 13%),
+    radial-gradient(circle at 50% 70%, rgba(97, 240, 255, 0.75) 0 28%, transparent 29%);
+  filter: drop-shadow(0 0 22px rgba(255, 139, 123, 0.5));
+  transform: translate(-50%, -62%);
+}
+
+.glossary-bridge-splash.is-active {
+  animation: glossaryBridgeSplash 820ms ease-out;
+}
+
+.glossary-bridge-feedback,
+.glossary-bridge-progress {
+  position: absolute;
+  z-index: 8;
+  border: 1px solid rgba(97, 240, 255, 0.28);
+  border-radius: 22px;
+  background: rgba(5, 12, 30, 0.8);
+  padding: 16px 18px;
+  backdrop-filter: blur(14px);
+  box-shadow: 0 18px 42px rgba(0, 0, 0, 0.35);
+}
+
+.glossary-bridge-feedback {
+  left: 24px;
+  bottom: 22px;
+  width: min(520px, calc(100% - 48px));
+}
+
+.glossary-bridge-feedback strong {
+  display: block;
+  margin-bottom: 6px;
+  color: #ffd86c;
+  font-size: 0.78rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.glossary-bridge-feedback p,
+.glossary-bridge-progress p {
+  margin: 0;
+  color: #f8fbff;
+  line-height: 1.42;
+}
+
+.glossary-bridge-progress {
+  right: 24px;
+  bottom: 22px;
+  width: min(390px, calc(100% - 48px));
+}
+
+.glossary-bridge-progress strong {
+  display: block;
+  margin-bottom: 10px;
+  color: #84ffd1;
+  font-size: 0.78rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.glossary-bridge-track {
+  overflow: hidden;
+  height: 13px;
+  margin: 12px 0;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.12);
+}
+
+.glossary-bridge-track span {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: linear-gradient(90deg, #61f0ff, #84ffd1, #ffd86c);
+  transition: width 520ms ease;
+}
+
+.glossary-bridge-dots {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 8px;
+}
+
+.glossary-bridge-dots span {
+  height: 11px;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: rgba(255, 255, 255, 0.12);
+}
+
+.glossary-bridge-dots span.is-secured {
+  background: linear-gradient(90deg, #61f0ff, #84ffd1);
+  box-shadow: 0 0 16px rgba(132, 255, 209, 0.3);
+}
+
+.glossary-bridge-clear {
+  position: absolute;
+  inset: 0;
+  z-index: 20;
+  display: grid;
+  place-items: center;
+  padding: 28px;
+  background: rgba(3, 6, 16, 0.64);
+  backdrop-filter: blur(10px);
+}
+
+.glossary-bridge-clear article {
+  width: min(620px, 100%);
+  padding: 28px;
+  border: 1px solid rgba(255, 216, 108, 0.55);
+  border-radius: 28px;
+  background:
+    radial-gradient(circle at 50% 0%, rgba(255, 216, 108, 0.18), transparent 38%),
+    rgba(6, 13, 32, 0.95);
+  text-align: center;
+  box-shadow: 0 32px 80px rgba(0, 0, 0, 0.46), 0 0 42px rgba(255, 216, 108, 0.22);
+}
+
+.glossary-bridge-clear h3 {
+  margin: 0 0 10px;
+  color: #ffffff;
+  font-size: clamp(2rem, 4vw, 3.2rem);
+  line-height: 0.98;
+  letter-spacing: 0;
+}
+
+.glossary-bridge-clear p {
+  max-width: 480px;
+  margin: 0 auto 20px;
+  color: #b9c8df;
+  line-height: 1.45;
+}
+
+.glossary-bridge-reward-count {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+  margin: 0 0 22px;
+}
+
+.glossary-bridge-reward-count span {
+  padding: 10px;
+  border: 1px solid rgba(132, 255, 209, 0.28);
+  border-radius: 14px;
+  background: rgba(8, 18, 44, 0.78);
+  color: #b9c8df;
+  font-size: 0.82rem;
+  font-weight: 800;
+}
+
+.glossary-bridge-reward-count strong {
+  display: block;
+  margin-bottom: 4px;
+  color: #ffffff;
+  font-size: 1.2rem;
+  line-height: 1;
+}
+
+@keyframes glossaryBridgeRunway {
+  0%, 100% { opacity: 0.24; transform: translateX(-50%) scaleX(0.82); }
+  50% { opacity: 0.72; transform: translateX(-50%) scaleX(1.18); }
+}
+
+@keyframes glossaryBridgeTravel {
+  0% { left: var(--bridge-from-x); top: var(--bridge-from-y); transform: translate(-50%, -100%) scale(1) rotate(0deg); }
+  48% { transform: translate(-50%, -120%) scale(1.04) rotate(3deg); }
+  100% { left: var(--bridge-player-x); top: var(--bridge-player-y); transform: translate(-50%, -100%) scale(1) rotate(0deg); }
+}
+
+@keyframes glossaryBridgeReset {
+  0% { left: var(--bridge-from-x); top: var(--bridge-from-y); transform: translate(-50%, -100%) scale(1) rotate(0deg); opacity: 1; }
+  42% { transform: translate(-50%, -72%) scale(0.92) rotate(-8deg); opacity: 0.58; }
+  100% { left: var(--bridge-player-x); top: var(--bridge-player-y); transform: translate(-50%, -100%) scale(1) rotate(0deg); opacity: 1; }
+}
+
+@keyframes glossaryBridgePortalExit {
+  0% { left: var(--bridge-from-x); top: var(--bridge-from-y); transform: translate(-50%, -100%) scale(1); opacity: 1; }
+  55% { left: var(--bridge-player-x); top: var(--bridge-player-y); transform: translate(-50%, -108%) scale(0.82); opacity: 0.82; }
+  100% { left: var(--bridge-player-x); top: var(--bridge-player-y); transform: translate(-50%, -120%) scale(0.38); opacity: 0.22; }
+}
+
+@keyframes glossaryBridgeCorrectPulse {
+  0%, 100% { transform: translate(-50%, -50%) scale(1); }
+  50% { transform: translate(-50%, -50%) scale(1.06); }
+}
+
+@keyframes glossaryBridgeWrongShake {
+  0%, 100% { transform: translate(-50%, -50%); }
+  25% { transform: translate(calc(-50% - 8px), -50%); }
+  75% { transform: translate(calc(-50% + 8px), -50%); }
+}
+
+@keyframes glossaryBridgeBurst {
+  0% { opacity: 0; transform: translate(-50%, -90%) scale(0.24) rotate(-12deg); }
+  30% { opacity: 1; }
+  100% { opacity: 0; transform: translate(-50%, -90%) scale(1.34) rotate(22deg); }
+}
+
+@keyframes glossaryBridgeSplash {
+  0% { opacity: 0; transform: translate(-50%, -62%) scale(0.4); }
+  34% { opacity: 1; }
+  100% { opacity: 0; transform: translate(-50%, -62%) scale(1.35); }
+}
+
+@keyframes glossaryBridgePortalSpin {
+  to { transform: rotate(360deg); }
+}
+
+@keyframes glossaryBridgePortalBreathe {
+  0%, 100% { transform: scale(0.92); opacity: 0.74; }
+  50% { transform: scale(1.08); opacity: 1; }
+}
+
+@keyframes glossaryBridgePortalDoorOpen {
+  0% {
+    clip-path: polygon(0 0, 100% 0, 100% 100%, 0 100%);
+    opacity: 0.86;
+  }
+  60% {
+    clip-path: polygon(0 0, 39% 0, 39% 100%, 0 100%, 61% 0, 100% 0, 100% 100%, 61% 100%);
+    opacity: 0.62;
+  }
+  100% {
+    clip-path: polygon(0 0, 15% 0, 15% 100%, 0 100%, 85% 0, 100% 0, 100% 100%, 85% 100%);
+    opacity: 0;
+  }
+}
+
+@keyframes glossaryBridgePortalSparks {
+  0% { transform: scale(0.6) rotate(0deg); opacity: 0; }
+  35% { opacity: 1; }
+  100% { transform: scale(1.24) rotate(24deg); opacity: 0; }
+}
+
+@media (max-width: 900px) {
+  .glossary-bridge-game {
+    --bridge-tile-size: clamp(104px, 29vw, 176px);
+    min-height: 820px;
+  }
+
+  .glossary-bridge-hud {
+    grid-template-columns: 1fr;
+  }
+
+  .glossary-bridge-question {
+    top: 164px;
+  }
+
+  .glossary-bridge-tile {
+    min-height: 72px;
+    padding: 12px 10px;
+  }
+
+  .glossary-bridge-tile strong {
+    max-width: 8rem;
+    font-size: 0.78rem;
+  }
+
+  .glossary-bridge-player {
+    width: clamp(118px, 30vw, 180px);
+  }
+
+  .glossary-bridge-feedback,
+  .glossary-bridge-progress {
+    left: 18px;
+    right: 18px;
+    width: auto;
+  }
+
+  .glossary-bridge-feedback {
+    bottom: 134px;
+  }
+
+  .glossary-bridge-progress {
+    bottom: 18px;
+  }
+}
+
 @keyframes recallCardIn {
   from {
     opacity: 0;
@@ -3548,6 +4184,15 @@ body.glossary-mission-active #stage-section.gameplay-viewport #stage-root {
   .glossary-flight-gate,
   .glossary-flight-player,
   .glossary-flight-thruster,
+  .glossary-bridge-runway,
+  .glossary-bridge-tile,
+  .glossary-bridge-player,
+  .glossary-bridge-burst,
+  .glossary-bridge-splash,
+  .glossary-bridge-portal-ring,
+  .glossary-bridge-portal-core,
+  .glossary-bridge-portal-door,
+  .glossary-bridge-portal-sparks,
   .glossary-invader-scan,
   .glossary-invader-ship,
   .glossary-invader-ship::before,
