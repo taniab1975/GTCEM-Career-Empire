@@ -200,12 +200,6 @@
     min-height: 230px;
   }
 
-  .topic-media-status {
-    max-width: calc(100% - 32px);
-    right: 16px;
-    text-align: center;
-  }
-
   .topic-media-progress {
     display: none;
   }

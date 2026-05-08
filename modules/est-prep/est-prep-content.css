@@ -427,24 +427,9 @@
 }
 
 .topic-media-status {
-  position: absolute;
-  z-index: 4;
-  left: 16px;
-  bottom: 16px;
-  max-width: min(70%, 340px);
-  padding: 9px 12px;
-  border-radius: 999px;
-  border: 1px solid var(--topic-border);
-  background: rgba(5, 11, 26, 0.72);
-  color: #eef7ff;
-  font-size: 0.78rem;
-  font-weight: 800;
-  letter-spacing: 0.03em;
-  text-transform: uppercase;
-  backdrop-filter: blur(8px);
+  display: none;
 }
 
-.topic-media-stage--initiative .topic-media-status,
 .training-scene-preview--initiative.training-scene-preview--neutral .training-scene-badge {
   display: none;
 }

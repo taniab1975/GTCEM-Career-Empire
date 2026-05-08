@@ -213,6 +213,7 @@ function getTopicClassName(groupId) {
 }
 
 function getContentTopicSceneLabel(groupId, scene) {
+  if (scene === "neutral") return "";
   const labels = {
     initiative: {
       neutral: "",
@@ -220,34 +221,35 @@ function getContentTopicSceneLabel(groupId, scene) {
       success: "Initiative locked"
     },
     "time-management": {
-      neutral: "Schedule board",
+      neutral: "",
       challenge: "Deadline pressure",
       success: "Plan restored"
     },
     "personal-finance": {
-      neutral: "Budget signal",
+      neutral: "",
       challenge: "Money pressure",
       success: "Stability restored"
     },
     "job-application": {
-      neutral: "Application desk",
+      neutral: "",
       challenge: "Evidence check",
       success: "Response strengthened"
     },
     communication: {
-      neutral: "Message signal",
+      neutral: "",
       challenge: "Audience pressure",
       success: "Clarity restored"
     },
     "future-of-work": {
-      neutral: "Trend scanner",
+      neutral: "",
       challenge: "Industry shift",
       success: "Opportunity mapped"
     }
   };
   const topicLabels = labels[groupId] || {};
   if (scene === "restored") return topicLabels.success || "Signal restored";
-  return topicLabels[scene] || topicLabels.neutral || "Topic signal";
+  if (Object.prototype.hasOwnProperty.call(topicLabels, scene)) return topicLabels[scene];
+  return "";
 }
 
 function getTrainingConfigByType(type) {
@@ -1298,7 +1300,6 @@ function renderContentTopicIntro(group) {
   const bankedPercent = Math.max(0, Number(state.contentTopicBestScores[group.id] || 0));
   const hasBankedResult = bankedPercent > 0;
   const introImage = group.introImage || getArcSceneImage(group.id, "neutral");
-  const sceneLabel = getContentTopicSceneLabel(group.id, hasBankedResult ? "success" : "neutral");
   const mediaStage = `
     <div class="topic-media-stage topic-media-stage--${escapeHtml(topicClass)} ${hasVideo ? "topic-media-stage--video" : ""}">
       ${hasVideo ? `
@@ -1309,7 +1310,6 @@ function renderContentTopicIntro(group) {
         <img class="topic-media topic-media-image" src="${escapeHtml(introImage)}" alt="${escapeHtml(group.title)}">
       `}
       <span class="topic-media-scan" aria-hidden="true"></span>
-      ${sceneLabel ? `<span class="topic-media-status">${escapeHtml(sceneLabel)}</span>` : ""}
     </div>
   `;
   const videoControls = hasVideo ? `
