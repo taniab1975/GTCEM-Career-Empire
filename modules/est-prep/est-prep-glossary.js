@@ -11,7 +11,7 @@ const GLOSSARY_TERMS_PER_ROUND = 4;
 const GLOSSARY_BRIDGE_TERMS_PER_LEVEL = 5;
 const GLOSSARY_MASTERY_TARGET = FULL_GLOSSARY_TERMS.length;
 const GLOSSARY_MASTERY_ACCURACY = 1;
-const GLOSSARY_MASTERY_REPS = 2;
+const GLOSSARY_MASTERY_REPS = 1;
 const GLOSSARY_VISUAL_ASSETS = {
   "term-catch": "../../Assets/Images and Animations/Glossary Check/glossary-signal-scan.svg",
   "colour-shape": "../../Assets/Images and Animations/Glossary Check/glossary-signal-scan.svg",
@@ -60,7 +60,6 @@ const GLOSSARY_BRIDGE_ROWS = [
 
 const GLOSSARY_BRIDGE_HOME_POSITION = { x: 50, y: 91 };
 const GLOSSARY_BRIDGE_PORTAL_POSITION = { x: 83, y: 42 };
-const GLOSSARY_BRIDGE_LANDING_OFFSET = 10;
 
 const GLOSSARY_STORY_ASSETS = {
   vault: "../../Assets/Images and Animations/EST backgrounds/Background Neutral.png",
@@ -831,9 +830,17 @@ function getGlossaryBridgeActivePosition(bridge = getGlossaryBridgeState()) {
   if (bridge.levelClear) return GLOSSARY_BRIDGE_PORTAL_POSITION;
   if (bridge.step <= 0) return GLOSSARY_BRIDGE_HOME_POSITION;
   const optionIndex = bridge.levelLocks[bridge.step - 1];
-  const row = GLOSSARY_BRIDGE_ROWS[bridge.step - 1] || [];
+  return getGlossaryBridgePlayerLandingPosition(bridge.step - 1, optionIndex);
+}
+
+function getGlossaryBridgePlayerLandingPosition(rowIndex, optionIndex) {
+  const row = GLOSSARY_BRIDGE_ROWS[rowIndex] || [];
   const tile = row[Math.max(0, Math.min(row.length - 1, Number(optionIndex || 0)))] || row[0];
-  return tile ? { x: tile.x, y: tile.y + GLOSSARY_BRIDGE_LANDING_OFFSET } : GLOSSARY_BRIDGE_HOME_POSITION;
+  if (!tile) return GLOSSARY_BRIDGE_HOME_POSITION;
+  return {
+    x: tile.x,
+    y: Math.max(80, 92 - (Math.max(0, Number(rowIndex || 0)) * 2.5))
+  };
 }
 
 function buildGlossaryBridgeOptions(item, levelIndex = 0, stepIndex = 0) {
@@ -897,11 +904,7 @@ function submitGlossaryBridgeChoiceEncoded(targetId, encodedValue, optionIndexRa
   const answer = decodeURIComponent(encodedValue || "");
   const selectedOptionIndex = Math.max(0, Math.min(2, Number(optionIndexRaw || 0)));
   const startPosition = getGlossaryBridgeActivePosition(bridge);
-  const selectedTile = GLOSSARY_BRIDGE_ROWS[bridge.step]?.[selectedOptionIndex] || GLOSSARY_BRIDGE_ROWS[bridge.step]?.[0] || GLOSSARY_BRIDGE_HOME_POSITION;
-  const selectedPosition = {
-    x: selectedTile.x,
-    y: selectedTile.y + GLOSSARY_BRIDGE_LANDING_OFFSET
-  };
+  const selectedPosition = getGlossaryBridgePlayerLandingPosition(bridge.step, selectedOptionIndex);
   const correct = normaliseGlossaryTermText(answer) === normaliseGlossaryTermText(item.term);
   recordGlossaryAttempt(item, answer, correct, "vault-bridge");
 
@@ -2244,9 +2247,8 @@ function renderGlossaryVaultBridgeGame(round) {
           style="--bridge-tile-x:${position.x}%; --bridge-tile-y:${position.y}%;"
           ${isActive ? `onclick="window.ESTPrep.submitGlossaryBridgeChoiceEncoded('${item.id}', '${encodeForInlineHandler(option.value)}', ${optionIndex})"` : "disabled"}
           data-correct="${option.correct ? "true" : "false"}"
-          aria-label="${escapeHtml(isActive ? `${String.fromCharCode(65 + optionIndex)}: ${option.title}` : isLocked ? `Row ${rowIndex + 1} secured` : isDropped ? `Row ${rowIndex + 1} dropped` : `Row ${rowIndex + 1} waiting`)}"
+          aria-label="${escapeHtml(isActive ? option.title : isLocked ? `Row ${rowIndex + 1} secured` : isDropped ? `Row ${rowIndex + 1} dropped` : `Row ${rowIndex + 1} waiting`)}"
         >
-          <span class="glossary-bridge-letter">${isLocked ? "OK" : isWaiting ? "" : String.fromCharCode(65 + optionIndex)}</span>
           <strong>${isActive ? escapeHtml(option.title) : ""}</strong>
         </button>
       `;
@@ -2261,6 +2263,23 @@ function renderGlossaryVaultBridgeGame(round) {
   const clearCopy = finalLevel
     ? `All ${sourceTotal} terms are secure. Bank the salary reward, pay the community tax, and choose what to practise next.`
     : `${levelName} cleared. Five terms are locked, the salary portal is open, and the next bridge level is ready.`;
+  const statusTitle = bridge.levelClear
+    ? clearTitle
+    : motionKind === "wrong"
+      ? "Bridge rebuilt"
+      : bridge.step
+        ? "Next row"
+        : "Ready";
+  const statusCopy = bridge.levelClear
+    ? clearCopy
+    : motionKind === "wrong"
+      ? "A wrong tile sends you back to the entrance for this level. Previous cleared levels stay banked."
+      : bridge.step
+        ? "The locked bridge piece stays lit. The new row has fresh options."
+        : "Start from the arrow runway and choose the term that matches the definition.";
+  const definitionCopy = bridge.levelClear
+    ? "The level route is secure. Move through the portal to unlock the next glossary set."
+    : item.definition;
 
   return `
     <div class="panel glossary-command-panel glossary-arcade-shell glossary-bridge-shell">
@@ -2271,6 +2290,7 @@ function renderGlossaryVaultBridgeGame(round) {
       <div class="badge-row" style="margin-bottom:14px;">
         <span class="badge">${bridge.step}/${bridge.levelTerms.length} rows secured</span>
         <span class="badge">${totalSecured}/${sourceTotal} total terms</span>
+        <span class="badge">${formatCurrency(bridgeSalary)} salary signal</span>
         <span class="badge">Best streak: x${state.glossaryBestStreak}</span>
         <span class="badge">Misses: ${state.glossaryMisses}</span>
       </div>
@@ -2278,18 +2298,14 @@ function renderGlossaryVaultBridgeGame(round) {
       <div class="glossary-progress-track" aria-hidden="true">
         <div class="glossary-progress-bar" style="width:${totalPercent}%;"></div>
       </div>
+      <article class="glossary-bridge-prompt-bar">
+        <span class="kicker">${bridge.levelClear ? "Portal target" : "Definition target"}</span>
+        <p>${escapeHtml(definitionCopy)}</p>
+      </article>
       <div class="glossary-bridge-game ${bridge.levelClear ? "is-level-clear" : ""} ${motionKind ? `motion-${escapeHtml(motionKind)}` : ""}" style="${playerStyle}">
         <img class="glossary-bridge-bg" src="${escapeHtml(GLOSSARY_BRIDGE_ASSETS.backdrop)}" alt="">
         <span class="glossary-bridge-vignette" aria-hidden="true"></span>
         <span class="glossary-bridge-runway" aria-hidden="true"></span>
-        <div class="glossary-bridge-hud" aria-label="Vault Bridge status">
-          <span><b>L${bridge.level + 1}</b> ${escapeHtml(levelName)}</span>
-          <span><b>${formatCurrency(bridgeSalary)}</b> salary signal</span>
-        </div>
-        <article class="glossary-bridge-question">
-          <span class="kicker">${bridge.levelClear ? "Portal target" : "Definition target"}</span>
-          <p>${escapeHtml(bridge.levelClear ? "The level route is secure. Move through the portal to unlock the next glossary set." : item.definition)}</p>
-        </article>
         <div class="glossary-bridge-pieces" aria-label="Select the bridge piece that matches the definition">
           ${rowMarkup}
         </div>
@@ -2302,16 +2318,6 @@ function renderGlossaryVaultBridgeGame(round) {
         <img class="glossary-bridge-player ${playerClass}" src="${escapeHtml(characterImage)}" alt="MacKillop student character crossing the bridge">
         <span class="glossary-bridge-burst ${motionKind === "correct" || motionKind === "clear" ? "is-active" : ""}" aria-hidden="true"></span>
         <span class="glossary-bridge-splash ${motionKind === "wrong" ? "is-active" : ""}" aria-hidden="true"></span>
-        <article class="glossary-bridge-feedback" aria-live="polite">
-          <strong>${bridge.levelClear ? clearTitle : motionKind === "wrong" ? "Bridge rebuilt" : bridge.step ? "Next row" : "Ready"}</strong>
-          <p>${escapeHtml(bridge.levelClear ? clearCopy : motionKind === "wrong" ? "A wrong tile sends you back to the entrance for this level. Previous cleared levels stay banked." : bridge.step ? "The locked bridge piece stays lit. The new row has fresh options." : "Start from the arrow runway and choose the term that matches the definition.")}</p>
-        </article>
-        <article class="glossary-bridge-progress">
-          <strong>Bridge charge</strong>
-          <p>Level ${bridge.level + 1}: ${bridge.step}/${bridge.levelTerms.length} rows. Total glossary bank: ${totalSecured}/${sourceTotal}.</p>
-          <div class="glossary-bridge-track" aria-hidden="true"><span style="width:${totalPercent}%;"></span></div>
-          <div class="glossary-bridge-dots" aria-hidden="true">${stepDots}</div>
-        </article>
         ${bridge.levelClear ? `
           <section class="glossary-bridge-clear" aria-live="polite">
             <article>
@@ -2328,11 +2334,23 @@ function renderGlossaryVaultBridgeGame(round) {
           </section>
         ` : ""}
       </div>
+      <div class="glossary-bridge-statusbar">
+        <article class="glossary-bridge-feedback" aria-live="polite">
+          <strong>${escapeHtml(statusTitle)}</strong>
+          <p>${escapeHtml(statusCopy)}</p>
+        </article>
+        <article class="glossary-bridge-progress">
+          <strong>Bridge charge</strong>
+          <p>Level ${bridge.level + 1}: ${bridge.step}/${bridge.levelTerms.length} rows. Total glossary bank: ${totalSecured}/${sourceTotal}.</p>
+          <div class="glossary-bridge-track" aria-hidden="true"><span style="width:${totalPercent}%;"></span></div>
+          <div class="glossary-bridge-dots" aria-hidden="true">${stepDots}</div>
+        </article>
+      </div>
     </div>
     <div class="written-stage glossary-finale-stage">
       <strong>Vault Bridge exit</strong>
       <p class="small-copy">Secure five rows to open each portal. Wrong answers rebuild only the current level from the entrance.</p>
-      <button class="submit-button" type="button" onclick="window.ESTPrep.continueGlossaryBridgeLevel()" ${bridge.levelClear ? "" : "disabled"}>${finalLevel ? "Bank reward" : "Next level"}</button>
+      ${bridge.levelClear ? `<button class="submit-button" type="button" onclick="window.ESTPrep.continueGlossaryBridgeLevel()">${finalLevel ? "Bank reward" : "Next level"}</button>` : ""}
       <button class="choice-button" type="button" onclick="window.ESTPrep.resetGlossaryBridgeLevel()">Reset current level</button>
     </div>
   `;
