@@ -3023,8 +3023,8 @@ body.glossary-mission-active .glossary-chamber-card strong {
 .glossary-bridge-game {
   --bridge-tile-size: clamp(102px, 12.5%, 158px);
   position: relative;
-  min-height: 620px;
-  aspect-ratio: 16 / 9;
+  min-height: 0;
+  height: clamp(500px, 46vw, 620px);
   margin-top: 12px;
   overflow: hidden;
   border-radius: 28px;
@@ -3623,8 +3623,7 @@ body.glossary-mission-active .glossary-chamber-card strong {
 @media (max-width: 900px) {
   .glossary-bridge-game {
     --bridge-tile-size: clamp(88px, 23vw, 128px);
-    min-height: 650px;
-    aspect-ratio: auto;
+    height: clamp(540px, 82vw, 650px);
   }
 
   .glossary-bridge-prompt-bar {
