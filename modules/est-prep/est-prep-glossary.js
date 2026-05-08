@@ -5,6 +5,8 @@ let glossaryRecallAdvanceTimeout = null;
 
 let glossaryInvaderShotTimeout = null;
 
+let glossaryInvadersRuntime = null;
+
 let glossaryCommunityAssetTimeout = null;
 
 let glossaryMemoryResetTimeout = null;
@@ -14,6 +16,10 @@ const GLOSSARY_BRIDGE_TERMS_PER_LEVEL = 5;
 const GLOSSARY_MASTERY_TARGET = FULL_GLOSSARY_TERMS.length;
 const GLOSSARY_MASTERY_ACCURACY = 1;
 const GLOSSARY_MASTERY_REPS = 1;
+const GLOSSARY_INVADER_WIDTH = 960;
+const GLOSSARY_INVADER_HEIGHT = 360;
+const GLOSSARY_INVADER_PLAYER_Y = 306;
+const GLOSSARY_INVADER_COLORS = ["#72f7b8", "#61f0ff", "#ffd86c", "#ff7dc0"];
 const GLOSSARY_VISUAL_ASSETS = {
   "memory-match": "../../Assets/Images and Animations/Glossary Check/glossary-recall-forge.svg",
   "term-catch": "../../Assets/Images and Animations/Glossary Check/glossary-signal-scan.svg",
@@ -242,6 +248,7 @@ function clearGlossaryInvaderShotTimeout() {
     clearTimeout(glossaryInvaderShotTimeout);
     glossaryInvaderShotTimeout = null;
   }
+  stopGlossaryInvadersRuntime();
   if (state?.answers) {
     delete state.answers.glossaryInvaderTarget;
     delete state.answers.glossaryInvaderFiring;
@@ -1131,24 +1138,650 @@ function clearGlossaryBridgeState() {
   delete state.answers.glossaryBridgeMotion;
 }
 
-function fireGlossaryInvaderShipEncoded(targetId, encodedValue) {
+function clampGlossaryInvaderNumber(value, min, max) {
+  return Math.max(min, Math.min(max, Number(value || 0)));
+}
+
+function stopGlossaryInvadersRuntime() {
+  if (!glossaryInvadersRuntime) return;
+  glossaryInvadersRuntime.stopped = true;
+  if (glossaryInvadersRuntime.frameId) {
+    cancelAnimationFrame(glossaryInvadersRuntime.frameId);
+  }
+  glossaryInvadersRuntime = null;
+}
+
+function getGlossaryInvaderColor(index) {
+  return GLOSSARY_INVADER_COLORS[index % GLOSSARY_INVADER_COLORS.length];
+}
+
+function getGlossaryInvaderWaveKey(item, optionSet) {
+  return [
+    getGlossaryBatchKey(),
+    item?.id || "none",
+    optionSet.map(option => option.value).join("|")
+  ].join("::");
+}
+
+function buildGlossaryInvaderStars(item) {
+  const seed = getGlossaryStableNumber(item?.id || "invaders");
+  return Array.from({ length: 72 }, (_, index) => {
+    const xSeed = getGlossaryStableNumber(`${seed}-x-${index}`);
+    const ySeed = getGlossaryStableNumber(`${seed}-y-${index}`);
+    return {
+      x: xSeed % GLOSSARY_INVADER_WIDTH,
+      y: ySeed % Math.max(220, GLOSSARY_INVADER_HEIGHT - 90),
+      r: 0.7 + ((xSeed + ySeed) % 24) / 18,
+      pulse: ((xSeed + index) % 100) / 100
+    };
+  });
+}
+
+function createGlossaryInvadersRuntime(canvas, item, optionSet) {
+  const alienWidth = optionSet.length > 4 ? 128 : 144;
+  const alienGap = optionSet.length > 4 ? 22 : 36;
+  const formationWidth = (optionSet.length * alienWidth) + ((optionSet.length - 1) * alienGap);
+  const formationLeft = Math.max(42, (GLOSSARY_INVADER_WIDTH - formationWidth) / 2);
+  const waveKey = getGlossaryInvaderWaveKey(item, optionSet);
+  const aliens = optionSet.map((option, index) => ({
+    option,
+    index,
+    alive: true,
+    homeX: formationLeft + (index * (alienWidth + alienGap)),
+    homeY: 126,
+    w: alienWidth,
+    h: 92,
+    color: getGlossaryInvaderColor(index),
+    type: index % 3
+  }));
+
+  return {
+    canvas,
+    ctx: canvas.getContext("2d"),
+    item,
+    optionSet,
+    waveKey,
+    stopped: false,
+    locked: false,
+    frameId: 0,
+    lastTime: 0,
+    time: 0,
+    keys: { left: false, right: false },
+    player: {
+      x: GLOSSARY_INVADER_WIDTH / 2,
+      y: GLOSSARY_INVADER_PLAYER_Y,
+      w: 82,
+      h: 44,
+      hull: 3,
+      hitPulse: 0
+    },
+    formation: {
+      x: 0,
+      y: 0,
+      direction: 1,
+      speed: 34,
+      drop: 24
+    },
+    aliens,
+    playerBullets: [],
+    enemyBullets: [],
+    explosions: [],
+    shieldActive: false,
+    shieldCharge: 100,
+    shieldDelay: 0,
+    fireCooldown: 0,
+    enemyFireTimer: 1.25,
+    status: "Move the ship, fire upward, and hold Shield when the row shoots back.",
+    stars: buildGlossaryInvaderStars(item)
+  };
+}
+
+function mountGlossaryInvadersIfNeeded() {
+  const canvas = document.getElementById("glossary-invaders-canvas");
+  const round = getCurrentGlossaryRound();
   const batch = getCurrentGlossaryBatch();
-  const item = batch.find(entry => entry.id === targetId);
-  if (!item || getCurrentGlossaryRound()?.id !== "plain-match") return;
-  clearGlossaryInvaderShotTimeout();
-  const answer = decodeURIComponent(encodedValue || "");
-  state.answers.glossaryInvaderTarget = answer;
-  state.answers.glossaryInvaderFiring = true;
-  state.glossaryPulse = `Laser locked on ${answer}.`;
-  state.glossaryPulseType = "neutral";
-  persistESTProgressSnapshot();
-  renderGlossaryStage();
+  const item = getCurrentGlossaryPromptItem(batch);
+
+  if (!canvas || round?.id !== "plain-match" || !item || state.glossaryMode !== "play" || state.glossaryRoundCelebration) {
+    stopGlossaryInvadersRuntime();
+    return;
+  }
+
+  const optionSet = buildGlossaryChallengeOptions(round.id, item, batch);
+  const waveKey = getGlossaryInvaderWaveKey(item, optionSet);
+  if (glossaryInvadersRuntime?.waveKey === waveKey && glossaryInvadersRuntime.canvas === canvas) return;
+
+  stopGlossaryInvadersRuntime();
+  glossaryInvadersRuntime = createGlossaryInvadersRuntime(canvas, item, optionSet);
+  updateGlossaryInvaderHud(glossaryInvadersRuntime);
+  glossaryInvadersRuntime.frameId = requestAnimationFrame(runGlossaryInvadersFrame);
+}
+
+function updateGlossaryInvaderHud(runtime = glossaryInvadersRuntime) {
+  if (!runtime) return;
+  const hull = document.getElementById("glossary-invader-hull");
+  const meter = document.getElementById("glossary-invader-forcefield-meter");
+  const status = document.getElementById("glossary-invader-status");
+  if (hull) hull.textContent = `${runtime.player.hull}/3`;
+  if (meter) meter.style.width = `${Math.round(runtime.shieldCharge)}%`;
+  if (status) status.textContent = runtime.status;
+}
+
+function setGlossaryInvaderMove(direction) {
+  const runtime = glossaryInvadersRuntime;
+  if (!runtime || runtime.locked) return;
+  const move = Number(direction || 0);
+  runtime.keys.left = move < 0;
+  runtime.keys.right = move > 0;
+}
+
+function stopGlossaryInvaderMove(direction = 0) {
+  const runtime = glossaryInvadersRuntime;
+  if (!runtime) return;
+  const move = Number(direction || 0);
+  if (move < 0) runtime.keys.left = false;
+  if (move > 0) runtime.keys.right = false;
+  if (!move) {
+    runtime.keys.left = false;
+    runtime.keys.right = false;
+  }
+}
+
+function setGlossaryInvaderShield(active) {
+  const runtime = glossaryInvadersRuntime;
+  if (!runtime || runtime.locked) return;
+  runtime.shieldActive = Boolean(active) && runtime.shieldCharge > 2;
+  runtime.status = runtime.shieldActive
+    ? "Forcefield online. It absorbs shots while the charge lasts."
+    : "Forcefield released. Let it recharge before the next volley.";
+  updateGlossaryInvaderHud(runtime);
+}
+
+function fireGlossaryInvaderPlayerShot() {
+  const runtime = glossaryInvadersRuntime;
+  if (!runtime || runtime.locked || runtime.fireCooldown > 0) return;
+  if (runtime.playerBullets.length >= 2) {
+    runtime.status = "Two shots are already in the lane. Track the row and fire again.";
+    updateGlossaryInvaderHud(runtime);
+    return;
+  }
+  runtime.playerBullets.push({
+    x: runtime.player.x,
+    y: runtime.player.y - 34,
+    r: 5,
+    speed: 560
+  });
+  runtime.fireCooldown = 0.22;
+  runtime.status = "Shot fired. Hit the term creature that matches the definition lock.";
+  updateGlossaryInvaderHud(runtime);
+}
+
+function fireGlossaryInvaderShipEncoded() {
+  fireGlossaryInvaderPlayerShot();
+}
+
+function getGlossaryInvaderBounds(runtime, alien) {
+  return {
+    x: alien.homeX + runtime.formation.x,
+    y: alien.homeY + runtime.formation.y,
+    w: alien.w,
+    h: alien.h
+  };
+}
+
+function getGlossaryInvaderFormationBounds(runtime) {
+  const alive = runtime.aliens.filter(alien => alien.alive);
+  if (!alive.length) return { minX: 0, maxX: 0, maxY: 0 };
+  return alive.reduce((bounds, alien) => {
+    const box = getGlossaryInvaderBounds(runtime, alien);
+    return {
+      minX: Math.min(bounds.minX, box.x),
+      maxX: Math.max(bounds.maxX, box.x + box.w),
+      maxY: Math.max(bounds.maxY, box.y + box.h)
+    };
+  }, { minX: Infinity, maxX: -Infinity, maxY: -Infinity });
+}
+
+function triggerGlossaryInvaderEnemyFire(runtime) {
+  const alive = runtime.aliens.filter(alien => alien.alive);
+  if (!alive.length) return;
+  const index = Math.floor(Math.random() * alive.length);
+  const alien = alive[index];
+  const box = getGlossaryInvaderBounds(runtime, alien);
+  runtime.enemyBullets.push({
+    x: box.x + (box.w / 2),
+    y: box.y + box.h - 12,
+    speed: 140 + (runtime.formation.y * 0.12),
+    color: alien.color,
+    r: 4
+  });
+  runtime.status = "Incoming term fire. Move or hold Shield to absorb it.";
+}
+
+function resolveGlossaryInvaderHit(runtime, alien) {
+  if (runtime.locked) return;
+  runtime.locked = true;
+  runtime.explosions.push({
+    x: getGlossaryInvaderBounds(runtime, alien).x + (alien.w / 2),
+    y: getGlossaryInvaderBounds(runtime, alien).y + 42,
+    color: alien.color,
+    age: 0
+  });
+  alien.alive = false;
+  runtime.status = `${alien.option.title} hit. Checking the definition lock...`;
+  updateGlossaryInvaderHud(runtime);
   glossaryInvaderShotTimeout = setTimeout(() => {
     glossaryInvaderShotTimeout = null;
-    delete state.answers.glossaryInvaderTarget;
-    delete state.answers.glossaryInvaderFiring;
-    submitGlossaryChallengeChoiceEncoded(targetId, encodedValue);
-  }, 420);
+    stopGlossaryInvadersRuntime();
+    submitGlossaryChallengeChoiceEncoded(runtime.item.id, encodeURIComponent(alien.option.value));
+  }, 280);
+}
+
+function resetGlossaryInvaderAfterShipHit(reason) {
+  const runtime = glossaryInvadersRuntime;
+  if (!runtime || runtime.locked) return;
+  runtime.locked = true;
+  state.glossaryMisses += 1;
+  state.glossaryStreak = 0;
+  state.glossaryPulse = reason || "The ship was hit. Use the forcefield and keep the term row away from the base line.";
+  state.glossaryPulseType = "warn";
+  state.recentReward = {
+    type: "warning",
+    title: "Ship reset",
+    detail: "The invader wave restarted. Read the definition, move under the correct term, and fire again."
+  };
+  renderRewardPulse();
+  persistESTProgressSnapshot();
+  glossaryInvaderShotTimeout = setTimeout(() => {
+    glossaryInvaderShotTimeout = null;
+    stopGlossaryInvadersRuntime();
+    renderGlossaryStage();
+  }, 260);
+}
+
+function updateGlossaryInvaders(runtime, dt) {
+  if (runtime.locked) {
+    runtime.explosions.forEach(explosion => {
+      explosion.age += dt;
+    });
+    return;
+  }
+
+  runtime.time += dt;
+  runtime.fireCooldown = Math.max(0, runtime.fireCooldown - dt);
+  runtime.player.hitPulse = Math.max(0, runtime.player.hitPulse - dt);
+
+  const move = (runtime.keys.right ? 1 : 0) - (runtime.keys.left ? 1 : 0);
+  runtime.player.x = clampGlossaryInvaderNumber(runtime.player.x + (move * 380 * dt), 52, GLOSSARY_INVADER_WIDTH - 52);
+
+  if (runtime.shieldActive && runtime.shieldCharge > 0) {
+    runtime.shieldCharge = Math.max(0, runtime.shieldCharge - (26 * dt));
+    runtime.shieldDelay = 0.7;
+    if (runtime.shieldCharge <= 0) {
+      runtime.shieldActive = false;
+      runtime.status = "Forcefield depleted. Dodge while it recharges.";
+    }
+  } else {
+    runtime.shieldDelay = Math.max(0, runtime.shieldDelay - dt);
+    if (runtime.shieldDelay <= 0) {
+      runtime.shieldCharge = Math.min(100, runtime.shieldCharge + (18 * dt));
+    }
+  }
+
+  runtime.formation.x += runtime.formation.direction * runtime.formation.speed * dt;
+  const bounds = getGlossaryInvaderFormationBounds(runtime);
+  if (bounds.minX < 30 || bounds.maxX > GLOSSARY_INVADER_WIDTH - 30) {
+    runtime.formation.x += bounds.minX < 30 ? 30 - bounds.minX : (GLOSSARY_INVADER_WIDTH - 30) - bounds.maxX;
+    runtime.formation.y += runtime.formation.drop;
+    runtime.formation.direction *= -1;
+    runtime.formation.speed = Math.min(86, runtime.formation.speed + 3.5);
+    runtime.status = "The term row dropped closer. Keep it above the force line.";
+  }
+  if (bounds.maxY > GLOSSARY_INVADER_PLAYER_Y - 18) {
+    resetGlossaryInvaderAfterShipHit("The term row reached the base line. Reset the wave and shoot the matching term sooner.");
+    return;
+  }
+
+  runtime.enemyFireTimer -= dt;
+  if (runtime.enemyFireTimer <= 0) {
+    triggerGlossaryInvaderEnemyFire(runtime);
+    runtime.enemyFireTimer = 1.35 + Math.random() * 1.1;
+  }
+
+  runtime.playerBullets.forEach(bullet => {
+    bullet.y -= bullet.speed * dt;
+  });
+  runtime.enemyBullets.forEach(bullet => {
+    bullet.y += bullet.speed * dt;
+  });
+
+  runtime.playerBullets = runtime.playerBullets.filter(bullet => bullet.y > -20);
+  runtime.enemyBullets = runtime.enemyBullets.filter(bullet => bullet.y < GLOSSARY_INVADER_HEIGHT + 30);
+  runtime.explosions = runtime.explosions.filter(explosion => explosion.age < 0.5);
+
+  for (const bullet of runtime.playerBullets) {
+    const target = runtime.aliens.find(alien => {
+      if (!alien.alive) return false;
+      const box = getGlossaryInvaderBounds(runtime, alien);
+      return bullet.x >= box.x && bullet.x <= box.x + box.w && bullet.y >= box.y && bullet.y <= box.y + box.h;
+    });
+    if (target) {
+      resolveGlossaryInvaderHit(runtime, target);
+      return;
+    }
+  }
+
+  const player = runtime.player;
+  runtime.enemyBullets = runtime.enemyBullets.filter(bullet => {
+    const dx = bullet.x - player.x;
+    const dy = bullet.y - (player.y - 10);
+    const shieldHit = runtime.shieldActive && runtime.shieldCharge > 0 && Math.hypot(dx, dy) < 76;
+    if (shieldHit) {
+      runtime.shieldCharge = Math.max(0, runtime.shieldCharge - 16);
+      runtime.status = "Forcefield absorbed the shot.";
+      runtime.explosions.push({ x: bullet.x, y: bullet.y, color: "#72f7b8", age: 0 });
+      return false;
+    }
+
+    const shipHit = bullet.x > player.x - (player.w / 2)
+      && bullet.x < player.x + (player.w / 2)
+      && bullet.y > player.y - player.h
+      && bullet.y < player.y + 12;
+    if (!shipHit) return true;
+
+    player.hull -= 1;
+    player.hitPulse = 0.42;
+    runtime.status = player.hull > 0
+      ? "Ship hit. Hold Shield before the next enemy shot."
+      : "Ship integrity lost. Restarting this wave.";
+    runtime.explosions.push({ x: bullet.x, y: bullet.y, color: "#ff7d7d", age: 0 });
+    if (player.hull <= 0) {
+      resetGlossaryInvaderAfterShipHit("The ship was hit three times. Hold the forcefield during enemy fire and shoot the correct term.");
+    }
+    return false;
+  });
+
+  updateGlossaryInvaderHud(runtime);
+}
+
+function drawGlossaryRoundRect(ctx, x, y, width, height, radius) {
+  const r = Math.min(radius, width / 2, height / 2);
+  ctx.beginPath();
+  ctx.moveTo(x + r, y);
+  ctx.lineTo(x + width - r, y);
+  ctx.quadraticCurveTo(x + width, y, x + width, y + r);
+  ctx.lineTo(x + width, y + height - r);
+  ctx.quadraticCurveTo(x + width, y + height, x + width - r, y + height);
+  ctx.lineTo(x + r, y + height);
+  ctx.quadraticCurveTo(x, y + height, x, y + height - r);
+  ctx.lineTo(x, y + r);
+  ctx.quadraticCurveTo(x, y, x + r, y);
+  ctx.closePath();
+}
+
+function drawGlossaryInvaderBackdrop(ctx, runtime) {
+  const gradient = ctx.createLinearGradient(0, 0, 0, GLOSSARY_INVADER_HEIGHT);
+  gradient.addColorStop(0, "#050916");
+  gradient.addColorStop(0.5, "#0a1837");
+  gradient.addColorStop(1, "#030713");
+  ctx.fillStyle = gradient;
+  ctx.fillRect(0, 0, GLOSSARY_INVADER_WIDTH, GLOSSARY_INVADER_HEIGHT);
+
+  runtime.stars.forEach(star => {
+    const alpha = 0.35 + (Math.sin((runtime.time * 2.4) + (star.pulse * 6.28)) * 0.18);
+    ctx.fillStyle = `rgba(255, 255, 255, ${alpha.toFixed(3)})`;
+    ctx.fillRect(star.x, star.y, star.r, star.r);
+  });
+
+  ctx.save();
+  ctx.strokeStyle = "rgba(97, 240, 255, 0.08)";
+  ctx.lineWidth = 1;
+  for (let x = 0; x <= GLOSSARY_INVADER_WIDTH; x += 48) {
+    ctx.beginPath();
+    ctx.moveTo(x, 0);
+    ctx.lineTo(x - 80, GLOSSARY_INVADER_HEIGHT);
+    ctx.stroke();
+  }
+  for (let y = 44; y < GLOSSARY_INVADER_HEIGHT; y += 44) {
+    ctx.beginPath();
+    ctx.moveTo(0, y);
+    ctx.lineTo(GLOSSARY_INVADER_WIDTH, y);
+    ctx.stroke();
+  }
+  ctx.restore();
+
+  ctx.fillStyle = "rgba(255, 216, 108, 0.12)";
+  ctx.fillRect(0, GLOSSARY_INVADER_PLAYER_Y - 56, GLOSSARY_INVADER_WIDTH, 2);
+  ctx.fillStyle = "rgba(114, 247, 184, 0.12)";
+  ctx.fillRect(0, GLOSSARY_INVADER_PLAYER_Y + 22, GLOSSARY_INVADER_WIDTH, 5);
+}
+
+function drawGlossaryPixelCreature(ctx, x, y, scale, color, type) {
+  const sprites = [
+    ["00111100", "01111110", "11011011", "11111111", "00100100", "01000010"],
+    ["01000010", "10100101", "11111111", "11011011", "01111110", "00100100"],
+    ["00100100", "01111110", "11111111", "10111101", "00111100", "01011010"]
+  ];
+  const sprite = sprites[type % sprites.length];
+  ctx.save();
+  ctx.shadowColor = color;
+  ctx.shadowBlur = 12;
+  sprite.forEach((row, rowIndex) => {
+    Array.from(row).forEach((cell, colIndex) => {
+      if (cell !== "1") return;
+      ctx.fillStyle = color;
+      ctx.fillRect(x + (colIndex * scale), y + (rowIndex * scale), scale - 1, scale - 1);
+    });
+  });
+  ctx.restore();
+}
+
+function getGlossaryCanvasTextLines(ctx, text, maxWidth, maxLines = 2) {
+  const words = String(text || "").split(/\s+/).filter(Boolean);
+  const lines = [];
+  let current = "";
+  words.forEach(word => {
+    const trial = current ? `${current} ${word}` : word;
+    if (ctx.measureText(trial).width <= maxWidth || !current) {
+      current = trial;
+      return;
+    }
+    lines.push(current);
+    current = word;
+  });
+  if (current) lines.push(current);
+  if (lines.length <= maxLines) return lines;
+  const kept = lines.slice(0, maxLines);
+  while (ctx.measureText(`${kept[maxLines - 1]}...`).width > maxWidth && kept[maxLines - 1].length > 4) {
+    kept[maxLines - 1] = kept[maxLines - 1].slice(0, -1);
+  }
+  kept[maxLines - 1] = `${kept[maxLines - 1]}...`;
+  return kept;
+}
+
+function drawGlossaryInvaderTargetPanel(ctx, runtime) {
+  const panelX = 30;
+  const panelY = 62;
+  const panelWidth = GLOSSARY_INVADER_WIDTH - 60;
+  const panelHeight = 52;
+  ctx.save();
+  ctx.fillStyle = "rgba(6, 13, 30, 0.88)";
+  ctx.strokeStyle = "rgba(255, 216, 108, 0.42)";
+  ctx.lineWidth = 1.5;
+  drawGlossaryRoundRect(ctx, panelX, panelY, panelWidth, panelHeight, 14);
+  ctx.fill();
+  ctx.stroke();
+  ctx.fillStyle = "#ffd86c";
+  ctx.font = "900 12px Outfit, Arial, sans-serif";
+  ctx.textAlign = "left";
+  ctx.textBaseline = "top";
+  ctx.fillText("DEFINITION LOCK", panelX + 16, panelY + 10);
+  ctx.fillStyle = "#eff8ff";
+  ctx.font = "800 14px Outfit, Arial, sans-serif";
+  const lines = getGlossaryCanvasTextLines(ctx, runtime.item.definition, panelWidth - 190, 2);
+  lines.forEach((line, index) => {
+    ctx.fillText(line, panelX + 168, panelY + 9 + (index * 17));
+  });
+  ctx.restore();
+}
+
+function drawGlossaryInvaderAlien(ctx, runtime, alien) {
+  if (!alien.alive) return;
+  const box = getGlossaryInvaderBounds(runtime, alien);
+  const centerX = box.x + (box.w / 2);
+  const bodyY = box.y + 10;
+  const bob = Math.sin(runtime.time * 4) * 2;
+  const scale = 8;
+  const creatureWidth = 8 * scale;
+  drawGlossaryPixelCreature(ctx, centerX - (creatureWidth / 2), bodyY + bob, scale, alien.color, alien.type);
+
+  ctx.save();
+  ctx.globalAlpha = 0.92;
+  ctx.fillStyle = "rgba(5, 12, 28, 0.86)";
+  ctx.strokeStyle = `${alien.color}aa`;
+  ctx.lineWidth = 1.4;
+  drawGlossaryRoundRect(ctx, box.x + 5, box.y + 62, box.w - 10, 34, 10);
+  ctx.fill();
+  ctx.stroke();
+
+  ctx.fillStyle = "#eff8ff";
+  ctx.font = "800 13px Outfit, Arial, sans-serif";
+  ctx.textAlign = "center";
+  ctx.textBaseline = "middle";
+  const lines = getGlossaryCanvasTextLines(ctx, alien.option.title, box.w - 22, 2);
+  lines.forEach((line, index) => {
+    ctx.fillText(line, centerX, box.y + 75 + (index * 13));
+  });
+  ctx.restore();
+}
+
+function drawGlossaryInvaderShip(ctx, runtime) {
+  const player = runtime.player;
+  const x = player.x;
+  const y = player.y;
+  const hitAlpha = player.hitPulse > 0 ? 0.3 + (Math.sin(runtime.time * 48) * 0.18) : 0;
+
+  ctx.save();
+  if (runtime.shieldActive && runtime.shieldCharge > 0) {
+    ctx.strokeStyle = "rgba(114, 247, 184, 0.88)";
+    ctx.fillStyle = "rgba(114, 247, 184, 0.09)";
+    ctx.lineWidth = 4;
+    ctx.shadowColor = "#72f7b8";
+    ctx.shadowBlur = 22;
+    ctx.beginPath();
+    ctx.ellipse(x, y - 14, 78, 58, 0, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.stroke();
+  }
+
+  ctx.shadowColor = "#61f0ff";
+  ctx.shadowBlur = 18;
+  ctx.fillStyle = hitAlpha ? "#ffb4aa" : "#61f0ff";
+  ctx.beginPath();
+  ctx.moveTo(x, y - 50);
+  ctx.lineTo(x + 40, y + 2);
+  ctx.lineTo(x + 18, y + 7);
+  ctx.lineTo(x + 8, y - 8);
+  ctx.lineTo(x - 8, y - 8);
+  ctx.lineTo(x - 18, y + 7);
+  ctx.lineTo(x - 40, y + 2);
+  ctx.closePath();
+  ctx.fill();
+
+  ctx.shadowBlur = 0;
+  ctx.fillStyle = "#06111f";
+  ctx.fillRect(x - 6, y - 30, 12, 14);
+  ctx.fillStyle = "#ffd86c";
+  ctx.fillRect(x - 24, y + 4, 12, 4);
+  ctx.fillRect(x + 12, y + 4, 12, 4);
+  ctx.restore();
+}
+
+function drawGlossaryInvaderProjectiles(ctx, runtime) {
+  ctx.save();
+  runtime.playerBullets.forEach(bullet => {
+    ctx.strokeStyle = "#72f7b8";
+    ctx.lineWidth = 4;
+    ctx.shadowColor = "#72f7b8";
+    ctx.shadowBlur = 16;
+    ctx.beginPath();
+    ctx.moveTo(bullet.x, bullet.y + 16);
+    ctx.lineTo(bullet.x, bullet.y - 16);
+    ctx.stroke();
+  });
+
+  runtime.enemyBullets.forEach(bullet => {
+    ctx.strokeStyle = bullet.color;
+    ctx.lineWidth = 4;
+    ctx.shadowColor = bullet.color;
+    ctx.shadowBlur = 14;
+    ctx.beginPath();
+    ctx.moveTo(bullet.x, bullet.y - 10);
+    ctx.lineTo(bullet.x, bullet.y + 14);
+    ctx.stroke();
+  });
+  ctx.restore();
+}
+
+function drawGlossaryInvaderExplosions(ctx, runtime) {
+  runtime.explosions.forEach(explosion => {
+    const progress = clampGlossaryInvaderNumber(explosion.age / 0.5, 0, 1);
+    ctx.save();
+    ctx.globalAlpha = 1 - progress;
+    ctx.strokeStyle = explosion.color;
+    ctx.fillStyle = explosion.color;
+    ctx.lineWidth = 3;
+    ctx.shadowColor = explosion.color;
+    ctx.shadowBlur = 20;
+    ctx.beginPath();
+    ctx.arc(explosion.x, explosion.y, 10 + (progress * 44), 0, Math.PI * 2);
+    ctx.stroke();
+    for (let index = 0; index < 8; index += 1) {
+      const angle = (Math.PI * 2 * index) / 8;
+      const length = 14 + (progress * 38);
+      ctx.fillRect(
+        explosion.x + Math.cos(angle) * length,
+        explosion.y + Math.sin(angle) * length,
+        5,
+        5
+      );
+    }
+    ctx.restore();
+  });
+}
+
+function drawGlossaryInvaders(runtime) {
+  const ctx = runtime.ctx;
+  if (!ctx) return;
+  ctx.clearRect(0, 0, GLOSSARY_INVADER_WIDTH, GLOSSARY_INVADER_HEIGHT);
+  drawGlossaryInvaderBackdrop(ctx, runtime);
+
+  ctx.save();
+  ctx.fillStyle = "rgba(255, 216, 108, 0.92)";
+  ctx.font = "900 15px Outfit, Arial, sans-serif";
+  ctx.fillText("TERM CREATURE FORMATION", 30, 32);
+  ctx.fillStyle = "rgba(210, 232, 255, 0.76)";
+  ctx.font = "800 12px Outfit, Arial, sans-serif";
+  ctx.fillText("Destroy only the term that matches the definition lock", 30, 54);
+  ctx.restore();
+
+  drawGlossaryInvaderTargetPanel(ctx, runtime);
+  runtime.aliens.forEach(alien => drawGlossaryInvaderAlien(ctx, runtime, alien));
+  drawGlossaryInvaderProjectiles(ctx, runtime);
+  drawGlossaryInvaderShip(ctx, runtime);
+  drawGlossaryInvaderExplosions(ctx, runtime);
+}
+
+function runGlossaryInvadersFrame(now) {
+  const runtime = glossaryInvadersRuntime;
+  if (!runtime || runtime.stopped) return;
+  const dt = runtime.lastTime ? Math.min(0.04, (now - runtime.lastTime) / 1000) : 0;
+  runtime.lastTime = now;
+  updateGlossaryInvaders(runtime, dt);
+  drawGlossaryInvaders(runtime);
+  if (!runtime.stopped) {
+    runtime.frameId = requestAnimationFrame(runGlossaryInvadersFrame);
+  }
 }
 
 function isGlossaryChoiceCorrect(roundId, item, value) {
@@ -1201,7 +1834,7 @@ function submitGlossaryChallengeChoiceEncoded(targetId, encodedValue) {
         : round.id === "keyword-cloze"
           ? "Blank mismatch. Read the definition rhythm and try the missing keyword again."
           : round.id === "plain-match"
-            ? "Wrong ship. Use the definition lock and shoot the term that matches it."
+            ? "Wrong creature. Use the definition lock and shoot the term that matches it."
             : round.id === "recall"
               ? "Wrong bridge piece. Reread the definition and rebuild the safe path."
               : "Signal mismatch. Use the clue feed and restore the right glossary term.";
@@ -2382,13 +3015,11 @@ function renderGlossarySceneMatchGame(round, promptItem, optionSet, batch, batch
 }
 
 function renderGlossaryInvadersGame(round, promptItem, optionSet, batch, batchNumber, totalBatches, matchedCount, roundScore, progressPercent) {
-  const firingTarget = state.answers.glossaryInvaderTarget || "";
-  const isFiring = Boolean(state.answers.glossaryInvaderFiring);
   return `
     <div class="panel glossary-command-panel glossary-arcade-shell glossary-invaders-shell">
       <div class="section-title">
         <h2>Definition Invaders</h2>
-        <p>${matchedCount}/${batch.length} term ships cleared</p>
+        <p>${matchedCount}/${batch.length} term waves cleared</p>
       </div>
       <div class="badge-row" style="margin-bottom:14px;">
         <span class="badge">Current streak: x${state.glossaryStreak}</span>
@@ -2400,38 +3031,65 @@ function renderGlossaryInvadersGame(round, promptItem, optionSet, batch, batchNu
       <div class="glossary-progress-track" aria-hidden="true">
         <div class="glossary-progress-bar" style="width:${progressPercent}%;"></div>
       </div>
-      <div class="glossary-invaders-game ${isFiring ? "is-firing" : ""}">
-        <div class="glossary-invader-field" aria-label="Shoot the term ship that matches the definition">
-          <span class="glossary-invader-scan glossary-invader-scan--one"></span>
-          <span class="glossary-invader-scan glossary-invader-scan--two"></span>
-          ${optionSet.map((option, index) => `
-            <button
-              type="button"
-              class="glossary-invader-ship glossary-invader-ship--${index + 1} ${firingTarget === option.value ? "targeted" : ""}"
-              style="--ship-left:${12 + ((index * 21) % 62)}%; --ship-top:${10 + ((index * 17) % 42)}%; --ship-delay:${(index * -0.42).toFixed(2)}s;"
-              onclick="window.ESTPrep.fireGlossaryInvaderShipEncoded('${promptItem.id}', '${encodeForInlineHandler(option.value)}')"
-              ${isFiring ? "disabled" : ""}
-            >
-              <span>Term ship</span>
-              <strong>${escapeHtml(option.title)}</strong>
-            </button>
-          `).join("")}
-          <div class="glossary-invader-defender" aria-hidden="true">
-            <span class="glossary-invader-cannon"></span>
-            <span class="glossary-invader-laser glossary-invader-laser--one"></span>
-            <span class="glossary-invader-laser glossary-invader-laser--two"></span>
-          </div>
+      <div class="glossary-invaders-game">
+        <div class="glossary-invader-instructions" aria-live="polite">
+          <span><strong>Move</strong> arrow keys or buttons</span>
+          <span><strong>Shoot</strong> Space or Shoot</span>
+          <span><strong>Forcefield</strong> hold Shield to block enemy fire</span>
         </div>
-        <div class="glossary-invader-definition">
-          <span class="kicker">Definition lock</span>
-          <strong>Shoot the term that means:</strong>
-          <p>${escapeHtml(promptItem.definition)}</p>
+        <div class="glossary-invader-hud" aria-hidden="true">
+          <span>Hull <strong id="glossary-invader-hull">3/3</strong></span>
+          <span class="glossary-invader-meter"><i id="glossary-invader-forcefield-meter"></i></span>
+          <span id="glossary-invader-status">Formation entering the chamber.</span>
+        </div>
+        <canvas
+          id="glossary-invaders-canvas"
+          class="glossary-invaders-canvas"
+          width="${GLOSSARY_INVADER_WIDTH}"
+          height="${GLOSSARY_INVADER_HEIGHT}"
+          data-target-id="${escapeHtml(promptItem.id)}"
+          aria-label="Definition Invaders arcade game. Move the ship left and right, fire upward, and hold the forcefield to block enemy shots. Target definition: ${escapeHtml(promptItem.definition)}"
+        ></canvas>
+        <div class="glossary-invader-controls" aria-label="Definition Invaders controls">
+          <button
+            type="button"
+            class="glossary-invader-control"
+            aria-label="Move left"
+            onpointerdown="window.ESTPrep.setGlossaryInvaderMove(-1)"
+            onpointerup="window.ESTPrep.stopGlossaryInvaderMove(-1)"
+            onpointerleave="window.ESTPrep.stopGlossaryInvaderMove(-1)"
+            onpointercancel="window.ESTPrep.stopGlossaryInvaderMove(-1)"
+          >←</button>
+          <button
+            type="button"
+            class="glossary-invader-control"
+            aria-label="Move right"
+            onpointerdown="window.ESTPrep.setGlossaryInvaderMove(1)"
+            onpointerup="window.ESTPrep.stopGlossaryInvaderMove(1)"
+            onpointerleave="window.ESTPrep.stopGlossaryInvaderMove(1)"
+            onpointercancel="window.ESTPrep.stopGlossaryInvaderMove(1)"
+          >→</button>
+          <button
+            type="button"
+            class="glossary-invader-control glossary-invader-control--shield"
+            aria-label="Hold forcefield"
+            onpointerdown="window.ESTPrep.setGlossaryInvaderShield(true)"
+            onpointerup="window.ESTPrep.setGlossaryInvaderShield(false)"
+            onpointerleave="window.ESTPrep.setGlossaryInvaderShield(false)"
+            onpointercancel="window.ESTPrep.setGlossaryInvaderShield(false)"
+          >Shield</button>
+          <button
+            type="button"
+            class="glossary-invader-control glossary-invader-control--fire"
+            aria-label="Shoot with Space"
+            onclick="window.ESTPrep.fireGlossaryInvaderPlayerShot()"
+          >Shoot <span>Space</span></button>
         </div>
       </div>
     </div>
     <div class="written-stage glossary-finale-stage">
       <strong>Invader exit</strong>
-      <p class="small-copy">Clear the correct term ship for every definition lock to bank the round.</p>
+      <p class="small-copy">Clear the correct term creature in each descending row. The forcefield blocks shots, but it needs time to recharge.</p>
       <button class="submit-button" type="button" onclick="window.ESTPrep.nextGlossaryPhase()" ${isGlossaryBatchMatched() ? "" : "disabled"}>Finish Game</button>
     </div>
   `;
@@ -2967,6 +3625,7 @@ function renderGlossaryStage() {
         ${renderGlossaryCelebration()}
       </div>
     `);
+    stopGlossaryInvadersRuntime();
     return;
   }
 
@@ -3004,6 +3663,7 @@ function renderGlossaryStage() {
       </div>
     `);
     startGlossaryRoundTimer();
+    stopGlossaryInvadersRuntime();
     return;
   }
 
@@ -3031,6 +3691,7 @@ function renderGlossaryStage() {
     </div>
   `);
   startGlossaryRoundTimer();
+  mountGlossaryInvadersIfNeeded();
 }
 
 if (!window.__glossaryBridgeControlsBound) {
@@ -3051,6 +3712,46 @@ if (!window.__glossaryBridgeControlsBound) {
       if (!item || !option) return;
       event.preventDefault();
       submitGlossaryBridgeChoiceEncoded(item.id, encodeURIComponent(option.value), optionIndex);
+    }
+  });
+}
+
+if (!window.__glossaryInvaderControlsBound) {
+  window.__glossaryInvaderControlsBound = true;
+  window.addEventListener("keydown", event => {
+    const typingTag = String(event.target?.tagName || "").toLowerCase();
+    if (["input", "textarea", "select"].includes(typingTag) || event.target?.isContentEditable) return;
+    if (!document.body.classList.contains("glossary-mission-active")) return;
+    if (state.glossaryRoundCelebration || getCurrentGlossaryRound()?.id !== "plain-match" || state.glossaryMode !== "play") return;
+
+    if (event.key === "ArrowLeft" || event.key === "a" || event.key === "A") {
+      event.preventDefault();
+      setGlossaryInvaderMove(-1);
+    }
+    if (event.key === "ArrowRight" || event.key === "d" || event.key === "D") {
+      event.preventDefault();
+      setGlossaryInvaderMove(1);
+    }
+    if (event.key === " " || event.code === "Space" || event.key === "ArrowUp") {
+      event.preventDefault();
+      fireGlossaryInvaderPlayerShot();
+    }
+    if (event.key === "Shift") {
+      event.preventDefault();
+      setGlossaryInvaderShield(true);
+    }
+  });
+
+  window.addEventListener("keyup", event => {
+    if (getCurrentGlossaryRound()?.id !== "plain-match") return;
+    if (event.key === "ArrowLeft" || event.key === "a" || event.key === "A") {
+      stopGlossaryInvaderMove(-1);
+    }
+    if (event.key === "ArrowRight" || event.key === "d" || event.key === "D") {
+      stopGlossaryInvaderMove(1);
+    }
+    if (event.key === "Shift") {
+      setGlossaryInvaderShield(false);
     }
   });
 }
