@@ -70,6 +70,7 @@ const GLOSSARY_BRIDGE_ROWS = [
 
 const GLOSSARY_BRIDGE_HOME_POSITION = { x: 50, y: 91 };
 const GLOSSARY_BRIDGE_PORTAL_POSITION = { x: 83, y: 42 };
+const GLOSSARY_BRIDGE_PATH_SCALE_Y = 0.5625;
 
 const GLOSSARY_MEMORY_THEMES = {
   aqua: {
@@ -970,14 +971,50 @@ function getGlossaryBridgeActivePosition(bridge = getGlossaryBridgeState()) {
   return getGlossaryBridgePlayerLandingPosition(bridge.step - 1, optionIndex);
 }
 
-function getGlossaryBridgePlayerLandingPosition(rowIndex, optionIndex) {
+function getGlossaryBridgeTilePosition(rowIndex, optionIndex) {
   const row = GLOSSARY_BRIDGE_ROWS[rowIndex] || [];
-  const tile = row[Math.max(0, Math.min(row.length - 1, Number(optionIndex || 0)))] || row[0];
+  return row[Math.max(0, Math.min(row.length - 1, Number(optionIndex || 0)))] || row[0] || null;
+}
+
+function getGlossaryBridgePlayerLandingPosition(rowIndex, optionIndex) {
+  const tile = getGlossaryBridgeTilePosition(rowIndex, optionIndex);
   if (!tile) return GLOSSARY_BRIDGE_HOME_POSITION;
   return {
     x: tile.x,
-    y: Math.max(80, 92 - (Math.max(0, Number(rowIndex || 0)) * 2.5))
+    y: Math.min(90, tile.y + 24)
   };
+}
+
+function getGlossaryBridgePathPoints(bridge = getGlossaryBridgeState()) {
+  const points = [{ x: GLOSSARY_BRIDGE_HOME_POSITION.x, y: 87 }];
+  const lockedCount = Math.min(bridge.step, bridge.levelTerms.length);
+  for (let rowIndex = 0; rowIndex < lockedCount; rowIndex += 1) {
+    const tile = getGlossaryBridgeTilePosition(rowIndex, bridge.levelLocks[rowIndex]);
+    if (tile) points.push({ x: tile.x, y: tile.y });
+  }
+  if (bridge.levelClear && points.length > 1) {
+    points.push({ x: GLOSSARY_BRIDGE_PORTAL_POSITION.x, y: GLOSSARY_BRIDGE_PORTAL_POSITION.y });
+  }
+  return points;
+}
+
+function renderGlossaryBridgePathSegments(bridge) {
+  const points = getGlossaryBridgePathPoints(bridge);
+  if (points.length < 2) return "";
+  return points.slice(0, -1).map((point, index) => {
+    const next = points[index + 1];
+    const dx = next.x - point.x;
+    const scaledDy = (next.y - point.y) * GLOSSARY_BRIDGE_PATH_SCALE_Y;
+    const length = Math.max(1, Math.sqrt((dx * dx) + (scaledDy * scaledDy)));
+    const angle = Math.atan2(scaledDy, dx) * (180 / Math.PI);
+    const finalSegment = index === points.length - 2 && bridge.levelClear;
+    return `
+      <span
+        class="glossary-bridge-path-segment ${finalSegment ? "is-portal" : ""}"
+        style="--path-x:${point.x}%; --path-y:${point.y}%; --path-length:${length.toFixed(2)}%; --path-angle:${angle.toFixed(2)}deg;"
+      ></span>
+    `;
+  }).join("");
 }
 
 function buildGlossaryBridgeOptions(item, levelIndex = 0, stepIndex = 0) {
@@ -3139,6 +3176,7 @@ function renderGlossaryVaultBridgeGame(round) {
   }
 
   const options = buildGlossaryBridgeOptions(item, bridge.level, bridge.step);
+  const pathMarkup = renderGlossaryBridgePathSegments(bridge);
   const rowMarkup = GLOSSARY_BRIDGE_ROWS.map((row, rowIndex) => {
     return row.map((position, optionIndex) => {
       const lockedOption = bridge.levelLocks[rowIndex];
@@ -3226,6 +3264,7 @@ function renderGlossaryVaultBridgeGame(round) {
         <img class="glossary-bridge-bg" src="${escapeHtml(GLOSSARY_BRIDGE_ASSETS.backdrop)}" alt="">
         <span class="glossary-bridge-vignette" aria-hidden="true"></span>
         <span class="glossary-bridge-runway" aria-hidden="true"></span>
+        <div class="glossary-bridge-path" aria-hidden="true">${pathMarkup}</div>
         <div class="glossary-bridge-pieces" aria-label="Select the bridge piece that matches the definition">
           ${rowMarkup}
         </div>
