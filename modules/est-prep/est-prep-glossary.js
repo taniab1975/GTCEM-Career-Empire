@@ -2919,6 +2919,11 @@ function renderGlossaryStage() {
   const totalRounds = GLOSSARY_ROUND_CONFIGS.length;
   const batchNumber = 1;
   const matchedCount = Object.keys(assignments).length;
+  const roundScopeLabel = round.id === "recall"
+    ? `${buildGlossarySource().length} terms • ${getGlossaryBridgeLevels().length} levels`
+    : round.id === "memory-match"
+      ? `${batch.length} terms • ${batch.length * 2} cards`
+      : `${batch.length} terms`;
   setText("stage-title", "Glossary Mission");
   setText("stage-subtitle", "Short timed memory reps build coverage across the full glossary without forcing one giant sitting.");
 
@@ -2940,7 +2945,7 @@ function renderGlossaryStage() {
   const roundScore = Math.max(0, (matchedCount * 100) - (state.glossaryMisses * 25));
   const modeSwitch = `
     <div class="glossary-mode-switch">
-      <button type="button" class="choice-button ${state.glossaryMode === "play" ? "selected live-selected" : ""}" onclick="window.ESTPrep.setGlossaryMode('play')">Memory Game</button>
+      <button type="button" class="choice-button ${state.glossaryMode === "play" ? "selected live-selected" : ""}" onclick="window.ESTPrep.setGlossaryMode('play')">Play Game</button>
       <button type="button" class="choice-button ${state.glossaryMode === "study" ? "selected live-selected" : ""}" onclick="window.ESTPrep.setGlossaryMode('study')">Memory Deck</button>
     </div>
   `;
@@ -2980,11 +2985,11 @@ function renderGlossaryStage() {
         <div>
           <div class="kicker">System Recovery Protocol</div>
           <h3>Glossary Arcade</h3>
-          <p class="small-copy">Flip two cards at a time. Match six terms with six definitions, then bank the reward and move to the next theme.</p>
+          <p class="small-copy">${escapeHtml(round.cue)}</p>
         </div>
         <div class="glossary-mission-actions">
           <span class="badge">Game ${roundNumber} / ${totalRounds}</span>
-          <span class="badge">${batch.length} terms • ${batch.length * 2} cards</span>
+          <span class="badge">${escapeHtml(roundScopeLabel)}</span>
           <span class="badge">Timer <strong id="glossary-round-timer">${formatSecondsAsClock(getGlossaryRoundElapsedSeconds())}</strong></span>
           <button class="choice-button" type="button" onclick="window.ESTPrep.startNewGlossaryPracticeRun()">New timed set</button>
           <button class="choice-button" type="button" onclick="window.ESTPrep.returnToLab()">Save and return</button>
