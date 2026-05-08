@@ -1311,10 +1311,11 @@ const FULL_GLOSSARY_TERMS = [
 ];
 
 const GLOSSARY_ROUND_CONFIGS = [
-  { id: "term-catch", title: "Round 1: Termfall Dash", cue: "Catch the correct falling term for the definition before it disappears down the memory road." },
-  { id: "signal-slice", title: "Round 2: Cloze Sprint", cue: "Fill the missing keyword from the definition by tapping the moving repair tile." },
-  { id: "plain-match", title: "Round 3: Definition Invaders", cue: "Use the definition lock and shoot the correct term from the moving invader formation." },
-  { id: "recall", title: "Round 4: Vault Bridge", cue: "Cross five bridge rows per level. Correct terms lock the safe path, while one wrong answer rebuilds the current level from the entrance." }
+  { id: "memory-match", theme: "aqua", title: "Round 1: Memory Game", cue: "Flip two cards at a time. Match each term with its definition to clear the board." },
+  { id: "memory-match", theme: "violet", title: "Round 2: Memory Game", cue: "Flip two cards at a time. Matching term and definition pairs disappear from the board." },
+  { id: "memory-match", theme: "emerald", title: "Round 3: Memory Game", cue: "Keep using exact definitions. Wrong pairs reset after a short reveal." },
+  { id: "memory-match", theme: "solar", title: "Round 4: Memory Game", cue: "Use the term clue and definition wording to clear every pair in this round." },
+  { id: "memory-match", theme: "crimson", title: "Round 5: Memory Game", cue: "Final memory board. Clear the last set to cover every glossary word." }
 ];
 
 const STAGES = [
