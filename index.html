@@ -1607,6 +1607,7 @@
       align-self: stretch;
       display: grid;
       align-content: center;
+      justify-items: end;
     }
     .platform-shot-stack,
     .platform-shot-card,
@@ -1616,12 +1617,54 @@
     .platform-cinematic-stage {
       display: grid;
       gap: 16px;
-      padding: 20px;
-      border: 1px solid rgba(125, 211, 252, 0.18);
+      padding: 0;
+      border: 0;
       border-radius: 26px;
-      background: rgba(2, 8, 23, 0.54);
-      box-shadow: 0 28px 60px rgba(2, 8, 23, 0.36);
-      backdrop-filter: blur(18px);
+      background: transparent;
+      box-shadow: none;
+      backdrop-filter: none;
+    }
+    .platform-community-animation {
+      position: relative;
+      overflow: hidden;
+      width: 100%;
+      min-height: 0;
+      border-radius: 22px;
+      border: 1px solid rgba(253, 230, 138, 0.18);
+      background: #020817;
+      box-shadow: inset 0 0 0 1px rgba(125, 211, 252, 0.08);
+      isolation: isolate;
+    }
+    .platform-community-animation img {
+      display: block;
+      width: 100%;
+      height: auto;
+      filter: saturate(1.08) contrast(1.05);
+      transform-origin: center;
+      animation: platformCommunityDrift 15s ease-in-out infinite alternate;
+    }
+    .platform-community-animation::before,
+    .platform-community-animation::after {
+      content: "";
+      position: absolute;
+      pointer-events: none;
+      z-index: 1;
+    }
+    .platform-community-animation::before {
+      inset: 0;
+      background:
+        linear-gradient(115deg, transparent 0 35%, rgba(125, 211, 252, 0.18) 48%, transparent 60%),
+        radial-gradient(circle at 50% 48%, rgba(253, 230, 138, 0.2), transparent 22%);
+      mix-blend-mode: screen;
+      animation: platformCommunitySweep 4.8s ease-in-out infinite;
+    }
+    .platform-community-animation::after {
+      inset: 0;
+      background:
+        linear-gradient(180deg, rgba(2, 8, 23, 0.02), rgba(2, 8, 23, 0.48)),
+        linear-gradient(90deg, rgba(125, 211, 252, 0.1) 1px, transparent 1px);
+      background-size: auto, 44px 44px;
+      opacity: 0.58;
     }
     .platform-signal-orbit {
       position: relative;
@@ -1850,6 +1893,14 @@
     @keyframes platformOrbit {
       to { transform: rotate(360deg); }
     }
+    @keyframes platformCommunityDrift {
+      0% { transform: scale(1) translate3d(-1.5%, -1%, 0); }
+      100% { transform: scale(1.08) translate3d(1.5%, 1%, 0); }
+    }
+    @keyframes platformCommunitySweep {
+      0%, 100% { opacity: 0.2; transform: translateX(-24%); }
+      50% { opacity: 0.62; transform: translateX(22%); }
+    }
 
     body { box-sizing: border-box; }
 
@@ -1980,16 +2031,8 @@
                 </div>
                 <div class="platform-feature-stage" aria-label="Career Empire gameplay preview">
                   <div class="platform-cinematic-stage" aria-hidden="true">
-                    <div class="platform-signal-orbit">
-                      <span class="platform-signal-node one"><i data-lucide="map"></i></span>
-                      <span class="platform-signal-node two"><i data-lucide="sparkles"></i></span>
-                      <span class="platform-signal-node three"><i data-lucide="badge-check"></i></span>
-                      <span class="platform-signal-node four"><i data-lucide="radar"></i></span>
-                      <span class="platform-signal-core">Career<br>Empire</span>
-                    </div>
-                    <div class="platform-cinematic-caption">
-                      <strong>Playable learning world</strong>
-                      <span>Scenarios, choices, skill evidence and class momentum moving together.</span>
+                    <div class="platform-community-animation">
+                      <img src="./Assets/Images and Animations/Student Hub/community-impact-banner.png" alt="">
                     </div>
                   </div>
                   <div class="platform-feature-chips">
