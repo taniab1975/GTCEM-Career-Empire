@@ -276,8 +276,7 @@
       inset: 0;
       background:
         linear-gradient(180deg, rgba(2, 6, 23, 0.62), rgba(2, 6, 23, 0.88)),
-        radial-gradient(circle at 24% 30%, rgba(125, 211, 252, 0.22), transparent 24%),
-        radial-gradient(circle at 78% 62%, rgba(253, 230, 138, 0.16), transparent 26%);
+        url('./Assets/landing-screenshots/global-shop.png') center/cover no-repeat;
       filter: blur(3px) brightness(0.68);
       transform: scale(1.03);
       z-index: 0;
@@ -1064,7 +1063,7 @@
       z-index: 1;
     }
     .platform-home-grid {
-      max-width: 1180px;
+      max-width: 1480px;
       margin: 0 auto;
     }
     .platform-hero-card {
@@ -1087,6 +1086,8 @@
       align-items: center;
       justify-content: space-between;
       gap: 18px;
+      width: fit-content;
+      max-width: 100%;
       margin-bottom: 20px;
       padding: 14px 16px;
       border: 1px solid rgba(125, 211, 252, 0.22);
@@ -1102,10 +1103,16 @@
       min-width: 0;
     }
     .platform-logo-lockup img {
-      width: 76px;
-      height: auto;
+      width: 132px;
+      height: 104px;
+      object-fit: cover;
+      object-position: center;
+      border: 1px solid rgba(125, 211, 252, 0.22);
+      border-radius: 18px;
+      background: rgba(2, 8, 23, 0.72);
+      box-sizing: border-box;
       flex-shrink: 0;
-      filter: drop-shadow(0 10px 18px rgba(2, 8, 23, 0.42));
+      filter: drop-shadow(0 10px 18px rgba(2, 8, 23, 0.42)) drop-shadow(0 0 18px rgba(125, 211, 252, 0.18));
     }
     .platform-logo-lockup strong,
     .platform-logo-lockup span {
@@ -1125,6 +1132,7 @@
       text-transform: uppercase;
     }
     .platform-campus-tag {
+      display: none;
       max-width: 320px;
       color: #fde68a;
       font-size: 0.88rem;
@@ -1278,12 +1286,12 @@
     .platform-welcome-hero {
       position: relative;
       overflow: hidden;
-      min-height: min(760px, calc(100vh - 150px));
+      min-height: clamp(620px, calc(100vh - 150px), 720px);
       display: grid;
-      grid-template-columns: minmax(0, 0.92fr) minmax(420px, 1.08fr);
-      gap: clamp(22px, 4vw, 48px);
+      grid-template-columns: minmax(0, 0.92fr) minmax(360px, 0.88fr);
+      gap: clamp(24px, 4vw, 58px);
       align-items: center;
-      padding: clamp(28px, 5vw, 58px);
+      padding: clamp(30px, 4vw, 54px);
       border: 1px solid rgba(125, 211, 252, 0.22);
       border-radius: 28px;
       background:
@@ -1310,11 +1318,11 @@
       z-index: 1;
     }
     .platform-hero-ecc-badge {
+      display: none;
       position: absolute;
       top: clamp(18px, 3vw, 30px);
       left: clamp(18px, 3vw, 30px);
       z-index: 2;
-      display: inline-flex;
       align-items: center;
       gap: 12px;
       max-width: min(360px, calc(100% - 40px));
@@ -1338,21 +1346,22 @@
       line-height: 1.1;
     }
     .platform-welcome-copy {
-      padding-top: 92px;
+      padding-top: 0;
     }
     .platform-welcome-copy h1 {
       margin: 14px 0 0 0;
-      max-width: 780px;
+      max-width: 660px;
       color: #ffffff;
-      font-size: clamp(3rem, 7vw, 6.7rem);
+      font-size: clamp(3rem, 5.2vw, 5.85rem);
       font-weight: 800;
-      line-height: 0.9;
+      line-height: 0.95;
+      text-wrap: balance;
     }
     .platform-welcome-copy p {
-      max-width: 680px;
-      margin: 22px 0 0 0;
+      max-width: 620px;
+      margin: 20px 0 0 0;
       color: #dbeafe;
-      font-size: clamp(1.08rem, 1.7vw, 1.35rem);
+      font-size: clamp(1.03rem, 1.45vw, 1.2rem);
       line-height: 1.58;
     }
     .platform-role-choice {
@@ -1369,20 +1378,23 @@
     }
     .platform-feature-stage {
       display: grid;
-      gap: 18px;
+      gap: 14px;
+      align-self: center;
     }
     .platform-shot-stack {
-      position: relative;
-      min-height: 430px;
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      grid-template-rows: minmax(220px, 1.25fr) minmax(148px, 0.75fr);
+      gap: 12px;
+      min-height: 390px;
     }
     .platform-shot-card {
-      position: absolute;
+      position: relative;
       overflow: hidden;
       border: 1px solid rgba(255, 255, 255, 0.16);
-      border-radius: 20px;
+      border-radius: 18px;
       background: rgba(2, 6, 23, 0.86);
-      box-shadow: 0 26px 58px rgba(2, 8, 23, 0.44);
-      animation: platformShotFloat 8s ease-in-out infinite;
+      box-shadow: 0 22px 48px rgba(2, 8, 23, 0.42);
     }
     .platform-shot-card img {
       display: block;
@@ -1391,26 +1403,20 @@
       object-fit: cover;
     }
     .platform-shot-card.primary {
-      inset: 24px 0 auto 42px;
-      width: min(92%, 620px);
-      height: 315px;
+      grid-column: 1 / -1;
+      width: auto;
+      height: auto;
       z-index: 3;
     }
     .platform-shot-card.secondary {
-      top: 0;
-      right: 24px;
-      width: min(54%, 360px);
-      height: 190px;
+      width: auto;
+      height: auto;
       z-index: 2;
-      animation-delay: 1.6s;
     }
     .platform-shot-card.tertiary {
-      left: 0;
-      bottom: 0;
-      width: min(56%, 380px);
-      height: 205px;
+      width: auto;
+      height: auto;
       z-index: 4;
-      animation-delay: 3s;
     }
     .platform-shot-label {
       position: absolute;
@@ -1430,20 +1436,23 @@
     .platform-feature-chips {
       display: grid;
       grid-template-columns: repeat(3, minmax(0, 1fr));
-      gap: 10px;
+      gap: 9px;
     }
     .platform-feature-chip {
       display: flex;
       align-items: center;
+      justify-content: center;
       gap: 9px;
-      padding: 12px 13px;
+      min-height: 52px;
+      padding: 10px 12px;
       border: 1px solid rgba(125, 211, 252, 0.16);
       border-radius: 16px;
       background: rgba(3, 18, 30, 0.72);
       color: #e2e8f0;
-      font-size: 0.88rem;
+      font-size: 0.82rem;
       font-weight: 800;
       line-height: 1.2;
+      text-align: center;
       backdrop-filter: blur(14px);
     }
     .platform-feature-chip i {
@@ -1455,6 +1464,13 @@
     .platform-pathways {
       display: grid;
       gap: 22px;
+    }
+    body.platform-role-entry .platform-brand-strip,
+    body.platform-role-entry .platform-welcome-hero {
+      display: none;
+    }
+    body.platform-role-entry .platform-landing-grid {
+      gap: 0;
     }
     .platform-pathway-panel {
       display: none;
@@ -1529,13 +1545,201 @@
       min-height: 52px;
       gap: 9px;
     }
+    .platform-teacher-landing {
+      position: relative;
+      overflow: hidden;
+      scroll-margin-top: 16px;
+      display: grid;
+      gap: clamp(18px, 3vw, 28px);
+      padding: clamp(18px, 3.6vw, 42px);
+      border-color: rgba(125, 211, 252, 0.24);
+      border-radius: 28px;
+      background:
+        radial-gradient(circle at 68% 24%, rgba(14, 165, 233, 0.22), transparent 30%),
+        radial-gradient(circle at 50% 64%, rgba(16, 185, 129, 0.14), transparent 24%),
+        linear-gradient(110deg, rgba(2, 8, 23, 0.98), rgba(4, 16, 30, 0.88) 56%, rgba(2, 8, 23, 0.72)),
+        url("./Assets/landing-screenshots/ecc-future-campus-hero.png") center center / cover no-repeat;
+      box-shadow: 0 30px 80px rgba(2, 8, 23, 0.48);
+    }
+    .platform-teacher-landing::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background:
+        linear-gradient(90deg, rgba(2, 8, 23, 0.82), rgba(2, 8, 23, 0.32) 48%, rgba(2, 8, 23, 0.82)),
+        linear-gradient(180deg, rgba(2, 8, 23, 0.24), rgba(2, 8, 23, 0.92));
+      pointer-events: none;
+    }
+    .platform-teacher-landing::after {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background:
+        linear-gradient(90deg, rgba(125, 211, 252, 0.08) 1px, transparent 1px),
+        linear-gradient(180deg, rgba(253, 230, 138, 0.05) 1px, transparent 1px);
+      background-size: 64px 64px;
+      mask-image: linear-gradient(90deg, transparent, #000 28%, #000 76%, transparent);
+      opacity: 0.16;
+      pointer-events: none;
+    }
+    .platform-teacher-landing > * {
+      position: relative;
+      z-index: 1;
+    }
+    .platform-teacher-topline {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 10px;
+    }
+    .platform-pathway-back {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      min-height: 42px;
+      padding: 10px 14px;
+      border: 1px solid rgba(255, 255, 255, 0.14);
+      border-radius: 12px;
+      background: rgba(255, 255, 255, 0.055);
+      color: #ffffff;
+      font-size: 0.82rem;
+      font-weight: 800;
+      line-height: 1.1;
+      text-decoration: none;
+    }
+    .platform-pathway-back i {
+      width: 16px;
+      height: 16px;
+      flex-shrink: 0;
+    }
+    .platform-teacher-stage {
+      display: grid;
+      grid-template-columns: minmax(230px, 0.54fr) minmax(0, 1.46fr);
+      gap: clamp(18px, 4vw, 54px);
+      align-items: center;
+    }
+    .platform-teacher-hero {
+      display: grid;
+      gap: 18px;
+      align-content: center;
+    }
+    .platform-teacher-hero h2 {
+      max-width: 560px;
+      margin: 0;
+      color: #ffffff;
+      font-size: clamp(3.1rem, 6vw, 6.15rem);
+      font-weight: 800;
+      line-height: 0.9;
+      letter-spacing: 0;
+    }
+    .platform-teacher-hero p {
+      width: fit-content;
+      max-width: 360px;
+      margin: 0;
+      padding: 10px 13px;
+      border: 1px solid rgba(253, 230, 138, 0.22);
+      border-radius: 999px;
+      background: rgba(2, 8, 23, 0.54);
+      color: #fde68a;
+      font-size: 0.95rem;
+      font-weight: 800;
+      line-height: 1.2;
+    }
+    .platform-teacher-overview {
+      display: grid;
+      gap: 14px;
+      padding: clamp(14px, 2vw, 22px);
+      border: 1px solid rgba(125, 211, 252, 0.28);
+      border-radius: 24px;
+      background: rgba(2, 8, 23, 0.68);
+      box-shadow:
+        0 0 70px rgba(14, 165, 233, 0.18),
+        0 28px 70px rgba(2, 8, 23, 0.5);
+    }
+    .platform-teacher-overview h3 {
+      margin: 0;
+      color: #ffffff;
+      font-size: clamp(1.7rem, 3vw, 3.1rem);
+      font-weight: 800;
+      line-height: 1;
+      letter-spacing: 0;
+    }
+    .platform-teacher-overview p {
+      margin: 0;
+      color: #dbeafe;
+      font-size: 0.95rem;
+      font-weight: 700;
+      line-height: 1.35;
+    }
+    .platform-teacher-overview .platform-embed-frame {
+      aspect-ratio: 16 / 9;
+      min-height: 0;
+      padding: 8px;
+      border-radius: 20px;
+      border-color: rgba(253, 230, 138, 0.18);
+      background: rgba(2, 6, 23, 0.84);
+    }
+    .platform-teacher-overview .platform-kicker {
+      width: fit-content;
+    }
+    .platform-teacher-overview .platform-embed-frame video {
+      min-height: 0;
+      object-fit: cover;
+      border-radius: 14px;
+    }
+    .platform-teacher-action-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 18px;
+    }
+    .platform-teacher-action-card {
+      display: flex;
+      flex-direction: column;
+      min-height: 172px;
+      padding: clamp(18px, 2vw, 24px);
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      border-radius: 18px;
+      background: rgba(2, 8, 23, 0.58);
+      box-shadow: 0 20px 46px rgba(2, 8, 23, 0.26);
+    }
+    .platform-teacher-action-card h3 {
+      margin: 0 0 10px 0;
+      color: #ffffff;
+      font-size: 1.45rem;
+      font-weight: 800;
+      line-height: 1.1;
+    }
+    .platform-teacher-action-card p {
+      margin: 0;
+      color: #dbeafe;
+      font-weight: 700;
+      line-height: 1.42;
+    }
+    .platform-teacher-action-card .platform-pathway-actions {
+      margin-top: auto;
+      padding-top: 22px;
+    }
+    .platform-teacher-action-card .platform-entry-btn,
+    .platform-teacher-action-card .platform-ghost {
+      min-width: 0;
+      min-height: 48px;
+      border-radius: 10px;
+      white-space: nowrap;
+    }
+    .platform-safety-entry {
+      border-color: rgba(253, 230, 138, 0.34);
+      background: rgba(253, 230, 138, 0.08);
+      color: #fef3c7;
+      box-shadow: 0 16px 34px rgba(253, 230, 138, 0.08);
+    }
     .platform-student-preview {
       min-height: 320px;
       border-radius: 20px;
       border: 1px solid rgba(125, 211, 252, 0.18);
       background:
-        radial-gradient(circle at 50% 40%, rgba(125, 211, 252, 0.22), transparent 22%),
-        linear-gradient(145deg, rgba(4, 24, 38, 0.94), rgba(2, 8, 23, 0.88));
+        linear-gradient(180deg, rgba(2, 6, 23, 0.1), rgba(2, 6, 23, 0.78)),
+        url("./Assets/landing-screenshots/student-hub.png") center center / cover no-repeat;
     }
     .platform-role-button.active {
       border-color: rgba(253, 230, 138, 0.4);
@@ -1544,362 +1748,6 @@
     @keyframes platformShotFloat {
       0%, 100% { transform: translateY(0) rotate(0deg); }
       50% { transform: translateY(-10px) rotate(-0.45deg); }
-    }
-
-    /* Landing repair: campus-first, no screenshot frames, separated role pages. */
-    .platform-home-shell {
-      background:
-        linear-gradient(180deg, rgba(2, 8, 23, 0.08), rgba(2, 8, 23, 0.82) 72%, #020817 100%),
-        url("./Assets/landing-screenshots/ecc-future-campus-hero.png") center center / cover fixed no-repeat,
-        #020817;
-    }
-    .platform-home-shell::before {
-      background:
-        linear-gradient(90deg, rgba(2, 8, 23, 0.84), rgba(2, 8, 23, 0.34) 48%, rgba(2, 8, 23, 0.74)),
-        radial-gradient(circle at 76% 16%, rgba(253, 230, 138, 0.12), transparent 28%);
-    }
-    .platform-home-grid {
-      max-width: 1280px;
-    }
-    .platform-brand-strip {
-      width: fit-content;
-      max-width: calc(100% - 24px);
-      margin-bottom: 18px;
-      padding: 10px 14px;
-      border-radius: 18px;
-      background: rgba(2, 8, 23, 0.56);
-    }
-    .platform-logo-lockup img {
-      width: 54px;
-    }
-    .platform-campus-tag {
-      display: none;
-    }
-    .platform-welcome-hero {
-      min-height: min(780px, calc(100vh - 120px));
-      grid-template-columns: minmax(0, 0.9fr) minmax(360px, 0.72fr);
-      align-items: end;
-      background:
-        linear-gradient(90deg, rgba(2, 8, 23, 0.92), rgba(2, 8, 23, 0.5) 58%, rgba(2, 8, 23, 0.28)),
-        linear-gradient(180deg, rgba(2, 8, 23, 0.05), rgba(2, 8, 23, 0.78)),
-        url("./Assets/landing-screenshots/ecc-future-campus-hero.png") center center / cover no-repeat;
-    }
-    .platform-welcome-hero::after {
-      opacity: 0.14;
-      mask-image: linear-gradient(90deg, #000, transparent 78%);
-    }
-    .platform-hero-ecc-badge {
-      display: none;
-    }
-    .platform-welcome-copy {
-      max-width: 760px;
-      padding-top: 0;
-      align-self: end;
-    }
-    .platform-welcome-copy h1 {
-      max-width: 700px;
-      font-size: clamp(3.4rem, 7.6vw, 7.4rem);
-    }
-    .platform-welcome-copy p {
-      max-width: 620px;
-    }
-    .platform-feature-stage {
-      align-self: stretch;
-      display: grid;
-      align-content: center;
-      justify-items: end;
-    }
-    .platform-shot-stack,
-    .platform-shot-card,
-    .platform-shot-label {
-      display: none;
-    }
-    .platform-cinematic-stage {
-      display: grid;
-      gap: 16px;
-      padding: 0;
-      border: 0;
-      border-radius: 26px;
-      background: transparent;
-      box-shadow: none;
-      backdrop-filter: none;
-    }
-    .platform-community-animation {
-      position: relative;
-      overflow: hidden;
-      width: 100%;
-      min-height: 0;
-      border-radius: 22px;
-      border: 1px solid rgba(253, 230, 138, 0.18);
-      background: #020817;
-      box-shadow: inset 0 0 0 1px rgba(125, 211, 252, 0.08);
-      isolation: isolate;
-    }
-    .platform-community-animation img {
-      display: block;
-      width: 100%;
-      height: auto;
-      filter: saturate(1.08) contrast(1.05);
-      transform-origin: center;
-      animation: platformCommunityDrift 15s ease-in-out infinite alternate;
-    }
-    .platform-community-animation::before,
-    .platform-community-animation::after {
-      content: "";
-      position: absolute;
-      pointer-events: none;
-      z-index: 1;
-    }
-    .platform-community-animation::before {
-      inset: 0;
-      background:
-        linear-gradient(115deg, transparent 0 35%, rgba(125, 211, 252, 0.18) 48%, transparent 60%),
-        radial-gradient(circle at 50% 48%, rgba(253, 230, 138, 0.2), transparent 22%);
-      mix-blend-mode: screen;
-      animation: platformCommunitySweep 4.8s ease-in-out infinite;
-    }
-    .platform-community-animation::after {
-      inset: 0;
-      background:
-        linear-gradient(180deg, rgba(2, 8, 23, 0.02), rgba(2, 8, 23, 0.48)),
-        linear-gradient(90deg, rgba(125, 211, 252, 0.1) 1px, transparent 1px);
-      background-size: auto, 44px 44px;
-      opacity: 0.58;
-    }
-    .platform-signal-orbit {
-      position: relative;
-      min-height: 280px;
-      border-radius: 22px;
-      overflow: hidden;
-      border: 1px solid rgba(253, 230, 138, 0.16);
-      background:
-        radial-gradient(circle at 50% 50%, rgba(125, 211, 252, 0.34), transparent 12%),
-        radial-gradient(circle at 50% 50%, transparent 0 28%, rgba(253, 230, 138, 0.18) 29%, transparent 31%),
-        radial-gradient(circle at 50% 50%, transparent 0 46%, rgba(125, 211, 252, 0.14) 47%, transparent 49%),
-        linear-gradient(145deg, rgba(4, 24, 38, 0.95), rgba(2, 8, 23, 0.86));
-    }
-    .platform-signal-orbit::before,
-    .platform-signal-orbit::after {
-      content: "";
-      position: absolute;
-      inset: 24%;
-      border: 1px solid rgba(125, 211, 252, 0.24);
-      border-radius: 50%;
-      animation: platformOrbit 12s linear infinite;
-    }
-    .platform-signal-orbit::after {
-      inset: 12%;
-      border-color: rgba(253, 230, 138, 0.18);
-      animation-duration: 18s;
-      animation-direction: reverse;
-    }
-    .platform-signal-node {
-      position: absolute;
-      display: grid;
-      place-items: center;
-      width: 58px;
-      height: 58px;
-      border-radius: 18px;
-      border: 1px solid rgba(125, 211, 252, 0.22);
-      background: rgba(2, 8, 23, 0.72);
-      color: #fde68a;
-      box-shadow: 0 18px 34px rgba(0, 0, 0, 0.28);
-    }
-    .platform-signal-node i {
-      width: 24px;
-      height: 24px;
-    }
-    .platform-signal-node.one { top: 12%; left: 16%; }
-    .platform-signal-node.two { top: 18%; right: 14%; }
-    .platform-signal-node.three { bottom: 16%; right: 22%; }
-    .platform-signal-node.four { bottom: 14%; left: 22%; }
-    .platform-signal-core {
-      position: absolute;
-      left: 50%;
-      top: 50%;
-      transform: translate(-50%, -50%);
-      width: 116px;
-      height: 116px;
-      display: grid;
-      place-items: center;
-      border-radius: 34px;
-      border: 1px solid rgba(253, 230, 138, 0.26);
-      background: rgba(4, 28, 40, 0.76);
-      color: white;
-      font-size: 0.82rem;
-      font-weight: 800;
-      text-align: center;
-      letter-spacing: 0.08em;
-      text-transform: uppercase;
-      box-shadow: 0 0 42px rgba(125, 211, 252, 0.16);
-    }
-    .platform-cinematic-caption {
-      display: grid;
-      gap: 5px;
-      padding: 16px 18px;
-      border-radius: 18px;
-      border: 1px solid rgba(125, 211, 252, 0.16);
-      background: rgba(2, 8, 23, 0.58);
-    }
-    .platform-cinematic-caption strong {
-      color: #ffffff;
-      font-size: 1.05rem;
-      font-weight: 800;
-    }
-    .platform-cinematic-caption span {
-      color: #dbeafe;
-      font-size: 0.92rem;
-      line-height: 1.45;
-    }
-    .platform-feature-chips {
-      grid-template-columns: 1fr;
-    }
-    .platform-feature-chip {
-      min-height: 54px;
-      background: rgba(2, 8, 23, 0.56);
-    }
-    .platform-home-shell.platform-role-active .platform-brand-strip,
-    .platform-home-shell.platform-role-active .platform-welcome-hero {
-      display: none;
-    }
-    .platform-pathway-panel.active {
-      min-height: calc(100vh - 64px);
-      padding: clamp(24px, 4vw, 52px);
-      border-radius: 28px;
-      background:
-        linear-gradient(90deg, rgba(2, 8, 23, 0.9), rgba(2, 8, 23, 0.58)),
-        linear-gradient(180deg, rgba(2, 8, 23, 0.18), rgba(2, 8, 23, 0.78)),
-        url("./Assets/landing-screenshots/ecc-future-campus-hero.png") center center / cover no-repeat;
-    }
-    .platform-pathway-head {
-      grid-template-columns: 1fr;
-      align-items: start;
-    }
-    .platform-pathway-head h2 {
-      max-width: 900px;
-      font-size: clamp(2.6rem, 5.8vw, 5.8rem);
-    }
-    .platform-back-button {
-      width: fit-content;
-      min-height: 42px;
-      gap: 8px;
-      margin-bottom: 4px;
-    }
-    .platform-pathway-grid,
-    #platform-teacher-pathway .platform-pathway-grid {
-      grid-template-columns: 1fr;
-    }
-    #platform-teacher-pathway .platform-video-panel {
-      max-width: 1120px;
-      margin: 0 auto;
-      width: 100%;
-      background: rgba(2, 8, 23, 0.76);
-    }
-    #platform-teacher-pathway .platform-video-header h1 {
-      font-size: clamp(2rem, 4vw, 4.4rem);
-    }
-    #platform-teacher-pathway .platform-embed-frame {
-      aspect-ratio: 16 / 9;
-      min-height: 0;
-    }
-    .platform-teacher-actions {
-      max-width: 1120px;
-      margin: 0 auto;
-      width: 100%;
-      display: grid;
-      grid-template-columns: repeat(2, minmax(0, 1fr));
-      gap: 16px;
-    }
-    .platform-pathway-card {
-      background: rgba(2, 8, 23, 0.68);
-      backdrop-filter: blur(18px);
-    }
-    .platform-student-preview {
-      position: relative;
-      min-height: 420px;
-      overflow: hidden;
-      background:
-        radial-gradient(circle at 50% 42%, rgba(125, 211, 252, 0.32), transparent 14%),
-        linear-gradient(145deg, rgba(4, 24, 38, 0.95), rgba(2, 8, 23, 0.86));
-    }
-    .platform-student-preview > * {
-      position: relative;
-      z-index: 1;
-    }
-    .platform-student-preview::before {
-      content: "";
-      position: absolute;
-      inset: 14%;
-      border-radius: 42px;
-      border: 1px solid rgba(125, 211, 252, 0.22);
-      background:
-        linear-gradient(90deg, rgba(125, 211, 252, 0.12) 1px, transparent 1px),
-        linear-gradient(180deg, rgba(253, 230, 138, 0.1) 1px, transparent 1px);
-      background-size: 42px 42px;
-      transform: perspective(700px) rotateX(58deg);
-      transform-origin: center bottom;
-    }
-    .platform-student-preview::after {
-      content: "STUDENT LAUNCH";
-      position: absolute;
-      left: 50%;
-      top: 50%;
-      transform: translate(-50%, -50%);
-      padding: 16px 22px;
-      border: 1px solid rgba(253, 230, 138, 0.26);
-      border-radius: 20px;
-      background: rgba(2, 8, 23, 0.72);
-      color: #ffffff;
-      font-weight: 800;
-      letter-spacing: 0.16em;
-    }
-    .platform-student-console {
-      position: absolute;
-      left: clamp(18px, 7%, 42px);
-      right: clamp(18px, 7%, 42px);
-      bottom: clamp(18px, 7%, 42px);
-      display: grid;
-      gap: 14px;
-      padding: 20px;
-      border: 1px solid rgba(125, 211, 252, 0.2);
-      border-radius: 22px;
-      background: rgba(2, 8, 23, 0.72);
-      backdrop-filter: blur(16px);
-    }
-    .platform-student-console strong {
-      color: #ffffff;
-      font-size: clamp(1.45rem, 3vw, 2.25rem);
-      line-height: 1;
-    }
-    .platform-student-lanes {
-      display: grid;
-      grid-template-columns: repeat(3, minmax(0, 1fr));
-      gap: 10px;
-    }
-    .platform-student-lanes span {
-      min-height: 46px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      padding: 10px;
-      border: 1px solid rgba(253, 230, 138, 0.18);
-      border-radius: 14px;
-      background: rgba(255, 255, 255, 0.055);
-      color: #e2e8f0;
-      font-size: 0.82rem;
-      font-weight: 800;
-      text-align: center;
-    }
-    @keyframes platformOrbit {
-      to { transform: rotate(360deg); }
-    }
-    @keyframes platformCommunityDrift {
-      0% { transform: scale(1) translate3d(-1.5%, -1%, 0); }
-      100% { transform: scale(1.08) translate3d(1.5%, 1%, 0); }
-    }
-    @keyframes platformCommunitySweep {
-      0%, 100% { opacity: 0.2; transform: translateX(-24%); }
-      50% { opacity: 0.62; transform: translateX(22%); }
     }
 
     body { box-sizing: border-box; }
@@ -1945,7 +1793,8 @@
         text-align: left;
       }
       .platform-logo-lockup img {
-        width: 62px;
+        width: 108px;
+        height: 86px;
       }
       .platform-video-header {
         align-items: flex-start;
@@ -1958,7 +1807,9 @@
       }
       .platform-welcome-hero,
       .platform-pathway-grid,
-      .platform-pathway-head {
+      .platform-pathway-head,
+      .platform-teacher-stage,
+      .platform-teacher-action-grid {
         grid-template-columns: 1fr;
       }
       .platform-welcome-hero {
@@ -1966,22 +1817,25 @@
         padding: 22px;
       }
       .platform-hero-ecc-badge {
-        position: static;
-        margin-bottom: 22px;
+        display: none;
       }
       .platform-welcome-copy {
         padding-top: 0;
       }
       .platform-shot-stack {
-        min-height: 390px;
+        grid-template-columns: 1fr;
+        grid-template-rows: none;
+        min-height: auto;
       }
       .platform-shot-card.primary {
-        left: 0;
+        grid-row: auto;
         width: 100%;
+        min-height: 260px;
       }
       .platform-shot-card.secondary,
       .platform-shot-card.tertiary {
-        width: 62%;
+        width: 100%;
+        min-height: 190px;
       }
       .platform-feature-chips {
         grid-template-columns: 1fr;
@@ -1989,15 +1843,21 @@
       .platform-pathway-head {
         align-items: start;
       }
-      .platform-teacher-actions,
-      .platform-student-lanes {
-        grid-template-columns: 1fr;
+      .platform-teacher-landing {
+        padding: 16px;
       }
-      .platform-signal-orbit {
-        min-height: 240px;
+      .platform-teacher-stage {
+        min-height: auto;
+        gap: 18px;
       }
-      .platform-student-preview {
-        min-height: 360px;
+      .platform-teacher-hero {
+        gap: 14px;
+      }
+      .platform-teacher-hero h2 {
+        font-size: clamp(3rem, 13vw, 4.5rem);
+      }
+      .platform-teacher-action-card {
+        min-height: auto;
       }
     }
   </style>
@@ -2008,7 +1868,7 @@
       <div class="platform-home-grid">
         <header class="platform-brand-strip" aria-label="Emmanuel Catholic College Career Empire">
           <div class="platform-logo-lockup">
-            <img src="./Assets/landing-screenshots/ecc-logo.png" alt="Emmanuel Catholic College crest">
+            <img src="./Assets/landing-screenshots/ecc-logo-hologram-main.png?v=20260508" alt="Emmanuel Catholic College hologram logo">
             <div>
               <strong>Emmanuel Catholic College</strong>
               <span>Career Empire</span>
@@ -2020,6 +1880,10 @@
           <div class="platform-hero-card">
             <div class="platform-landing-grid">
               <section class="platform-welcome-hero" aria-labelledby="platform-welcome-title">
+                <div class="platform-hero-ecc-badge">
+                  <img src="./Assets/landing-screenshots/ecc-logo-hologram-main.png?v=20260508" alt="Emmanuel Catholic College hologram logo">
+                  <span>Emmanuel Catholic College</span>
+                </div>
                 <div class="platform-welcome-copy">
                   <span class="platform-kicker">Welcome to the next stage</span>
                   <h1 id="platform-welcome-title">Year 12 Careers just levelled up.</h1>
@@ -2029,11 +1893,20 @@
                     <button class="platform-ghost platform-entry-btn platform-role-button" type="button" data-platform-role-button="teacher"><i data-lucide="presentation"></i>I'm a teacher</button>
                   </div>
                 </div>
-                <div class="platform-feature-stage" aria-label="Career Empire gameplay preview">
-                  <div class="platform-cinematic-stage" aria-hidden="true">
-                    <div class="platform-community-animation">
-                      <img src="./Assets/Images and Animations/Student Hub/community-impact-banner.png" alt="">
-                    </div>
+                <div class="platform-feature-stage" aria-label="Career Empire feature preview">
+                  <div class="platform-shot-stack">
+                    <figure class="platform-shot-card primary">
+                      <img src="./Assets/Images%20and%20Animations/Student%20Hub/student-hub-hero-career-empire.png" alt="Career Empire student hub artwork">
+                      <figcaption class="platform-shot-label">Student hub</figcaption>
+                    </figure>
+                    <figure class="platform-shot-card secondary">
+                      <img src="./Assets/Images%20and%20Animations/Global%20Shop/global-shop-student-hub.png" alt="Career Empire career world artwork">
+                      <figcaption class="platform-shot-label">Career world</figcaption>
+                    </figure>
+                    <figure class="platform-shot-card tertiary">
+                      <img src="./Assets/Images%20and%20Animations/Student%20Hub/module-lifelong-learning-thumb.png" alt="Career Empire Lifelong Learning module artwork">
+                      <figcaption class="platform-shot-label">Playable modules</figcaption>
+                    </figure>
                   </div>
                   <div class="platform-feature-chips">
                     <span class="platform-feature-chip"><i data-lucide="gamepad-2"></i>Playable modules</span>
@@ -2047,28 +1920,17 @@
                 <article id="platform-student-pathway" class="platform-pathway-panel" data-platform-role-panel="student" aria-labelledby="platform-student-title">
                   <div class="platform-pathway-head">
                     <div>
-                      <button class="platform-ghost platform-entry-btn platform-back-button" type="button" data-platform-role-button=""><i data-lucide="arrow-left"></i>Back to welcome</button>
                       <span class="platform-kicker">Student pathway</span>
                       <h2 id="platform-student-title">Your Career Empire starts here.</h2>
-                      <p>Students can step straight into their own login and demo spaces. A dedicated student welcome video can slot in here when it is ready.</p>
+                      <p>Students can step into a dedicated landing page with the animated intro, their own login, demo spaces, and first mission launch links.</p>
                     </div>
                     <div class="platform-pathway-actions">
-                      <a class="btn-primary text-white font-bold py-3 px-6 rounded-lg platform-entry-btn" href="./auth/student-login.html"><i data-lucide="log-in"></i>Student Login</a>
+                      <a class="btn-primary text-white font-bold py-3 px-6 rounded-lg platform-entry-btn" href="./student/index.html"><i data-lucide="graduation-cap"></i>Student Landing</a>
                       <button class="platform-ghost platform-entry-btn" type="button" data-demo-student-launch="true" data-demo-student-target="./dashboards/student.html"><i data-lucide="play-circle"></i>Try Student Demo</button>
                     </div>
                   </div>
                   <div class="platform-pathway-grid">
-                    <div class="platform-student-preview" role="img" aria-label="Cinematic Career Empire student launch preview">
-                      <div class="platform-student-console">
-                        <span class="platform-kicker">Student launch</span>
-                        <strong>Choose your first mission.</strong>
-                        <div class="platform-student-lanes">
-                          <span>Megatrends</span>
-                          <span>EST Prep</span>
-                          <span>Career evidence</span>
-                        </div>
-                      </div>
-                    </div>
+                    <div class="platform-student-preview" role="img" aria-label="Career Empire student hub preview"></div>
                     <div class="platform-student-guide">
                       <h3>How students get online</h3>
                       <ol>
@@ -2085,23 +1947,23 @@
                   </div>
                 </article>
 
-                <article id="platform-teacher-pathway" class="platform-pathway-panel" data-platform-role-panel="teacher" aria-labelledby="platform-teacher-title">
-                  <div class="platform-pathway-head">
-                    <div>
-                      <button class="platform-ghost platform-entry-btn platform-back-button" type="button" data-platform-role-button=""><i data-lucide="arrow-left"></i>Back to welcome</button>
-                      <span class="platform-kicker">Teacher pathway</span>
-                      <h2 id="platform-teacher-title">Watch the overview first.</h2>
-                      <p>Start with the platform video, then test the student demo pathways. Create or open a teacher account once the flow makes sense.</p>
-                    </div>
+                <article id="platform-teacher-pathway" class="platform-pathway-panel platform-teacher-landing" data-platform-role-panel="teacher" aria-labelledby="platform-teacher-title">
+                  <div class="platform-teacher-topline">
+                    <a class="platform-pathway-back" href="#platform-welcome-title"><i data-lucide="arrow-left"></i>Back</a>
+                    <span class="platform-kicker">Teacher pathway</span>
                   </div>
-                  <div class="platform-pathway-grid platform-teacher-video-grid">
-                    <div class="platform-video-panel platform-video-panel--lead" aria-label="Career Empire teacher overview video">
-                      <div class="platform-video-header">
-                        <div>
-                          <span class="platform-kicker">Platform overview</span>
-                          <h1>What is Career Empire?</h1>
-                          <p>The staff overview stays front and centre before account creation.</p>
-                        </div>
+
+                  <section class="platform-teacher-stage" aria-label="Career Empire teacher overview video">
+                    <header class="platform-teacher-hero">
+                      <h2 id="platform-teacher-title">Enter the teaching universe.</h2>
+                      <p>Press play. Step inside.</p>
+                    </header>
+
+                    <div class="platform-teacher-overview">
+                      <div>
+                        <span class="platform-kicker">Start here</span>
+                        <h3>The overview</h3>
+                        <p>See the world before you build the class.</p>
                       </div>
                       <div class="platform-embed-frame">
                         <video controls playsinline preload="metadata" poster="./Assets/Images and Animations/Student Hub/student-hub-hero-career-empire.png">
@@ -2110,25 +1972,28 @@
                         </video>
                       </div>
                     </div>
-                  </div>
-                  <div class="platform-teacher-actions" aria-label="Teacher next steps">
-                    <div class="platform-pathway-card">
-                      <h3>Try the student flow</h3>
-                      <p>Use temporary demo student spaces to see the platform before setting up your own class.</p>
+                  </section>
+
+                  <div class="platform-teacher-action-grid">
+                    <section class="platform-teacher-action-card" aria-labelledby="teacher-demo-flow-title">
+                      <h3 id="teacher-demo-flow-title">Preview as a student</h3>
+                      <p>Borrow the learner lens before setup.</p>
                       <div class="platform-pathway-actions">
                         <button class="btn-primary text-white font-bold py-3 px-6 rounded-lg platform-entry-btn" type="button" data-demo-student-launch="true" data-demo-student-target="./dashboards/student.html"><i data-lucide="play-circle"></i>Student Hub Demo</button>
                         <button class="btn-primary text-white font-bold py-3 px-6 rounded-lg platform-entry-btn" type="button" data-demo-student-launch="true" data-demo-student-target="./modules/est-prep/index.html"><i data-lucide="flask-conical"></i>EST Prep Demo</button>
                         <a class="platform-ghost platform-entry-btn" href="./promo-video.html" target="_blank" rel="noopener noreferrer"><i data-lucide="maximize-2"></i>Open Video Page</a>
                       </div>
-                    </div>
-                    <div class="platform-pathway-card">
-                      <h3>Create your teacher space</h3>
-                      <p>When you are ready, register a teacher account or return through teacher login.</p>
+                    </section>
+
+                    <section class="platform-teacher-action-card" aria-labelledby="teacher-space-title">
+                      <h3 id="teacher-space-title">Open your teacher space</h3>
+                      <p>Build the class when the story clicks.</p>
                       <div class="platform-pathway-actions">
                         <a class="btn-primary text-white font-bold py-3 px-6 rounded-lg platform-entry-btn" href="./auth/teacher-signup.html"><i data-lucide="user-plus"></i>Create Teacher Account</a>
                         <a class="platform-ghost platform-entry-btn" href="./auth/teacher-login.html"><i data-lucide="log-in"></i>Teacher Login</a>
+                        <button class="platform-ghost platform-entry-btn platform-safety-entry" type="button"><i data-lucide="shield-check"></i>Online safety concerns addressed</button>
                       </div>
-                    </div>
+                    </section>
                   </div>
                 </article>
               </section>
@@ -2895,15 +2760,9 @@
 
     function setPlatformRole(role, shouldScroll = false) {
       const validRole = role === 'student' || role === 'teacher' ? role : '';
-      const home = document.getElementById('platform-home');
-
-      home?.classList.toggle('platform-role-active', Boolean(validRole));
-      home?.classList.toggle('platform-role-student', validRole === 'student');
-      home?.classList.toggle('platform-role-teacher', validRole === 'teacher');
 
       document.querySelectorAll('[data-platform-role-button]').forEach(button => {
-        const buttonRole = button.dataset.platformRoleButton || '';
-        const isActive = Boolean(validRole) && buttonRole === validRole;
+        const isActive = button.dataset.platformRoleButton === validRole;
         button.classList.toggle('active', isActive);
         button.setAttribute('aria-pressed', isActive ? 'true' : 'false');
       });
@@ -2912,19 +2771,20 @@
         panel.classList.toggle('active', panel.dataset.platformRolePanel === validRole);
       });
 
+      if (!validRole) return;
+
       if (window.history?.replaceState) {
         const url = new URL(window.location.href);
-        if (validRole) {
-          url.searchParams.set('role', validRole);
-        } else {
-          url.searchParams.delete('role');
-        }
+        url.searchParams.set('role', validRole);
         window.history.replaceState({}, '', url);
       }
 
       if (shouldScroll) {
-        const target = validRole ? document.querySelector(`[data-platform-role-panel="${validRole}"]`) : home;
-        target?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        const panel = document.querySelector(`[data-platform-role-panel="${validRole}"]`);
+        const scrollPanel = (behavior = 'smooth') => panel?.scrollIntoView({ behavior, block: 'start' });
+        scrollPanel();
+        window.setTimeout(() => scrollPanel('auto'), 500);
+        window.addEventListener('load', () => scrollPanel('auto'), { once: true });
       }
     }
 
@@ -4781,7 +4641,8 @@
       }
 
       if (role === 'student' || role === 'teacher') {
-        setPlatformRole(role, false);
+        document.body.classList.add('platform-role-entry');
+        setPlatformRole(role, true);
       }
     }
 
