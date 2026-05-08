@@ -661,7 +661,7 @@ h1 {
   min-height: 360px;
   display: grid;
   align-content: end;
-  padding-right: min(280px, 24vw);
+  padding-right: min(330px, 28vw);
   background:
     linear-gradient(90deg, rgba(5, 13, 26, 0.98), rgba(7, 18, 34, 0.8) 54%, rgba(5, 13, 26, 0.34)),
     linear-gradient(180deg, rgba(5, 13, 26, 0.02), rgba(5, 13, 26, 0.9)),
@@ -687,27 +687,33 @@ h1 {
   z-index: 1;
 }
 
-.teacher-dashboard-page .teacher-hero-logo {
+.teacher-dashboard-page .teacher-hero-school-name {
   position: absolute;
-  z-index: 2;
-  right: clamp(24px, 4.8vw, 64px);
-  top: clamp(34px, 7vw, 78px);
-  width: clamp(168px, 18vw, 260px);
-  height: auto;
-  padding: 0;
-  border: 0;
-  border-radius: 0;
-  background: transparent;
-  opacity: 0.9;
+  z-index: 1;
+  right: clamp(22px, 4vw, 54px);
+  top: clamp(26px, 5vw, 58px);
+  width: min(300px, 28vw);
+  padding: 18px;
+  border: 1px solid rgba(104, 210, 255, 0.24);
+  border-radius: 8px;
+  background:
+    linear-gradient(135deg, rgba(9, 31, 53, 0.78), rgba(5, 13, 26, 0.56)),
+    rgba(255, 255, 255, 0.04);
+  color: #e8f0ff;
+  font-size: clamp(18px, 2.1vw, 30px);
+  font-weight: 800;
+  line-height: 1.05;
+  letter-spacing: 0;
+  text-align: right;
   filter:
-    drop-shadow(0 0 16px rgba(94, 215, 255, 0.52))
-    drop-shadow(0 20px 38px rgba(0, 0, 0, 0.34));
+    drop-shadow(0 0 22px rgba(94, 215, 255, 0.2))
+    drop-shadow(0 18px 34px rgba(0, 0, 0, 0.28));
   pointer-events: none;
 }
 
 .teacher-dashboard-page h1 {
   max-width: 780px;
-  font-size: clamp(34px, 4.7vw, 62px);
+  font-size: clamp(34px, 4.4vw, 58px);
   line-height: 1;
   letter-spacing: 0;
 }
@@ -2129,6 +2135,209 @@ textarea {
   gap: 12px;
 }
 
+.teacher-matrix-wrap {
+  min-width: 0;
+}
+
+.teacher-matrix-scroll {
+  width: 100%;
+  max-height: 680px;
+  overflow: auto;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background:
+    linear-gradient(145deg, rgba(12, 30, 48, 0.62), rgba(5, 13, 26, 0.82)),
+    rgba(255, 255, 255, 0.025);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.04);
+}
+
+.teacher-matrix {
+  width: max(100%, 1120px);
+  border-collapse: separate;
+  border-spacing: 0;
+  table-layout: fixed;
+}
+
+.teacher-response-matrix {
+  width: max(100%, 1240px);
+}
+
+.teacher-matrix th,
+.teacher-matrix td {
+  padding: 14px;
+  vertical-align: top;
+  border-right: 1px solid rgba(136, 173, 255, 0.14);
+  border-bottom: 1px solid rgba(136, 173, 255, 0.14);
+}
+
+.teacher-matrix th:last-child,
+.teacher-matrix td:last-child {
+  border-right: 0;
+}
+
+.teacher-matrix thead th {
+  position: sticky;
+  top: 0;
+  z-index: 3;
+  background: rgba(10, 23, 43, 0.98);
+  color: var(--text);
+  font-size: 12px;
+  letter-spacing: 0.08em;
+  text-align: left;
+  text-transform: uppercase;
+}
+
+.teacher-matrix thead th span,
+.teacher-matrix thead th small,
+.teacher-matrix-student-col strong,
+.teacher-matrix-student-col small {
+  display: block;
+}
+
+.teacher-matrix thead th small,
+.teacher-matrix-student-col small {
+  margin-top: 5px;
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0;
+  line-height: 1.35;
+  text-transform: none;
+}
+
+.teacher-matrix tbody th,
+.teacher-matrix tbody td {
+  background: rgba(8, 18, 34, 0.62);
+}
+
+.teacher-matrix tbody tr:nth-child(even) th,
+.teacher-matrix tbody tr:nth-child(even) td {
+  background: rgba(11, 26, 47, 0.62);
+}
+
+.teacher-matrix-student-col {
+  position: sticky;
+  left: 0;
+  z-index: 2;
+  width: 190px;
+  min-width: 190px;
+  color: var(--text);
+  text-align: left;
+}
+
+.teacher-matrix thead .teacher-matrix-student-col {
+  z-index: 4;
+}
+
+.teacher-matrix-result {
+  min-height: 74px;
+  display: grid;
+  align-content: center;
+  gap: 4px;
+  padding: 10px;
+  border: 1px solid rgba(136, 173, 255, 0.16);
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.04);
+}
+
+.teacher-matrix-result strong {
+  color: var(--text);
+  font-size: 20px;
+  line-height: 1.05;
+}
+
+.teacher-matrix-result span {
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 1.25;
+}
+
+.teacher-matrix-result--high {
+  border-color: rgba(128, 237, 153, 0.38);
+  background: rgba(128, 237, 153, 0.1);
+}
+
+.teacher-matrix-result--mid {
+  border-color: rgba(255, 209, 102, 0.36);
+  background: rgba(255, 209, 102, 0.1);
+}
+
+.teacher-matrix-result--low {
+  border-color: rgba(255, 122, 122, 0.34);
+  background: rgba(255, 122, 122, 0.1);
+}
+
+.teacher-matrix-result--nys {
+  border-color: rgba(159, 178, 211, 0.22);
+  background: rgba(159, 178, 211, 0.07);
+}
+
+.teacher-matrix-code {
+  display: inline-flex;
+  align-items: center;
+  width: fit-content;
+  max-width: 100%;
+  min-height: 28px;
+  padding: 5px 9px;
+  border: 1px solid rgba(136, 173, 255, 0.2);
+  border-radius: 999px;
+  color: var(--text);
+  font-size: 12px;
+  font-weight: 800;
+  line-height: 1.1;
+}
+
+.teacher-matrix-code--nys {
+  color: #cedcff;
+  background: rgba(159, 178, 211, 0.1);
+}
+
+.teacher-matrix-code--mid {
+  color: #ffe7a3;
+  background: rgba(255, 209, 102, 0.12);
+}
+
+.teacher-response-cell {
+  min-height: 228px;
+  display: grid;
+  align-content: start;
+  gap: 9px;
+  padding: 10px;
+  border: 1px solid rgba(136, 173, 255, 0.16);
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.035);
+}
+
+.teacher-response-cell--empty {
+  min-height: 150px;
+  color: var(--muted);
+}
+
+.teacher-response-status {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 1.3;
+}
+
+.teacher-response-prompt,
+.teacher-response-feedback {
+  margin: 0;
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 1.35;
+}
+
+.teacher-response-cell .answer-response {
+  min-height: 96px;
+  max-height: 150px;
+  border-radius: 8px;
+  font-size: 13px;
+}
+
 .teacher-answer-grid {
   display: grid;
   gap: 14px;
@@ -2438,11 +2647,13 @@ textarea {
     padding-top: 26px;
   }
 
-  .teacher-dashboard-page .teacher-hero-logo {
+  .teacher-dashboard-page .teacher-hero-school-name {
     top: 14px;
     right: 14px;
-    width: 98px;
-    opacity: 0.54;
+    width: 126px;
+    padding: 10px;
+    font-size: 15px;
+    opacity: 0.72;
   }
 
   .teacher-dashboard-page .metric-card--art {

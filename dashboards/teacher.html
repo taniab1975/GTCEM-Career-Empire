@@ -7,7 +7,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Outfit:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="./dashboard.css?v=20260508-teacher-analytics-logo">
+  <link rel="stylesheet" href="./dashboard.css?v=20260508-teacher-logo-scene">
 </head>
 <body class="teacher-dashboard-page" data-teacher-nav-active="teacher-dashboard">
   <main class="page-shell">
@@ -25,7 +25,7 @@
 
     <section class="hero">
       <article class="hero-card teacher-hero-card">
-        <img class="teacher-hero-logo" src="../Assets/landing-screenshots/ecc-logo-hologram.png" alt="Emmanuel Catholic College logo">
+        <div id="teacher-school-name" class="teacher-hero-school-name">Your School</div>
         <span class="eyebrow">Teacher Analytics</span>
         <h1 id="teacher-hero-title">Data-Informed Interventions and Engagement Information</h1>
         <p id="teacher-hero-subtitle" class="subtitle">
@@ -154,9 +154,9 @@
     <section class="panel">
       <div class="section-title">
         <h2>Student Compare View</h2>
-        <p>Per-student comparison across Megatrends, Lifelong Learning, and EST Prep</p>
+        <p>Students down the left; class measures across the top</p>
       </div>
-      <div id="teacher-student-compare-list" class="module-grid"></div>
+      <div id="teacher-student-compare-list" class="teacher-matrix-wrap"></div>
     </section>
 
     <section class="two-column">
@@ -180,9 +180,9 @@
     <section class="panel">
       <div class="section-title">
         <h2>Long Answer Comparison</h2>
-        <p>Compare extended submissions with score signals, class averages, and suggested feedback</p>
+        <p>Students down the left; written-response tasks across the top</p>
       </div>
-      <div id="teacher-long-answer-compare-list" class="teacher-answer-grid"></div>
+      <div id="teacher-long-answer-compare-list" class="teacher-matrix-wrap"></div>
     </section>
 
     <section class="panel">

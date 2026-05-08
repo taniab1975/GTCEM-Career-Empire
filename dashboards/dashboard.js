@@ -1289,34 +1289,153 @@ function renderTeacherGlossaryGapList(data) {
   ].join("");
 }
 
-function renderTeacherLongAnswerComparison(rows) {
+function getMatrixState(value) {
+  const numeric = Number(value || 0);
+  if (!numeric) return "nys";
+  if (numeric < 40) return "low";
+  if (numeric < 75) return "mid";
+  return "high";
+}
+
+function renderMatrixProgress(value, caption = "complete") {
+  const numeric = Math.round(Number(value || 0));
+  const state = getMatrixState(numeric);
+  return `
+    <div class="teacher-matrix-result teacher-matrix-result--${state}">
+      <strong>${numeric ? `${numeric}%` : "NYS"}</strong>
+      <span>${escapeHtml(caption)}</span>
+    </div>
+  `;
+}
+
+function renderMatrixText(primary, caption = "", state = "neutral") {
+  return `
+    <div class="teacher-matrix-result teacher-matrix-result--${state}">
+      <strong>${escapeHtml(primary || "NYS")}</strong>
+      ${caption ? `<span>${escapeHtml(caption)}</span>` : ""}
+    </div>
+  `;
+}
+
+function getTeacherMatrixStudentKey(student) {
+  return String(student?.id || student?.studentId || student?.display_name || student?.username || student?.name || "").toLowerCase();
+}
+
+function renderTeacherLongAnswerComparison(rows, students = []) {
   const container = document.getElementById("teacher-long-answer-compare-list");
   if (!container) return;
 
-  if (!rows.length) {
-    container.innerHTML = '<div class="timeline-item"><strong>No long answers yet</strong><p>Extended EST, Megatrends, and Lifelong Learning responses will appear here for side-by-side teacher review.</p></div>';
+  const fallbackStudents = rows.map(row => ({
+    id: row.studentId,
+    display_name: row.studentName,
+    username: row.studentName
+  }));
+  const matrixStudents = (students.length ? students : fallbackStudents)
+    .map(student => ({
+      key: getTeacherMatrixStudentKey(student),
+      name: student.display_name || student.username || student.name || "Student",
+      meta: student.username && student.username !== student.display_name ? student.username : ""
+    }))
+    .filter(student => student.key);
+
+  if (!matrixStudents.length) {
+    container.innerHTML = '<div class="timeline-item"><strong>No students to compare yet</strong><p>Once students are attached to this class, written-response tracking will appear here.</p></div>';
     return;
   }
 
-  container.innerHTML = rows.map(row => `
-    <article class="module-card answer-compare-card">
-      <div class="section-title">
-        <div>
-          <h3>${escapeHtml(row.studentName)}</h3>
-          <p>${escapeHtml(row.meta)}</p>
-        </div>
-        <p>${escapeHtml(row.band)}</p>
-      </div>
-      <div class="answer-compare-meta">
-        <span class="pill">${escapeHtml(row.scoreLabel)}</span>
-        <span class="pill">${escapeHtml(row.classCompare)}</span>
-        <span class="pill">${row.wordCount} words</span>
-      </div>
-      <p><strong>Prompt:</strong> ${escapeHtml(row.prompt)}</p>
-      <div class="answer-response">${escapeHtml(row.response)}</div>
-      <p><strong>Suggested feedback:</strong> ${escapeHtml(row.feedback || "Read for accuracy, specificity, and clear cause-and-effect reasoning.")}</p>
-    </article>
-  `).join("");
+  const columnMap = new Map();
+  rows.forEach(row => {
+    const key = row.columnKey || row.prompt || row.meta || "written-response";
+    const existing = columnMap.get(key);
+    const createdAt = parseTime(row.createdAt);
+    if (!existing) {
+      columnMap.set(key, {
+        key,
+        label: row.taskLabel || "Written response",
+        sublabel: row.moduleLabel || "Evidence",
+        prompt: row.prompt || "Written response task",
+        latest: createdAt,
+        count: 1
+      });
+      return;
+    }
+    existing.count += 1;
+    existing.latest = Math.max(existing.latest, createdAt);
+  });
+
+  const skeletonColumns = [
+    { key: "est-written-response", label: "EST response", sublabel: "Approval skeleton", prompt: "EST-style extended response" },
+    { key: "megatrends-reflection", label: "Megatrends reflection", sublabel: "Approval skeleton", prompt: "Megatrends written reflection" },
+    { key: "lifelong-reflection", label: "Lifelong reflection", sublabel: "Approval skeleton", prompt: "Lifelong Learning written reflection" }
+  ];
+  const columns = (columnMap.size ? [...columnMap.values()].sort((a, b) => b.latest - a.latest).slice(0, 5) : skeletonColumns);
+  const responseMap = new Map();
+  rows.forEach(row => {
+    const studentKeys = [row.studentId, row.studentName].filter(Boolean).map(value => String(value).toLowerCase());
+    const columnKey = row.columnKey || row.prompt || row.meta || "written-response";
+    studentKeys.forEach(studentKey => {
+      const mapKey = `${studentKey}::${columnKey}`;
+      const existing = responseMap.get(mapKey);
+      if (!existing || parseTime(row.createdAt) > parseTime(existing.createdAt)) responseMap.set(mapKey, row);
+    });
+  });
+
+  container.innerHTML = `
+    <div class="teacher-matrix-scroll" role="region" aria-label="Long answer comparison table" tabindex="0">
+      <table class="teacher-matrix teacher-response-matrix">
+        <thead>
+          <tr>
+            <th scope="col" class="teacher-matrix-student-col">Student</th>
+            ${columns.map(column => `
+              <th scope="col">
+                <span>${escapeHtml(column.label)}</span>
+                <small>${escapeHtml(column.sublabel)}${column.count ? ` • ${column.count} submitted` : ""}</small>
+              </th>
+            `).join("")}
+          </tr>
+        </thead>
+        <tbody>
+          ${matrixStudents.map(student => `
+            <tr>
+              <th scope="row" class="teacher-matrix-student-col">
+                <strong>${escapeHtml(student.name)}</strong>
+                ${student.meta ? `<small>${escapeHtml(student.meta)}</small>` : ""}
+              </th>
+              ${columns.map(column => {
+                const response = responseMap.get(`${student.key}::${column.key}`);
+                if (!response) {
+                  return `
+                    <td>
+                      <div class="teacher-response-cell teacher-response-cell--empty">
+                        <div class="teacher-response-status">
+                          <span class="teacher-matrix-code teacher-matrix-code--nys">NYS</span>
+                          <span>Awaiting submission</span>
+                        </div>
+                        <p>Approval workflow, model answer, and peer comparison controls will attach here.</p>
+                      </div>
+                    </td>
+                  `;
+                }
+                return `
+                  <td>
+                    <div class="teacher-response-cell">
+                      <div class="teacher-response-status">
+                        <span class="teacher-matrix-code teacher-matrix-code--mid">Pending approval</span>
+                        <span>${escapeHtml(response.scoreLabel)} • ${response.wordCount} words</span>
+                      </div>
+                      <p class="teacher-response-prompt">${escapeHtml(response.prompt || column.prompt)}</p>
+                      <div class="answer-response">${escapeHtml(response.response)}</div>
+                      <p class="teacher-response-feedback">${escapeHtml(response.feedback || "Suggested feedback will appear here.")}</p>
+                    </div>
+                  </td>
+                `;
+              }).join("")}
+            </tr>
+          `).join("")}
+        </tbody>
+      </table>
+    </div>
+  `;
 }
 
 function renderTeacherStudentCompareList(items) {
@@ -1328,37 +1447,54 @@ function renderTeacherStudentCompareList(items) {
     return;
   }
 
-  container.innerHTML = items.map(item => `
-    <article class="module-card ${item.spotlight ? "spotlight" : ""}">
-      <div class="section-title">
-        <div>
-          <h3>${escapeHtml(item.name)}</h3>
-          <p>${escapeHtml(item.meta)}</p>
-        </div>
-        <p>${escapeHtml(item.status)}</p>
-      </div>
-      <p>${escapeHtml(item.summary)}</p>
-      <div class="pill-row">
-        ${item.pills.map(pill => `<span class="pill">${escapeHtml(pill)}</span>`).join("")}
-      </div>
-      <div class="section-title" style="margin-top: 12px;">
-        <p>Megatrends ${item.megatrendsCompletion}% complete</p>
-        <p>Lifelong ${item.lifelongCompletion}% complete</p>
-        <p>EST ${item.estCompletion}% complete</p>
-      </div>
-      ${createProgressBar(item.megatrendsCompletion)}
-      ${createProgressBar(item.lifelongCompletion, "gold")}
-      ${createProgressBar(item.estCompletion, "green")}
-      <div class="list" style="margin-top: 14px;">
-        ${item.details.map(detail => `
-          <div class="timeline-item">
-            <strong>${escapeHtml(detail.title)}</strong>
-            <p>${escapeHtml(detail.detail)}</p>
-          </div>
-        `).join("")}
-      </div>
-    </article>
-  `).join("");
+  container.innerHTML = `
+    <div class="teacher-matrix-scroll" role="region" aria-label="Student progress comparison table" tabindex="0">
+      <table class="teacher-matrix teacher-progress-matrix">
+        <thead>
+          <tr>
+            <th scope="col" class="teacher-matrix-student-col">Student</th>
+            <th scope="col">Engagement signal</th>
+            <th scope="col">Megatrends complete</th>
+            <th scope="col">Megatrends mastery</th>
+            <th scope="col">Lifelong complete</th>
+            <th scope="col">EST complete</th>
+            <th scope="col">Task time</th>
+            <th scope="col">Progress score</th>
+            <th scope="col">Strongest skill</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${items.map(item => {
+            const progressScore = Number(item.progressScore ?? average([
+              Number(item.megatrendsCompletion || 0),
+              Number(item.lifelongCompletion || 0),
+              Number(item.estCompletion || 0),
+              Number(item.megatrendsMastery || 0),
+              Number(item.lifelongMastery || 0),
+              Number(item.estMastery || 0)
+            ]));
+            const engagementState = item.status === "On track" ? "high" : item.status === "Building" ? "mid" : "nys";
+            return `
+              <tr>
+                <th scope="row" class="teacher-matrix-student-col">
+                  <strong>${escapeHtml(item.name)}</strong>
+                  <small>${escapeHtml(item.meta)}</small>
+                </th>
+                <td>${renderMatrixText(item.status, item.engagementCaption || "Login + progress signal", engagementState)}</td>
+                <td>${renderMatrixProgress(item.megatrendsCompletion, "complete")}</td>
+                <td>${renderMatrixProgress(item.megatrendsMastery, "mastery")}</td>
+                <td>${renderMatrixProgress(item.lifelongCompletion, "complete")}</td>
+                <td>${renderMatrixProgress(item.estCompletion, "complete")}</td>
+                <td>${renderMatrixText(item.averageTaskTimeLabel || "NYS", "captured time", item.averageTaskTimeSeconds ? "mid" : "nys")}</td>
+                <td>${renderMatrixProgress(progressScore, "progress score")}</td>
+                <td>${renderMatrixText(item.strongestSkillTitle || "NYS", "current signal", item.strongestSkillTitle ? "neutral" : "nys")}</td>
+              </tr>
+            `;
+          }).join("")}
+        </tbody>
+      </table>
+    </div>
+  `;
 }
 
 function buildDonutGradient(segments) {
@@ -3065,19 +3201,30 @@ function renderTeacherLiveData(players, skillsData, teacherData = null) {
     })
     .filter(item => item.wordCount >= 25 && !String(item.entry.row.evidence_type || "").includes("glossary"));
   const longAnswerScoreAverage = average(longAnswerCandidates.map(item => item.score).filter(value => typeof value === "number"));
-  const longAnswerRows = longAnswerCandidates.slice(0, 8).map(item => {
+  const longAnswerRows = longAnswerCandidates.map(item => {
     const scoreGap = typeof item.score === "number" && longAnswerScoreAverage
       ? item.score - longAnswerScoreAverage
       : null;
+    const moduleLabel = getModuleLabel(getEvidenceModuleId(item.entry.row, item.entry.payload));
+    const prompt = getEvidencePromptText(item.entry.row, item.entry.payload);
+    const columnKey = [
+      moduleLabel,
+      item.taskLabel || item.entry.row.evidence_type || "Written response",
+      prompt || item.entry.row.evidence_type || "Prompt"
+    ].join("::");
     return {
       studentId: item.entry.row.student_id || "",
       studentName: getEvidenceStudentName(item.entry.row),
-      meta: `${getModuleLabel(getEvidenceModuleId(item.entry.row, item.entry.payload))} • ${item.taskLabel} • ${formatDateTime(item.entry.row.created_at)}`,
+      meta: `${moduleLabel} • ${item.taskLabel} • ${formatDateTime(item.entry.row.created_at)}`,
+      moduleLabel,
+      taskLabel: item.taskLabel || "Written response",
+      columnKey,
+      createdAt: item.entry.row.created_at,
       band: getTeacherAnswerBand(item.score, item.wordCount),
       scoreLabel: typeof item.score === "number" ? `${item.score}%` : "Unscored",
       classCompare: typeof scoreGap === "number" ? `${Math.abs(scoreGap)} points ${scoreGap >= 0 ? "above" : "below"} class average` : "No class score comparison",
       wordCount: item.wordCount,
-      prompt: getEvidencePromptText(item.entry.row, item.entry.payload),
+      prompt,
       response: item.response,
       feedback: buildTeacherFeedbackSuggestion(item.response, item.score, longAnswerScoreAverage)
     };
@@ -3194,6 +3341,27 @@ function renderTeacherLiveData(players, skillsData, teacherData = null) {
     const recentModule = latestAnyEvidence
       ? getModuleLabel(getEvidenceModuleId(latestAnyEvidence.row, latestAnyEvidence.payload))
       : "No written evidence yet";
+    const megatrendsCompletion = Number(megatrendsProgress?.completion_percent || Math.min(100, Number(player?.years_played || 0) * 18 || 0));
+    const lifelongCompletion = Number(lifelongProgress?.completion_percent || 0);
+    const estCompletion = Number(estProgress?.completion_percent || 0);
+    const megatrendsMastery = Number(megatrendsProgress?.mastery_percent || overallMastery || 0);
+    const lifelongMastery = Number(lifelongProgress?.mastery_percent || 0);
+    const estMastery = Number(estProgress?.mastery_percent || 0);
+    const progressScore = average([
+      megatrendsCompletion,
+      lifelongCompletion,
+      estCompletion,
+      megatrendsMastery,
+      lifelongMastery,
+      estMastery
+    ]);
+    const lastActivity = getLastActivityTime(student, studentProgress, studentEvidence);
+    const engagementCaption = [
+      student.last_login_at ? `Login ${formatRelativeAge(parseTime(student.last_login_at))}` : "No login",
+      studentProgress.length ? `${studentProgress.length} progress row${studentProgress.length === 1 ? "" : "s"}` : "no progress",
+      studentEvidence.length ? `${studentEvidence.length} evidence item${studentEvidence.length === 1 ? "" : "s"}` : "no evidence",
+      lastActivity ? `activity ${formatRelativeAge(lastActivity)}` : ""
+    ].filter(Boolean).join(" • ");
 
     return {
       studentId: student.id,
@@ -3202,6 +3370,8 @@ function renderTeacherLiveData(players, skillsData, teacherData = null) {
         student.username || "No username",
         student.last_login_at ? `Last login ${formatDateTime(student.last_login_at)}` : "Not logged in yet"
       ].join(" • "),
+      lastLoginLabel: student.last_login_at ? formatDateTime(student.last_login_at) : "Not logged in yet",
+      engagementCaption,
       status: overallMastery >= 60 ? "On track" : estProgress || megatrendsProgress || lifelongProgress ? "Building" : "Not started",
       summary: player
         ? `${player.career_title || "Career Builder"} with ${overallMastery}% overall megatrend mastery, ${formatCurrency(player.annual_salary || 0)} salary, and ${formatCurrency(player.cumulative_net_worth || 0)} net worth.`
@@ -3213,9 +3383,16 @@ function renderTeacherLiveData(players, skillsData, teacherData = null) {
         `Avg task time: ${averageTaskTime ? formatDurationSeconds(averageTaskTime) : "No timings yet"}`,
         `Strongest skill: ${strongestSkill?.title || "Not clear yet"}`
       ],
-      megatrendsCompletion: Number(megatrendsProgress?.completion_percent || Math.min(100, Number(player?.years_played || 0) * 18 || 0)),
-      lifelongCompletion: Number(lifelongProgress?.completion_percent || 0),
-      estCompletion: Number(estProgress?.completion_percent || 0),
+      megatrendsCompletion,
+      lifelongCompletion,
+      estCompletion,
+      megatrendsMastery,
+      lifelongMastery,
+      estMastery,
+      progressScore,
+      averageTaskTimeSeconds: averageTaskTime,
+      averageTaskTimeLabel: averageTaskTime ? formatDurationSeconds(averageTaskTime) : "NYS",
+      strongestSkillTitle: strongestSkill?.title || "",
       spotlight: Boolean((estProgress || lifelongProgress) && megatrendsProgress),
       details: [
         {
@@ -3255,6 +3432,11 @@ function renderTeacherLiveData(players, skillsData, teacherData = null) {
     : selectedClassId === "all"
       ? `all classes at ${dashboardContext.teacher?.schoolName || "your school"}`
       : (classCodeFilter ? `Class ${classCodeFilter}` : "selected class");
+  const teacherSchoolName = dashboardContext.teacher?.schoolName
+    || dashboardContext.teacherLogin?.schoolName
+    || dashboardContext.teacherSession?.schoolName
+    || "Your School";
+  setText("teacher-school-name", teacherSchoolName);
   setText("teacher-hero-title", "Data-Informed Interventions and Engagement Information");
   setText(
     "teacher-hero-subtitle",
@@ -3378,7 +3560,7 @@ function renderTeacherLiveData(players, skillsData, teacherData = null) {
   ].slice(0, 5));
   renderTeacherRosterActivity(engagementRows.slice(0, 8));
   renderTeacherGlossaryGapList(glossaryData);
-  renderTeacherLongAnswerComparison(longAnswerRows);
+  renderTeacherLongAnswerComparison(longAnswerRows, students);
   renderTeacherTaskTimeList(taskTimingRows);
   renderTeacherStudentCompareList(studentCompareRows);
   renderTeacherStudentProfile({
