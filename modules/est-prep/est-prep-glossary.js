@@ -646,6 +646,7 @@ function clearGlossaryRoundState(roundIndex) {
   delete state.glossaryAssignments[roundBatchKey];
   delete state.answers[`${roundBatchKey}-memory-open`];
   delete state.answers[`${roundBatchKey}-memory-mismatch`];
+  delete state.answers[`${roundBatchKey}-memory-match`];
 
   const batch = (state.stageDeck?.glossaryBatches || [])[roundIndex] || [];
   batch.forEach(item => {
@@ -674,6 +675,10 @@ function getGlossaryMemoryOpenKey() {
 
 function getGlossaryMemoryMismatchKey() {
   return `${getGlossaryBatchKey()}-memory-mismatch`;
+}
+
+function getGlossaryMemoryMatchKey() {
+  return `${getGlossaryBatchKey()}-memory-match`;
 }
 
 function getGlossaryAssignmentsForBatch() {
@@ -1223,13 +1228,16 @@ function flipGlossaryMemoryCardEncoded(encodedCardId) {
   const assignments = { ...getGlossaryAssignmentsForBatch() };
   const openKey = getGlossaryMemoryOpenKey();
   const mismatchKey = getGlossaryMemoryMismatchKey();
+  const matchKey = getGlossaryMemoryMatchKey();
   const openCards = Array.isArray(state.answers[openKey]) ? state.answers[openKey] : [];
   const mismatchCards = Array.isArray(state.answers[mismatchKey]) ? state.answers[mismatchKey] : [];
-  if (assignments[card.itemId] === card.itemId || openCards.includes(card.id) || mismatchCards.length) return;
+  const matchCards = Array.isArray(state.answers[matchKey]) ? state.answers[matchKey] : [];
+  if (assignments[card.itemId] === card.itemId || openCards.includes(card.id) || mismatchCards.length || matchCards.length) return;
 
   clearGlossaryMemoryResetTimeout();
   const nextOpenCards = [...openCards, card.id].slice(0, 2);
   state.answers[openKey] = nextOpenCards;
+  delete state.answers[matchKey];
 
   if (nextOpenCards.length < 2) {
     state.glossaryPulse = "First card flipped. Choose one more card to test the match.";
@@ -1255,18 +1263,17 @@ function flipGlossaryMemoryCardEncoded(encodedCardId) {
 
   if (isMatch) {
     const item = firstItem || secondItem;
-    assignments[firstCard.itemId] = firstCard.itemId;
-    state.glossaryAssignments[getGlossaryBatchKey()] = assignments;
-    state.answers[openKey] = [];
+    const nextAssignments = { ...assignments, [firstCard.itemId]: firstCard.itemId };
+    state.answers[matchKey] = nextOpenCards;
     delete state.answers[mismatchKey];
     recordGlossaryAttempt(item, "Matched term and definition", true, "memory-match");
     state.glossaryStreak += 1;
     state.glossaryBestStreak = Math.max(state.glossaryBestStreak, state.glossaryStreak);
-    const matchedCount = batch.filter(entry => assignments[entry.id] === entry.id).length;
+    const matchedCount = batch.filter(entry => nextAssignments[entry.id] === entry.id).length;
     const boardCleared = matchedCount === batch.length;
     state.glossaryPulse = boardCleared
-      ? `Round ${state.glossaryRoundIndex + 1} memory board cleared. Reward chamber opening.`
-      : `${item?.term || "Glossary pair"} matched. The cards are clearing from the board.`;
+      ? `Final pair matched: ${item?.term || "glossary pair"}. Read the term and definition together before the reward chamber opens.`
+      : `Matched: ${item?.term || "glossary pair"}. Read the term and definition together before the cards clear.`;
     state.glossaryPulseType = "good";
     state.recentReward = {
       type: "positive",
@@ -1276,14 +1283,31 @@ function flipGlossaryMemoryCardEncoded(encodedCardId) {
     renderRewardPulse();
     persistESTProgressSnapshot();
     renderGlossaryStage();
-    if (boardCleared) {
-      glossaryMemoryResetTimeout = setTimeout(() => {
-        glossaryMemoryResetTimeout = null;
-        if (state.glossaryRoundCelebration) return;
-        buildGlossaryCelebration(state.glossaryRoundIndex + 1, `${matchedCount}/${batch.length} term-definition pairs matched.`);
+    glossaryMemoryResetTimeout = setTimeout(() => {
+      glossaryMemoryResetTimeout = null;
+      state.glossaryAssignments[getGlossaryBatchKey()] = nextAssignments;
+      state.answers[openKey] = [];
+      delete state.answers[matchKey];
+
+      if (boardCleared) {
+        state.glossaryPulse = `Round ${state.glossaryRoundIndex + 1} memory board cleared. Reward chamber opening.`;
+        state.glossaryPulseType = "good";
+        persistESTProgressSnapshot();
         renderGlossaryStage();
-      }, 650);
-    }
+        glossaryMemoryResetTimeout = setTimeout(() => {
+          glossaryMemoryResetTimeout = null;
+          if (state.glossaryRoundCelebration) return;
+          buildGlossaryCelebration(state.glossaryRoundIndex + 1, `${matchedCount}/${batch.length} term-definition pairs matched.`);
+          renderGlossaryStage();
+        }, 520);
+        return;
+      }
+
+      state.glossaryPulse = `${item?.term || "Matched pair"} cleared. Flip another term and definition.`;
+      state.glossaryPulseType = "good";
+      persistESTProgressSnapshot();
+      renderGlossaryStage();
+    }, 1400);
     return;
   }
 
@@ -1307,11 +1331,12 @@ function flipGlossaryMemoryCardEncoded(encodedCardId) {
     glossaryMemoryResetTimeout = null;
     state.answers[openKey] = [];
     delete state.answers[mismatchKey];
+    delete state.answers[matchKey];
     state.glossaryPulse = "Cards reset. Flip a term and its matching definition.";
     state.glossaryPulseType = "neutral";
     persistESTProgressSnapshot();
     renderGlossaryStage();
-  }, 900);
+  }, 1100);
 }
 
 function setGlossarySelectedTerm(termId) {
@@ -2598,6 +2623,7 @@ function renderGlossaryMemoryMatchGame(round, batch, matchedCount, roundScore, p
   const assignments = getGlossaryAssignmentsForBatch();
   const openCards = Array.isArray(state.answers[getGlossaryMemoryOpenKey()]) ? state.answers[getGlossaryMemoryOpenKey()] : [];
   const mismatchCards = Array.isArray(state.answers[getGlossaryMemoryMismatchKey()]) ? state.answers[getGlossaryMemoryMismatchKey()] : [];
+  const matchCards = Array.isArray(state.answers[getGlossaryMemoryMatchKey()]) ? state.answers[getGlossaryMemoryMatchKey()] : [];
   const theme = getCurrentGlossaryMemoryTheme(round);
   const matchedCardCount = matchedCount * 2;
   const totalCards = batch.length * 2;
@@ -2625,15 +2651,16 @@ function renderGlossaryMemoryMatchGame(round, batch, matchedCount, roundScore, p
         <div class="glossary-memory-board" aria-label="Memory game cards">
           ${deck.map((card, index) => {
             const matched = assignments[card.itemId] === card.itemId;
-            const open = openCards.includes(card.id) || mismatchCards.includes(card.id);
+            const matchPreview = matchCards.includes(card.id);
+            const open = openCards.includes(card.id) || mismatchCards.includes(card.id) || matchPreview;
             const mismatched = mismatchCards.includes(card.id);
             return `
               <button
                 type="button"
-                class="glossary-memory-card ${open ? "is-flipped" : ""} ${matched ? "is-matched" : ""} ${mismatched ? "is-mismatch" : ""} glossary-memory-card--${escapeHtml(card.kind)}"
+                class="glossary-memory-card ${open ? "is-flipped" : ""} ${matched ? "is-matched" : ""} ${mismatched ? "is-mismatch" : ""} ${matchPreview ? "is-match-preview" : ""} glossary-memory-card--${escapeHtml(card.kind)}"
                 style="--card-index:${index};"
                 onclick="window.ESTPrep.flipGlossaryMemoryCardEncoded('${encodeForInlineHandler(card.id)}')"
-                ${matched || mismatchCards.length ? "disabled" : ""}
+                ${matched || mismatchCards.length || matchCards.length ? "disabled" : ""}
                 aria-label="${matched ? "Matched" : open ? "Open" : "Hidden"} ${escapeHtml(card.label)} card"
               >
                 <span class="glossary-memory-card-inner">
