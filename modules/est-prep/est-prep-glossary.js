@@ -2856,6 +2856,9 @@ function renderGlossaryCelebration() {
             <h2>Choose how your class tax helps the community</h2>
             <p>All pooled taxes go toward building something bigger than one student run.</p>
           </div>
+          <p class="small-copy">You earned ${formatCurrency(celebration.salary)} salary. ${formatCurrency(celebration.tax)} is class tax. Choose one destination for this round's contribution.</p>
+          <div class="choice-grid">${communityOptions}</div>
+          ${voteKey ? `<p class="small-copy content-vote-confirmed">Selected: <strong>${escapeHtml(selectedOption?.label || voteKey)}</strong></p>` : ""}
           ${voteKey && selectedOption ? `
             <article class="glossary-community-growth ${assetReady ? "is-complete" : "is-growing"}">
               <div class="glossary-community-growth-art">
@@ -2869,9 +2872,7 @@ function renderGlossaryCelebration() {
                 <p>${escapeHtml(selectedAsset?.detail || "The class contribution grows a shared community asset.")} ${formatCurrency(celebration.tax)} has been allocated here.</p>
               </div>
             </article>
-          ` : `
-            <div class="choice-grid">${communityOptions}</div>
-          `}
+          ` : ""}
         </div>
         ${voteKey ? "" : `
           <div class="feedback-box warn">
