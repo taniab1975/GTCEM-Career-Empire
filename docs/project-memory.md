@@ -168,6 +168,7 @@ Important docs/files:
 - `docs/est-prep-design-pack.md`
 - `docs/est-mechanic-system.md`
 - `docs/est-topic-game-map.md`
+- `docs/vault-bridge-workflow.md`
 - `data/modules/est-prep.module.json`
 - `modules/est-prep/`
 
@@ -177,6 +178,7 @@ Current state:
 - module has content check, glossary, decoder, and boss round mechanics
 - Remotion EST scene work exists separately
 - guide characters and visual assets are being assembled
+- Vault Bridge is the approved visual/gameplay direction for the Glossary Check playtest
 
 Main issues:
 
@@ -184,6 +186,7 @@ Main issues:
 - the visual system says one screen should usually equal one action, but dense multi-step screens can creep back in
 - every lab should justify its place in the larger arc: Knowledge Reactor -> Glossary Check -> VTCS Decoder -> Boss Round -> rewards
 - use the game-or-worksheet rubric before adding more EST tasks
+- next Vault Bridge iteration should use 15 path pieces, five sets of three options, correct-piece lock-in, wrong-piece drop-away, and reset to the entrance after a wrong answer
 
 ### 6. Year 10 Megatrends Explorer
 
