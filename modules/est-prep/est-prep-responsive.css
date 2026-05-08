@@ -75,6 +75,10 @@
     max-height: 340px;
   }
 
+  .glossary-memory-board {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
   .glossary-flight-controls {
     grid-template-columns: 54px 54px minmax(0, 1fr);
   }
@@ -167,6 +171,19 @@
 
   .glossary-invaders-game {
     min-height: 520px;
+  }
+
+  .glossary-memory-arena {
+    min-height: 760px;
+  }
+
+  .glossary-memory-board {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    padding: 22px;
+  }
+
+  .glossary-memory-card {
+    min-height: 156px;
   }
 
   .glossary-flight-game {
@@ -377,6 +394,30 @@
 
   .glossary-memory-bank-stats {
     grid-template-columns: 1fr;
+  }
+
+  .glossary-memory-arena {
+    min-height: 880px;
+  }
+
+  .glossary-memory-board {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 10px;
+    padding: 16px;
+  }
+
+  .glossary-memory-card {
+    min-height: 132px;
+    border-radius: 15px;
+  }
+
+  .glossary-memory-card-face {
+    padding: 10px;
+  }
+
+  .glossary-memory-card--definition .glossary-memory-card-front strong {
+    font-size: 0.66rem;
+    -webkit-line-clamp: 6;
   }
 
   .glossary-catch-game {

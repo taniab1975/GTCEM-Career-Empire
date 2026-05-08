@@ -27,6 +27,9 @@ function openStage(stageId) {
   }
   if (stageId === "glossary") {
     state.glossaryMissionMode = true;
+    if (typeof refreshGlossaryPracticeDeck === "function") {
+      refreshGlossaryPracticeDeck();
+    }
     syncMissionMode();
     if (!state.glossaryHasStarted && state.completed.glossary) {
       restoreGlossaryReplayBoard();
@@ -156,6 +159,7 @@ window.ESTPrep = {
   setGlossaryRecallTermChoiceEncoded,
   setGlossaryRecallKeywordChoiceEncoded,
   submitGlossaryChallengeChoiceEncoded,
+  flipGlossaryMemoryCardEncoded,
   submitGlossaryBridgeChoiceEncoded,
   continueGlossaryBridgeLevel,
   resetGlossaryBridgeLevel,

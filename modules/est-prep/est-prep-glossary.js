@@ -7,12 +7,15 @@ let glossaryInvaderShotTimeout = null;
 
 let glossaryCommunityAssetTimeout = null;
 
-const GLOSSARY_TERMS_PER_ROUND = 4;
+let glossaryMemoryResetTimeout = null;
+
+const GLOSSARY_TERMS_PER_ROUND = 6;
 const GLOSSARY_BRIDGE_TERMS_PER_LEVEL = 5;
 const GLOSSARY_MASTERY_TARGET = FULL_GLOSSARY_TERMS.length;
 const GLOSSARY_MASTERY_ACCURACY = 1;
 const GLOSSARY_MASTERY_REPS = 1;
 const GLOSSARY_VISUAL_ASSETS = {
+  "memory-match": "../../Assets/Images and Animations/Glossary Check/glossary-recall-forge.svg",
   "term-catch": "../../Assets/Images and Animations/Glossary Check/glossary-signal-scan.svg",
   "colour-shape": "../../Assets/Images and Animations/Glossary Check/glossary-signal-scan.svg",
   "signal-slice": "../../Assets/Images and Animations/Glossary Check/glossary-blank-repair.svg",
@@ -23,6 +26,7 @@ const GLOSSARY_VISUAL_ASSETS = {
 };
 
 const GLOSSARY_GUIDE_ASSETS = {
+  "memory-match": "../../Assets/EST Preparation/guide-character/guide-pointing.png",
   "term-catch": "../../Assets/EST Preparation/guide-character/guide-pointing.png",
   "colour-shape": "../../Assets/EST Preparation/guide-character/guide-pointing.png",
   "signal-slice": "../../Assets/EST Preparation/guide-character/guide-thinking-top.png",
@@ -60,6 +64,59 @@ const GLOSSARY_BRIDGE_ROWS = [
 
 const GLOSSARY_BRIDGE_HOME_POSITION = { x: 50, y: 91 };
 const GLOSSARY_BRIDGE_PORTAL_POSITION = { x: 83, y: 42 };
+
+const GLOSSARY_MEMORY_THEMES = {
+  aqua: {
+    label: "Aqua Vault",
+    cardBack: "../../Assets/Images and Animations/Glossary Check/glossary-memory-card-back.png",
+    arena: "../../Assets/Images and Animations/Glossary Check/glossary-memory-arena-bg.png",
+    accent: "#61f0ff",
+    accent2: "#ffd86c",
+    tint: "rgba(97, 240, 255, 0.18)",
+    cardFilter: "none",
+    arenaFilter: "none"
+  },
+  violet: {
+    label: "Violet Nebula",
+    cardBack: "../../Assets/Images and Animations/Glossary Check/glossary-memory-card-violet.png",
+    arena: "../../Assets/Images and Animations/Glossary Check/glossary-memory-arena-violet.png",
+    accent: "#c084fc",
+    accent2: "#f0abfc",
+    tint: "rgba(192, 132, 252, 0.2)",
+    cardFilter: "none",
+    arenaFilter: "none"
+  },
+  emerald: {
+    label: "Emerald Circuit",
+    cardBack: "../../Assets/Images and Animations/Glossary Check/glossary-memory-card-emerald.png",
+    arena: "../../Assets/Images and Animations/Glossary Check/glossary-memory-arena-emerald.png",
+    accent: "#72f7b8",
+    accent2: "#bbf7d0",
+    tint: "rgba(114, 247, 184, 0.18)",
+    cardFilter: "none",
+    arenaFilter: "none"
+  },
+  solar: {
+    label: "Solar Forge",
+    cardBack: "../../Assets/Images and Animations/Glossary Check/glossary-memory-card-solar.png",
+    arena: "../../Assets/Images and Animations/Glossary Check/glossary-memory-arena-solar.png",
+    accent: "#f97316",
+    accent2: "#fde68a",
+    tint: "rgba(249, 115, 22, 0.2)",
+    cardFilter: "none",
+    arenaFilter: "none"
+  },
+  crimson: {
+    label: "Crimson Core",
+    cardBack: "../../Assets/Images and Animations/Glossary Check/glossary-memory-card-crimson.png",
+    arena: "../../Assets/Images and Animations/Glossary Check/glossary-memory-arena-crimson.png",
+    accent: "#fb7185",
+    accent2: "#fbbf24",
+    tint: "rgba(251, 113, 133, 0.18)",
+    cardFilter: "none",
+    arenaFilter: "none"
+  }
+};
 
 const GLOSSARY_STORY_ASSETS = {
   vault: "../../Assets/Images and Animations/EST backgrounds/Background Neutral.png",
@@ -198,6 +255,13 @@ function clearGlossaryCommunityAssetTimeout() {
   }
 }
 
+function clearGlossaryMemoryResetTimeout() {
+  if (glossaryMemoryResetTimeout) {
+    clearTimeout(glossaryMemoryResetTimeout);
+    glossaryMemoryResetTimeout = null;
+  }
+}
+
 function setGlossaryCommunityAssetReady(roundNumber, ready) {
   state.glossaryCommunityAssetReady = state.glossaryCommunityAssetReady || {};
   state.glossaryCommunityAssetReady[roundNumber] = ready;
@@ -325,18 +389,14 @@ function getGlossaryMasterySummary() {
 
 function buildGlossaryPracticeBatches(source = buildGlossarySource()) {
   const terms = Array.isArray(source) && source.length ? source : buildGlossarySource();
-  const stats = state.glossaryTermStats || {};
-  const untested = shuffle(terms.filter(item => !Number(stats[item.id]?.tested || 0)));
-  const weak = shuffle(terms.filter(item => {
-    const stat = stats[item.id];
-    return Number(stat?.tested || 0) > 0 && !hasGlossaryPerfectRecentRecall(stat);
-  }));
-  const review = shuffle(terms.filter(item => {
-    const stat = stats[item.id];
-    return Number(stat?.tested || 0) > 0 && hasGlossaryPerfectRecentRecall(stat);
-  }));
-  const selected = [...untested, ...weak, ...review].slice(0, GLOSSARY_TERMS_PER_ROUND);
-  return GLOSSARY_ROUND_CONFIGS.map(() => selected);
+  const roundCount = Math.max(1, GLOSSARY_ROUND_CONFIGS.length);
+  return GLOSSARY_ROUND_CONFIGS.map((_, roundIndex) => {
+    const start = roundIndex * GLOSSARY_TERMS_PER_ROUND;
+    const batch = terms.slice(start, start + GLOSSARY_TERMS_PER_ROUND);
+    if (batch.length) return batch;
+    const fallbackStart = (roundIndex * GLOSSARY_TERMS_PER_ROUND) % terms.length;
+    return terms.slice(fallbackStart, fallbackStart + GLOSSARY_TERMS_PER_ROUND);
+  }).slice(0, roundCount);
 }
 
 function refreshGlossaryPracticeDeck() {
@@ -493,6 +553,22 @@ function getCurrentGlossaryRound() {
   return GLOSSARY_ROUND_CONFIGS[state.glossaryRoundIndex] || GLOSSARY_ROUND_CONFIGS[0];
 }
 
+function getCurrentGlossaryMemoryTheme(round = getCurrentGlossaryRound()) {
+  return GLOSSARY_MEMORY_THEMES[round?.theme] || GLOSSARY_MEMORY_THEMES.aqua;
+}
+
+function getGlossaryMemoryThemeStyle(theme = getCurrentGlossaryMemoryTheme()) {
+  return [
+    `--memory-accent:${theme.accent};`,
+    `--memory-accent-2:${theme.accent2};`,
+    `--memory-tint:${theme.tint};`,
+    `--memory-card-filter:${theme.cardFilter};`,
+    `--memory-arena-filter:${theme.arenaFilter};`,
+    `--memory-card-back:url('${theme.cardBack}');`,
+    `--memory-arena:url('${theme.arena}');`
+  ].join("");
+}
+
 function getGlossaryVisual(index) {
   const visuals = [
     { shape: "circle", color: "#ff8a5b" },
@@ -523,6 +599,7 @@ function resetGlossaryRewardLoop() {
 function initialiseGlossaryBoard() {
   clearGlossaryRecallAdvanceTimeout();
   clearGlossaryInvaderShotTimeout();
+  clearGlossaryMemoryResetTimeout();
   refreshGlossaryPracticeDeck();
   state.glossaryRoundIndex = 0;
   state.glossaryBatchIndex = 0;
@@ -537,7 +614,7 @@ function initialiseGlossaryBoard() {
   state.glossaryStreak = 0;
   state.glossaryBestStreak = 0;
   state.glossaryMisses = 0;
-  state.glossaryPulse = "System breach detected. Recover the first term signal to begin restoring the EST lab.";
+  state.glossaryPulse = "Memory vault loaded. Flip two cards at a time and match each term with its definition.";
   state.glossaryPulseType = "neutral";
   state.glossaryMissionMode = true;
   state.glossaryHasStarted = true;
@@ -564,8 +641,11 @@ function clearGlossaryRoundState(roundIndex) {
   clearGlossaryRecallAdvanceTimeout();
   clearGlossaryInvaderShotTimeout();
   clearGlossaryCommunityAssetTimeout();
+  clearGlossaryMemoryResetTimeout();
   const roundBatchKey = `glossary-r${roundIndex}-b0`;
   delete state.glossaryAssignments[roundBatchKey];
+  delete state.answers[`${roundBatchKey}-memory-open`];
+  delete state.answers[`${roundBatchKey}-memory-mismatch`];
 
   const batch = (state.stageDeck?.glossaryBatches || [])[roundIndex] || [];
   batch.forEach(item => {
@@ -581,15 +661,60 @@ function clearGlossaryRoundState(roundIndex) {
   state.glossaryDraggedTermId = "";
   state.glossaryStreak = 0;
   state.glossaryMisses = 0;
-  if (roundIndex === 3) clearGlossaryBridgeState();
+  if (GLOSSARY_ROUND_CONFIGS[roundIndex]?.id === "recall") clearGlossaryBridgeState();
 }
 
 function getGlossaryBatchKey() {
   return `glossary-r${state.glossaryRoundIndex}-b${state.glossaryBatchIndex}`;
 }
 
+function getGlossaryMemoryOpenKey() {
+  return `${getGlossaryBatchKey()}-memory-open`;
+}
+
+function getGlossaryMemoryMismatchKey() {
+  return `${getGlossaryBatchKey()}-memory-mismatch`;
+}
+
 function getGlossaryAssignmentsForBatch() {
   return state.glossaryAssignments[getGlossaryBatchKey()] || {};
+}
+
+function getGlossaryAllRoundItems() {
+  return (state.stageDeck?.glossaryBatches || []).flat();
+}
+
+function getGlossaryMatchedTermIds() {
+  const matchedIds = new Set();
+  (state.stageDeck?.glossaryBatches || []).forEach((batch, roundIndex) => {
+    const assignments = state.glossaryAssignments[`glossary-r${roundIndex}-b0`] || {};
+    batch.forEach(item => {
+      if (assignments[item.id] === item.id) matchedIds.add(item.id);
+    });
+  });
+  return matchedIds;
+}
+
+function getGlossaryMemoryDeck(batch = getCurrentGlossaryBatch()) {
+  const seed = state.glossaryRunStartedAt || 0;
+  return batch.flatMap(item => ([
+    {
+      id: `${item.id}::term`,
+      itemId: item.id,
+      kind: "term",
+      label: "Term",
+      text: item.term
+    },
+    {
+      id: `${item.id}::definition`,
+      itemId: item.id,
+      kind: "definition",
+      label: "Definition",
+      text: item.definition
+    }
+  ])).sort((a, b) => {
+    return getGlossaryStableNumber(`${seed}-${getGlossaryBatchKey()}-${a.id}`) - getGlossaryStableNumber(`${seed}-${getGlossaryBatchKey()}-${b.id}`);
+  });
 }
 
 function getGlossaryPendingItems(batch = getCurrentGlossaryBatch()) {
@@ -1088,6 +1213,107 @@ function submitGlossaryChallengeChoiceEncoded(targetId, encodedValue) {
   renderGlossaryStage();
 }
 
+function flipGlossaryMemoryCardEncoded(encodedCardId) {
+  const batch = getCurrentGlossaryBatch();
+  const deck = getGlossaryMemoryDeck(batch);
+  const cardId = decodeURIComponent(encodedCardId || "");
+  const card = deck.find(entry => entry.id === cardId);
+  if (!card) return;
+
+  const assignments = { ...getGlossaryAssignmentsForBatch() };
+  const openKey = getGlossaryMemoryOpenKey();
+  const mismatchKey = getGlossaryMemoryMismatchKey();
+  const openCards = Array.isArray(state.answers[openKey]) ? state.answers[openKey] : [];
+  const mismatchCards = Array.isArray(state.answers[mismatchKey]) ? state.answers[mismatchKey] : [];
+  if (assignments[card.itemId] === card.itemId || openCards.includes(card.id) || mismatchCards.length) return;
+
+  clearGlossaryMemoryResetTimeout();
+  const nextOpenCards = [...openCards, card.id].slice(0, 2);
+  state.answers[openKey] = nextOpenCards;
+
+  if (nextOpenCards.length < 2) {
+    state.glossaryPulse = "First card flipped. Choose one more card to test the match.";
+    state.glossaryPulseType = "neutral";
+    persistESTProgressSnapshot();
+    renderGlossaryStage();
+    return;
+  }
+
+  const [firstCardId, secondCardId] = nextOpenCards;
+  const firstCard = deck.find(entry => entry.id === firstCardId);
+  const secondCard = deck.find(entry => entry.id === secondCardId);
+  if (!firstCard || !secondCard) {
+    state.answers[openKey] = [];
+    persistESTProgressSnapshot();
+    renderGlossaryStage();
+    return;
+  }
+
+  const isMatch = firstCard.itemId === secondCard.itemId && firstCard.kind !== secondCard.kind;
+  const firstItem = batch.find(item => item.id === firstCard.itemId);
+  const secondItem = batch.find(item => item.id === secondCard.itemId);
+
+  if (isMatch) {
+    const item = firstItem || secondItem;
+    assignments[firstCard.itemId] = firstCard.itemId;
+    state.glossaryAssignments[getGlossaryBatchKey()] = assignments;
+    state.answers[openKey] = [];
+    delete state.answers[mismatchKey];
+    recordGlossaryAttempt(item, "Matched term and definition", true, "memory-match");
+    state.glossaryStreak += 1;
+    state.glossaryBestStreak = Math.max(state.glossaryBestStreak, state.glossaryStreak);
+    const matchedCount = batch.filter(entry => assignments[entry.id] === entry.id).length;
+    const boardCleared = matchedCount === batch.length;
+    state.glossaryPulse = boardCleared
+      ? `Round ${state.glossaryRoundIndex + 1} memory board cleared. Reward chamber opening.`
+      : `${item?.term || "Glossary pair"} matched. The cards are clearing from the board.`;
+    state.glossaryPulseType = "good";
+    state.recentReward = {
+      type: "positive",
+      title: "Memory match",
+      detail: item ? `${item.term} term and definition matched.` : "Term and definition matched."
+    };
+    renderRewardPulse();
+    persistESTProgressSnapshot();
+    renderGlossaryStage();
+    if (boardCleared) {
+      glossaryMemoryResetTimeout = setTimeout(() => {
+        glossaryMemoryResetTimeout = null;
+        if (state.glossaryRoundCelebration) return;
+        buildGlossaryCelebration(state.glossaryRoundIndex + 1, `${matchedCount}/${batch.length} term-definition pairs matched.`);
+        renderGlossaryStage();
+      }, 650);
+    }
+    return;
+  }
+
+  [firstItem, secondItem].filter(Boolean).forEach(item => {
+    recordGlossaryAttempt(item, "Memory mismatch", false, "memory-match");
+  });
+  state.answers[mismatchKey] = nextOpenCards;
+  state.glossaryMisses += 1;
+  state.glossaryStreak = 0;
+  state.glossaryPulse = "Not a match. The two cards will reset, then try another term-definition pair.";
+  state.glossaryPulseType = "warn";
+  state.recentReward = {
+    type: "warning",
+    title: "Memory reset",
+    detail: "Those two cards do not form a term-definition match."
+  };
+  renderRewardPulse();
+  persistESTProgressSnapshot();
+  renderGlossaryStage();
+  glossaryMemoryResetTimeout = setTimeout(() => {
+    glossaryMemoryResetTimeout = null;
+    state.answers[openKey] = [];
+    delete state.answers[mismatchKey];
+    state.glossaryPulse = "Cards reset. Flip a term and its matching definition.";
+    state.glossaryPulseType = "neutral";
+    persistESTProgressSnapshot();
+    renderGlossaryStage();
+  }, 900);
+}
+
 function setGlossarySelectedTerm(termId) {
   const assignments = getGlossaryAssignmentsForBatch();
   const usedTermIds = Object.values(assignments);
@@ -1153,18 +1379,15 @@ function endGlossaryDrag() {
 function getGlossaryRoundEconomy(roundNumber) {
   const glossaryStage = STAGES.find(stage => stage.id === "glossary");
   if (!glossaryStage) return { salary: 0, taxRate: 0 };
-  const salary = Math.round((glossaryStage.credits * (0.65 + (roundNumber * 0.12))) / 4);
+  const salary = Math.round((glossaryStage.credits * (0.65 + (roundNumber * 0.1))) / Math.max(1, GLOSSARY_ROUND_CONFIGS.length));
   return { salary, taxRate: glossaryStage.taxRate };
 }
 
 function formatGlossaryRoundTitle(roundNumber) {
-  return roundNumber === 1
-    ? "Termfall Dash cleared. The first glossary game is banked."
-    : roundNumber === 2
-      ? "Cloze Sprint cleared. Missing-keyword recall is locking into memory."
-      : roundNumber === 3
-        ? "Definition Invaders cleared. Meaning-to-term recognition is stronger."
-        : "Vault Bridge complete. All glossary terms are banked.";
+  const totalRounds = GLOSSARY_ROUND_CONFIGS.length;
+  return roundNumber >= totalRounds
+    ? "Final memory board cleared. Every glossary word has been covered."
+    : `Memory round ${roundNumber} cleared. The next glossary set is ready.`;
 }
 
 function buildGlossaryCelebration(roundNumber, scoreText) {
@@ -1181,7 +1404,9 @@ function buildGlossaryCelebration(roundNumber, scoreText) {
   state.glossaryRoundCelebration = {
     roundNumber,
     title: formatGlossaryRoundTitle(roundNumber),
-    subtitle: "Choose the next practice game yourself. The real target is all 30 terms secured through perfect recent recall.",
+    subtitle: roundNumber >= GLOSSARY_ROUND_CONFIGS.length
+      ? "Choose the class tax destination, then finish the glossary check with all terms recorded."
+      : "Choose the class tax destination, then move to the next six glossary terms.",
     salary: totalSalary,
     tax,
     scoreText,
@@ -1189,7 +1414,7 @@ function buildGlossaryCelebration(roundNumber, scoreText) {
     speedBand,
     precisionBonus
   };
-  state.glossaryPulse = `Game ${roundNumber} cleared. Choose where the class community tax should land, then pick your next practice mode.`;
+  state.glossaryPulse = `Game ${roundNumber} cleared. Choose where the class community tax should land, then continue the memory run.`;
   state.glossaryPulseType = "good";
   state.recentReward = {
     type: "positive",
@@ -1230,7 +1455,7 @@ function setGlossaryRoundVote(optionId) {
   glossaryCommunityAssetTimeout = setTimeout(() => {
     glossaryCommunityAssetTimeout = null;
     setGlossaryCommunityAssetReady(roundNumber, true);
-    state.glossaryPulse = "Community asset built. Choose another practice game or return to the lab.";
+    state.glossaryPulse = "Community asset built. Continue the memory run or return to the lab.";
     state.glossaryPulseType = "good";
     renderGlossaryStage();
   }, getGlossaryCommunityAssetDelay());
@@ -1238,13 +1463,13 @@ function setGlossaryRoundVote(optionId) {
   renderGlossaryStage();
 }
 
-function continueGlossaryRound() {
+async function continueGlossaryRound() {
   const celebration = state.glossaryRoundCelebration;
   if (!celebration) return;
   const roundNumber = celebration.roundNumber;
   const voteKey = state.glossaryRoundVotes[roundNumber];
   if (!voteKey) {
-    state.glossaryPulse = "Choose a class tax destination before you pick the next glossary game.";
+    state.glossaryPulse = "Choose a class tax destination before you continue the memory run.";
     state.glossaryPulseType = "warn";
     state.recentReward = {
       type: "warning",
@@ -1258,13 +1483,18 @@ function continueGlossaryRound() {
   state.answers[`glossaryVoteRound${roundNumber}`] = voteKey;
   clearGlossaryCommunityAssetTimeout();
   setGlossaryCommunityAssetReady(roundNumber, true);
+  const finalRoundComplete = roundNumber >= GLOSSARY_ROUND_CONFIGS.length;
   state.glossaryRoundCelebration = null;
   state.glossarySelectedTermId = "";
   state.glossaryDraggedTermId = "";
   state.glossaryBatchIndex = 0;
-  refreshGlossaryPracticeDeck();
+  if (finalRoundComplete) {
+    await bankGlossaryResults();
+    return;
+  }
+  state.glossaryRoundIndex = Math.min(GLOSSARY_ROUND_CONFIGS.length - 1, state.glossaryRoundIndex + 1);
   clearGlossaryRoundState(state.glossaryRoundIndex);
-  state.glossaryPulse = "Choose any glossary game. Your mastery bank is what matters, not a fixed order.";
+  state.glossaryPulse = GLOSSARY_ROUND_CONFIGS[state.glossaryRoundIndex]?.cue || "Next memory board loaded.";
   state.glossaryPulseType = "neutral";
   startGlossaryRoundTimer(true);
   renderGlossaryStage();
@@ -1355,8 +1585,10 @@ function isGlossaryBatchMatched() {
 }
 
 function moveToNextGlossaryBatchOrRound() {
+  if (state.glossaryRoundCelebration) return;
+  clearGlossaryMemoryResetTimeout();
   const completedRound = state.glossaryRoundIndex + 1;
-  buildGlossaryCelebration(completedRound, `All ${getCurrentGlossaryBatch().length} glossary signals restored in this chamber.`);
+  buildGlossaryCelebration(completedRound, `${getCurrentGlossaryBatch().length}/${getCurrentGlossaryBatch().length} term-definition pairs matched.`);
   renderGlossaryStage();
 }
 
@@ -1495,13 +1727,14 @@ function setGlossaryRecallKeywordChoiceEncoded(itemId, encodedValue) {
 
 function getGlossaryStabilityPercent() {
   const completedRounds = Object.keys(state.glossaryRoundRewards || {}).length;
-  const bridgePartial = !state.glossaryRoundCelebration && getCurrentGlossaryRound()?.id === "recall"
-    ? Math.round((getGlossaryBridgeTotalSecured() / Math.max(1, buildGlossarySource().length)) * 25)
-    : 0;
-  const partial = bridgePartial || (state.glossaryRoundCelebration
+  const roundWeight = 100 / Math.max(1, GLOSSARY_ROUND_CONFIGS.length);
+  const batch = getCurrentGlossaryBatch();
+  const assignments = getGlossaryAssignmentsForBatch();
+  const matchedCount = batch.filter(item => assignments[item.id] === item.id).length;
+  const partial = state.glossaryRoundCelebration
     ? 0
-    : Math.round(((state.glossaryBatchIndex + (isGlossaryBatchMatched() ? 1 : 0)) / Math.max(1, (state.stageDeck?.glossaryBatches || []).length)) * 25));
-  return Math.min(100, (completedRounds * 25) + partial);
+    : (matchedCount / Math.max(1, batch.length)) * roundWeight;
+  return Math.min(100, Math.round((completedRounds * roundWeight) + partial));
 }
 
 function getGlossaryRoundBadge(roundIndex) {
@@ -1665,6 +1898,10 @@ function renderGlossaryRoundVisual(roundId, item) {
 function getGlossaryGuideCopy(roundId, item) {
   const term = item?.term || "this term";
   const copy = {
+    "memory-match": {
+      title: "Match term to meaning",
+      body: `Flip two cards and find the definition that belongs with ${term}. Matched pairs disappear; misses reset.`
+    },
     "term-catch": {
       title: "Catch the right term",
       body: `Watch the falling options. The definition points toward ${term}; catch it before the memory road resets.`
@@ -1970,7 +2207,7 @@ function renderGlossarySignalSliceGame(round, promptItem, optionSet, batch, batc
   return `
     <div class="panel glossary-command-panel glossary-arcade-shell glossary-slice-shell glossary-cloze-shell">
       <div class="section-title">
-        <h2>Cloze Sprint</h2>
+        <h2>Keyword Repair</h2>
         <p>${matchedCount}/${batch.length} blanks repaired</p>
       </div>
       <div class="badge-row" style="margin-bottom:14px;">
@@ -2075,7 +2312,7 @@ function renderGlossarySceneMatchGame(round, promptItem, optionSet, batch, batch
   return `
     <div class="panel glossary-command-panel glossary-arcade-shell glossary-scene-shell">
       <div class="section-title">
-        <h2>Cloze Sprint</h2>
+        <h2>Scene Match</h2>
         <p>${matchedCount}/${batch.length} animated meanings decoded</p>
       </div>
       <div class="badge-row" style="margin-bottom:14px;">
@@ -2356,9 +2593,77 @@ function renderGlossaryVaultBridgeGame(round) {
   `;
 }
 
+function renderGlossaryMemoryMatchGame(round, batch, matchedCount, roundScore, progressPercent) {
+  const deck = getGlossaryMemoryDeck(batch);
+  const assignments = getGlossaryAssignmentsForBatch();
+  const openCards = Array.isArray(state.answers[getGlossaryMemoryOpenKey()]) ? state.answers[getGlossaryMemoryOpenKey()] : [];
+  const mismatchCards = Array.isArray(state.answers[getGlossaryMemoryMismatchKey()]) ? state.answers[getGlossaryMemoryMismatchKey()] : [];
+  const theme = getCurrentGlossaryMemoryTheme(round);
+  const matchedCardCount = matchedCount * 2;
+  const totalCards = batch.length * 2;
+
+  return `
+    <div class="panel glossary-command-panel glossary-arcade-shell glossary-memory-shell" style="${getGlossaryMemoryThemeStyle(theme)}">
+      <div class="section-title">
+        <h2>Memory Game</h2>
+        <p>${matchedCount}/${batch.length} term-definition pairs cleared</p>
+      </div>
+      <div class="badge-row" style="margin-bottom:14px;">
+        <span class="badge">${escapeHtml(theme.label)}</span>
+        <span class="badge">${matchedCardCount}/${totalCards} cards cleared</span>
+        <span class="badge">Current streak: x${state.glossaryStreak}</span>
+        <span class="badge">Best streak: x${state.glossaryBestStreak}</span>
+        <span class="badge">Misses: ${state.glossaryMisses}</span>
+        <span class="badge">Score: ${roundScore}</span>
+      </div>
+      <p class="small-copy glossary-pulse ${state.glossaryPulseType}">${escapeHtml(state.glossaryPulse || round.cue)}</p>
+      <div class="glossary-progress-track" aria-hidden="true">
+        <div class="glossary-progress-bar" style="width:${progressPercent}%;"></div>
+      </div>
+      <div class="glossary-memory-arena">
+        <div class="glossary-memory-arena-bg" aria-hidden="true"></div>
+        <div class="glossary-memory-board" aria-label="Memory game cards">
+          ${deck.map((card, index) => {
+            const matched = assignments[card.itemId] === card.itemId;
+            const open = openCards.includes(card.id) || mismatchCards.includes(card.id);
+            const mismatched = mismatchCards.includes(card.id);
+            return `
+              <button
+                type="button"
+                class="glossary-memory-card ${open ? "is-flipped" : ""} ${matched ? "is-matched" : ""} ${mismatched ? "is-mismatch" : ""} glossary-memory-card--${escapeHtml(card.kind)}"
+                style="--card-index:${index};"
+                onclick="window.ESTPrep.flipGlossaryMemoryCardEncoded('${encodeForInlineHandler(card.id)}')"
+                ${matched || mismatchCards.length ? "disabled" : ""}
+                aria-label="${matched ? "Matched" : open ? "Open" : "Hidden"} ${escapeHtml(card.label)} card"
+              >
+                <span class="glossary-memory-card-inner">
+                  <span class="glossary-memory-card-face glossary-memory-card-back" aria-hidden="true"></span>
+                  <span class="glossary-memory-card-face glossary-memory-card-front">
+                    <span class="kicker">${escapeHtml(card.label)}</span>
+                    <strong>${escapeHtml(card.text)}</strong>
+                  </span>
+                </span>
+              </button>
+            `;
+          }).join("")}
+        </div>
+      </div>
+    </div>
+    <div class="written-stage glossary-finale-stage">
+      <strong>Memory exit</strong>
+      <p class="small-copy">Clear all ${batch.length} term-definition pairs. Matching cards disappear, and wrong pairs flip back after a short reset.</p>
+      <button class="submit-button" type="button" onclick="window.ESTPrep.nextGlossaryPhase()" ${isGlossaryBatchMatched() ? "" : "disabled"}>Finish Game</button>
+    </div>
+  `;
+}
+
 function renderGlossaryChallengeArena(round, batch, batchNumber, totalBatches, matchedCount, roundScore) {
   const promptItem = getCurrentGlossaryPromptItem(batch);
   const progressPercent = Math.round((matchedCount / Math.max(1, batch.length)) * 100);
+
+  if (round.id === "memory-match") {
+    return renderGlossaryMemoryMatchGame(round, batch, matchedCount, roundScore, progressPercent);
+  }
 
   if (round.id === "recall") {
     return renderGlossaryVaultBridgeGame(round);
@@ -2404,7 +2709,7 @@ function renderGlossaryChallengeArena(round, batch, batchNumber, totalBatches, m
       }
     : round.id === "keyword-cloze"
       ? {
-          kicker: "Cloze Sprint",
+          kicker: "Keyword repair",
           title: "Fill the missing keyword from the definition",
           prompt: getGlossaryCloze(promptItem).text,
           promptHtml: renderGlossaryClozeText(promptItem),
@@ -2467,6 +2772,7 @@ function renderGlossaryChallengeArena(round, batch, batchNumber, totalBatches, m
 function renderGlossaryCelebration() {
   const celebration = state.glossaryRoundCelebration;
   if (!celebration) return "";
+  const isFinalRound = celebration.roundNumber >= GLOSSARY_ROUND_CONFIGS.length;
   const voteKey = state.glossaryRoundVotes[celebration.roundNumber] || "";
   const selectedOption = (state.stageDeck?.communityOptions || []).find(option => option.id === voteKey) || null;
   const selectedAsset = selectedOption ? GLOSSARY_COMMUNITY_ASSETS[selectedOption.id] : null;
@@ -2548,7 +2854,7 @@ function renderGlossaryCelebration() {
         `}
         ${voteKey && assetReady ? `
           <div class="builder-actions glossary-community-next-actions">
-            <button class="submit-button" type="button" onclick="window.ESTPrep.continueGlossaryRound()">Choose Another Practice Game</button>
+            <button class="submit-button" type="button" onclick="window.ESTPrep.continueGlossaryRound()">${isFinalRound ? "Finish Glossary Check" : "Continue Memory Run"}</button>
             <button class="choice-button" type="button" onclick="window.ESTPrep.returnToLab()">Save and return to EST Lab</button>
           </div>
         ` : ""}
@@ -2610,6 +2916,7 @@ function renderGlossaryStage() {
   const assignments = getGlossaryAssignmentsForBatch();
   const totalBatches = 1;
   const roundNumber = state.glossaryRoundIndex + 1;
+  const totalRounds = GLOSSARY_ROUND_CONFIGS.length;
   const batchNumber = 1;
   const matchedCount = Object.keys(assignments).length;
   setText("stage-title", "Glossary Mission");
@@ -2633,7 +2940,7 @@ function renderGlossaryStage() {
   const roundScore = Math.max(0, (matchedCount * 100) - (state.glossaryMisses * 25));
   const modeSwitch = `
     <div class="glossary-mode-switch">
-      <button type="button" class="choice-button ${state.glossaryMode === "play" ? "selected live-selected" : ""}" onclick="window.ESTPrep.setGlossaryMode('play')">Restore Chamber</button>
+      <button type="button" class="choice-button ${state.glossaryMode === "play" ? "selected live-selected" : ""}" onclick="window.ESTPrep.setGlossaryMode('play')">Memory Game</button>
       <button type="button" class="choice-button ${state.glossaryMode === "study" ? "selected live-selected" : ""}" onclick="window.ESTPrep.setGlossaryMode('study')">Memory Deck</button>
     </div>
   `;
@@ -2648,8 +2955,8 @@ function renderGlossaryStage() {
             <p class="small-copy">Use quick look-cover-retrieve-check reps, then jump back into the timed chamber.</p>
           </div>
           <div class="glossary-mission-actions">
-            <span class="badge">Game ${roundNumber} / 4</span>
-            <span class="badge">Target 30/30 secure</span>
+            <span class="badge">Game ${roundNumber} / ${totalRounds}</span>
+            <span class="badge">${batch.length} terms • ${batch.length * 2} cards</span>
             <span class="badge">Timer <strong id="glossary-round-timer">${formatSecondsAsClock(getGlossaryRoundElapsedSeconds())}</strong></span>
             <button class="choice-button" type="button" onclick="window.ESTPrep.startNewGlossaryPracticeRun()">New timed set</button>
             <button class="choice-button" type="button" onclick="window.ESTPrep.returnToLab()">Save and return</button>
@@ -2673,11 +2980,11 @@ function renderGlossaryStage() {
         <div>
           <div class="kicker">System Recovery Protocol</div>
           <h3>Glossary Arcade</h3>
-          <p class="small-copy">Choose any practice game. The system tracks whether all 30 glossary terms are secure through perfect recent recall.</p>
+          <p class="small-copy">Flip two cards at a time. Match six terms with six definitions, then bank the reward and move to the next theme.</p>
         </div>
         <div class="glossary-mission-actions">
-          <span class="badge">Game ${roundNumber} / 4</span>
-          <span class="badge">Choose any mode</span>
+          <span class="badge">Game ${roundNumber} / ${totalRounds}</span>
+          <span class="badge">${batch.length} terms • ${batch.length * 2} cards</span>
           <span class="badge">Timer <strong id="glossary-round-timer">${formatSecondsAsClock(getGlossaryRoundElapsedSeconds())}</strong></span>
           <button class="choice-button" type="button" onclick="window.ESTPrep.startNewGlossaryPracticeRun()">New timed set</button>
           <button class="choice-button" type="button" onclick="window.ESTPrep.returnToLab()">Save and return</button>
@@ -2687,7 +2994,7 @@ function renderGlossaryStage() {
       ${renderGlossaryMissionFrame(`
         ${modeSwitch}
         ${renderGlossaryChallengeArena(round, batch, batchNumber, totalBatches, matchedCount, roundScore)}
-      `, round.id === "recall" ? getGlossaryBridgeActiveItem() : getCurrentGlossaryPromptItem(batch))}
+      `, getCurrentGlossaryPromptItem(batch))}
     </div>
   `);
   startGlossaryRoundTimer();
@@ -2717,36 +3024,17 @@ if (!window.__glossaryBridgeControlsBound) {
 
 async function submitGlossary() {
   const batch = getCurrentGlossaryBatch();
-  if (state.glossaryRoundIndex < 3) return;
-
-  batch.forEach(item => {
-    const typedTerm = normaliseGlossaryTermText(state.glossaryRecallAnswers[`term-${item.id}`]);
-    const typedKeyword = normaliseGlossaryTermText(state.glossaryRecallAnswers[`keyword-${item.id}`]);
-    const termCorrect = typedTerm === normaliseGlossaryTermText(item.term);
-    const keywordCorrect = item.keywords.some(keyword => typedKeyword.includes(normaliseGlossaryTermText(keyword)));
-    const overallCorrect = termCorrect && keywordCorrect;
-    state.glossaryRecallResults[item.id] = {
-      term: item.term,
-      keywords: item.keywords,
-      termCorrect,
-      keywordCorrect,
-      overallCorrect
-    };
-  });
-
-  const allResults = batch.map(item => state.glossaryRecallResults[item.id]).filter(Boolean);
-  const overallCorrect = allResults.reduce((sum, item) => sum + (item.termCorrect ? 1 : 0) + (item.keywordCorrect ? 1 : 0), 0);
-  const total = allResults.length * 2;
-  buildGlossaryCelebration(4, `${overallCorrect}/${total} final recall checks correct.`);
+  if (!isGlossaryBatchMatched()) return;
+  buildGlossaryCelebration(GLOSSARY_ROUND_CONFIGS.length, `${batch.length}/${batch.length} term-definition pairs matched.`);
   renderGlossaryStage();
 }
 
 async function bankGlossaryResults() {
-  const batch = getCurrentGlossaryBatch();
-  const allResults = batch.map(item => state.glossaryRecallResults[item.id]).filter(Boolean);
+  const allTerms = getGlossaryAllRoundItems();
+  const matchedTermIds = getGlossaryMatchedTermIds();
   const durationSeconds = getCurrentStageDurationSeconds();
-  const overallCorrect = allResults.reduce((sum, item) => sum + (item.termCorrect ? 1 : 0) + (item.keywordCorrect ? 1 : 0), 0);
-  const total = allResults.length * 2;
+  const overallCorrect = matchedTermIds.size;
+  const total = allTerms.length;
   const masterySummary = getGlossaryMasterySummary();
   const scoreRatio = total ? overallCorrect / total : 0;
   const scorePercent = Math.round(scoreRatio * 100);
@@ -2768,11 +3056,11 @@ async function bankGlossaryResults() {
   }
 
   state.stageBestScores.glossary = Math.max(previousBestRatio, scoreRatio);
-  addEvidence("Glossary mastery run", `${overallCorrect}/${total} final recall checks correct • Best streak x${state.glossaryBestStreak} • Misses ${state.glossaryMisses}`);
-  await saveProgress("glossary-lock-in", "glossary-check", `Glossary final recall: ${overallCorrect}/${total}`, scorePercent, {
+  addEvidence("Glossary mastery run", `${overallCorrect}/${total} term-definition pairs matched • Best streak x${state.glossaryBestStreak} • Misses ${state.glossaryMisses}`);
+  await saveProgress("glossary-lock-in", "glossary-check", `Glossary memory game: ${overallCorrect}/${total}`, scorePercent, {
     taskName: "Glossary Check",
     durationSeconds,
-    promptText: "Complete a timed glossary memory run using keyword blanks, term retrieval, and final recall.",
+    promptText: "Complete five themed glossary memory boards by matching every term with its definition.",
     extraPayload: {
       round_summary: {
         rounds: GLOSSARY_ROUND_CONFIGS.map(item => item.title),
@@ -2787,7 +3075,11 @@ async function bankGlossaryResults() {
         round_votes: state.glossaryRoundVotes,
         term_stats: state.glossaryTermStats
       },
-      final_round_results: allResults
+      final_round_results: allTerms.map(item => ({
+        term: item.term,
+        definition: item.definition,
+        matched: matchedTermIds.has(item.id)
+      }))
     }
   });
   state.glossaryMissionMode = false;
@@ -2795,12 +3087,12 @@ async function bankGlossaryResults() {
   clearGlossaryTimer();
   syncMissionMode();
   showFeedbackBox(scoreRatio >= 0.8 ? "good" : scoreRatio >= 0.5 ? "warn" : "bad", [
-    `<strong>Glossary score:</strong> ${overallCorrect}/${total} final recall checks correct.`,
+    `<strong>Glossary score:</strong> ${overallCorrect}/${total} term-definition pairs matched.`,
     `${improvedBest || firstGlossaryClear
       ? `Best glossary result is now ${Math.round(state.stageBestScores.glossary * 100)}%.`
       : `Best glossary result remains ${Math.round(previousBestRatio * 100)}%. This replay was saved but did not overwrite your best run.`}`,
     `Best streak: x${state.glossaryBestStreak}. Misses: ${state.glossaryMisses}.`,
-    "Teachers can now inspect which terms were mastered or missed in the final recall round."
+    "Teachers can now inspect which terms were matched or missed in the memory run."
   ]);
   persistESTProgressSnapshot();
 }
