@@ -21,7 +21,7 @@
       --mint: #84ffd1;
       --gold: #ffd86c;
       --coral: #ff8b7b;
-      --tile-size: clamp(190px, 18vw, 290px);
+      --tile-size: clamp(145px, 13.5vw, 232px);
     }
 
     * {
@@ -196,17 +196,25 @@
       font-weight: 800;
     }
 
+    .bridge-pieces {
+      position: absolute;
+      inset: 0;
+      z-index: 5;
+      pointer-events: none;
+    }
+
     .tile {
       position: absolute;
-      z-index: 5;
+      left: var(--x);
+      top: var(--y);
       width: var(--tile-size);
-      min-height: calc(var(--tile-size) * 0.5);
-      transform: translate(-50%, -50%);
+      min-height: calc(var(--tile-size) * 0.45);
+      transform: translate(-50%, -50%) scale(0.96);
       border: 1px solid rgba(97, 240, 255, 0.44);
-      border-radius: 22px;
+      border-radius: 18px;
       color: var(--text);
       background:
-        linear-gradient(180deg, rgba(19, 40, 83, 0.78), rgba(7, 13, 30, 0.88)),
+        linear-gradient(180deg, rgba(19, 40, 83, 0.68), rgba(7, 13, 30, 0.86)),
         radial-gradient(circle at 50% 0%, rgba(97, 240, 255, 0.22), transparent 62%);
       box-shadow:
         inset 0 0 0 1px rgba(255, 255, 255, 0.08),
@@ -216,13 +224,32 @@
       align-content: center;
       justify-items: center;
       gap: 8px;
-      padding: 22px 18px;
-      cursor: pointer;
-      transition: transform 180ms ease, border-color 180ms ease, box-shadow 180ms ease, background 180ms ease;
+      padding: 18px 14px;
+      cursor: default;
+      opacity: 0.46;
+      pointer-events: auto;
+      transition:
+        transform 240ms ease,
+        border-color 240ms ease,
+        box-shadow 240ms ease,
+        background 240ms ease,
+        opacity 240ms ease,
+        filter 240ms ease;
     }
 
-    .tile:hover {
-      transform: translate(-50%, -54%);
+    .tile.is-active {
+      opacity: 1;
+      cursor: pointer;
+      transform: translate(-50%, -50%) scale(1);
+      border-color: rgba(132, 255, 209, 0.66);
+      box-shadow:
+        inset 0 0 0 1px rgba(255, 255, 255, 0.12),
+        0 22px 42px rgba(0, 0, 0, 0.42),
+        0 0 30px rgba(97, 240, 255, 0.22);
+    }
+
+    .tile.is-active:hover {
+      transform: translate(-50%, -56%) scale(1.02);
       border-color: rgba(132, 255, 209, 0.78);
       box-shadow:
         inset 0 0 0 1px rgba(255, 255, 255, 0.12),
@@ -243,29 +270,51 @@
       color: #041120;
       background: var(--mint);
       font-weight: 900;
+      transition: opacity 220ms ease, transform 220ms ease;
     }
 
     .tile-term {
-      max-width: 14rem;
+      max-width: 11rem;
       text-align: center;
-      font-size: clamp(1rem, 1.5vw, 1.25rem);
+      font-size: clamp(0.88rem, 1.22vw, 1.08rem);
       font-weight: 900;
       line-height: 1.05;
+      transition: opacity 220ms ease, transform 220ms ease;
     }
 
-    .tile-a {
-      left: 23%;
-      top: 60%;
+    .tile.is-waiting {
+      filter: saturate(0.75);
     }
 
-    .tile-b {
-      left: 50%;
-      top: 61%;
+    .tile.is-waiting .tile-letter {
+      opacity: 0;
     }
 
-    .tile-c {
-      left: 77%;
-      top: 60%;
+    .tile.is-locked {
+      opacity: 1;
+      border-color: rgba(132, 255, 209, 0.9);
+      background:
+        linear-gradient(180deg, rgba(30, 105, 91, 0.82), rgba(7, 42, 43, 0.92)),
+        radial-gradient(circle at 50% 0%, rgba(132, 255, 209, 0.36), transparent 70%);
+      box-shadow: 0 0 30px rgba(132, 255, 209, 0.3), 0 18px 34px rgba(0, 0, 0, 0.38);
+      pointer-events: none;
+    }
+
+    .tile.is-locked .tile-letter {
+      color: #041120;
+      background: linear-gradient(135deg, var(--mint), var(--gold));
+    }
+
+    .tile.is-locked .tile-term {
+      opacity: 0;
+      transform: translateY(4px);
+    }
+
+    .tile.is-dropped {
+      opacity: 0;
+      transform: translate(-50%, 54%) scale(0.68) rotate(5deg);
+      filter: blur(2px);
+      pointer-events: none;
     }
 
     .tile.is-correct {
@@ -666,19 +715,15 @@
         top: 250px;
       }
 
-      .tile-a {
-        left: 24%;
-        top: 56%;
+      .tile {
+        width: clamp(112px, 28vw, 190px);
+        min-height: 72px;
+        padding: 12px 10px;
       }
 
-      .tile-b {
-        left: 50%;
-        top: 64%;
-      }
-
-      .tile-c {
-        left: 76%;
-        top: 56%;
+      .tile-term {
+        font-size: 0.8rem;
+        max-width: 8rem;
       }
 
       .guide-panel,
@@ -704,8 +749,8 @@
       <div>
         <h1>Vault Bridge</h1>
         <p>
-          Secure 5 glossary terms. Correct answers move the character forward, wrong answers send them back one step,
-          and a clean run opens the salary portal.
+          Secure 5 glossary terms across five bridge rows. Correct answers lock the path, wrong answers reset the run
+          to the entrance, and a clean streak opens the salary portal.
         </p>
       </div>
       <div class="character-switcher" aria-label="Choose character">
@@ -730,18 +775,7 @@
         <p id="question-text">The ability to adjust to changing work conditions and environments by recognising and pursuing opportunities.</p>
       </article>
 
-      <button class="tile tile-a" type="button" data-answer="wrong" data-x="23" data-y="58" data-option-index="0">
-        <span class="tile-letter">A</span>
-        <span class="tile-term">Career</span>
-      </button>
-      <button class="tile tile-b" type="button" data-answer="wrong" data-x="50" data-y="58" data-option-index="1">
-        <span class="tile-letter">B</span>
-        <span class="tile-term">Enterprise</span>
-      </button>
-      <button class="tile tile-c" type="button" data-answer="correct" data-x="77" data-y="58" data-option-index="2">
-        <span class="tile-letter">C</span>
-        <span class="tile-term">Career adaptability</span>
-      </button>
+      <div id="bridge-pieces" class="bridge-pieces" aria-label="Vault Bridge answer pieces"></div>
 
       <div class="path-pulse" aria-hidden="true"></div>
       <img id="player" class="player" src="../../Assets/Images%20and%20Animations/Emmanuel%20Student%20Characters/MacKillop/MacKillop%20Thinking.png" alt="MacKillop student character">
@@ -750,12 +784,12 @@
 
       <article class="guide-panel" aria-live="polite">
         <strong id="feedback-title">Ready</strong>
-        <p id="feedback-copy">Choose the glossary term that matches the definition. Try the wrong tiles too so you can see the reset animation.</p>
+        <p id="feedback-copy">Start from the arrow runway. Choose the right piece in each row to build a path to the portal.</p>
       </article>
 
       <article class="progress-panel">
         <strong>Bridge charge</strong>
-        <p id="progress-copy">0 of 5 words secured. Wrong answers move you back one safe step.</p>
+        <p id="progress-copy">0 of 5 words secured. Wrong answers reset the bridge to the entrance.</p>
         <div class="progress-track" aria-hidden="true"><div id="progress-fill" class="progress-fill"></div></div>
         <div id="step-dots" class="step-dots" aria-hidden="true"></div>
       </article>
@@ -775,7 +809,7 @@
 
   <script>
     const player = document.getElementById("player");
-    const tiles = Array.from(document.querySelectorAll(".tile"));
+    const bridgePieces = document.getElementById("bridge-pieces");
     const questionText = document.getElementById("question-text");
     const feedbackTitle = document.getElementById("feedback-title");
     const feedbackCopy = document.getElementById("feedback-copy");
@@ -824,8 +858,15 @@
     ];
 
     const homePosition = { x: 50, y: 91 };
-    const portalPosition = { x: 83, y: 43 };
-    const tileLandingOffset = 12;
+    const portalPosition = { x: 83, y: 55 };
+    const tileLandingOffset = 10;
+    const bridgeRows = [
+      [{ x: 23, y: 68 }, { x: 50, y: 68 }, { x: 77, y: 68 }],
+      [{ x: 28, y: 59 }, { x: 50, y: 59 }, { x: 72, y: 59 }],
+      [{ x: 23, y: 50 }, { x: 50, y: 50 }, { x: 77, y: 50 }],
+      [{ x: 31, y: 41 }, { x: 55, y: 41 }, { x: 79, y: 41 }],
+      [{ x: 43, y: 33 }, { x: 63, y: 33 }, { x: 83, y: 33 }]
+    ];
 
     const characters = {
       mackillop: {
@@ -854,7 +895,8 @@
     let activeCharacter = "mackillop";
     let busy = false;
     let secured = 0;
-    let safePositions = [homePosition];
+    let lockedSelections = Array(roundQuestions.length).fill(null);
+    let tiles = [];
 
     function setPlayerPosition(x, y) {
       player.style.left = `${x}%`;
@@ -872,10 +914,85 @@
       player.alt = `${character.name} student character`;
     }
 
-    function resetTiles() {
+    function createBridgePieces() {
+      bridgePieces.innerHTML = "";
+      tiles = bridgeRows.flatMap((row, rowIndex) => row.map((position, optionIndex) => {
+        const tile = document.createElement("button");
+        tile.className = "tile is-waiting";
+        tile.type = "button";
+        tile.dataset.row = String(rowIndex);
+        tile.dataset.optionIndex = String(optionIndex);
+        tile.dataset.x = String(position.x);
+        tile.dataset.y = String(position.y);
+        tile.style.setProperty("--x", `${position.x}%`);
+        tile.style.setProperty("--y", `${position.y}%`);
+        tile.innerHTML = `
+          <span class="tile-letter" aria-hidden="true">...</span>
+          <span class="tile-term"></span>
+        `;
+        tile.addEventListener("click", () => handleTileClick(tile));
+        bridgePieces.append(tile);
+        return tile;
+      }));
+    }
+
+    function getRowTiles(rowIndex) {
+      return tiles.filter((tile) => Number(tile.dataset.row) === rowIndex);
+    }
+
+    function getTile(rowIndex, optionIndex) {
+      return tiles.find((tile) => Number(tile.dataset.row) === rowIndex && Number(tile.dataset.optionIndex) === optionIndex);
+    }
+
+    function currentSafePosition() {
+      if (secured <= 0) return homePosition;
+      const lastTile = getTile(secured - 1, lockedSelections[secured - 1]);
+      return lastTile ? landingPositionFor(lastTile) : homePosition;
+    }
+
+    function resetTileClasses(tile) {
+      tile.classList.remove("is-active", "is-waiting", "is-locked", "is-correct", "is-wrong", "is-dropped");
+    }
+
+    function renderBridgePieces() {
+      const question = roundQuestions[Math.min(secured, roundQuestions.length - 1)];
       tiles.forEach((tile) => {
-        tile.classList.remove("is-correct", "is-wrong");
-        tile.disabled = false;
+        const rowIndex = Number(tile.dataset.row);
+        const optionIndex = Number(tile.dataset.optionIndex);
+        const letter = tile.querySelector(".tile-letter");
+        const term = tile.querySelector(".tile-term");
+        resetTileClasses(tile);
+        tile.disabled = true;
+        tile.dataset.answer = "waiting";
+        tile.setAttribute("aria-label", `Bridge row ${rowIndex + 1}, waiting`);
+
+        if (rowIndex < secured) {
+          if (lockedSelections[rowIndex] === optionIndex) {
+            tile.classList.add("is-locked");
+            letter.textContent = "OK";
+            term.textContent = "";
+            tile.setAttribute("aria-label", `Bridge row ${rowIndex + 1} secured`);
+          } else {
+            tile.classList.add("is-dropped");
+            letter.textContent = "";
+            term.textContent = "";
+          }
+          return;
+        }
+
+        if (rowIndex === secured && secured < roundQuestions.length) {
+          tile.classList.add("is-active");
+          tile.disabled = busy;
+          tile.dataset.answer = optionIndex === question.correct ? "correct" : "wrong";
+          letter.textContent = String.fromCharCode(65 + optionIndex);
+          term.textContent = question.options[optionIndex];
+          tile.setAttribute("aria-label", `${String.fromCharCode(65 + optionIndex)}: ${question.options[optionIndex]}`);
+          return;
+        }
+
+        tile.classList.add("is-waiting");
+        letter.textContent = "";
+        term.textContent = "";
       });
     }
 
@@ -891,7 +1008,7 @@
     function updateProgress() {
       const percent = Math.round((secured / roundQuestions.length) * 100);
       progressFill.style.width = `${percent}%`;
-      progressCopy.textContent = `${secured} of ${roundQuestions.length} words secured. Wrong answers move you back one safe step.`;
+      progressCopy.textContent = `${secured} of ${roundQuestions.length} bridge rows secured. Wrong answers reset the run to the entrance.`;
       roundStep.textContent = `${secured}/${roundQuestions.length}`;
       salary.textContent = `$${(2400 + secured * 350).toLocaleString()}`;
       renderStepDots();
@@ -900,12 +1017,7 @@
     function renderQuestion() {
       const question = roundQuestions[Math.min(secured, roundQuestions.length - 1)];
       questionText.textContent = question.definition;
-      tiles.forEach((tile, index) => {
-        tile.dataset.answer = index === question.correct ? "correct" : "wrong";
-        tile.dataset.optionIndex = String(index);
-        tile.querySelector(".tile-letter").textContent = String.fromCharCode(65 + index);
-        tile.querySelector(".tile-term").textContent = question.options[index];
-      });
+      renderBridgePieces();
     }
 
     function landingPositionFor(tile) {
@@ -921,33 +1033,39 @@
 
     function setTilesDisabled(disabled) {
       tiles.forEach((tile) => {
-        tile.disabled = disabled;
+        if (tile.classList.contains("is-active")) {
+          tile.disabled = disabled;
+        }
       });
     }
 
     function beginMove(tile) {
       busy = true;
-      resetTiles();
       setTilesDisabled(true);
       setCharacterPose("action");
       player.classList.remove("is-celebrating", "is-resetting", "is-exiting");
       player.classList.add("is-hopping");
       moveTo(landingPositionFor(tile));
-      setFeedback("Crossing", "The character moves to the selected term platform before the answer is judged.");
+      setFeedback("Crossing", "The character jumps to the selected bridge piece before the answer is judged.");
     }
 
     function finishCorrect(tile) {
       const question = roundQuestions[Math.min(secured, roundQuestions.length - 1)];
       const landing = landingPositionFor(tile);
       tile.classList.add("is-correct");
+      getRowTiles(secured).forEach((rowTile) => {
+        if (rowTile !== tile) {
+          rowTile.classList.add("is-dropped");
+        }
+      });
       setCharacterPose("success");
       player.classList.remove("is-hopping");
       player.classList.add("is-celebrating");
       burst.classList.remove("is-active");
       void burst.offsetWidth;
       burst.classList.add("is-active");
+      lockedSelections[secured] = Number(tile.dataset.optionIndex);
       secured += 1;
-      safePositions.push(landing);
       updateProgress();
       setFeedback("Correct", question.secureLine);
       window.setTimeout(() => {
@@ -956,10 +1074,10 @@
           return;
         }
         renderQuestion();
-        resetTiles();
         setCharacterPose("ready");
         player.classList.remove("is-celebrating");
-        setFeedback("Next word", "New definition loaded. Pick the platform that keeps the bridge moving.");
+        moveTo(landing);
+        setFeedback("Next row", "The wrong pieces dropped away. New options have appeared on the next bridge row.");
         setTilesDisabled(false);
         busy = false;
       }, 1050);
@@ -967,6 +1085,11 @@
 
     function finishWrong(tile) {
       tile.classList.add("is-wrong");
+      getRowTiles(secured).forEach((rowTile) => {
+        if (rowTile !== tile) {
+          rowTile.classList.add("is-dropped");
+        }
+      });
       setCharacterPose("reset");
       player.classList.remove("is-hopping");
       player.classList.add("is-resetting");
@@ -977,19 +1100,16 @@
       splash.classList.remove("is-active");
       void splash.offsetWidth;
       splash.classList.add("is-active");
-      if (secured > 0) {
-        secured -= 1;
-        safePositions.pop();
-      }
-      updateProgress();
-      setFeedback("Step back", "Not that one. The bridge sends the character back one safe step, then the same word stays in play.");
+      setFeedback("Bridge reset", "Not that one. The answer row collapses and the run restarts from the entrance.");
       window.setTimeout(() => {
-        moveTo(safePositions[safePositions.length - 1]);
+        secured = 0;
+        lockedSelections = Array(roundQuestions.length).fill(null);
+        updateProgress();
+        renderQuestion();
+        moveTo(homePosition);
         setCharacterPose("ready");
         player.classList.remove("is-resetting");
-        renderQuestion();
-        resetTiles();
-        setFeedback("Try again", "Choose the matching term to regain the lost step.");
+        setFeedback("Try again", "The bridge has rebuilt. Start from row one and keep the streak clean.");
         setTilesDisabled(false);
         busy = false;
       }, 1350);
@@ -1016,32 +1136,29 @@
 
     function resetRound() {
       secured = 0;
-      safePositions = [homePosition];
+      lockedSelections = Array(roundQuestions.length).fill(null);
       busy = false;
       roundComplete.classList.remove("is-visible");
       player.classList.remove("is-hopping", "is-celebrating", "is-resetting", "is-exiting");
       setCharacterPose("ready");
       moveTo(homePosition);
       renderQuestion();
-      resetTiles();
       updateProgress();
-      setFeedback("Ready", "Start from the arrow runway. Secure 5 terms to open the portal.");
+      setFeedback("Ready", "Start from the arrow runway. Secure 5 bridge rows to open the portal.");
       setTilesDisabled(false);
     }
 
-    tiles.forEach((tile) => {
-      tile.addEventListener("click", () => {
-        if (busy) return;
-        beginMove(tile);
-        window.setTimeout(() => {
-          if (tile.dataset.answer === "correct") {
-            finishCorrect(tile);
-          } else {
-            finishWrong(tile);
-          }
-        }, 760);
-      });
-    });
+    function handleTileClick(tile) {
+      if (busy || !tile.classList.contains("is-active")) return;
+      beginMove(tile);
+      window.setTimeout(() => {
+        if (tile.dataset.answer === "correct") {
+          finishCorrect(tile);
+        } else {
+          finishWrong(tile);
+        }
+      }, 760);
+    }
 
     characterButtons.forEach((button) => {
       button.addEventListener("click", () => {
@@ -1049,14 +1166,15 @@
         activeCharacter = button.dataset.character;
         characterButtons.forEach((item) => item.setAttribute("aria-pressed", String(item === button)));
         setCharacterPose("ready");
-        moveTo(safePositions[safePositions.length - 1]);
-        resetTiles();
-        setFeedback("Ready", `${characters[activeCharacter].name} is loaded. Choose a term platform to test the movement.`);
+        moveTo(currentSafePosition());
+        renderQuestion();
+        setFeedback("Ready", `${characters[activeCharacter].name} is loaded. Choose the active answer piece to test the movement.`);
       });
     });
 
     keepPlaying.addEventListener("click", resetRound);
 
+    createBridgePieces();
     renderQuestion();
     updateProgress();
     moveTo(homePosition);
