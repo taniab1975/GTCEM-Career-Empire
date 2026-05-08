@@ -1133,15 +1133,15 @@ function renderSharedGlobalPage(players) {
   const latestPlayers = dedupeLatestPlayers(players);
   if (!latestPlayers.length) {
     metrics.innerHTML = `
-      <article class="metric">
+      <article class="metric global-metric">
         <div class="metric-label">Global Status</div>
         <div class="metric-value">0</div>
         <div class="metric-note">No school competition data yet</div>
       </article>
     `;
-    schoolRankings.innerHTML = '<div class="timeline-item"><strong>No schools ranked yet</strong><p>Once students start playing, this page will turn into a live inter-school ladder.</p></div>';
-    classRankings.innerHTML = '<article class="module-card"><div class="kicker">Awaiting data</div><h3>No classes yet</h3><p>The rivalry board will populate once classes begin banking earnings and progress.</p></article>';
-    spotlights.innerHTML = '<div class="timeline-item"><strong>No spotlight stats yet</strong><p>Competitive highlights will appear once schools start generating results.</p></div>';
+    schoolRankings.innerHTML = '<div class="global-empty-state"><strong>No schools ranked yet</strong><p>Once schools begin playing, this page becomes the aggregate interschool ladder.</p></div>';
+    classRankings.innerHTML = '<article class="module-card global-class-card"><div class="kicker">Awaiting data</div><h3>No classes yet</h3><p>The rivalry board will populate once classes begin banking earnings and progress.</p></article>';
+    spotlights.innerHTML = '<div class="global-empty-state"><strong>No spotlight stats yet</strong><p>Aggregate highlights will appear once schools start generating results.</p></div>';
     return;
   }
 
@@ -1228,50 +1228,69 @@ function renderSharedGlobalPage(players) {
   }).sort((a, b) => b.score - a.score);
 
   const topSchool = schoolRows[0];
-  const topClass = classRows[0];
   const highestReadiness = [...schoolRows].sort((a, b) => b.readiness - a.readiness)[0];
   const biggestTaxBase = [...schoolRows].sort((a, b) => b.tax - a.tax)[0];
   const bestAttendanceProxy = [...schoolRows].sort((a, b) => b.yearsPlayed - a.yearsPlayed)[0];
   const safestSchool = [...schoolRows].sort((a, b) => b.jobSecurity - a.jobSecurity)[0];
+  const totalSchools = schoolRows.length;
+  const totalStudents = latestPlayers.length;
+  const totalRounds = schoolRows.reduce((sum, row) => sum + row.yearsPlayed, 0);
+  const averageReadiness = Math.round(schoolRows.reduce((sum, row) => sum + row.readiness, 0) / Math.max(1, schoolRows.length));
+  const maxSchoolScore = Math.max(...schoolRows.map(row => row.competitiveScore), 1);
+  const maxClassScore = Math.max(...classRows.map(row => row.score), 1);
 
   metrics.innerHTML = `
-    <article class="metric">
-      <div class="metric-label">Top School</div>
-      <div class="metric-value">${escapeHtml(topSchool.schoolName)}</div>
-      <div class="metric-note">${topSchool.competitiveScore} rivalry points</div>
+    <article class="metric global-metric global-metric--leader">
+      <div class="metric-label">League Leader</div>
+      <div class="metric-value global-metric-title">${escapeHtml(topSchool.schoolName)}</div>
+      <div class="metric-note">${topSchool.competitiveScore} rivalry points &middot; ${totalSchools} schools</div>
     </article>
-    <article class="metric">
-      <div class="metric-label">Top Class</div>
-      <div class="metric-value">${escapeHtml(topClass.classCode || "No code")}</div>
-      <div class="metric-note">${escapeHtml(topClass.schoolName)} • ${topClass.score} points</div>
-    </article>
-    <article class="metric">
-      <div class="metric-label">Highest Readiness</div>
+    <article class="metric global-metric global-metric--readiness">
+      <div class="metric-label">Readiness Peak</div>
       <div class="metric-value">${highestReadiness.readiness}%</div>
-      <div class="metric-note">${escapeHtml(highestReadiness.schoolName)}</div>
+      <div class="metric-note">${escapeHtml(highestReadiness.schoolName)} &middot; ${averageReadiness}% average</div>
     </article>
-    <article class="metric">
-      <div class="metric-label">Biggest Community Fund</div>
+    <article class="metric global-metric global-metric--momentum">
+      <div class="metric-label">Participation Heat</div>
+      <div class="metric-value">${totalRounds}</div>
+      <div class="metric-note">${totalStudents} students &middot; ${bestAttendanceProxy.yearsPlayed} rounds from ${escapeHtml(bestAttendanceProxy.schoolName)}</div>
+    </article>
+    <article class="metric global-metric global-metric--fund">
+      <div class="metric-label">Community Fund</div>
       <div class="metric-value">${formatCurrency(biggestTaxBase.tax)}</div>
       <div class="metric-note">${escapeHtml(biggestTaxBase.schoolName)}</div>
     </article>
   `;
 
   schoolRankings.innerHTML = schoolRows.slice(0, 8).map((row, index) => `
-    <div class="timeline-item">
-      <strong>#${index + 1} ${escapeHtml(row.schoolName)}</strong>
-      <p>
-        Rivalry score ${row.competitiveScore} • ${row.studentCount} students • Earnings ${formatCurrency(row.earnings)} •
-        Readiness ${row.readiness}% • Class fund ${formatCurrency(row.tax)} • Job security ${row.jobSecurity}%
-      </p>
+    <div class="global-league-row ${index === 0 ? "is-leading" : ""}" style="--score-width: ${Math.max(8, Math.round((row.competitiveScore / maxSchoolScore) * 100))}%">
+      <div class="global-league-rank">${String(index + 1).padStart(2, "0")}</div>
+      <div class="global-league-main">
+        <strong>${escapeHtml(row.schoolName)}</strong>
+        <div class="global-score-track" aria-hidden="true"><span></span></div>
+        <div class="global-league-details">
+          <span>${row.studentCount} students</span>
+          <span>${formatCurrency(row.earnings)} earnings</span>
+          <span>${row.readiness}% readiness</span>
+          <span>${formatCurrency(row.tax)} fund</span>
+        </div>
+      </div>
+      <div class="global-league-score">
+        <strong>${row.competitiveScore}</strong>
+        <span>pts</span>
+      </div>
     </div>
   `).join("");
 
   classRankings.innerHTML = classRows.slice(0, 6).map((row, index) => `
-    <article class="module-card ${index === 0 ? "spotlight" : ""}">
-      <div class="kicker">#${index + 1} Class Rival</div>
+    <article class="module-card global-class-card ${index === 0 ? "spotlight" : ""}" style="--score-width: ${Math.max(8, Math.round((row.score / maxClassScore) * 100))}%">
+      <div class="global-class-topline">
+        <div class="kicker">#${index + 1} Class Rival</div>
+        <span>${row.score} pts</span>
+      </div>
       <h3>${escapeHtml(row.classCode || "No class code")}</h3>
       <p>${escapeHtml(row.schoolName)}</p>
+      <div class="global-score-track" aria-hidden="true"><span></span></div>
       ${createProgressBar(row.readiness, index === 0 ? "green" : "")}
       <div class="section-title">
         <p>${row.readiness}% readiness</p>
@@ -1287,25 +1306,25 @@ function renderSharedGlobalPage(players) {
 
   spotlights.innerHTML = [
     {
-      title: "Most Match Fit",
-      detail: `${escapeHtml(highestReadiness.schoolName)} has the highest future-readiness average at ${highestReadiness.readiness}%.`
+      title: "Readiness Cup",
+      detail: `${highestReadiness.schoolName} has the strongest future-readiness average at ${highestReadiness.readiness}%.`
     },
     {
-      title: "Most Active School",
-      detail: `${escapeHtml(bestAttendanceProxy.schoolName)} has banked ${bestAttendanceProxy.yearsPlayed} total played rounds across its students.`
+      title: "Momentum Cup",
+      detail: `${bestAttendanceProxy.schoolName} has banked ${bestAttendanceProxy.yearsPlayed} total played rounds.`
     },
     {
-      title: "Safest Career Build",
-      detail: `${escapeHtml(safestSchool.schoolName)} leads average job security with ${safestSchool.jobSecurity}%.`
+      title: "Safety Net",
+      detail: `${safestSchool.schoolName} leads average job security with ${safestSchool.jobSecurity}%.`
     },
     {
-      title: "Biggest Economy",
-      detail: `${escapeHtml(topSchool.schoolName)} leads total salary earnings with ${formatCurrency(topSchool.earnings)} and net worth of ${formatCurrency(topSchool.netWorth)}.`
+      title: "Economy Engine",
+      detail: `${topSchool.schoolName} leads total salary earnings with ${formatCurrency(topSchool.earnings)} and net worth of ${formatCurrency(topSchool.netWorth)}.`
     }
   ].map(item => `
-    <div class="timeline-item">
-      <strong>${item.title}</strong>
-      <p>${item.detail}</p>
+    <div class="global-spotlight-item">
+      <span>${escapeHtml(item.title)}</span>
+      <strong>${escapeHtml(item.detail)}</strong>
     </div>
   `).join("");
 }
