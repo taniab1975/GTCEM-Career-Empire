@@ -1,0 +1,539 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Career Empire Teacher Pathway</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@500;600;700;800&display=swap" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/lucide@0.263.0/dist/umd/lucide.min.js"></script>
+  <style>
+    :root {
+      --bg: #06101f;
+      --panel: rgba(6, 16, 31, 0.82);
+      --panel-strong: rgba(4, 12, 25, 0.94);
+      --line: rgba(125, 211, 252, 0.28);
+      --line-soft: rgba(226, 232, 240, 0.16);
+      --text: #f8fbff;
+      --muted: #dbeafe;
+      --accent: #68d2ff;
+      --gold: #f7d879;
+      --green: #80ed99;
+      --button: #3b82f6;
+      --shadow: 0 28px 80px rgba(0, 0, 0, 0.42);
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    html {
+      min-height: 100%;
+      background: var(--bg);
+    }
+
+    body {
+      min-height: 100vh;
+      margin: 0;
+      color: var(--text);
+      font-family: "Outfit", "Avenir Next", "Segoe UI", sans-serif;
+      background:
+        linear-gradient(90deg, rgba(2, 7, 17, 0.97), rgba(5, 15, 30, 0.82) 50%, rgba(2, 7, 17, 0.94)),
+        linear-gradient(180deg, rgba(2, 7, 17, 0.12), rgba(2, 7, 17, 0.96) 72%),
+        url("../Assets/landing-screenshots/ecc-future-campus-hero.png") center top / cover fixed no-repeat,
+        var(--bg);
+    }
+
+    body::before {
+      content: "";
+      position: fixed;
+      inset: 0;
+      background:
+        linear-gradient(90deg, rgba(104, 210, 255, 0.11) 1px, transparent 1px),
+        linear-gradient(180deg, rgba(104, 210, 255, 0.08) 1px, transparent 1px);
+      background-size: 72px 72px;
+      opacity: 0.18;
+      pointer-events: none;
+    }
+
+    a,
+    button {
+      font: inherit;
+    }
+
+    a {
+      color: inherit;
+    }
+
+    .teacher-landing-shell {
+      position: relative;
+      width: min(1120px, calc(100% - 48px));
+      margin: 0 auto;
+      padding: 18px 0 64px;
+    }
+
+    .teacher-topbar,
+    .hero-actions,
+    .button,
+    .back-link,
+    .badge,
+    .screen-label,
+    .video-meta {
+      display: flex;
+      align-items: center;
+    }
+
+    .teacher-topbar {
+      gap: 10px;
+      margin-bottom: 16px;
+      flex-wrap: wrap;
+    }
+
+    .back-link,
+    .badge,
+    .button {
+      justify-content: center;
+      text-decoration: none;
+    }
+
+    .back-link {
+      min-height: 42px;
+      gap: 8px;
+      padding: 10px 16px;
+      border: 1px solid rgba(226, 232, 240, 0.2);
+      border-radius: 10px;
+      background: rgba(15, 23, 42, 0.58);
+      color: #ffffff;
+      font-size: 0.9rem;
+      font-weight: 800;
+      box-shadow: 0 14px 32px rgba(0, 0, 0, 0.18);
+    }
+
+    .badge {
+      min-height: 30px;
+      padding: 7px 12px;
+      border: 1px solid rgba(104, 210, 255, 0.36);
+      border-radius: 999px;
+      background: rgba(8, 47, 73, 0.52);
+      color: #b9ecff;
+      font-size: 0.72rem;
+      font-weight: 800;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+    }
+
+    .teacher-stage {
+      overflow: hidden;
+      padding: clamp(20px, 3vw, 34px);
+      border: 1px solid var(--line);
+      border-radius: 18px;
+      background:
+        linear-gradient(145deg, rgba(4, 12, 25, 0.94), rgba(8, 23, 43, 0.82)),
+        rgba(4, 12, 25, 0.86);
+      box-shadow: var(--shadow);
+      backdrop-filter: blur(18px);
+    }
+
+    .teacher-hero {
+      display: grid;
+      grid-template-columns: minmax(0, 0.85fr) minmax(0, 1.15fr);
+      gap: clamp(20px, 4vw, 38px);
+      align-items: center;
+    }
+
+    .teacher-copy {
+      display: grid;
+      gap: 18px;
+    }
+
+    .teacher-kicker {
+      width: max-content;
+      max-width: 100%;
+      padding: 7px 12px;
+      border: 1px solid rgba(247, 216, 121, 0.34);
+      border-radius: 999px;
+      background: rgba(247, 216, 121, 0.08);
+      color: #ffe7a0;
+      font-size: 0.74rem;
+      font-weight: 800;
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+    }
+
+    h1,
+    h2,
+    p {
+      margin: 0;
+    }
+
+    .teacher-copy h1 {
+      color: #ffffff;
+      font-size: clamp(3rem, 7vw, 6.6rem);
+      line-height: 0.96;
+      font-weight: 800;
+      letter-spacing: 0;
+    }
+
+    .teacher-copy p {
+      max-width: 520px;
+      color: var(--muted);
+      font-size: 1rem;
+      font-weight: 700;
+      line-height: 1.55;
+    }
+
+    .hero-actions {
+      gap: 12px;
+      flex-wrap: wrap;
+      margin-top: 6px;
+    }
+
+    .button {
+      min-height: 46px;
+      gap: 9px;
+      padding: 12px 18px;
+      border: 1px solid rgba(226, 232, 240, 0.22);
+      border-radius: 8px;
+      color: #ffffff;
+      background: rgba(15, 23, 42, 0.62);
+      cursor: pointer;
+      font-size: 0.92rem;
+      font-weight: 800;
+      box-shadow: 0 16px 34px rgba(0, 0, 0, 0.2);
+    }
+
+    .button-primary {
+      border-color: rgba(147, 197, 253, 0.42);
+      background: linear-gradient(135deg, #3b82f6, #2563eb);
+      box-shadow: 0 18px 38px rgba(37, 99, 235, 0.36);
+    }
+
+    .button-gold {
+      border-color: rgba(247, 216, 121, 0.42);
+      background: linear-gradient(135deg, #d99c2b, #a96a12);
+      box-shadow: 0 18px 38px rgba(217, 156, 43, 0.28);
+    }
+
+    .button:hover,
+    .back-link:hover {
+      border-color: rgba(125, 211, 252, 0.5);
+      transform: translateY(-1px);
+    }
+
+    .button svg,
+    .back-link svg,
+    .screen-label svg,
+    .video-meta svg {
+      width: 18px;
+      height: 18px;
+      flex-shrink: 0;
+    }
+
+    .teacher-media {
+      display: grid;
+      gap: 14px;
+    }
+
+    .video-card {
+      overflow: hidden;
+      padding: 12px;
+      border: 1px solid rgba(104, 210, 255, 0.28);
+      border-radius: 16px;
+      background: rgba(3, 10, 21, 0.88);
+      box-shadow: 0 24px 60px rgba(0, 0, 0, 0.32);
+    }
+
+    .video-card video {
+      width: 100%;
+      aspect-ratio: 16 / 9;
+      display: block;
+      border: 1px solid rgba(226, 232, 240, 0.16);
+      border-radius: 12px;
+      background: #020817;
+      object-fit: cover;
+    }
+
+    .video-meta {
+      justify-content: space-between;
+      gap: 14px;
+      padding: 2px 2px 12px;
+      color: #b9ecff;
+      font-size: 0.75rem;
+      font-weight: 800;
+      text-transform: uppercase;
+    }
+
+    .screen-grid {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 12px;
+      margin-top: 22px;
+    }
+
+    .screen-card {
+      position: relative;
+      overflow: hidden;
+      min-height: 190px;
+      margin: 0;
+      border: 1px solid rgba(104, 210, 255, 0.24);
+      border-radius: 12px;
+      background: rgba(4, 12, 25, 0.86);
+      box-shadow: 0 18px 42px rgba(0, 0, 0, 0.24);
+    }
+
+    .screen-card img {
+      width: 100%;
+      height: 100%;
+      min-height: 190px;
+      display: block;
+      object-fit: cover;
+      filter: saturate(1.04) contrast(1.02);
+    }
+
+    .screen-card::after {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(180deg, rgba(2, 7, 17, 0.04), rgba(2, 7, 17, 0.74));
+      pointer-events: none;
+    }
+
+    .screen-label {
+      position: absolute;
+      left: 12px;
+      bottom: 12px;
+      z-index: 1;
+      gap: 8px;
+      padding: 8px 10px;
+      border: 1px solid rgba(226, 232, 240, 0.18);
+      border-radius: 8px;
+      background: rgba(2, 7, 17, 0.74);
+      color: #ffffff;
+      font-size: 0.76rem;
+      font-weight: 800;
+    }
+
+    .quick-panel {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 12px;
+      margin-top: 14px;
+    }
+
+    .quick-card {
+      display: grid;
+      gap: 8px;
+      padding: 16px;
+      border: 1px solid var(--line-soft);
+      border-radius: 12px;
+      background: rgba(7, 17, 31, 0.72);
+      color: inherit;
+      text-decoration: none;
+    }
+
+    .quick-card strong {
+      color: #ffffff;
+      font-size: 0.94rem;
+      font-weight: 800;
+    }
+
+    .quick-card span {
+      color: #d6e5fb;
+      font-size: 0.82rem;
+      font-weight: 700;
+      line-height: 1.45;
+    }
+
+    @media (max-width: 920px) {
+      body {
+        background-attachment: scroll;
+      }
+
+      .teacher-landing-shell {
+        width: min(100% - 24px, 1120px);
+      }
+
+      .teacher-hero,
+      .screen-grid,
+      .quick-panel {
+        grid-template-columns: 1fr;
+      }
+
+      .screen-card {
+        min-height: 220px;
+      }
+
+      .screen-card img {
+        min-height: 220px;
+      }
+    }
+
+    @media (max-width: 520px) {
+      .teacher-stage {
+        padding: 16px;
+      }
+
+      .teacher-copy h1 {
+        font-size: 3rem;
+      }
+
+      .hero-actions {
+        display: grid;
+        grid-template-columns: 1fr;
+      }
+
+      .button,
+      .back-link {
+        width: 100%;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main class="teacher-landing-shell">
+    <div class="teacher-topbar">
+      <a class="back-link" href="../index.html" aria-label="Back to welcome page">
+        <i data-lucide="arrow-left"></i>
+        Back to welcome
+      </a>
+      <span class="badge">Teacher pathway</span>
+    </div>
+
+    <section class="teacher-stage" aria-labelledby="teacher-title">
+      <div class="teacher-hero">
+        <div class="teacher-copy">
+          <span class="teacher-kicker">Press play. Step inside.</span>
+          <h1 id="teacher-title">Enter the teaching universe.</h1>
+          <p>Launch the newest Career Empire teacher welcome, see the world before setup, then move into class creation, student previews, and analytics.</p>
+          <div class="hero-actions" aria-label="Teacher entry actions">
+            <a class="button button-primary" href="../auth/teacher-login.html">
+              <i data-lucide="log-in"></i>
+              Teacher Login
+            </a>
+            <a class="button button-gold" href="../auth/teacher-signup.html">
+              <i data-lucide="user-plus"></i>
+              Create Teacher Account
+            </a>
+            <button class="button" type="button" data-demo-target="../dashboards/student.html">
+              <i data-lucide="play-circle"></i>
+              Student Hub Demo
+            </button>
+          </div>
+        </div>
+
+        <div class="teacher-media">
+          <article class="video-card" aria-labelledby="teacher-video-title">
+            <div class="video-meta">
+              <span id="teacher-video-title">The overview</span>
+              <span><i data-lucide="sparkles"></i>Career Empire Explainer</span>
+            </div>
+            <video controls playsinline preload="metadata" poster="../Assets/landing-screenshots/homepage.png">
+              <source src="../Assets/videos/Career%20Empire%20Explainer%202026.mp4" type="video/mp4">
+              Your browser does not support the video tag.
+            </video>
+          </article>
+        </div>
+      </div>
+
+      <div class="screen-grid" aria-label="Teacher welcome previews">
+        <figure class="screen-card">
+          <img src="../Assets/landing-screenshots/teacher-dashboard.png" alt="Career Empire teacher dashboard screenshot">
+          <figcaption class="screen-label"><i data-lucide="bar-chart-3"></i>Teacher dashboard</figcaption>
+        </figure>
+        <figure class="screen-card">
+          <img src="../Assets/landing-screenshots/manage-students.png" alt="Career Empire student management screenshot">
+          <figcaption class="screen-label"><i data-lucide="users-round"></i>Class setup</figcaption>
+        </figure>
+        <figure class="screen-card">
+          <img src="../Assets/landing-screenshots/student-hub.png" alt="Career Empire student hub screenshot">
+          <figcaption class="screen-label"><i data-lucide="graduation-cap"></i>Student view</figcaption>
+        </figure>
+      </div>
+
+      <div class="quick-panel" aria-label="Teacher quick actions">
+        <a class="quick-card" href="../auth/create-class.html">
+          <strong>Create a class</strong>
+          <span>Set up the class space before students enter Career Empire.</span>
+        </a>
+        <a class="quick-card" href="../dashboards/teacher.html">
+          <strong>Open teacher dashboard</strong>
+          <span>Review engagement, evidence, and intervention signals.</span>
+        </a>
+        <a class="quick-card" href="../auth/manage-students.html">
+          <strong>Manage students</strong>
+          <span>Add students, check accounts, and keep the cohort tidy.</span>
+        </a>
+      </div>
+    </section>
+  </main>
+
+  <script>
+    const DEMO_AUTH_KEY = "career-empire-auth-demo";
+    const DEMO_SESSION_KEY = "career-empire-session";
+
+    function seedDemoStudentSession() {
+      const now = new Date().toISOString();
+      localStorage.setItem(DEMO_AUTH_KEY, JSON.stringify({
+        studentLogin: {
+          id: "demo-student",
+          username: "demo.student",
+          displayName: "Demo Student",
+          schoolName: "Emmanuel Catholic College",
+          classCode: "DEMO",
+          preview: true,
+          demo: true,
+          loggedInAt: now
+        },
+        classroom: {
+          classCode: "DEMO",
+          name: "Demo Careers Class"
+        }
+      }));
+
+      localStorage.setItem(DEMO_SESSION_KEY, JSON.stringify({
+        studentId: "demo-student",
+        username: "demo.student",
+        playerName: "Demo Student",
+        schoolName: "Emmanuel Catholic College",
+        classCode: "DEMO",
+        careerTitle: "Career Builder",
+        annualSalary: 25000,
+        salary: 25000,
+        cumulativeNetWorth: 0,
+        savings: 0,
+        taxPaid: 0,
+        yearsPlayed: 0,
+        careerLevel: 1,
+        jobSecurity: 68,
+        workLifeBalance: 72,
+        wellbeing: 72,
+        socialStatus: 48,
+        resilience: 61,
+        techMastery: 12,
+        climateMastery: 8,
+        demoMastery: 10,
+        economicMastery: 9,
+        communityVote: "none",
+        lastCommunityVote: "none",
+        ownedAssets: [],
+        economyLog: [],
+        checkpoint: "teacher-landing-student-preview",
+        demoMode: true,
+        updatedAt: now
+      }));
+    }
+
+    document.querySelectorAll("[data-demo-target]").forEach(button => {
+      button.addEventListener("click", () => {
+        seedDemoStudentSession();
+        window.location.href = button.dataset.demoTarget || "../dashboards/student.html";
+      });
+    });
+
+    if (window.lucide) {
+      window.lucide.createIcons();
+    }
+  </script>
+</body>
+</html>

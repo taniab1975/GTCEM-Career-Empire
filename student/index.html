@@ -67,7 +67,7 @@
 
     .student-landing-shell {
       position: relative;
-      width: min(900px, calc(100% - 132px));
+      width: min(980px, calc(100% - 132px));
       margin: 0 auto;
       padding: 12px 0 72px;
     }
@@ -122,10 +122,10 @@
     }
 
     .student-hero {
-      min-height: 500px;
       display: grid;
       align-content: start;
-      padding-top: 6px;
+      gap: 20px;
+      padding: 6px 0 28px;
     }
 
     .student-hero h1 {
@@ -150,7 +150,7 @@
       display: flex;
       flex-wrap: wrap;
       gap: 12px;
-      margin-top: 130px;
+      margin-top: 0;
     }
 
     .button {
@@ -187,6 +187,7 @@
     .student-launch-section {
       display: grid;
       gap: 18px;
+      margin-top: 8px;
     }
 
     .student-video-panel {
@@ -368,7 +369,7 @@
       }
 
       .student-hero {
-        min-height: 470px;
+        gap: 18px;
       }
 
       .student-hero h1 {
@@ -376,7 +377,7 @@
       }
 
       .hero-actions {
-        margin-top: 96px;
+        margin-top: 0;
       }
 
       .launch-stage {
@@ -438,8 +439,19 @@
     <section class="student-hero" aria-labelledby="student-title">
       <div>
         <h1 id="student-title">Your Career Empire starts here.</h1>
-        <p>Students can step straight into their own login and demo spaces. Watch the intro, then choose your first mission.</p>
+        <p>Students can step straight into their own login and demo spaces. Watch the intro, then enter the student experience.</p>
       </div>
+
+      <article class="student-video-panel" aria-labelledby="student-video-title">
+        <div class="video-panel-header">
+          <h2 id="student-video-title">Career Empire student intro</h2>
+          <span>Animation and voiceover</span>
+        </div>
+        <video controls playsinline preload="metadata" poster="../Assets/Images and Animations/Student Hub/student-hub-hero-career-empire.png">
+          <source src="../Assets/videos/Career%20Empire%20Student%20Intro%202026.mp4?v=20260508-final" type="video/mp4">
+          Your browser does not support the video tag.
+        </video>
+      </article>
 
       <div class="hero-actions" aria-label="Student entry actions">
         <a class="button button-primary" href="../auth/student-login.html">
@@ -453,49 +465,6 @@
       </div>
     </section>
 
-    <section class="student-launch-section" aria-label="Student launch choices">
-      <article class="student-video-panel" aria-labelledby="student-video-title">
-        <div class="video-panel-header">
-          <h2 id="student-video-title">Career Empire student intro</h2>
-          <span>Animation and voiceover</span>
-        </div>
-        <video controls playsinline preload="metadata" poster="../Assets/Images and Animations/Student Hub/student-hub-hero-career-empire.png">
-          <source src="../Assets/videos/Career%20Empire%20Student%20Intro%202026.mp4" type="video/mp4">
-          Your browser does not support the video tag.
-        </video>
-      </article>
-
-      <div class="launch-stage">
-        <span class="launch-badge">Student launch</span>
-        <div class="mission-panel">
-          <span class="mission-kicker">Student launch</span>
-          <h2>Choose your first mission.</h2>
-          <div class="mission-grid">
-            <button class="mission-link" type="button" data-demo-target="../index.html?screen=megatrends">Megatrends</button>
-            <button class="mission-link" type="button" data-demo-target="../modules/est-prep/index.html">EST Prep</button>
-            <button class="mission-link" type="button" data-demo-target="../dashboards/student.html">Career evidence</button>
-          </div>
-        </div>
-      </div>
-
-      <article class="student-guide-panel">
-        <h2>How students get online</h2>
-        <p>Your teacher creates the class and gives you your student login details.</p>
-        <p>Use Student Login to enter Career Empire with your class profile.</p>
-        <p>Start in the Student Hub, then launch Megatrends, EST Prep, or other assigned modules.</p>
-        <p>Your progress saves to your profile so your next module opens from the right place.</p>
-        <div class="guide-actions">
-          <button class="button button-primary" type="button" data-demo-target="../modules/est-prep/index.html">
-            <i data-lucide="flask-conical"></i>
-            Try EST Prep Demo
-          </button>
-          <a class="button button-secondary" href="../modules/year10-megatrends/index.html">
-            <i data-lucide="route"></i>
-            Year 10 Quick Link
-          </a>
-        </div>
-      </article>
-    </section>
   </main>
 
   <script>
