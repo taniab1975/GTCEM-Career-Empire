@@ -17,8 +17,8 @@ const GLOSSARY_MASTERY_TARGET = FULL_GLOSSARY_TERMS.length;
 const GLOSSARY_MASTERY_ACCURACY = 1;
 const GLOSSARY_MASTERY_REPS = 1;
 const GLOSSARY_INVADER_WIDTH = 960;
-const GLOSSARY_INVADER_HEIGHT = 360;
-const GLOSSARY_INVADER_PLAYER_Y = 306;
+const GLOSSARY_INVADER_HEIGHT = 520;
+const GLOSSARY_INVADER_PLAYER_Y = 462;
 const GLOSSARY_INVADER_COLORS = ["#72f7b8", "#61f0ff", "#ffd86c", "#ff7dc0"];
 const GLOSSARY_VISUAL_ASSETS = {
   "memory-match": "../../Assets/Images and Animations/Glossary Check/glossary-recall-forge.svg",
@@ -1214,20 +1214,41 @@ function buildGlossaryInvaderStars(item) {
   });
 }
 
+function getGlossaryInvaderPressure() {
+  const batch = getCurrentGlossaryBatch();
+  const assignments = getGlossaryAssignmentsForBatch();
+  const clearedInBatch = batch.filter(item => assignments[item.id] === item.id).length;
+  const level = Math.min(6, Math.max(1, clearedInBatch + 1));
+  const streakLift = Math.min(2, Math.floor(Number(state.glossaryStreak || 0) / 3));
+  return {
+    level,
+    label: `Lv ${level}`,
+    speed: 30 + (level * 6) + (streakLift * 3),
+    maxSpeed: 72 + (level * 8) + (streakLift * 5),
+    edgeGain: 3.5 + (level * 0.7),
+    drop: 16 + (level * 2),
+    fireDelay: Math.max(0.72, 1.55 - (level * 0.12) - (streakLift * 0.06)),
+    fireJitter: Math.max(0.4, 0.95 - (level * 0.06)),
+    bulletSpeed: 132 + (level * 18),
+    dangerLineY: GLOSSARY_INVADER_PLAYER_Y - 54
+  };
+}
+
 function createGlossaryInvadersRuntime(canvas, item, optionSet) {
-  const alienWidth = optionSet.length > 4 ? 128 : 144;
-  const alienGap = optionSet.length > 4 ? 22 : 36;
+  const pressure = getGlossaryInvaderPressure();
+  const alienWidth = optionSet.length > 4 ? 112 : 132;
+  const alienGap = optionSet.length > 4 ? 18 : 30;
   const formationWidth = (optionSet.length * alienWidth) + ((optionSet.length - 1) * alienGap);
-  const formationLeft = Math.max(42, (GLOSSARY_INVADER_WIDTH - formationWidth) / 2);
+  const formationLeft = Math.max(72, (GLOSSARY_INVADER_WIDTH - formationWidth) / 2);
   const waveKey = getGlossaryInvaderWaveKey(item, optionSet);
   const aliens = optionSet.map((option, index) => ({
     option,
     index,
     alive: true,
     homeX: formationLeft + (index * (alienWidth + alienGap)),
-    homeY: 126,
+    homeY: 150,
     w: alienWidth,
-    h: 92,
+    h: 88,
     color: getGlossaryInvaderColor(index),
     type: index % 3
   }));
@@ -1238,6 +1259,7 @@ function createGlossaryInvadersRuntime(canvas, item, optionSet) {
     item,
     optionSet,
     waveKey,
+    pressure,
     stopped: false,
     locked: false,
     frameId: 0,
@@ -1256,8 +1278,8 @@ function createGlossaryInvadersRuntime(canvas, item, optionSet) {
       x: 0,
       y: 0,
       direction: 1,
-      speed: 34,
-      drop: 24
+      speed: pressure.speed,
+      drop: pressure.drop
     },
     aliens,
     playerBullets: [],
@@ -1267,8 +1289,8 @@ function createGlossaryInvadersRuntime(canvas, item, optionSet) {
     shieldCharge: 100,
     shieldDelay: 0,
     fireCooldown: 0,
-    enemyFireTimer: 1.25,
-    status: "Move the ship, fire upward, and hold Shield when the row shoots back.",
+    enemyFireTimer: pressure.fireDelay,
+    status: `${pressure.label} pressure. Move, shoot, and shield before the row reaches the ship.`,
     stars: buildGlossaryInvaderStars(item)
   };
 }
@@ -1297,9 +1319,11 @@ function mountGlossaryInvadersIfNeeded() {
 function updateGlossaryInvaderHud(runtime = glossaryInvadersRuntime) {
   if (!runtime) return;
   const hull = document.getElementById("glossary-invader-hull");
+  const pace = document.getElementById("glossary-invader-pace");
   const meter = document.getElementById("glossary-invader-forcefield-meter");
   const status = document.getElementById("glossary-invader-status");
   if (hull) hull.textContent = `${runtime.player.hull}/3`;
+  if (pace) pace.textContent = runtime.pressure?.label || "Lv 1";
   if (meter) meter.style.width = `${Math.round(runtime.shieldCharge)}%`;
   if (status) status.textContent = runtime.status;
 }
@@ -1388,7 +1412,7 @@ function triggerGlossaryInvaderEnemyFire(runtime) {
   runtime.enemyBullets.push({
     x: box.x + (box.w / 2),
     y: box.y + box.h - 12,
-    speed: 140 + (runtime.formation.y * 0.12),
+    speed: runtime.pressure.bulletSpeed + (runtime.formation.y * 0.16),
     color: alien.color,
     r: 4
   });
@@ -1414,18 +1438,37 @@ function resolveGlossaryInvaderHit(runtime, alien) {
   }, 280);
 }
 
-function resetGlossaryInvaderAfterShipHit(reason) {
+function resetGlossaryInvaderAfterShipHit(reason, options = {}) {
   const runtime = glossaryInvadersRuntime;
   if (!runtime || runtime.locked) return;
   runtime.locked = true;
+  const crashType = options.crashType || "ship";
+  const crashAnswer = crashType === "base"
+    ? "Term row reached the ship"
+    : "Ship hit by enemy fire";
+  recordGlossaryAttempt(runtime.item, crashAnswer, false, "plain-match");
   state.glossaryMisses += 1;
   state.glossaryStreak = 0;
   state.glossaryPulse = reason || "The ship was hit. Use the forcefield and keep the term row away from the base line.";
   state.glossaryPulseType = "warn";
+  runtime.player.hull = crashType === "base" ? 0 : Math.max(0, runtime.player.hull);
+  runtime.player.hitPulse = 0.75;
+  runtime.status = crashType === "base"
+    ? "Crash. The row reached the ship, so this term resets as a miss."
+    : "Ship reset. This term stays live, but the miss is recorded.";
+  runtime.explosions.push({
+    x: runtime.player.x,
+    y: runtime.player.y - 32,
+    color: "#ff7d7d",
+    age: 0
+  });
+  updateGlossaryInvaderHud(runtime);
   state.recentReward = {
     type: "warning",
-    title: "Ship reset",
-    detail: "The invader wave restarted. Read the definition, move under the correct term, and fire again."
+    title: crashType === "base" ? "Wave crash" : "Ship reset",
+    detail: crashType === "base"
+      ? "The row reached the ship. That term is marked as a miss and the wave restarts."
+      : "The invader wave restarted. Read the definition, move under the correct term, and fire again."
   };
   renderRewardPulse();
   persistESTProgressSnapshot();
@@ -1433,7 +1476,7 @@ function resetGlossaryInvaderAfterShipHit(reason) {
     glossaryInvaderShotTimeout = null;
     stopGlossaryInvadersRuntime();
     renderGlossaryStage();
-  }, 260);
+  }, options.delay || 720);
 }
 
 function updateGlossaryInvaders(runtime, dt) {
@@ -1471,18 +1514,22 @@ function updateGlossaryInvaders(runtime, dt) {
     runtime.formation.x += bounds.minX < 30 ? 30 - bounds.minX : (GLOSSARY_INVADER_WIDTH - 30) - bounds.maxX;
     runtime.formation.y += runtime.formation.drop;
     runtime.formation.direction *= -1;
-    runtime.formation.speed = Math.min(86, runtime.formation.speed + 3.5);
-    runtime.status = "The term row dropped closer. Keep it above the force line.";
+    runtime.formation.speed = Math.min(runtime.pressure.maxSpeed, runtime.formation.speed + runtime.pressure.edgeGain);
+    runtime.status = `${runtime.pressure.label}: the row dropped closer. Clear it before it crosses the crash line.`;
   }
-  if (bounds.maxY > GLOSSARY_INVADER_PLAYER_Y - 18) {
-    resetGlossaryInvaderAfterShipHit("The term row reached the base line. Reset the wave and shoot the matching term sooner.");
+  const nextBounds = getGlossaryInvaderFormationBounds(runtime);
+  if (nextBounds.maxY > runtime.pressure.dangerLineY) {
+    resetGlossaryInvaderAfterShipHit(
+      "Crash. The term row reached the ship zone, so that term is marked as a miss and the wave resets.",
+      { crashType: "base", delay: 820 }
+    );
     return;
   }
 
   runtime.enemyFireTimer -= dt;
   if (runtime.enemyFireTimer <= 0) {
     triggerGlossaryInvaderEnemyFire(runtime);
-    runtime.enemyFireTimer = 1.35 + Math.random() * 1.1;
+    runtime.enemyFireTimer = runtime.pressure.fireDelay + (Math.random() * runtime.pressure.fireJitter);
   }
 
   runtime.playerBullets.forEach(bullet => {
@@ -1533,7 +1580,10 @@ function updateGlossaryInvaders(runtime, dt) {
       : "Ship integrity lost. Restarting this wave.";
     runtime.explosions.push({ x: bullet.x, y: bullet.y, color: "#ff7d7d", age: 0 });
     if (player.hull <= 0) {
-      resetGlossaryInvaderAfterShipHit("The ship was hit three times. Hold the forcefield during enemy fire and shoot the correct term.");
+      resetGlossaryInvaderAfterShipHit(
+        "The ship was hit three times. This term is marked as a miss; shield enemy fire and shoot sooner on the reset.",
+        { crashType: "ship", delay: 820 }
+      );
     }
     return false;
   });
@@ -1587,8 +1637,11 @@ function drawGlossaryInvaderBackdrop(ctx, runtime) {
   }
   ctx.restore();
 
-  ctx.fillStyle = "rgba(255, 216, 108, 0.12)";
-  ctx.fillRect(0, GLOSSARY_INVADER_PLAYER_Y - 56, GLOSSARY_INVADER_WIDTH, 2);
+  ctx.fillStyle = "rgba(255, 216, 108, 0.2)";
+  ctx.fillRect(0, runtime.pressure.dangerLineY, GLOSSARY_INVADER_WIDTH, 2);
+  ctx.fillStyle = "rgba(255, 216, 108, 0.72)";
+  ctx.font = "900 11px Outfit, Arial, sans-serif";
+  ctx.fillText("CRASH LINE", 30, runtime.pressure.dangerLineY - 8);
   ctx.fillStyle = "rgba(114, 247, 184, 0.12)";
   ctx.fillRect(0, GLOSSARY_INVADER_PLAYER_Y + 22, GLOSSARY_INVADER_WIDTH, 5);
 }
@@ -3073,9 +3126,11 @@ function renderGlossaryInvadersGame(round, promptItem, optionSet, batch, batchNu
           <span><strong>Move</strong> arrow keys or buttons</span>
           <span><strong>Shoot</strong> Space or Shoot</span>
           <span><strong>Forcefield</strong> hold Shield to block enemy fire</span>
+          <span><strong>Pressure</strong> rises after each cleared term</span>
         </div>
         <div class="glossary-invader-hud" aria-hidden="true">
           <span>Hull <strong id="glossary-invader-hull">3/3</strong></span>
+          <span>Pressure <strong id="glossary-invader-pace">Lv 1</strong></span>
           <span class="glossary-invader-meter"><i id="glossary-invader-forcefield-meter"></i></span>
           <span id="glossary-invader-status">Formation entering the chamber.</span>
         </div>
@@ -3126,7 +3181,7 @@ function renderGlossaryInvadersGame(round, promptItem, optionSet, batch, batchNu
     </div>
     <div class="written-stage glossary-finale-stage">
       <strong>Invader exit</strong>
-      <p class="small-copy">Clear the correct term creature in each descending row. The forcefield blocks shots, but it needs time to recharge.</p>
+      <p class="small-copy">Clear the correct term creature in each descending row. The forcefield blocks shots, but pressure climbs after every secured term and a row crash counts as a miss.</p>
       <button class="submit-button" type="button" onclick="window.ESTPrep.nextGlossaryPhase()" ${isGlossaryBatchMatched() ? "" : "disabled"}>Finish Game</button>
     </div>
   `;

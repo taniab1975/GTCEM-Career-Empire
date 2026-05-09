@@ -2568,7 +2568,7 @@ body.glossary-mission-active .glossary-chamber-card strong {
 
 .glossary-invader-hud {
   display: grid;
-  grid-template-columns: auto minmax(160px, 240px) minmax(220px, 1fr);
+  grid-template-columns: auto auto minmax(160px, 240px) minmax(220px, 1fr);
 }
 
 .glossary-invader-hud > span:last-child {
@@ -2605,9 +2605,9 @@ body.glossary-mission-active .glossary-chamber-card strong {
   z-index: 1;
   display: block;
   width: 100%;
-  aspect-ratio: 8 / 3;
-  min-height: 300px;
-  max-height: 430px;
+  aspect-ratio: 24 / 13;
+  min-height: 430px;
+  max-height: 620px;
   border-radius: 22px;
   border: 1px solid rgba(97, 240, 255, 0.22);
   background: #050916;
@@ -2702,7 +2702,7 @@ body.glossary-mission-active .glossary-chamber-card strong {
   }
 
   .glossary-invaders-canvas {
-    min-height: 270px;
+    min-height: 390px;
   }
 
   .glossary-invader-controls {
