@@ -493,6 +493,24 @@ function renderArcGuideAside({ config, groupId, scene, flow, currentStep, curren
   `;
 }
 
+function renderCoreLabBanner(groupId) {
+  const topicGroup = (getContentStageConfig().topicGroups || []).find(group => group.id === groupId);
+  const shortLabel = getContentGroupShortLabel(groupId);
+  const coreTerms = (topicGroup?.topics || []).slice(0, 5);
+  return `
+    <div class="training-core-lab-banner" aria-label="${escapeHtml(`Core Lab: ${shortLabel}`)}">
+      <span class="training-core-lab-kicker">Core Lab</span>
+      <strong>${escapeHtml(shortLabel)}</strong>
+      ${coreTerms.length ? `
+        <span class="training-core-lab-divider" aria-hidden="true"></span>
+        <span class="training-core-lab-terms">
+          ${coreTerms.map(term => `<span>${escapeHtml(term)}</span>`).join("")}
+        </span>
+      ` : ""}
+    </div>
+  `;
+}
+
 function renderArcTrainingBay(config, score) {
   const groupId = getGroupIdForTrainingType(config.type);
   const topicClass = getTopicClassName(groupId);
@@ -641,6 +659,7 @@ function renderArcTrainingBay(config, score) {
                     questionNumber,
                     questionCount
                   })}
+                  ${isPilotLayout ? renderCoreLabBanner(groupId) : ""}
                 </div>
               </article>
               ${showAnswerState ? `

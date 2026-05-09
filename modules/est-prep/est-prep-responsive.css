@@ -446,6 +446,22 @@
     font-size: clamp(1.18rem, 4vw, 1.48rem);
   }
 
+  #stage-section.gameplay-viewport .training-core-lab-banner {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 7px;
+  }
+
+  #stage-section.gameplay-viewport .training-core-lab-divider {
+    display: none;
+  }
+
+  #stage-section.gameplay-viewport .training-core-lab-terms {
+    width: 100%;
+    flex-wrap: wrap;
+    overflow: visible;
+  }
+
   .glossary-memory-bank {
     padding: 12px;
   }
