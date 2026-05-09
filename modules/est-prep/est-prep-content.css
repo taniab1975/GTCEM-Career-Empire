@@ -1327,6 +1327,7 @@ body.est-lab-mode #stage-section.gameplay-viewport {
 .training-question-layout .training-card-lead {
   display: grid;
   align-content: center;
+  gap: 12px;
   height: 100%;
   min-height: 0;
   margin-bottom: 0;
@@ -1338,12 +1339,47 @@ body.est-lab-mode #stage-section.gameplay-viewport {
     rgba(8, 16, 38, 0.68);
 }
 
+.training-question-layout .training-card-lead.has-media {
+  align-content: start;
+  grid-template-rows: auto auto auto auto;
+  gap: 14px;
+  padding: 14px;
+}
+
+.training-card-media {
+  position: relative;
+  overflow: hidden;
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  max-height: clamp(150px, 22vh, 248px);
+  border-radius: 18px;
+  border: 1px solid rgba(129, 166, 255, 0.2);
+  background:
+    linear-gradient(135deg, rgba(8, 16, 38, 0.92), rgba(16, 32, 66, 0.9)),
+    radial-gradient(circle at top left, rgba(97, 240, 255, 0.16), transparent 36%);
+  box-shadow: 0 16px 28px rgba(4, 9, 24, 0.24);
+}
+
+.training-card-media video,
+.training-card-media img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+.training-card-media--video video {
+  object-fit: cover;
+  object-position: center;
+}
+
 .training-card--flash .training-stack {
   grid-template-columns: 1fr;
   grid-auto-rows: minmax(0, 1fr);
   align-content: stretch;
   height: 100%;
   margin-top: 0;
+  gap: clamp(14px, 2vh, 20px);
 }
 
 .training-answer-column {
@@ -1355,15 +1391,20 @@ body.est-lab-mode #stage-section.gameplay-viewport {
 .training-card--flash .choice-button {
   display: flex;
   align-items: center;
+  justify-content: flex-start;
   min-height: 0;
   height: 100%;
-  padding: 12px 14px;
+  padding: clamp(18px, 2.4vw, 30px) clamp(20px, 2.8vw, 34px);
   border-radius: 16px;
 }
 
 .training-card--flash .choice-button strong {
   margin-bottom: 0;
-  line-height: 1.25;
+  max-width: 26ch;
+  font-size: clamp(1.12rem, 1.45vw, 1.42rem);
+  line-height: 1.14;
+  overflow-wrap: anywhere;
+  text-wrap: balance;
 }
 
 .training-card--flash .choice-button:disabled {

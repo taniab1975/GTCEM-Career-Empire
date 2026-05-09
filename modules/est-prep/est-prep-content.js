@@ -373,6 +373,35 @@ function renderArcActionButton({ label, onclick, asset, className = "" }) {
   `;
 }
 
+function getArcItemMediaType(media) {
+  const src = String(media?.src || "");
+  if (media?.type) return String(media.type).toLowerCase();
+  if (/\.(mp4|webm|mov)(\?|#|$)/i.test(src)) return "video";
+  return "image";
+}
+
+function renderArcItemMedia(item) {
+  const media = item?.media;
+  if (!media?.src) return "";
+  const src = escapeHtml(media.src);
+  const alt = escapeHtml(media.alt || "Training prompt media");
+  const mediaType = getArcItemMediaType(media);
+
+  if (mediaType === "video") {
+    return `
+      <div class="training-card-media training-card-media--video">
+        <video src="${src}" autoplay muted loop playsinline preload="metadata" aria-label="${alt}"></video>
+      </div>
+    `;
+  }
+
+  return `
+    <div class="training-card-media training-card-media--image">
+      <img src="${src}" alt="${alt}">
+    </div>
+  `;
+}
+
 function getContentTopicRewardPreview() {
   const stage = STAGES.find(item => item.id === "content");
   const totalTopics = Math.max(1, (state.stageDeck?.contentGroups || []).length);
@@ -467,6 +496,8 @@ function renderArcTrainingBay(config, score) {
     : `No salary banks on this card yet. Lock the strongest answer to move forward.`;
   const stateTitle = isCorrect ? `${groupLabel} signal locked` : "Try again";
   const stateLead = isCorrect ? "Strong call." : "Not quite yet.";
+  const itemMedia = renderArcItemMedia(currentItem);
+  const leadClass = ["training-card-lead", itemMedia ? "has-media" : ""].filter(Boolean).join(" ");
   return `
     <section class="est-scene-shell est-scene-shell--${scene} est-scene-shell--topic est-scene-shell--topic-${escapeHtml(topicClass)}" ${buildESTSceneStyle(scene)}>
       <div class="panel training-bay training-campaign training-campaign--focus training-campaign--topic training-campaign--topic-${escapeHtml(topicClass)}">
@@ -550,7 +581,8 @@ function renderArcTrainingBay(config, score) {
               </div>
               <article class="training-card training-card--flash ${currentAnswer ? (isCorrect ? "good" : "bad") : ""}">
                   <div class="training-question-layout ${currentAnswer ? "is-dimmed" : ""}">
-                  <div class="training-card-lead">
+                  <div class="${escapeHtml(leadClass)}">
+                    ${itemMedia}
                     <p class="training-card-prompt">${escapeHtml(currentItem?.prompt || "")}</p>
                     <p>${escapeHtml(currentStep.instruction || "Choose the strongest move.")}</p>
                     <p class="training-feedback">Pick the strongest move, get instant feedback, then move to the next flash card.</p>

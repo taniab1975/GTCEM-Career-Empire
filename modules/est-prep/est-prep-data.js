@@ -364,6 +364,11 @@ const DEFAULT_CONTENT_TRAINING_BAYS = {
           {
             id: "initiative-stock",
             prompt: "A worker notices stock is running low and restocks before customers complain.",
+            media: {
+              src: "../../Assets/EST Preparation/initiative-q1.mp4",
+              type: "video",
+              alt: "Animated workplace initiative example"
+            },
             options: ["Shows initiative", "Needs more initiative", "Only follows instructions"],
             correct: "Shows initiative",
             feedback: "This is proactive. The worker spots a problem early and acts without being told."
@@ -371,16 +376,26 @@ const DEFAULT_CONTENT_TRAINING_BAYS = {
           {
             id: "initiative-wait",
             prompt: "A worker sees a spill but leaves it until a supervisor gives exact instructions.",
+            media: {
+              src: "../../Assets/EST Preparation/initiative-q2-replacement.mp4",
+              type: "video",
+              alt: "Animated workplace spill scenario"
+            },
             options: ["Shows initiative", "Needs more initiative", "Strong teamwork"],
             correct: "Needs more initiative",
             feedback: "This is passive, not initiative. Waiting creates risk and delays."
           },
           {
             id: "initiative-display",
-            prompt: "A worker fixes a messy display before customers start avoiding the area.",
+            prompt: "A worker sees an elderly person struggling with lifting an item and offers to help.",
+            media: {
+              src: "../../Assets/EST Preparation/initiative-q3.mp4",
+              type: "video",
+              alt: "Animated workplace helping scenario"
+            },
             options: ["Shows initiative", "Needs more initiative", "Just luck"],
             correct: "Shows initiative",
-            feedback: "This is initiative because the worker acts before the issue affects customers."
+            feedback: "This shows initiative because the worker notices someone needs support and offers practical help without waiting to be told."
           }
         ]
       },

@@ -54,6 +54,10 @@
     height: auto;
   }
 
+  .training-card--flash .choice-button strong {
+    max-width: none;
+  }
+
   .training-focus-aside {
     order: 2;
   }
@@ -356,6 +360,15 @@
     padding: 12px;
   }
 
+  #stage-section.gameplay-viewport .training-question-layout .training-card-lead.has-media {
+    gap: 10px;
+  }
+
+  #stage-section.gameplay-viewport .training-card-media {
+    max-height: 190px;
+    border-radius: 14px;
+  }
+
   #stage-section.gameplay-viewport .training-card-prompt {
     font-size: 1rem;
     line-height: 1.22;
@@ -369,6 +382,11 @@
   #stage-section.gameplay-viewport .training-card--flash .choice-button {
     min-height: 50px;
     padding: 10px 12px;
+  }
+
+  #stage-section.gameplay-viewport .training-card--flash .choice-button strong {
+    font-size: 1rem;
+    line-height: 1.18;
   }
 
   #stage-section.gameplay-viewport .arc-progress-track {
