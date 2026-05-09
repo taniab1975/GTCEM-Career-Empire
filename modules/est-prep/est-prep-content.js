@@ -583,9 +583,10 @@ function renderArcTrainingBay(config, score) {
                   <div class="training-question-layout ${currentAnswer ? "is-dimmed" : ""}">
                   <div class="${escapeHtml(leadClass)}">
                     ${itemMedia}
-                    <p class="training-card-prompt">${escapeHtml(currentItem?.prompt || "")}</p>
-                    <p>${escapeHtml(currentStep.instruction || "Choose the strongest move.")}</p>
-                    <p class="training-feedback">Pick the strongest move, get instant feedback, then move to the next flash card.</p>
+                    <div class="training-card-copy">
+                      <p class="training-card-prompt">${escapeHtml(currentItem?.prompt || "")}</p>
+                      <p>${escapeHtml(currentStep.instruction || "Choose the strongest move.")}</p>
+                    </div>
                   </div>
                   <div class="training-answer-column">
                     <div class="training-stack">

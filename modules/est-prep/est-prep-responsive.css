@@ -362,10 +362,12 @@
 
   #stage-section.gameplay-viewport .training-question-layout .training-card-lead.has-media {
     gap: 10px;
+    grid-template-rows: minmax(210px, 1fr) auto;
   }
 
   #stage-section.gameplay-viewport .training-card-media {
-    max-height: 190px;
+    width: min(76%, 260px);
+    max-height: 270px;
     border-radius: 14px;
   }
 
