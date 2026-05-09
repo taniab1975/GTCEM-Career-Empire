@@ -135,6 +135,7 @@ window.ESTPrep = {
   setTrainingChoiceEncoded,
   advanceArcCard,
   retryArcCard,
+  jumpArcStep,
   startArcStep,
   setContentResponseSegmentEncoded,
   buildContentResponse,

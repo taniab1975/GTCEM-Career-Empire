@@ -412,6 +412,40 @@
     font-size: 0.72rem;
   }
 
+  #stage-section.gameplay-viewport .training-focus-shell--pilot {
+    grid-template-columns: 1fr;
+  }
+
+  #stage-section.gameplay-viewport .training-focus-shell--pilot .training-focus-aside--arc {
+    display: none;
+  }
+
+  #stage-section.gameplay-viewport .training-campaign--pilot-layout .training-main-header {
+    grid-template-columns: 1fr;
+  }
+
+  #stage-section.gameplay-viewport .training-campaign--pilot-layout .training-step--flash {
+    min-height: auto;
+  }
+
+  #stage-section.gameplay-viewport .training-campaign--pilot-layout .training-question-layout {
+    grid-template-columns: 1fr;
+    min-height: auto;
+  }
+
+  #stage-section.gameplay-viewport .training-campaign--pilot-layout .training-card-media {
+    width: min(84%, 340px);
+    max-height: 420px;
+  }
+
+  #stage-section.gameplay-viewport .training-campaign--pilot-layout .training-card-prompt {
+    font-size: clamp(1.18rem, 4.2vw, 1.48rem);
+  }
+
+  #stage-section.gameplay-viewport .training-campaign--pilot-layout .training-card--flash .choice-button strong {
+    font-size: clamp(1.18rem, 4vw, 1.48rem);
+  }
+
   .glossary-memory-bank {
     padding: 12px;
   }

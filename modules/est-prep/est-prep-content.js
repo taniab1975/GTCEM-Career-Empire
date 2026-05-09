@@ -306,6 +306,10 @@ function getArcFlow(config) {
     return state.arcFlows[config.type];
   }
 
+  if (existing.phase === "review") {
+    return state.arcFlows[config.type];
+  }
+
   if (existing.phase === "feedback") {
     const answer = getArcItemAnswer(config, item);
     if (!answer) {
@@ -334,13 +338,15 @@ function getArcProgressRailAsset(config) {
   return EST_PROGRESS_RAILS.complete;
 }
 
-function renderArcProgressRail(config, className = "") {
+function renderArcProgressRail(config, className = "", context = {}) {
   const { completedSteps, activeStep, stepStates } = getArcStepProgress(config);
   const totalSteps = stepStates.length || 4;
   const caption = completedSteps === totalSteps
     ? "All reactor steps complete"
-    : `Step ${activeStep} active • ${completedSteps}/${totalSteps} complete`;
+    : `Step ${activeStep} of ${totalSteps} • ${completedSteps}/${totalSteps} steps done`;
   const classes = ["arc-progress-rail", className].filter(Boolean).join(" ");
+  const visibleStepIndex = Number.isInteger(context.stepIndex) ? context.stepIndex : activeStep - 1;
+  const visibleCardNumber = context.questionNumber || 1;
   return `
     <div class="${escapeHtml(classes)}">
       <div class="arc-progress-track" role="list" aria-label="${escapeHtml(caption)}">
@@ -348,13 +354,30 @@ function renderArcProgressRail(config, className = "") {
           const stepNumber = index + 1;
           const isComplete = step.complete;
           const isActive = !isComplete && stepNumber === activeStep;
+          const isCurrent = index === visibleStepIndex;
+          const isUnlocked = isComplete || isActive;
           const status = isComplete ? "complete" : isActive ? "active" : "locked";
           const shortTitle = String(step.title || `Step ${stepNumber}`).replace(/^Step\s+\d+:\s*/i, "");
+          const itemCount = step.total || 0;
+          const stepLabel = isCurrent && itemCount
+            ? `Flash card ${Math.min(visibleCardNumber, itemCount)} of ${itemCount}`
+            : isComplete
+              ? `Review ${itemCount || "step"} card${itemCount === 1 ? "" : "s"}`
+              : isActive && itemCount
+                ? `Flash card ${step.correct + 1} of ${itemCount}`
+                : shortTitle;
+          const ariaLabel = isCurrent
+            ? stepLabel
+            : `${shortTitle}: ${isUnlocked ? stepLabel : "locked"}`;
+          const elementTag = isUnlocked ? "button" : "div";
+          const actionAttrs = isUnlocked
+            ? `type="button" onclick="window.ESTPrep.jumpArcStep('${config.type}', ${index})"`
+            : "";
           return `
-            <div class="arc-progress-step ${status}" role="listitem">
+            <${elementTag} class="arc-progress-step ${status} ${isCurrent ? "current" : ""}" role="listitem" aria-label="${escapeHtml(ariaLabel)}" ${isCurrent ? "aria-current=\"step\"" : ""} ${actionAttrs}>
               <span>${stepNumber}</span>
-              <strong>${escapeHtml(shortTitle)}</strong>
-            </div>
+              <strong>${escapeHtml(stepLabel)}</strong>
+            </${elementTag}>
           `;
         }).join("")}
       </div>
@@ -498,20 +521,31 @@ function renderArcTrainingBay(config, score) {
   const stateLead = isCorrect ? "Strong call." : "Not quite yet.";
   const itemMedia = renderArcItemMedia(currentItem);
   const leadClass = ["training-card-lead", itemMedia ? "has-media" : ""].filter(Boolean).join(" ");
+  const displayStepTitle = String(currentStep?.title || "Central task").replace(/^Step\s+\d+:\s*/i, "");
+  const isPilotLayout = groupId === "initiative" && currentItem && !completedAll && flow?.phase !== "transition";
+  const showAnswerState = Boolean(currentAnswer && flow?.phase !== "review");
+  const stepStatusLabel = completedAll
+    ? `All ${totalStepCount} steps cleared`
+    : currentItem
+      ? `${stepProgress.correct}/${stepProgress.total} restored`
+      : `Step ${stepNumber} of ${totalStepCount}`;
+  const stepStatusCopy = completedAll
+    ? `${score.correct}/${score.total} decisions locked`
+    : `Step ${stepNumber}/${totalStepCount}`;
   return `
     <section class="est-scene-shell est-scene-shell--${scene} est-scene-shell--topic est-scene-shell--topic-${escapeHtml(topicClass)}" ${buildESTSceneStyle(scene)}>
-      <div class="panel training-bay training-campaign training-campaign--focus training-campaign--topic training-campaign--topic-${escapeHtml(topicClass)}">
+      <div class="panel training-bay training-campaign training-campaign--focus training-campaign--topic training-campaign--topic-${escapeHtml(topicClass)} ${isPilotLayout ? "training-campaign--pilot-layout" : ""}">
         <div class="training-hud training-hud--compact training-hud--mission">
           <div class="training-hud-copy">
             <div class="kicker">Knowledge reactor</div>
             <h2>${escapeHtml(config.title)}</h2>
           </div>
           <div class="training-hud-status">
-            <strong>${escapeHtml(currentStep?.title || "Reactor step")}</strong>
-            <small>${escapeHtml(completedAll ? `All ${totalStepCount} steps cleared` : `${stepProgress.correct}/${stepProgress.total} cleared in this step • ${completedSteps}/${totalStepCount} steps done`)}</small>
+            <strong>${escapeHtml(stepStatusLabel)}</strong>
+            <small>${escapeHtml(stepStatusCopy)}</small>
           </div>
         </div>
-        <div class="training-focus-shell training-focus-shell--arc">
+        <div class="training-focus-shell training-focus-shell--arc ${isPilotLayout ? "training-focus-shell--pilot" : ""}">
           ${renderArcGuideAside({ config, groupId, scene, flow, currentStep, currentItem, questionNumber, questionCount, stepProgress, completedSteps, totalStepCount, isCorrect })}
           <div class="training-focus-main">
             <div class="training-campaign-grid training-campaign-grid--flash">
@@ -564,11 +598,11 @@ function renderArcTrainingBay(config, score) {
               </div>
             </section>
           ` : currentItem ? `
-            <section class="training-step training-step--flash ${currentAnswer ? "has-state-overlay" : ""}">
+            <section class="training-step training-step--flash ${showAnswerState ? "has-state-overlay" : ""}">
               <div class="training-main-header compact">
                 <div class="training-main-copy">
                   <div class="kicker">Central task</div>
-                  <h2>${escapeHtml(currentStep?.title || "Central task")}</h2>
+                  <h2>${escapeHtml(displayStepTitle)}</h2>
                 </div>
                 <div class="training-step-meter">
                   <strong>${escapeHtml(`${stepProgress.correct}/${stepProgress.total} restored`)}</strong>
@@ -580,7 +614,7 @@ function renderArcTrainingBay(config, score) {
                 </div>
               </div>
               <article class="training-card training-card--flash ${currentAnswer ? (isCorrect ? "good" : "bad") : ""}">
-                  <div class="training-question-layout ${currentAnswer ? "is-dimmed" : ""}">
+                  <div class="training-question-layout ${showAnswerState ? "is-dimmed" : ""}">
                   <div class="${escapeHtml(leadClass)}">
                     ${itemMedia}
                     <div class="training-card-copy">
@@ -602,10 +636,14 @@ function renderArcTrainingBay(config, score) {
                       `).join("")}
                     </div>
                   </div>
-                  ${renderArcProgressRail(config, "arc-progress-rail--answer arc-progress-rail--wide")}
+                  ${renderArcProgressRail(config, "arc-progress-rail--answer arc-progress-rail--wide", {
+                    stepIndex: flow?.stepIndex || 0,
+                    questionNumber,
+                    questionCount
+                  })}
                 </div>
               </article>
-              ${currentAnswer ? `
+              ${showAnswerState ? `
                 <div class="training-state-scrim" aria-live="polite">
                   <section class="training-state-popover ${isCorrect ? "good" : "bad"}">
                     <div class="training-flash-media training-flash-media--state">
@@ -1923,6 +1961,32 @@ function retryArcCard(configType) {
     stepIndex: flow.stepIndex,
     itemIndex: flow.itemIndex,
     lastOutcome: null
+  };
+  persistESTProgressSnapshot();
+  renderContentStage();
+}
+
+function jumpArcStep(configType, stepIndex) {
+  const config = getTrainingConfigByType(configType);
+  const targetStepIndex = Number(stepIndex);
+  const steps = config?.steps || [];
+  if (!config || !Number.isInteger(targetStepIndex) || targetStepIndex < 0 || targetStepIndex >= steps.length) return;
+
+  const { stepStates, activeStep } = getArcStepProgress(config);
+  const targetStepState = stepStates[targetStepIndex];
+  const isUnlocked = targetStepState?.complete || targetStepIndex === activeStep - 1;
+  if (!isUnlocked) return;
+
+  const targetItems = steps[targetStepIndex]?.items || [];
+  if (!targetItems.length) return;
+
+  const firstPendingIndex = targetItems.findIndex(item => getArcItemAnswer(config, item) !== item.correct);
+  const itemIndex = firstPendingIndex >= 0 ? firstPendingIndex : 0;
+  state.arcFlows[config.type] = {
+    phase: targetStepState.complete ? "review" : "question",
+    stepIndex: targetStepIndex,
+    itemIndex,
+    lastOutcome: targetStepState.complete ? "review" : null
   };
   persistESTProgressSnapshot();
   renderContentStage();

@@ -1061,6 +1061,8 @@ body.est-lab-mode #stage-section.gameplay-viewport {
   background: rgba(8, 16, 38, 0.72);
   color: #d7e9ff;
   overflow: hidden;
+  font: inherit;
+  text-align: left;
 }
 
 .arc-progress-step::before {
@@ -1069,6 +1071,16 @@ body.est-lab-mode #stage-section.gameplay-viewport {
   inset: 0;
   background: linear-gradient(90deg, var(--topic-accent-soft), transparent 70%);
   opacity: 0;
+}
+
+button.arc-progress-step {
+  appearance: none;
+  cursor: pointer;
+}
+
+button.arc-progress-step:hover {
+  border-color: rgba(97, 240, 255, 0.44);
+  transform: translateY(-1px);
 }
 
 .arc-progress-step span,
@@ -1125,6 +1137,15 @@ body.est-lab-mode #stage-section.gameplay-viewport {
 
 .arc-progress-step.locked {
   opacity: 0.62;
+}
+
+.arc-progress-step.current {
+  border-color: var(--topic-border);
+  box-shadow: inset 0 0 0 1px var(--topic-accent-soft), 0 12px 24px rgba(3, 8, 20, 0.2);
+}
+
+.arc-progress-step.current strong {
+  font-size: clamp(0.9rem, 0.95vw, 1.05rem);
 }
 
 .arc-progress-image {
@@ -1932,6 +1953,127 @@ body.est-gameplay-viewport .ce-feedback-launcher {
 
 #stage-section.gameplay-viewport .training-focus-main .training-step--flash {
   min-height: 100%;
+}
+
+#stage-section.gameplay-viewport .training-campaign--pilot-layout {
+  padding: 16px;
+}
+
+#stage-section.gameplay-viewport .training-campaign--pilot-layout .training-hud--mission {
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: end;
+  padding-bottom: 10px;
+}
+
+#stage-section.gameplay-viewport .training-campaign--pilot-layout .training-hud-copy h2 {
+  font-size: clamp(1.45rem, 1.7vw, 2rem);
+}
+
+#stage-section.gameplay-viewport .training-campaign--pilot-layout .training-hud-status strong {
+  font-size: clamp(1rem, 1.12vw, 1.22rem);
+}
+
+#stage-section.gameplay-viewport .training-focus-shell--pilot {
+  grid-template-columns: 1fr;
+  gap: 0;
+  margin-top: 10px;
+}
+
+#stage-section.gameplay-viewport .training-focus-shell--pilot .training-focus-aside--arc {
+  display: none;
+}
+
+#stage-section.gameplay-viewport .training-campaign--pilot-layout .training-campaign-grid {
+  margin-top: 0;
+}
+
+#stage-section.gameplay-viewport .training-campaign--pilot-layout .training-step--flash {
+  padding: clamp(16px, 1.35vw, 24px);
+  min-height: clamp(720px, calc(100dvh - 210px), 900px);
+}
+
+#stage-section.gameplay-viewport .training-campaign--pilot-layout .training-main-header {
+  grid-template-columns: 1fr;
+  align-items: end;
+  gap: 10px;
+  margin-bottom: 14px;
+}
+
+#stage-section.gameplay-viewport .training-campaign--pilot-layout .training-main-copy h2 {
+  font-size: clamp(1.9rem, 2.2vw, 2.75rem);
+}
+
+#stage-section.gameplay-viewport .training-campaign--pilot-layout .training-step-meter {
+  display: none;
+}
+
+#stage-section.gameplay-viewport .training-campaign--pilot-layout .training-card--flash {
+  padding: clamp(16px, 1.45vw, 24px);
+}
+
+#stage-section.gameplay-viewport .training-campaign--pilot-layout .training-question-layout {
+  grid-template-columns: minmax(430px, 0.88fr) minmax(520px, 1.12fr);
+  grid-template-rows: minmax(0, 1fr) auto;
+  gap: clamp(18px, 1.6vw, 28px);
+  min-height: clamp(610px, 66vh, 760px);
+}
+
+#stage-section.gameplay-viewport .training-campaign--pilot-layout .training-question-layout .training-card-lead.has-media {
+  grid-template-rows: minmax(390px, 1fr) auto;
+  gap: clamp(18px, 2.6vh, 30px);
+  padding: clamp(16px, 1.5vw, 24px);
+}
+
+#stage-section.gameplay-viewport .training-campaign--pilot-layout .training-card-media {
+  width: min(92%, 420px);
+  height: min(100%, 580px);
+  max-height: clamp(420px, 56vh, 590px);
+}
+
+#stage-section.gameplay-viewport .training-campaign--pilot-layout .training-card-copy {
+  gap: 16px;
+}
+
+#stage-section.gameplay-viewport .training-campaign--pilot-layout .training-card-prompt {
+  font-size: clamp(1.36rem, 1.65vw, 1.9rem);
+  line-height: 1.18;
+}
+
+#stage-section.gameplay-viewport .training-campaign--pilot-layout .training-card-lead p:not(.training-card-prompt) {
+  font-size: clamp(1.12rem, 1.18vw, 1.34rem);
+  line-height: 1.42;
+}
+
+#stage-section.gameplay-viewport .training-campaign--pilot-layout .training-card--flash .training-stack {
+  gap: clamp(18px, 2.1vh, 26px);
+}
+
+#stage-section.gameplay-viewport .training-campaign--pilot-layout .training-card--flash .choice-button {
+  border-radius: 18px;
+  padding: clamp(24px, 2.7vw, 38px);
+}
+
+#stage-section.gameplay-viewport .training-campaign--pilot-layout .training-card--flash .choice-button strong {
+  max-width: 32ch;
+  font-size: clamp(1.5rem, 2vw, 2.15rem);
+  line-height: 1.12;
+}
+
+#stage-section.gameplay-viewport .training-campaign--pilot-layout .arc-progress-rail--answer {
+  padding: 14px 16px;
+}
+
+#stage-section.gameplay-viewport .training-campaign--pilot-layout .arc-progress-track {
+  gap: 10px;
+}
+
+#stage-section.gameplay-viewport .training-campaign--pilot-layout .arc-progress-step {
+  min-height: 66px;
+  padding: 12px;
+}
+
+#stage-section.gameplay-viewport .training-campaign--pilot-layout .arc-progress-step strong {
+  font-size: clamp(0.92rem, 0.98vw, 1.08rem);
 }
 
 @keyframes estGuideFloat {
