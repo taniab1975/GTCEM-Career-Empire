@@ -155,6 +155,7 @@ window.ESTPrep = {
   jumpToGlossaryRound,
   toggleReveal,
   toggleTopicIntroVideo,
+  toggleTopicIntroPictureInPicture,
   setGlossaryRecallAnswer,
   setGlossaryRecallChoiceEncoded,
   setGlossaryRecallTermChoiceEncoded,

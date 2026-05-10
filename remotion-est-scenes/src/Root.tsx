@@ -9,6 +9,7 @@ import {InitiativePortraitTeaser} from "./scenes/InitiativePortraitTeaser";
 import {InitiativeScenario} from "./scenes/InitiativeScenario";
 import {OverseasOpportunityScenario} from "./scenes/OverseasOpportunityScenario";
 import {ProblemSolvingExplainer} from "./scenes/ProblemSolvingExplainer";
+import {StudentIntroPromo} from "./scenes/StudentIntroPromo";
 import {TeamworkExplainer} from "./scenes/TeamworkExplainer";
 import {TimeManagementExplainer} from "./scenes/TimeManagementExplainer";
 import {
@@ -26,6 +27,14 @@ export const RemotionRoot: React.FC = () => {
         id="CareerEmpireExplainer"
         component={CareerEmpireExplainer}
         durationInFrames={2340}
+        fps={30}
+        width={1600}
+        height={900}
+      />
+      <Composition
+        id="StudentIntroPromo"
+        component={StudentIntroPromo}
+        durationInFrames={2214}
         fps={30}
         width={1600}
         height={900}
@@ -97,7 +106,7 @@ export const RemotionRoot: React.FC = () => {
       <Composition
         id="InitiativePortraitTeaser"
         component={InitiativePortraitTeaser}
-        durationInFrames={135}
+        durationInFrames={360}
         fps={30}
         width={1080}
         height={1920}

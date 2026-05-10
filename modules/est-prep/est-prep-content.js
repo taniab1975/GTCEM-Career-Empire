@@ -1,5 +1,6 @@
 // EST Prep content bundle. Loaded as a classic browser script.
 const DECODER_ROUND_COUNT = 4;
+const INITIATIVE_ONE_PAGE_SUMMARY = "../../Assets/EST Preparation/initiative-one-page-summary.png";
 
 function getContentGroupShortLabel(groupId) {
   const labels = {
@@ -11,6 +12,24 @@ function getContentGroupShortLabel(groupId) {
     "future-of-work": "Megatrends + Labour Market"
   };
   return labels[groupId] || "Topic";
+}
+
+function renderInitiativeContentReminder(groupOrId, variant = "") {
+  const groupId = typeof groupOrId === "string" ? groupOrId : groupOrId?.id;
+  if (groupId !== "initiative") return "";
+  const variantClass = variant ? ` initiative-reminder--${escapeHtml(variant)}` : "";
+  return `
+    <details class="initiative-reminder${variantClass}" open>
+      <summary>
+        <span>Initiative one-page guide</span>
+        <strong>Click here for a one-page summary.</strong>
+      </summary>
+      <div class="initiative-reminder-body">
+        <p>Keep this summary nearby while you play: spot the behaviour, name the initiative type, then explain the workplace effect in your EST answer.</p>
+        <img src="${escapeHtml(INITIATIVE_ONE_PAGE_SUMMARY)}" alt="One-page Initiative EST summary">
+      </div>
+    </details>
+  `;
 }
 
 function isContentGroupDone(group) {
@@ -489,6 +508,7 @@ function renderArcGuideAside({ config, groupId, scene, flow, currentStep, curren
           <p>${escapeHtml(config.memoryHook)}</p>
         </details>
       ` : ""}
+      ${renderInitiativeContentReminder(groupId, "aside")}
     </aside>
   `;
 }
@@ -1247,6 +1267,7 @@ function renderContentTopicReview(summary) {
               : `Your best result still stands at ${Math.round(summary.reward?.previousPercent || summary.overallPercent || 0)}%. No extra salary was added this time, but the banked community contribution can still be allocated.`
           )}</span>
         </div>
+        ${renderInitiativeContentReminder(summary.group, "wide")}
         ${reviewReward.credits || reviewReward.tax ? `
           <div class="glossary-reward-grid content-reward-grid">
             <article class="glossary-reward-chip">
@@ -1381,6 +1402,50 @@ function toggleTopicIntroVideo(button) {
   }
 }
 
+async function toggleTopicIntroPictureInPicture(button) {
+  const card = button?.closest(".topic-media-card");
+  const video = card?.querySelector(".topic-media-video");
+  if (!video) return;
+  const pipButtons = () => Array.from(card.querySelectorAll(".topic-media-toggle--pip"));
+  const setPipButtonState = isOpen => {
+    pipButtons().forEach(pipButton => {
+      pipButton.textContent = isOpen ? "Close PiP" : "Open PiP helper";
+      pipButton.setAttribute("aria-label", isOpen ? "Close Picture-in-Picture video" : "Open video in Picture-in-Picture");
+    });
+  };
+  if (video.dataset.pipBound !== "true") {
+    video.dataset.pipBound = "true";
+    video.addEventListener("enterpictureinpicture", () => setPipButtonState(true));
+    video.addEventListener("leavepictureinpicture", () => setPipButtonState(false));
+  }
+  if (typeof video.requestPictureInPicture !== "function" || typeof document.exitPictureInPicture !== "function") {
+    button.textContent = "PiP unavailable";
+    button.setAttribute("aria-label", "Picture-in-Picture is unavailable in this browser");
+    button.disabled = true;
+    return;
+  }
+  try {
+    if (document.pictureInPictureElement === video) {
+      await document.exitPictureInPicture();
+      setPipButtonState(false);
+      return;
+    }
+    if (video.paused) {
+      await video.play();
+      const playButton = card?.querySelector(".topic-media-toggle");
+      if (playButton) {
+        playButton.textContent = "Pause";
+        playButton.setAttribute("aria-label", "Pause topic animation");
+        playButton.classList.remove("is-paused");
+      }
+    }
+    await video.requestPictureInPicture();
+    setPipButtonState(true);
+  } catch (_) {
+    setPipButtonState(false);
+  }
+}
+
 function renderContentTopicIntro(group) {
   const highlights = group.introHighlights || [];
   const hasVideo = Boolean(group.introVideo);
@@ -1404,7 +1469,11 @@ function renderContentTopicIntro(group) {
   `;
   const videoControls = hasVideo ? `
     <div class="topic-media-controls">
-      <button class="topic-media-toggle" type="button" aria-label="Pause topic animation" onclick="window.ESTPrep.toggleTopicIntroVideo(this)">Pause</button>
+      <div class="topic-media-control-row">
+        <button class="topic-media-toggle" type="button" aria-label="Pause topic animation" onclick="window.ESTPrep.toggleTopicIntroVideo(this)">Pause</button>
+        <button class="topic-media-toggle topic-media-toggle--pip" type="button" aria-label="Open video in Picture-in-Picture" onclick="window.ESTPrep.toggleTopicIntroPictureInPicture(this)">Open PiP helper</button>
+      </div>
+      <p class="topic-media-helper">Handy tip: open Picture-in-Picture to keep this reminder video playing while you work through the reactor cards.</p>
     </div>
   ` : "";
   return `
@@ -1437,6 +1506,7 @@ function renderContentTopicIntro(group) {
           </div>
         </div>
       </div>
+      ${renderInitiativeContentReminder(group, "intro")}
     </section>
   `;
 }
@@ -1501,6 +1571,7 @@ function renderContentStage() {
               <small>Compare it to the model before moving to the next strand.</small>
             </div>
           </div>
+          ${renderInitiativeContentReminder(currentGroup, "wide")}
           <div class="training-campaign-grid" style="margin-top:18px;">
             ${currentGroup.rounds.map((round, index) => `
               <div class="panel">
