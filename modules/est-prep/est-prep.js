@@ -156,6 +156,7 @@ window.ESTPrep = {
   toggleReveal,
   toggleTopicIntroVideo,
   toggleTopicIntroPictureInPicture,
+  dismissTopicReminderPip,
   setGlossaryRecallAnswer,
   setGlossaryRecallChoiceEncoded,
   setGlossaryRecallTermChoiceEncoded,

@@ -30,6 +30,7 @@ const state = {
   contentTopicVotes: {},
   contentTopicVoteSaves: {},
   contentTopicResetAt: {},
+  contentReminderDismissed: {},
   lastContentTopicReview: null,
   glossaryBoard: [],
   glossarySelection: [],

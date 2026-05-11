@@ -1,6 +1,33 @@
 // EST Prep content bundle. Loaded as a classic browser script.
 const DECODER_ROUND_COUNT = 4;
 const INITIATIVE_ONE_PAGE_SUMMARY = "../../Assets/EST Preparation/initiative-one-page-summary.png";
+const CONTENT_GUIDE_PLACEHOLDERS = {
+  "time-management": {
+    label: "Time management one-page guide",
+    title: "Click here for a one-page summary.",
+    body: "Placeholder: add the Time Management one-page summary here."
+  },
+  "personal-finance": {
+    label: "Personal finance one-page guide",
+    title: "Click here for a one-page summary.",
+    body: "Placeholder: add the Personal Finance one-page summary here."
+  },
+  "job-application": {
+    label: "Job application one-page guide",
+    title: "Click here for a one-page summary.",
+    body: "Placeholder: add the Cover Letters, STAR and Selection Criteria one-page summary here."
+  },
+  communication: {
+    label: "Communication one-page guide",
+    title: "Click here for a one-page summary.",
+    body: "Placeholder: add the Communication one-page summary here."
+  },
+  "future-of-work": {
+    label: "Future of work one-page guide",
+    title: "Click here for a one-page summary.",
+    body: "Placeholder: add the Megatrends and Labour Market one-page summary here."
+  }
+};
 
 function getContentGroupShortLabel(groupId) {
   const labels = {
@@ -14,19 +41,45 @@ function getContentGroupShortLabel(groupId) {
   return labels[groupId] || "Topic";
 }
 
-function renderInitiativeContentReminder(groupOrId, variant = "") {
-  const groupId = typeof groupOrId === "string" ? groupOrId : groupOrId?.id;
-  if (groupId !== "initiative") return "";
+function getContentGuideConfig(groupOrId) {
+  const group = typeof groupOrId === "string"
+    ? (state.stageDeck?.contentGroups || []).find(item => item.id === groupOrId)
+    : groupOrId;
+  if (!group?.id) return null;
+  if (group.id === "initiative") {
+    return {
+      label: "Initiative one-page guide",
+      title: "Click here for a one-page summary.",
+      body: "Keep this summary nearby while you play: spot the behaviour, name the initiative type, then explain the workplace effect in your EST answer.",
+      image: INITIATIVE_ONE_PAGE_SUMMARY,
+      imageAlt: "One-page Initiative EST summary"
+    };
+  }
+  return CONTENT_GUIDE_PLACEHOLDERS[group.id] || {
+    label: `${getContentGroupShortLabel(group.id)} one-page guide`,
+    title: "Click here for a one-page summary.",
+    body: `Placeholder: add the ${group.title || getContentGroupShortLabel(group.id)} one-page summary here.`
+  };
+}
+
+function renderContentGuideReminder(groupOrId, variant = "") {
+  const guide = getContentGuideConfig(groupOrId);
+  if (!guide) return "";
   const variantClass = variant ? ` initiative-reminder--${escapeHtml(variant)}` : "";
   return `
-    <details class="initiative-reminder${variantClass}" open>
+    <details class="initiative-reminder${variantClass}">
       <summary>
-        <span>Initiative one-page guide</span>
-        <strong>Click here for a one-page summary.</strong>
+        <span>${escapeHtml(guide.label)}</span>
+        <strong>${escapeHtml(guide.title)}</strong>
       </summary>
       <div class="initiative-reminder-body">
-        <p>Keep this summary nearby while you play: spot the behaviour, name the initiative type, then explain the workplace effect in your EST answer.</p>
-        <img src="${escapeHtml(INITIATIVE_ONE_PAGE_SUMMARY)}" alt="One-page Initiative EST summary">
+        <p>${escapeHtml(guide.body)}</p>
+        ${guide.image ? `<img src="${escapeHtml(guide.image)}" alt="${escapeHtml(guide.imageAlt || guide.label)}">` : `
+          <div class="initiative-reminder-placeholder" aria-label="${escapeHtml(`${guide.label} placeholder`)}">
+            <strong>Summary placeholder</strong>
+            <span>Replace this with the one-page guide image when it is ready.</span>
+          </div>
+        `}
       </div>
     </details>
   `;
@@ -508,7 +561,7 @@ function renderArcGuideAside({ config, groupId, scene, flow, currentStep, curren
           <p>${escapeHtml(config.memoryHook)}</p>
         </details>
       ` : ""}
-      ${renderInitiativeContentReminder(groupId, "aside")}
+      ${renderContentGuideReminder(groupId, "aside")}
     </aside>
   `;
 }
@@ -1269,7 +1322,7 @@ function renderContentTopicReview(summary) {
               : `Your best result still stands at ${Math.round(summary.reward?.previousPercent || summary.overallPercent || 0)}%. No extra salary was added this time, but the banked community contribution can still be allocated.`
           )}</span>
         </div>
-        ${renderInitiativeContentReminder(summary.group, "wide")}
+        ${renderContentGuideReminder(summary.group, "wide")}
         ${reviewReward.credits || reviewReward.tax ? `
           <div class="glossary-reward-grid content-reward-grid">
             <article class="glossary-reward-chip">
@@ -1404,6 +1457,16 @@ function toggleTopicIntroVideo(button) {
   }
 }
 
+function dismissTopicReminderPip(groupId) {
+  if (!groupId) return;
+  if (!state.contentReminderDismissed || typeof state.contentReminderDismissed !== "object") {
+    state.contentReminderDismissed = {};
+  }
+  state.contentReminderDismissed[groupId] = true;
+  persistESTProgressSnapshot();
+  renderContentStage();
+}
+
 async function toggleTopicIntroPictureInPicture(button) {
   const card = button?.closest(".topic-media-card");
   const video = card?.querySelector(".topic-media-video");
@@ -1508,8 +1571,21 @@ function renderContentTopicIntro(group) {
           </div>
         </div>
       </div>
-      ${renderInitiativeContentReminder(group, "intro")}
+      ${renderContentGuideReminder(group, "intro")}
     </section>
+  `;
+}
+
+function renderTopicReminderPip(group) {
+  if (!group?.introVideo || state.contentView !== "lesson") return "";
+  if (state.contentReminderDismissed?.[group.id]) return "";
+  return `
+    <aside class="topic-reminder-pip topic-reminder-pip--${escapeHtml(getTopicClassName(group.id))}" aria-label="${escapeHtml(`${group.title} video reminder`)}">
+      <button class="topic-reminder-pip-close" type="button" aria-label="Close video reminder" onclick="window.ESTPrep.dismissTopicReminderPip('${encodeForInlineHandler(group.id)}')">&times;</button>
+      <video class="topic-reminder-pip-video" autoplay muted loop playsinline aria-hidden="true">
+        <source src="${escapeHtml(group.introVideo)}" type="video/mp4">
+      </video>
+    </aside>
   `;
 }
 
@@ -1573,7 +1649,7 @@ function renderContentStage() {
               <small>Compare it to the model before moving to the next strand.</small>
             </div>
           </div>
-          ${renderInitiativeContentReminder(currentGroup, "wide")}
+          ${renderContentGuideReminder(currentGroup, "wide")}
           <div class="training-campaign-grid" style="margin-top:18px;">
             ${currentGroup.rounds.map((round, index) => `
               <div class="panel">
@@ -1626,12 +1702,14 @@ function renderContentStage() {
   if (trainingConfig && isArcTrainingType(trainingConfig.type) && !trainingComplete) {
     renderStageRoot(`
       ${renderTrainingBay(currentGroup)}
+      ${renderTopicReminderPip(currentGroup)}
     `);
     persistESTProgressSnapshot();
     return;
   }
   renderStageRoot(`
     ${renderTrainingBay(currentGroup)}
+    ${renderTopicReminderPip(currentGroup)}
   `);
   persistESTProgressSnapshot();
 }
@@ -1766,6 +1844,7 @@ function resetCurrentContentTopic() {
   const currentGroup = groups[state.contentGroupIndex];
   if (!currentGroup) return;
   clearContentTopicWorkingState(currentGroup, { clearBankedResult: true, markEvidenceReset: true });
+  if (state.contentReminderDismissed) delete state.contentReminderDismissed[currentGroup.id];
   refreshContentCompletionAfterTopicReset(groups);
   state.lastContentTopicReview = null;
   state.contentView = "lesson";
@@ -1814,6 +1893,10 @@ function startContentGroup() {
   if (startedFromIntro && (hasBankedResult || trainingComplete)) {
     clearContentTopicWorkingState(currentGroup);
   }
+  if (!state.contentReminderDismissed || typeof state.contentReminderDismissed !== "object") {
+    state.contentReminderDismissed = {};
+  }
+  if (startedFromIntro) delete state.contentReminderDismissed[currentGroup.id];
   state.contentView = "lesson";
   state.contentGroupStartedAt = Date.now();
   persistESTProgressSnapshot();
