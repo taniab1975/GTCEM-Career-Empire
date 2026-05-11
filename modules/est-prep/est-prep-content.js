@@ -85,6 +85,35 @@ function renderContentGuideReminder(groupOrId, variant = "") {
   `;
 }
 
+function getStableOptionHash(seed) {
+  const text = String(seed || "");
+  let hash = 2166136261;
+  for (let index = 0; index < text.length; index += 1) {
+    hash ^= text.charCodeAt(index);
+    hash = Math.imul(hash, 16777619);
+  }
+  return hash >>> 0;
+}
+
+function getShuffledContentOptions(options, seed = "") {
+  const original = Array.isArray(options) ? options.filter(option => option !== null && typeof option !== "undefined") : [];
+  if (original.length <= 1) return original;
+
+  const shuffled = [...original];
+  let hash = getStableOptionHash(`${seed}:${original.join("|")}`);
+  for (let index = shuffled.length - 1; index > 0; index -= 1) {
+    hash = (Math.imul(hash, 1664525) + 1013904223) >>> 0;
+    const swapIndex = hash % (index + 1);
+    [shuffled[index], shuffled[swapIndex]] = [shuffled[swapIndex], shuffled[index]];
+  }
+
+  if (shuffled[0] === original[0]) {
+    const swapIndex = (getStableOptionHash(`${seed}:move-first`) % (shuffled.length - 1)) + 1;
+    [shuffled[0], shuffled[swapIndex]] = [shuffled[swapIndex], shuffled[0]];
+  }
+  return shuffled;
+}
+
 function isContentGroupDone(group) {
   if (!group) return false;
   const bankedPercent = Math.max(0, Number(state.contentTopicBestScores[group.id] || 0));
@@ -716,7 +745,10 @@ function renderArcTrainingBay(config, score) {
                       <p>${escapeHtml(currentStep.instruction || "Choose the strongest move.")}</p>
                     </div>
                     <div class="training-stack">
-                      ${currentItem.options.map(option => `
+                      ${getShuffledContentOptions(
+                        currentItem.options,
+                        `${config.type}:${currentStep?.title || flow?.stepIndex}:${currentItem.id}:${currentItem.prompt}`
+                      ).map(option => `
                         <button
                           type="button"
                           class="choice-button ${currentAnswer === option ? "selected live-selected" : ""} ${currentAnswer && option === currentItem.correct ? "correct" : ""} ${currentAnswer === option && !isCorrect ? "incorrect" : ""}"
@@ -837,7 +869,10 @@ function renderScenarioTrainingBay(config, score) {
               <div class="kicker">${escapeHtml(scenario.title)}</div>
               <p>${escapeHtml(scenario.prompt)}</p>
               <div class="training-stack">
-                ${scenario.options.map(option => `
+                ${getShuffledContentOptions(
+                  scenario.options,
+                  `${config.type}:${scenario.id}:${scenario.prompt}`
+                ).map(option => `
                   <button
                     type="button"
                     class="choice-button ${answer === option ? "selected live-selected" : ""}"
@@ -873,7 +908,10 @@ function renderBuilderTrainingBay(config, score) {
               <div class="kicker">${escapeHtml(round.title)}</div>
               <p>${escapeHtml(round.prompt)}</p>
               <div class="training-stack">
-                ${round.options.map(option => `
+                ${getShuffledContentOptions(
+                  round.options,
+                  `${config.type}:${round.id}:${round.prompt}`
+                ).map(option => `
                   <button
                     type="button"
                     class="choice-button ${answer === option ? "selected live-selected" : ""}"
@@ -1659,7 +1697,10 @@ function renderContentStage() {
                 </div>
                 <p class="small-copy">${escapeHtml(round.question)}</p>
                 <div class="mcq-grid" style="margin-top: 14px;">
-                  ${round.options.map(option => `
+                  ${getShuffledContentOptions(
+                    round.options,
+                    `${currentGroup.id}:${round.topic}:${round.question}:${index}`
+                  ).map(option => `
                     <button
                       type="button"
                       class="choice-button ${state.answers[`content-${currentGroup.id}-${index}`] === option ? "selected live-selected" : ""}"
