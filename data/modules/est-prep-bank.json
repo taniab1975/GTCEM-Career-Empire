@@ -682,7 +682,7 @@
       "minimumWordCount": 8,
       "controlLabel": "Enough items for marks",
       "controlDetail": "List responses still need the requested number of relevant items.",
-      "reviewSummary": "This boss round checked command decoding, relevant list items, topic vocabulary, and concise list control.",
+      "reviewSummary": "BOSS checked command decoding, relevant list items, topic vocabulary, and concise list control.",
       "sampleResponses": [
         {
           "label": "High sample",
@@ -748,7 +748,7 @@
         }
       ],
       "minimumWordCount": 30,
-      "reviewSummary": "This boss round checked decoding, glossary control, cause-and-effect reasoning, and result language.",
+      "reviewSummary": "BOSS checked decoding, glossary control, cause-and-effect reasoning, and result language.",
       "sampleResponses": [
         {
           "label": "High sample",

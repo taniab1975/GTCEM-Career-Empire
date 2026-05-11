@@ -66,10 +66,10 @@ const stages: LabStage[] = [
   {
     id: "knowledge",
     step: "01",
-    kicker: "Knowledge Reactor",
-    title: "Load the assessed content",
-    shortTitle: "Content",
-    body: "This is the actual revision content the EST can draw from.",
+    kicker: "CORE / What to say",
+    title: "What to say",
+    shortTitle: "CORE",
+    body: "CORE is the actual revision content the EST can draw from.",
     signal: "What do I need to know?",
     answer: "Topics, examples, facts, and syllabus points.",
     accent: "#61f0ff",
@@ -80,10 +80,10 @@ const stages: LabStage[] = [
   {
     id: "glossary",
     step: "02",
-    kicker: "Glossary Chamber",
-    title: "Lock in Careers language",
-    shortTitle: "Glossary",
-    body: "The glossary gives you the exact Careers terms markers expect.",
+    kicker: "TERM / The right language",
+    title: "The right language",
+    shortTitle: "TERM",
+    body: "TERM gives you the exact Careers language markers expect.",
     signal: "Which term fits this question?",
     answer: "Precise language, not vague wording.",
     accent: "#72f7b8",
@@ -94,8 +94,8 @@ const stages: LabStage[] = [
   {
     id: "vtcs",
     step: "03",
-    kicker: "VTCS Decoder",
-    title: "Unpack the question",
+    kicker: "VTCS / What the question wants",
+    title: "What the question wants",
     shortTitle: "VTCS",
     body: "Verb, topic, context, and structure reveal what the question wants.",
     signal: "What is the question really asking?",
@@ -108,10 +108,10 @@ const stages: LabStage[] = [
   {
     id: "boss",
     step: "04",
-    kicker: "Boss Round",
-    title: "Put it all together",
-    shortTitle: "Boss Round",
-    body: "Content, glossary, and VTCS combine into one mark-worthy response.",
+    kicker: "BOSS / The final response",
+    title: "The final response",
+    shortTitle: "BOSS",
+    body: "CORE, TERM, and VTCS combine into one mark-worthy response.",
     signal: "Can I perform under exam conditions?",
     answer: "Build the answer. Beat the paper.",
     accent: "#ff8aca",
@@ -149,7 +149,7 @@ const Timeline: React.FC<{activeIndex: number; frame: number; fps: number}> = ({
       bottom: 22,
       display: "grid",
       gridTemplateColumns: "repeat(4, 1fr)",
-      gap: 10
+      gap: 12
     }}
   >
     {stages.map((stage, index) => {
@@ -162,8 +162,8 @@ const Timeline: React.FC<{activeIndex: number; frame: number; fps: number}> = ({
           key={stage.id}
           style={{
             ...panelBase,
-            minHeight: 56,
-            padding: "8px 12px",
+            minHeight: 116,
+            padding: "10px 12px 12px",
             borderColor: isActive || isComplete ? stage.accent : "rgba(160, 191, 255, 0.22)",
             background: isActive
               ? `linear-gradient(135deg, ${stage.glow}, rgba(12,24,55,0.86))`
@@ -176,30 +176,49 @@ const Timeline: React.FC<{activeIndex: number; frame: number; fps: number}> = ({
         >
           <div
             style={{
-              display: "flex",
-              justifyContent: "space-between",
-              alignItems: "center",
-              gap: 10,
+              display: "grid",
+              justifyItems: "center",
+              gap: 8,
               color: isActive || isComplete ? stage.accent : "rgba(211, 225, 255, 0.72)",
-              fontSize: 10,
-              fontWeight: 900,
-              letterSpacing: "0.1em",
-              textTransform: "uppercase"
+              textAlign: "center"
             }}
           >
-            <span>System {stage.step}</span>
-            <span>{isComplete ? "Online" : isActive ? "Active" : "Locked"}</span>
-          </div>
-          <div
-            style={{
-              marginTop: 5,
-              color: "#ffffff",
-              fontSize: 18,
-              fontWeight: 900,
-              lineHeight: 1
-            }}
-          >
-            {stage.shortTitle}
+            <div
+              style={{
+                width: 54,
+                height: 54,
+                borderRadius: 999,
+                display: "grid",
+                placeItems: "center",
+                background: `radial-gradient(circle, ${stage.glow}, rgba(5, 13, 31, 0.88))`,
+                border: `1.5px solid ${isActive || isComplete ? stage.accent : "rgba(160, 191, 255, 0.28)"}`,
+                boxShadow: isActive || isComplete ? `0 0 24px ${stage.glow}` : "none"
+              }}
+            >
+              <div
+                style={{
+                  fontFamily: displayFont,
+                  color: "#ffffff",
+                  fontSize: stage.shortTitle.length > 4 ? 16 : 19,
+                  letterSpacing: 0,
+                  WebkitTextStroke: "1px rgba(7, 13, 29, 0.72)",
+                  paintOrder: "stroke fill"
+                }}
+              >
+                {stage.shortTitle}
+              </div>
+            </div>
+            <div
+              style={{
+                color: "#ffffff",
+                fontSize: 16,
+                fontWeight: 900,
+                lineHeight: 1.08,
+                textShadow: "0 3px 14px rgba(0,0,0,0.42)"
+              }}
+            >
+              {stage.title}
+            </div>
           </div>
         </div>
       );
@@ -695,28 +714,48 @@ const StageVisual: React.FC<{stage: LabStage; frame: number; localFrame: number;
             >
               <div
                 style={{
-                  width: 190,
-                  height: 190,
-                  borderRadius: 999,
                   display: "grid",
-                  placeItems: "center",
-                  background: `radial-gradient(circle, ${stage.glow}, rgba(5, 13, 31, 0.9))`,
-                  border: `2px solid ${stage.accent}`,
-                  boxShadow: `0 0 52px ${stage.glow}`,
+                  justifyItems: "center",
+                  gap: 14,
                   transform: `scale(${1 + Math.sin(frame / 12) * 0.025})`
                 }}
               >
                 <div
                   style={{
-                    fontFamily: displayFont,
-                    color: "#ffffff",
-                    fontSize: stage.icon.length > 4 ? 34 : 42,
-                    letterSpacing: 0,
-                    WebkitTextStroke: "2px rgba(7, 13, 29, 0.72)",
-                    paintOrder: "stroke fill"
+                    width: 164,
+                    height: 164,
+                    borderRadius: 999,
+                    display: "grid",
+                    placeItems: "center",
+                    background: `radial-gradient(circle, ${stage.glow}, rgba(5, 13, 31, 0.9))`,
+                    border: `2px solid ${stage.accent}`,
+                    boxShadow: `0 0 52px ${stage.glow}`
                   }}
                 >
-                  {stage.icon}
+                  <div
+                    style={{
+                      fontFamily: displayFont,
+                      color: "#ffffff",
+                      fontSize: stage.icon.length > 4 ? 34 : 42,
+                      letterSpacing: 0,
+                      WebkitTextStroke: "2px rgba(7, 13, 29, 0.72)",
+                      paintOrder: "stroke fill"
+                    }}
+                  >
+                    {stage.icon}
+                  </div>
+                </div>
+                <div
+                  style={{
+                    color: "#ffffff",
+                    fontSize: 26,
+                    lineHeight: 1.05,
+                    fontWeight: 900,
+                    textAlign: "center",
+                    textShadow: "0 3px 18px rgba(0,0,0,0.44)"
+                  }}
+                >
+                  {stage.title}
                 </div>
               </div>
             </div>
@@ -888,8 +927,8 @@ const RecapScene: React.FC<{frame: number; fps: number}> = ({frame, fps}) => {
             fontWeight: 900
           }}
         >
-          Content gives you what to say. Glossary gives you the exact language. VTCS
-          shows what the question wants. Boss Round proves you can put it together.
+          CORE gives you what to say. TERM gives you the exact language. VTCS
+          shows what the question wants. BOSS proves you can put it together.
         </p>
       </div>
 

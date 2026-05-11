@@ -25,6 +25,49 @@ function getStageMeta(stageId) {
   return STAGES.find(stage => stage.id === stageId) || null;
 }
 
+function getStageActivityLabel(stageOrId) {
+  const stage = typeof stageOrId === "string" ? getStageMeta(stageOrId) : stageOrId;
+  if (!stage) return "Focused EST lab";
+  return stage.activity || {
+    content: "Assessed content modules",
+    glossary: "Glossary terms",
+    decoder: "Question decode",
+    boss: "Exam simulation"
+  }[stage.id] || stage.title;
+}
+
+function renderStageLockup(stage, options = {}) {
+  const extraClass = options.extraClass || "";
+  const activeClass = options.active ? "is-active" : "";
+  const currentBadge = options.current ? '<span class="stage-lockup-current">You are here</span>' : "";
+  const activity = options.includeActivity === false ? "" : `<small>${escapeHtml(getStageActivityLabel(stage))}</small>`;
+  return `
+    <span class="stage-lockup stage-lockup--${escapeHtml(stage.id)} ${escapeHtml(extraClass)} ${activeClass}">
+      <span class="stage-lockup-orb"><span>${escapeHtml(stage.title)}</span></span>
+      <span class="stage-lockup-copy">
+        ${currentBadge}
+        <strong>${escapeHtml(stage.state)}</strong>
+        ${activity}
+      </span>
+    </span>
+  `;
+}
+
+function renderStageMapButtons() {
+  return STAGES.map(stage => {
+    const active = state.selectedStageId === stage.id;
+    return `
+      <button
+        type="button"
+        class="focus-track-button stage-map-button stage-map-button--${escapeHtml(stage.id)} ${active ? "active" : ""}"
+        onclick="window.ESTPrep.openStage('${stage.id}')"
+      >
+        ${renderStageLockup(stage, { active, current: active })}
+      </button>
+    `;
+  }).join("");
+}
+
 function getFocusSubtitle() {
   const stage = getStageMeta(state.selectedStageId);
   if (!stage) return "Focused EST lab";
@@ -80,9 +123,15 @@ function renderFocusNav() {
     return;
   }
 
+  const selectedStage = getStageMeta(state.selectedStageId);
+  if (!selectedStage) {
+    container.innerHTML = "";
+    return;
+  }
   const groups = state.stageDeck?.contentGroups || [];
   const currentGroup = groups[state.contentGroupIndex];
-  const contentMenuPrompt = "Choose an EST curriculum content area below";
+  const lessonActive = isContentLessonActive() && currentGroup;
+  const contentMenuPrompt = "Choose a CORE curriculum content area below";
   const completedTopicCount = getCompletedContentTopicCount();
   const contentTrackButtons = groups.map((group, index) => {
     const status = getContentGroupStatus(group, index);
@@ -101,45 +150,51 @@ function renderFocusNav() {
       </button>
     `;
   }).join("");
-  if (isContentLessonActive() && currentGroup) {
-    const status = isContentGroupDone(currentGroup) ? "Done" : "In progress";
-    container.innerHTML = `
-      <div class="focus-toolbar focus-toolbar--lesson">
-        <button type="button" class="focus-back" onclick="window.ESTPrep.openStage('content')">← Topic menu</button>
-        <div class="focus-lesson-pill">
-          <strong>${escapeHtml(getContentGroupShortLabel(currentGroup.id))}</strong>
-          <small>${escapeHtml(status)}</small>
+
+  const activityLabel = getStageActivityLabel(selectedStage);
+  const topicLabel = currentGroup ? getContentGroupShortLabel(currentGroup.id) : "";
+  const herePath = state.selectedStageId === "content" && topicLabel
+    ? `${selectedStage.title} > ${activityLabel} > ${topicLabel}`
+    : `${selectedStage.title} > ${activityLabel}`;
+  const topicSelector = state.selectedStageId === "content" && groups.length
+    ? lessonActive
+      ? `
+        <details class="content-topic-panel content-topic-panel--dropdown">
+          <summary>
+            <span>CORE topic menu</span>
+            <strong>${escapeHtml(topicLabel || "Choose topic")}</strong>
+          </summary>
+          <div class="content-track content-track-menu ${currentGroup ? "has-selection" : ""}">
+            ${contentTrackButtons}
+          </div>
+        </details>
+      `
+      : `
+        <div class="content-topic-panel content-topic-panel--open">
+          <div class="content-track-title-row">
+            <div class="content-track-title">CORE topic menu</div>
+            <div class="content-track-subtitle">${escapeHtml(currentGroup ? currentGroup.title : `${completedTopicCount}/${groups.length || 0} topics banked. Choose one to enter its reactor.`)}</div>
+          </div>
+          <div class="content-track content-track-menu ${currentGroup ? "has-selection" : ""}">
+            ${contentTrackButtons}
+          </div>
         </div>
-      </div>
-    `;
-    return;
-  }
+      `
+    : "";
+
   container.innerHTML = `
     <div class="focus-toolbar">
       <button type="button" class="focus-back" onclick="window.ESTPrep.returnToTrack()">← Back to EST Hub</button>
-      <div class="focus-label">${state.selectedStageId === "content" && !currentGroup ? "Choose an EST curriculum content area below" : escapeHtml(getFocusSubtitle())}</div>
+      <div class="focus-label">${state.selectedStageId === "content" && !currentGroup ? escapeHtml(contentMenuPrompt) : escapeHtml(getFocusSubtitle())}</div>
     </div>
-    <div class="focus-intro">You're in the EST Preparation module.</div>
-    <div class="focus-track">
-      ${STAGES.map(stage => `
-        <button
-          type="button"
-          class="focus-track-button ${state.selectedStageId === stage.id ? "active" : ""}"
-          onclick="window.ESTPrep.openStage('${stage.id}')"
-        >
-          <strong>${escapeHtml(stage.title)}</strong>
-        </button>
-      `).join("")}
+    <div class="focus-intro">
+      <span>You're in the EST Preparation module.</span>
+      <strong>You are here: ${escapeHtml(herePath)}</strong>
     </div>
-    ${state.selectedStageId === "content" ? `
-      <div class="content-track-title-row">
-        <div class="content-track-title">Topic Menu</div>
-        <div class="content-track-subtitle">${escapeHtml(currentGroup ? currentGroup.title : `${completedTopicCount}/${groups.length || 0} topics banked. Choose one to enter its reactor.`)}</div>
-      </div>
-      <div class="content-track content-track-menu ${currentGroup ? "has-selection" : ""}">
-        ${contentTrackButtons}
-      </div>
-    ` : ""}
+    <div class="focus-track stage-map-banner">
+      ${renderStageMapButtons()}
+    </div>
+    ${topicSelector}
   `;
 }
 
@@ -213,6 +268,7 @@ function renderContentModuleList() {
   const container = document.getElementById("content-module-list");
   if (!container) return;
   const groups = state.stageDeck?.contentGroups || [];
+  const coreStage = getStageMeta("content");
   if (!groups.length) {
     container.innerHTML = `
       <div class="content-module-empty">
@@ -226,7 +282,7 @@ function renderContentModuleList() {
   const completedTopicCount = getCompletedContentTopicCount();
   container.innerHTML = `
     <div class="content-module-heading">
-      <strong>Topic Reactors</strong>
+      ${coreStage ? renderStageLockup(coreStage, { extraClass: "content-module-lockup" }) : "<strong>CORE: Assessed content modules</strong>"}
       <span>${completedTopicCount}/${groups.length} banked</span>
     </div>
     <div class="content-module-grid">
@@ -296,10 +352,10 @@ function getStageCardMeta(stage, context = {}) {
   if (stage.id === "content") {
     return {
       summary: completedTopics > 0
-        ? `${completedTopics}/${contentTopics} topics banked in the knowledge reactor.`
+        ? `${completedTopics}/${contentTopics} topics banked in CORE.`
         : stage.summary,
       primary: `${completedTopics}/${contentTopics} topics`,
-      secondary: completedTopics > 0 ? `${bestScore}% content signal` : "Knowledge reactor"
+      secondary: completedTopics > 0 ? `${bestScore}% CORE signal` : "What to say"
     };
   }
 
@@ -311,7 +367,7 @@ function getStageCardMeta(stage, context = {}) {
         ? `${testedTerms}/${totalTerms} glossary terms tested across ${glossaryMastery.attempts} memory reps.`
         : stage.summary,
       primary: totalTerms ? `${testedTerms}/${totalTerms} terms` : `${glossaryProgress}% restored`,
-      secondary: testedTerms > 0 ? `${glossaryMastery.accuracyPercent}% accuracy` : "Precision language"
+      secondary: testedTerms > 0 ? `${glossaryMastery.accuracyPercent}% accuracy` : "The right language"
     };
   }
 
@@ -321,17 +377,17 @@ function getStageCardMeta(stage, context = {}) {
         ? `${decoderProgress.completed}/${decoderProgress.total} decoder questions banked.`
         : stage.summary,
       primary: `${decoderProgress.completed}/${decoderProgress.total} questions`,
-      secondary: decoderProgress.completed > 0 ? `${decoderProgress.correct}/${decoderProgress.totalParts} VTCS parts` : "Question decode"
+      secondary: decoderProgress.completed > 0 ? `${decoderProgress.correct}/${decoderProgress.totalParts} VTCS parts` : "What the question wants"
     };
   }
 
   if (stage.id === "boss") {
     return {
       summary: bestScore > 0
-        ? `Boss Round response best result: ${bestScore}%.`
+        ? `BOSS response best result: ${bestScore}%.`
         : stage.summary,
       primary: bestScore > 0 ? `${bestScore}% best` : `${stage.marks} marks`,
-      secondary: bestScore > 0 ? "Teacher evidence saved" : "EST simulation"
+      secondary: bestScore > 0 ? "Teacher evidence saved" : "The final response"
     };
   }
 
@@ -367,8 +423,8 @@ function renderMap() {
 
     return `
       <article class="challenge-tile challenge-tile--${stage.id} ${complete ? "completed" : ""} ${inProgress ? "in-progress" : ""} ${state.selectedStageId === stage.id ? "active" : ""}">
-        <div class="kicker">${escapeHtml(stage.state)} • ${escapeHtml(statusLabel)}</div>
-        <h3>${escapeHtml(stage.title)}</h3>
+        <div class="challenge-status">${escapeHtml(statusLabel)}</div>
+        ${renderStageLockup(stage, { extraClass: "challenge-lockup", current: state.selectedStageId === stage.id })}
         <p>${escapeHtml(stageMeta.summary)}</p>
         <div class="challenge-meta">
           <span>${escapeHtml(stageMeta.primary)}</span>
@@ -385,13 +441,13 @@ function renderMap() {
 function renderResources() {
   const container = document.getElementById("resource-board");
   if (!container) return;
-  const bossPrompt = state.stageDeck?.bossRound?.question || "Boss round loading...";
+  const bossPrompt = state.stageDeck?.bossRound?.question || "BOSS loading...";
   container.innerHTML = [
     { title: "Exam Readiness", detail: `${state.readiness}% and rising as you decode and respond accurately.` },
     { title: "Confidence", detail: `${state.confidence}% - clean decoding and strong answers keep your streak alive.` },
     { title: "Salary Reward", detail: `${formatCurrency(state.salaryBoost)} added to your wider Career Empire profile.` },
     { title: "Community Tax", detail: `${formatCurrency(state.taxContribution)} heading into the class/community economy.` },
-    { title: "Current Boss Focus", detail: bossPrompt }
+    { title: "Current BOSS Focus", detail: bossPrompt }
   ].map(item => `<div class="resource-item"><strong>${escapeHtml(item.title)}</strong><p>${escapeHtml(item.detail)}</p></div>`).join("");
 }
 

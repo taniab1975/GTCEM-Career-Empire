@@ -2153,7 +2153,7 @@ function buildGlossaryCelebration(roundNumber, scoreText) {
     roundNumber,
     title: formatGlossaryRoundTitle(roundNumber),
     subtitle: roundNumber >= GLOSSARY_ROUND_CONFIGS.length
-      ? "Choose the class tax destination, then finish the glossary check with all terms recorded."
+      ? "Choose the class tax destination, then finish TERM with all glossary entries recorded."
       : "Choose the class tax destination, then move to the next six glossary terms.",
     salary: totalSalary,
     tax,
@@ -3634,7 +3634,7 @@ function renderGlossaryCelebration() {
         `}
         ${voteKey && assetReady ? `
           <div class="builder-actions glossary-community-next-actions">
-            <button class="submit-button" type="button" onclick="window.ESTPrep.continueGlossaryRound()">${isFinalRound ? "Finish Glossary Check" : "Continue Memory Run"}</button>
+            <button class="submit-button" type="button" onclick="window.ESTPrep.continueGlossaryRound()">${isFinalRound ? "Finish TERM" : "Continue Memory Run"}</button>
             <button class="choice-button" type="button" onclick="window.ESTPrep.returnToLab()">Save and return to EST Lab</button>
           </div>
         ` : ""}
@@ -3704,15 +3704,15 @@ function renderGlossaryStage() {
     : round.id === "memory-match"
       ? `${batch.length} terms • ${batch.length * 2} cards`
       : `${batch.length} terms`;
-  setText("stage-title", "Glossary Mission");
-  setText("stage-subtitle", "Short timed memory reps build coverage across the full glossary without forcing one giant sitting.");
+  setText("stage-title", "TERM");
+  setText("stage-subtitle", "The right language: short timed memory reps build coverage across the full glossary without forcing one giant sitting.");
 
   if (state.glossaryRoundCelebration) {
     renderStageRoot(`
       <div class="glossary-mission-shell">
         <div class="glossary-mission-topbar">
           <div>
-            <div class="kicker">Glossary Mission Access</div>
+            <div class="kicker">TERM access</div>
             <h3>Reward chamber</h3>
           </div>
         </div>
@@ -3766,7 +3766,7 @@ function renderGlossaryStage() {
       <div class="glossary-mission-topbar glossary-escape-topbar">
         <div>
           <div class="kicker">System Recovery Protocol</div>
-          <h3>Glossary Arcade</h3>
+          <h3>TERM Arcade</h3>
           <p class="small-copy">${escapeHtml(round.cue)}</p>
         </div>
         <div class="glossary-mission-actions">
@@ -3877,16 +3877,16 @@ async function bankGlossaryResults() {
   } else {
     state.recentReward = {
       type: "warning",
-      title: "Glossary replay saved",
-      detail: `This attempt scored ${scorePercent}%. Your best glossary result remains ${Math.round(previousBestRatio * 100)}%, so no extra salary or tax was added.`
+      title: "TERM replay saved",
+      detail: `This attempt scored ${scorePercent}%. Your best TERM result remains ${Math.round(previousBestRatio * 100)}%, so no extra salary or tax was added.`
     };
     renderRewardPulse();
   }
 
   state.stageBestScores.glossary = Math.max(previousBestRatio, scoreRatio);
-  addEvidence("Glossary mastery run", `${overallCorrect}/${total} term-definition pairs matched • Best streak x${state.glossaryBestStreak} • Misses ${state.glossaryMisses}`);
-  await saveProgress("glossary-lock-in", "glossary-check", `Glossary memory game: ${overallCorrect}/${total}`, scorePercent, {
-    taskName: "Glossary Check",
+  addEvidence("TERM mastery run", `${overallCorrect}/${total} term-definition pairs matched • Best streak x${state.glossaryBestStreak} • Misses ${state.glossaryMisses}`);
+  await saveProgress("glossary-lock-in", "glossary-check", `TERM memory game: ${overallCorrect}/${total}`, scorePercent, {
+    taskName: "TERM",
     durationSeconds,
     promptText: "Complete five themed glossary memory boards by matching every term with its definition.",
     extraPayload: {
@@ -3915,10 +3915,10 @@ async function bankGlossaryResults() {
   clearGlossaryTimer();
   syncMissionMode();
   showFeedbackBox(scoreRatio >= 0.8 ? "good" : scoreRatio >= 0.5 ? "warn" : "bad", [
-    `<strong>Glossary score:</strong> ${overallCorrect}/${total} term-definition pairs matched.`,
+    `<strong>TERM score:</strong> ${overallCorrect}/${total} term-definition pairs matched.`,
     `${improvedBest || firstGlossaryClear
-      ? `Best glossary result is now ${Math.round(state.stageBestScores.glossary * 100)}%.`
-      : `Best glossary result remains ${Math.round(previousBestRatio * 100)}%. This replay was saved but did not overwrite your best run.`}`,
+      ? `Best TERM result is now ${Math.round(state.stageBestScores.glossary * 100)}%.`
+      : `Best TERM result remains ${Math.round(previousBestRatio * 100)}%. This replay was saved but did not overwrite your best run.`}`,
     `Best streak: x${state.glossaryBestStreak}. Misses: ${state.glossaryMisses}.`,
     "Teachers can now inspect which terms were matched or missed in the memory run."
   ]);

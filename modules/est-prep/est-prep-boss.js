@@ -142,7 +142,7 @@ function renderBossResponseBuilder(round) {
 }
 
 function renderDecoderStage() {
-  setGameplayViewportMode(false);
+  setGameplayViewportMode(true);
   setStageMenuMode(false);
   setStageScene("challenge");
   renderFocusNav();
@@ -178,12 +178,12 @@ function renderDecoderStage() {
       </div>
     </div>
   `;
-  setText("stage-title", "VTCS Decoder");
-  setText("stage-subtitle", `Question ${roundIndex + 1} of ${rounds.length}: run question forensics before you write.`);
+  setText("stage-title", "VTCS");
+  setText("stage-subtitle", `What the question wants: run question forensics before you write. Question ${roundIndex + 1} of ${rounds.length}.`);
   renderStageRoot(`
     <div class="badge-row decoder-progress-strip">${progressBadges}</div>
     <div class="question-card">
-      <div class="kicker">VTCS Core ${roundIndex + 1}/${rounds.length}</div>
+      <div class="kicker">VTCS ${roundIndex + 1}/${rounds.length}</div>
       <h3>${escapeHtml(round.question)}</h3>
       <p>${escapeHtml(round.feedback)}</p>
     </div>
@@ -198,10 +198,12 @@ function renderDecoderStage() {
 }
 
 function renderBossStage() {
-  setGameplayViewportMode(false);
+  setGameplayViewportMode(true);
   setStageMenuMode(false);
   setStageScene("challenge");
   renderFocusNav();
+  setText("stage-title", "BOSS");
+  setText("stage-subtitle", "The final response: build, test, and justify a mark-worthy EST answer.");
   const round = state.stageDeck?.bossRound;
   if (!round) return;
   const showdownPair = getBossShowdownPair(round);
@@ -213,7 +215,7 @@ function renderBossStage() {
   `).join("");
   renderStageRoot(`
     <div class="question-card">
-      <div class="kicker">Boss Round</div>
+      <div class="kicker">BOSS</div>
       <h3>${escapeHtml(round.question)}</h3>
       <p>${escapeHtml(round.help)}</p>
     </div>
@@ -272,7 +274,7 @@ function renderBossStage() {
       <div class="choice-grid">${communityOptions}</div>
     </div>
     <div class="written-stage">
-      <button class="submit-button" type="button" onclick="window.ESTPrep.submitBoss()">Submit Boss Round</button>
+      <button class="submit-button" type="button" onclick="window.ESTPrep.submitBoss()">Submit BOSS response</button>
     </div>
   `);
 }
@@ -441,7 +443,7 @@ async function submitDecoder() {
   };
   addEvidence(`Decoded EST question ${roundIndex + 1}/${rounds.length}`, `${round.question} • Verb: ${answersByPart.verb || "not chosen"} • Topic: ${answersByPart.topic || "not chosen"} • Context: ${answersByPart.context || "not chosen"} • Structure: ${answersByPart.structure || "not chosen"}`);
   await saveProgress("decoder-drill", "decoder-breakdown", `Question ${roundIndex + 1}/${rounds.length}: ${round.question}\nVerb: ${answersByPart.verb || "not chosen"}\nTopic: ${answersByPart.topic || "not chosen"}\nContext: ${answersByPart.context || "not chosen"}\nStructure: ${answersByPart.structure || "not chosen"}`, Math.round(questionScoreRatio * 100), {
-    taskName: `VTCS Decoder Question ${roundIndex + 1}`,
+    taskName: `VTCS Question ${roundIndex + 1}`,
     durationSeconds,
     promptText: round.question,
     extraPayload: {
@@ -484,8 +486,8 @@ async function submitDecoder() {
   }
 
   state.stageBestScores.decoder = Math.max(previousBestRatio, finalScoreRatio);
-  await saveProgress("decoder-drill", "decoder-breakdown", `Final VTCS Decoder score: ${progress.correct}/${progress.totalParts} parts correct across ${progress.total} questions.`, scorePercent, {
-    taskName: "VTCS Decoder",
+  await saveProgress("decoder-drill", "decoder-breakdown", `Final VTCS score: ${progress.correct}/${progress.totalParts} parts correct across ${progress.total} questions.`, scorePercent, {
+    taskName: "VTCS",
     durationSeconds,
     promptText: "Decode multiple EST questions using verb, topic, context, and structure.",
     extraPayload: {
@@ -521,14 +523,14 @@ async function submitBoss() {
   state.lastBossReview = review;
   const scoreRatio = review.scorePercent / 100;
   awardStage("boss", { scoreRatio });
-  addEvidence("Boss round EST answer", `${round.question} • ${response || "No boss-round answer entered"}`);
+  addEvidence("BOSS EST answer", `${round.question} • ${response || "No BOSS answer entered"}`);
   await saveProgress(
     "boss-round",
     "est-response",
     `Prompt: ${round.question}\nScore: ${review.scorePercent}%\nBand: ${review.band}\nResponse: ${response || "No response entered"}`,
     review.scorePercent,
     {
-      taskName: "Boss Round",
+      taskName: "BOSS",
       durationSeconds,
       promptText: round.question,
       extraPayload: {
@@ -560,8 +562,8 @@ async function submitBoss() {
   `;
 
   showFeedbackBox(review.scorePercent >= 85 ? "good" : review.scorePercent >= 60 ? "warn" : "bad", [
-    `<strong>Boss round complete:</strong> ${review.scorePercent}% • ${review.band} band.`,
-    `Word count: ${review.wordCount}. ${escapeHtml(round.reviewSummary || "This boss round checked decoding, glossary control, answer structure, explanation, and result language.")}`,
+    `<strong>BOSS complete:</strong> ${review.scorePercent}% • ${review.band} band.`,
+    `Word count: ${review.wordCount}. ${escapeHtml(round.reviewSummary || "BOSS checked decoding, glossary control, answer structure, explanation, and result language.")}`,
     `Marker model: ${escapeHtml(round.strongAnswer)}`
   ], `
     <div class="sample-review">

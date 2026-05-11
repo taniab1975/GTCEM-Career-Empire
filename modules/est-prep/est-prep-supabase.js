@@ -249,7 +249,7 @@ function hydrateGlossarySummaryFromPayload(payload) {
   state.glossaryBatchIndex = 0;
   state.glossaryMode = "play";
   state.glossaryPulse = state.completed.glossary
-    ? "Best glossary result loaded. Replay any chamber to improve your mastery without losing the banked result."
+    ? "Best TERM result loaded. Replay any chamber to improve your mastery without losing the banked result."
     : (state.glossaryPulse || "");
   state.glossaryPulseType = state.completed.glossary ? "good" : state.glossaryPulseType;
 }
@@ -273,8 +273,8 @@ function restoreGlossaryReplayBoard() {
   state.glossaryMode = "play";
   state.glossaryStudyIndex = 0;
   state.glossaryPulse = state.completed.glossary
-    ? "Best glossary result loaded. Replay any chamber to improve your mastery without losing the banked result."
-    : "Glossary lab restored. Pick up where you left off.";
+    ? "Best TERM result loaded. Replay any chamber to improve your mastery without losing the banked result."
+    : "TERM lab restored. Pick up where you left off.";
   state.glossaryPulseType = "good";
   syncMissionMode();
   startGlossaryRoundTimer(true);

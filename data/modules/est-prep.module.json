@@ -56,22 +56,22 @@
   "gameplayLoop": [
     {
       "step": 1,
-      "label": "Decode the question",
-      "description": "Identify the command verb, topic, context term, and required structure."
-    },
-    {
-      "step": 2,
-      "label": "Recall content",
+      "label": "CORE: what to say",
       "description": "Pull the right curriculum knowledge from the current EST revision topics."
     },
     {
+      "step": 2,
+      "label": "TERM: the right language",
+      "description": "Lock in exact glossary language and definitions."
+    },
+    {
       "step": 3,
-      "label": "Build the structure",
-      "description": "Choose or assemble the answer structure that matches the command verb and marks."
+      "label": "VTCS: what the question wants",
+      "description": "Identify the command verb, topic, context term, and required structure."
     },
     {
       "step": 4,
-      "label": "Write the answer",
+      "label": "BOSS: final response",
       "description": "Produce a short response under light pressure."
     },
     {
@@ -163,17 +163,27 @@
     {
       "id": "content-check",
       "type": "revision",
-      "title": "EST Content Check",
-      "purpose": "Rehearse the assessed content from the current revision sheet using rapid topic-based checks.",
+      "title": "CORE",
+      "purpose": "Rehearse what to say from the current revision sheet using rapid topic-based checks.",
       "awards": [
         { "kind": "module-xp", "target": "est-prep", "amount": 10 },
         { "kind": "shared-stat", "target": "salary", "amount": 1 }
       ]
     },
     {
+      "id": "glossary-lock-in",
+      "type": "glossary",
+      "title": "TERM",
+      "purpose": "Strengthen the right language by practising glossary terms used as the context of EST questions.",
+      "awards": [
+        { "kind": "module-xp", "target": "est-prep", "amount": 8 },
+        { "kind": "employability-xp", "target": "communication", "amount": 4 }
+      ]
+    },
+    {
       "id": "decoder-drill",
       "type": "question-decoder",
-      "title": "VTCS Decoder",
+      "title": "VTCS",
       "purpose": "Train students to isolate the verb, topic, context, and structure in EST-style questions.",
       "awards": [
         { "kind": "module-xp", "target": "est-prep", "amount": 8 },
@@ -181,20 +191,10 @@
       ]
     },
     {
-      "id": "glossary-lock-in",
-      "type": "glossary",
-      "title": "Glossary Check",
-      "purpose": "Strengthen understanding of glossary terms used as the context of EST questions.",
-      "awards": [
-        { "kind": "module-xp", "target": "est-prep", "amount": 8 },
-        { "kind": "employability-xp", "target": "communication", "amount": 4 }
-      ]
-    },
-    {
       "id": "marking-key-challenge",
       "type": "comparison",
-      "title": "EST Boss Round",
-      "purpose": "Combine content knowledge, glossary precision, VTCS decoding, and short-answer structure in one exam-style response.",
+      "title": "BOSS",
+      "purpose": "Combine CORE content, TERM precision, VTCS decoding, and short-answer structure in one exam-style response.",
       "awards": [
         { "kind": "module-xp", "target": "est-prep", "amount": 12 },
         { "kind": "shared-stat", "target": "job_security", "amount": 1 }

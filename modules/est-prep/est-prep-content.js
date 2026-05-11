@@ -575,7 +575,7 @@ function renderArcTrainingBay(config, score) {
       <div class="panel training-bay training-campaign training-campaign--focus training-campaign--topic training-campaign--topic-${escapeHtml(topicClass)} ${isPilotLayout ? "training-campaign--pilot-layout" : ""}">
         <div class="training-hud training-hud--compact training-hud--mission">
           <div class="training-hud-copy">
-            <div class="kicker">Knowledge reactor</div>
+            <div class="kicker">CORE reactor</div>
             <h2>${escapeHtml(config.title)}</h2>
           </div>
           <div class="training-hud-status">
@@ -653,14 +653,16 @@ function renderArcTrainingBay(config, score) {
               </div>
               <article class="training-card training-card--flash ${currentAnswer ? (isCorrect ? "good" : "bad") : ""}">
                   <div class="training-question-layout ${showAnswerState ? "is-dimmed" : ""}">
-                  <div class="${escapeHtml(leadClass)}">
-                    ${itemMedia}
-                    <div class="training-card-copy">
+                  ${itemMedia ? `
+                    <div class="${escapeHtml(leadClass)}">
+                      ${itemMedia}
+                    </div>
+                  ` : ""}
+                  <div class="training-answer-column ${itemMedia ? "" : "training-answer-column--full"}">
+                    <div class="training-card-copy training-card-copy--answer">
                       <p class="training-card-prompt">${escapeHtml(currentItem?.prompt || "")}</p>
                       <p>${escapeHtml(currentStep.instruction || "Choose the strongest move.")}</p>
                     </div>
-                  </div>
-                  <div class="training-answer-column">
                     <div class="training-stack">
                       ${currentItem.options.map(option => `
                         <button
@@ -1499,7 +1501,7 @@ function renderContentTopicIntro(group) {
           <div class="written-stage topic-intro-actions">
             <div class="topic-intro-button-row">
               <button class="submit-button compact" type="button" onclick="window.ESTPrep.openStage('content')">Back</button>
-              <button class="submit-button compact" type="button" onclick="window.ESTPrep.startContentGroup()">${hasBankedResult ? "Replay topic" : "Start content check"}</button>
+              <button class="submit-button compact" type="button" onclick="window.ESTPrep.startContentGroup()">${hasBankedResult ? "Replay topic" : "Start CORE check"}</button>
               ${hasBankedResult ? '<button class="submit-button compact ghost" type="button" onclick="window.ESTPrep.resetCurrentContentTopic()">Reset topic</button>' : ""}
             </div>
             ${hasBankedResult ? `<p class="small-copy topic-intro-status">Best banked result: ${bankedPercent}% • replay from the first reactor card or reset to clear this topic.</p>` : ""}
@@ -1524,7 +1526,7 @@ function renderContentStage() {
     setText("stage-subtitle", "");
     renderStageRoot(`
       <div class="focus-card">
-        <p class="small-copy">Select one curriculum area from the topic menu above to open that focused EST content module.</p>
+        <p class="small-copy">Select one CORE curriculum area from the topic menu above to open that focused content module.</p>
       </div>
     `);
     return;
@@ -1616,13 +1618,12 @@ function renderContentStage() {
   setStagePulseVisible(false);
   const trainingConfig = getContentTrainingConfig(currentGroup.id);
   const trainingScore = getTrainingScore(trainingConfig);
-  const trainingIsArc = trainingConfig && isArcTrainingType(trainingConfig.type);
   const trainingComplete = trainingScore.total > 0 && trainingScore.correct === trainingScore.total;
-  setGameplayViewportMode(Boolean(trainingIsArc));
+  setGameplayViewportMode(true);
   setStageScene(trainingScore.total > 0 && trainingScore.correct === trainingScore.total ? "restored" : "challenge");
   setText("stage-title", "");
   setText("stage-subtitle", "");
-  if (trainingIsArc && !trainingComplete) {
+  if (trainingConfig && isArcTrainingType(trainingConfig.type) && !trainingComplete) {
     renderStageRoot(`
       ${renderTrainingBay(currentGroup)}
     `);
@@ -2145,9 +2146,9 @@ async function submitContent() {
     };
   });
   awardStage("content", { scoreRatio });
-  addEvidence("EST content check", topicSummaries.map(summary => `${summary.group.title}: ${summary.topicCorrect}/${summary.results.length} correct • ${summary.response || "No written response yet"}`).join(" || "));
-  await saveProgress("revision-arena", "revision-check", `Content check accuracy: ${correctCount}/${scoredRounds.length}`, Math.round(scoreRatio * 100), {
-    taskName: "EST Content Check",
+  addEvidence("CORE check", topicSummaries.map(summary => `${summary.group.title}: ${summary.topicCorrect}/${summary.results.length} correct • ${summary.response || "No written response yet"}`).join(" || "));
+  await saveProgress("revision-arena", "revision-check", `CORE check accuracy: ${correctCount}/${scoredRounds.length}`, Math.round(scoreRatio * 100), {
+    taskName: "CORE Check",
     durationSeconds,
     promptText: "Choose the strongest content statement for each EST revision topic.",
     extraPayload: {
@@ -2171,7 +2172,7 @@ async function submitContent() {
     additionalEvidenceRows: topicSummaries.map(summary => ({
       checkpoint: `revision-arena-${summary.group.id}`,
       evidenceType: "revision-topic-check",
-      taskName: `EST Content Check - ${summary.group.title}`,
+      taskName: `CORE Check - ${summary.group.title}`,
       durationSeconds: summary.durationSeconds,
       autoScore: summary.topicScore,
       prompt: summary.group.title,
@@ -2215,8 +2216,8 @@ async function submitContent() {
     </div>
   `;
   showFeedbackBox(scoreRatio === 1 ? "good" : scoreRatio >= 0.5 ? "warn" : "bad", [
-    `<strong>Content check:</strong> ${correctCount}/${scoredRounds.length} strongest answer points selected.`,
-    `This stage is now grouped into the ${groups.length} core EST revision strands, so students and teachers can see which content area was strongest and where the most time was spent.`,
-    "Those content points and written explanations are what later feed the decoder and boss-round responses."
+    `<strong>CORE check:</strong> ${correctCount}/${scoredRounds.length} strongest answer points selected.`,
+    `This stage is now grouped into the ${groups.length} CORE revision strands, so students and teachers can see which content area was strongest and where the most time was spent.`,
+    "Those CORE points and written explanations are what later feed VTCS and BOSS responses."
   ], sampleReviewHtml);
 }
