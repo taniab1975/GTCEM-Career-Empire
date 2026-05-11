@@ -378,7 +378,7 @@
   display: block;
   object-fit: cover;
   border-radius: 20px;
-  opacity: 0.96;
+  opacity: 1;
   filter: saturate(1.08) contrast(1.04);
   background:
     radial-gradient(circle at top right, rgba(97, 240, 255, 0.12), transparent 28%),
@@ -386,15 +386,7 @@
 }
 
 .topic-media-stage--video::after {
-  content: "";
-  position: absolute;
-  z-index: 1;
-  inset: 0;
-  border-radius: 20px;
-  background:
-    radial-gradient(circle at 50% 40%, transparent 0 42%, rgba(5, 11, 26, 0.2) 76%),
-    linear-gradient(180deg, rgba(6, 12, 28, 0.02), rgba(6, 12, 28, 0.18));
-  pointer-events: none;
+  display: none;
 }
 
 .topic-media-stage .topic-media-image {
@@ -424,6 +416,10 @@
   background: linear-gradient(180deg, transparent, var(--topic-accent-mid), transparent);
   opacity: 0.55;
   animation: topicScan 3.8s ease-in-out infinite;
+}
+
+.topic-media-stage--video .topic-media-scan {
+  display: none;
 }
 
 .topic-media-status {

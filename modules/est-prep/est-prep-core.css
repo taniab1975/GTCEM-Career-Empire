@@ -243,33 +243,6 @@ body.est-lab-mode {
   object-fit: cover;
 }
 
-.hero-video-label {
-  position: absolute;
-  left: 16px;
-  right: 16px;
-  bottom: 16px;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-  padding: 12px 14px;
-  border-radius: 18px;
-  background: rgba(7, 15, 34, 0.78);
-  border: 1px solid rgba(151, 187, 255, 0.22);
-  backdrop-filter: blur(10px);
-}
-
-.hero-video-label span {
-  color: var(--muted);
-  font-size: 0.86rem;
-  font-weight: 700;
-}
-
-.hero-video-label strong {
-  color: var(--green);
-  font-size: 0.92rem;
-}
-
 .hero-card--cinema .badge-row {
   justify-content: center;
   margin-top: 10px;
