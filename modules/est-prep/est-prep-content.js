@@ -561,7 +561,6 @@ function renderArcGuideAside({ config, groupId, scene, flow, currentStep, curren
           <p>${escapeHtml(config.memoryHook)}</p>
         </details>
       ` : ""}
-      ${renderContentGuideReminder(groupId, "aside")}
     </aside>
   `;
 }
@@ -783,6 +782,7 @@ function renderArcTrainingBay(config, score) {
             </div>
           </div>
         </div>
+        ${renderContentGuideReminder(groupId, "gameplay")}
       </div>
     </section>
   `;
