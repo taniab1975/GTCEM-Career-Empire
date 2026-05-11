@@ -1,6 +1,6 @@
 /* EST Prep stylesheet manifest. Keep imports ordered from shared rules to overrides. */
 @import url("./est-prep-core.css?v=video-overlay-clear");
-@import url("./est-prep-content.css?v=initiative-layout-v4");
+@import url("./est-prep-content.css?v=initiative-pip-position-v5");
 @import url("./est-prep-glossary.css?v=space-invaders-pressure");
 @import url("./est-prep-boss.css?v=est-media-fix");
 @import url("./est-prep-responsive.css?v=stage-map-v2");
