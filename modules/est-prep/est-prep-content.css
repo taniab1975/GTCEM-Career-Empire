@@ -1327,7 +1327,8 @@ body.est-lab-mode #stage-section.gameplay-viewport {
   z-index: 1;
   width: min(178px, 100%);
   justify-self: center;
-  align-self: end;
+  align-self: center;
+  margin-top: -18px;
   animation: estGuideFloat 4.2s ease-in-out infinite;
 }
 
@@ -2575,6 +2576,8 @@ body.est-gameplay-viewport .ce-feedback-launcher {
 
 #stage-section.gameplay-viewport .training-focus-shell--pilot .training-guide-mini-image--arc {
   width: min(122px, 100%);
+  align-self: center;
+  margin-top: -16px;
 }
 
 #stage-section.gameplay-viewport .training-focus-shell--pilot .training-guide-mini-copy p,
