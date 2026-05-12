@@ -22,6 +22,25 @@
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
+  .core-briefing-stage {
+    min-height: 620px;
+  }
+
+  .core-briefing-scene,
+  .core-briefing-scene--sources,
+  .core-briefing-scene--gameplay {
+    grid-template-columns: 1fr;
+    align-content: center;
+  }
+
+  .core-briefing-copy {
+    max-width: none;
+  }
+
+  .core-briefing-menu > div {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
   .stage-map-banner {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
@@ -228,6 +247,44 @@
 
   .topic-intro-grid {
     grid-template-columns: 1fr;
+  }
+
+  .core-briefing-stage {
+    min-height: 760px;
+  }
+
+  .core-briefing-scene {
+    inset: 54px 12px 16px;
+  }
+
+  .core-source-board,
+  .core-gameplay-layout,
+  .core-topic-cloud,
+  .core-briefing-menu > div {
+    grid-template-columns: 1fr;
+  }
+
+  .core-syllabus-card,
+  .core-book-cover {
+    min-height: 230px;
+  }
+
+  .core-video-sample {
+    min-height: 250px;
+  }
+
+  .core-gameplay-stack {
+    grid-template-columns: 1fr;
+    height: 290px;
+  }
+
+  .core-gameplay-stack figure {
+    min-height: 0;
+  }
+
+  .core-briefing-guide {
+    width: 150px;
+    opacity: 0.86;
   }
 
   .topic-media-card {

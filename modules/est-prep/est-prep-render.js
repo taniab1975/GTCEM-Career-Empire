@@ -264,6 +264,125 @@ function renderMetrics() {
   setText("metric-streak", `x${state.streak}`);
 }
 
+function renderCoreBriefingAnimation(groups) {
+  const topicGroups = (groups || []).slice(0, 6);
+  const teaserBase = "../../Assets/EST Preparation/core-briefing";
+  const topicChips = topicGroups.map((group, index) => `
+    <span class="core-topic-chip" style="--topic-index: ${index}">
+      <strong>${escapeHtml(String(index + 1).padStart(2, "0"))}</strong>
+      <small>${escapeHtml(getContentGroupShortLabel(group.id))}</small>
+    </span>
+  `).join("");
+  const topicMenuPreview = topicGroups.map((group, index) => `
+    <span>
+      <strong>${escapeHtml(String(index + 1).padStart(2, "0"))}</strong>
+      ${escapeHtml(getContentGroupShortLabel(group.id))}
+    </span>
+  `).join("");
+  const guideCharacter = EST_GUIDE_CHARACTERS?.romero?.pointing || "../../Assets/EST Preparation/guide-character/guide-pointing.png";
+  const stageRail = STAGES.map(stage => `
+    <span class="${stage.id === "content" ? "online" : ""}">
+      <strong>${escapeHtml(stage.title)}</strong>
+      <small>${stage.id === "content" ? "Online" : "Queued"}</small>
+    </span>
+  `).join("");
+
+  return `
+    <div class="core-briefing-animation" aria-label="Animated CORE module briefing">
+      <div class="core-briefing-stage">
+        <div class="core-briefing-topline">
+          <span>CORE module briefing</span>
+          <strong>What to say</strong>
+        </div>
+
+        <section class="core-briefing-scene core-briefing-scene--overview" aria-hidden="true">
+          <div class="core-briefing-copy">
+            <span class="core-briefing-kicker">Overall picture</span>
+            <h3>Four EST systems. CORE unlocks the content first.</h3>
+            <p>CORE is the curriculum knowledge: the information, examples, facts, and syllabus points you need before you can answer EST questions.</p>
+          </div>
+          <div class="core-system-console">
+            <div class="core-system-rail">${stageRail}</div>
+            <div class="core-system-orb">CORE</div>
+          </div>
+        </section>
+
+        <section class="core-briefing-scene core-briefing-scene--topics" aria-hidden="true">
+          <div class="core-briefing-copy">
+            <span class="core-briefing-kicker">CORE breakdown</span>
+            <h3>Six assessed topic reactors</h3>
+            <p>These are the topics from the Year 12 syllabus we have been learning each week and the areas being assessed in this year's EST.</p>
+          </div>
+          <div class="core-topic-cloud">${topicChips}</div>
+        </section>
+
+        <section class="core-briefing-scene core-briefing-scene--sources" aria-hidden="true">
+          <div class="core-source-board">
+            <div class="core-syllabus-card">
+              <span>SCSA curriculum map</span>
+              <strong>Highlighted EST focus areas</strong>
+              <small>Year 12 curriculum points become the CORE topic reactors.</small>
+            </div>
+            <div class="core-book-cover" aria-label="Careers and Employability General 12 Coursebook by Michael Carolan">
+              <div class="core-book-rays"></div>
+              <div class="core-book-title">Careers <span>and</span><br>Employability</div>
+              <div class="core-book-label">General 12<br><strong>Coursebook</strong></div>
+              <div class="core-book-footer">Michael<br>Carolan</div>
+            </div>
+          </div>
+          <div class="core-briefing-copy">
+            <span class="core-briefing-kicker">Source material</span>
+            <h3>Carolan text + class resources become revision content.</h3>
+            <p>The buttons below open summaries, scenarios, questions, and mini games built from the course text, class resources, and assessed syllabus points.</p>
+          </div>
+        </section>
+
+        <section class="core-briefing-scene core-briefing-scene--gameplay" aria-hidden="true">
+          <div class="core-gameplay-layout">
+            <div class="core-video-sample">
+              <video src="${teaserBase}/core-reactor-gameplay-teaser.webm" autoplay muted loop playsinline aria-label="CORE gameplay teaser showing question practice and feedback"></video>
+              <span>Live CORE gameplay teaser</span>
+            </div>
+            <div class="core-gameplay-stack">
+              <figure>
+                <img src="${teaserBase}/core-initiative-video-teaser.png" alt="Current CORE topic explainer screen">
+                <figcaption>Watch topic video</figcaption>
+              </figure>
+              <figure>
+                <img src="${teaserBase}/core-graphic-organiser-teaser.png" alt="Current CORE graphic organiser summary screen">
+                <figcaption>Open organiser</figcaption>
+              </figure>
+              <figure>
+                <img src="${teaserBase}/core-reward-community-teaser.png" alt="Current CORE salary and community fund reward screen">
+                <figcaption>Bank salary + fund</figcaption>
+              </figure>
+              <figure>
+                <img src="${teaserBase}/core-shop-teaser.png" alt="Current Career Empire shop screen">
+                <figcaption>Use the shop</figcaption>
+              </figure>
+              <figure>
+                <img src="${teaserBase}/core-community-fund-teaser.png" alt="Current community fund dashboard screen">
+                <figcaption>Track class impact</figcaption>
+              </figure>
+            </div>
+          </div>
+          <div class="core-briefing-copy">
+            <span class="core-briefing-kicker">Gameplay loop</span>
+            <h3>Watch, organise, answer, bank rewards.</h3>
+            <p>Use the topic video, open the graphic organiser summaries, answer questions for immediate feedback, and bank salary plus tax contributions for the class community fund.</p>
+          </div>
+        </section>
+
+        <img class="core-briefing-guide" src="${escapeHtml(guideCharacter)}" alt="">
+      </div>
+      <div class="core-briefing-menu" aria-hidden="true">
+        <strong>CORE topic menu</strong>
+        <div>${topicMenuPreview}</div>
+      </div>
+    </div>
+  `;
+}
+
 function renderContentModuleList() {
   const container = document.getElementById("content-module-list");
   if (!container) return;
