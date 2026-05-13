@@ -292,6 +292,21 @@ textarea {
   resize: vertical;
 }
 
+.checkbox-row {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 10px;
+  align-items: start;
+  margin: 4px 0 18px;
+  color: var(--muted);
+  line-height: 1.45;
+}
+
+.checkbox-row input {
+  width: auto;
+  margin-top: 3px;
+}
+
 input::placeholder,
 textarea::placeholder {
   color: #90a3ca;
@@ -324,6 +339,11 @@ button,
   background: rgba(255, 255, 255, 0.08);
   color: var(--text);
   border: 1px solid var(--line);
+}
+
+button:disabled {
+  opacity: 0.58;
+  cursor: wait;
 }
 
 .helper,

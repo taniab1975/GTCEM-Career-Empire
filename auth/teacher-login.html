@@ -7,7 +7,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="./auth.css">
+  <link rel="stylesheet" href="./auth.css?v=20260513-auth-simplify">
 </head>
 <body data-teacher-nav-active="teacher-login">
   <main class="auth-shell">
@@ -29,24 +29,6 @@
         <a class="workflow-link" href="./manage-students.html">Manage Students</a>
         <a class="workflow-link" href="../dashboards/teacher.html">Teacher Dashboard</a>
       </div>
-      <div class="context-strip">
-        <div class="context-card">
-          <div class="context-label">Teacher</div>
-          <div id="teacher-name-preview" class="context-value">No teacher saved yet</div>
-        </div>
-        <div class="context-card">
-          <div class="context-label">School</div>
-          <div id="teacher-school-preview" class="context-value">School not set yet</div>
-        </div>
-        <div class="context-card">
-          <div class="context-label">Current Class</div>
-          <div id="class-preview" class="context-value">No class created yet</div>
-        </div>
-        <div class="context-card">
-          <div class="context-label">Class Code</div>
-          <div id="class-code-preview" class="context-value">Pending</div>
-        </div>
-      </div>
     </section>
 
     <section class="auth-layout">
@@ -57,20 +39,8 @@
 
         <form id="teacher-login-form">
           <div class="field">
-            <label for="teacher-login-name">Full name</label>
-            <input id="teacher-login-name" type="text" placeholder="Only needed if profile recovery is required">
-          </div>
-          <div class="field">
             <label for="teacher-login-email">School email</label>
             <input id="teacher-login-email" type="email" placeholder="you@tkc.wa.edu.au" required>
-          </div>
-          <div class="field">
-            <label for="teacher-login-school">School name</label>
-            <input id="teacher-login-school" type="text" placeholder="Only needed if profile recovery is required" autocomplete="off" list="teacher-login-school-list">
-            <datalist id="teacher-login-school-list"></datalist>
-            <div id="teacher-login-school-results" class="search-results"></div>
-            <div id="teacher-login-school-feedback" class="feedback"></div>
-            <div class="helper">If your teacher profile is missing, choose your school here so it can be recreated.</div>
           </div>
           <div class="field">
             <label for="teacher-login-password">Password</label>
@@ -86,7 +56,7 @@
         </form>
         <div class="code-box" style="margin-top: 18px;">
           <p><strong>Not on an approved email domain?</strong></p>
-          <p class="muted">If you're a teacher and your email address doesn't end in `@cewa.edu.au` or `.wa.edu.au`, please email <a href="mailto:tania.byrnes@cewa.edu.au" style="color: var(--accent);">tania.byrnes@cewa.edu.au</a> to add your email to the list of eligible registrations.</p>
+          <p class="muted">Register with your school email first. New teacher accounts must confirm the verification email before they can log in.</p>
         </div>
       </article>
 
@@ -101,17 +71,16 @@
           </div>
         </article>
         <article class="info-card">
-          <h2>Prototype note</h2>
-          <p class="muted">This screen currently validates the approved teacher domain and stores a prototype login state locally.</p>
+          <h2>New teachers</h2>
+          <p class="muted">Register first, choose your school, then confirm the email Supabase sends to your school inbox.</p>
         </article>
       </div>
     </section>
   </main>
 
   <script src="../config/supabase-config.js"></script>
-  <script src="../data/schools-list.js"></script>
   <script src="../src/services/supabase-browser.js"></script>
-  <script src="./auth.js?v=20260513-teacher-nav-dashboard"></script>
+  <script src="./auth.js?v=20260513-auth-simplify"></script>
   <script src="../src/services/session-banner.js?v=20260507-session-banner"></script>
   <script src="../src/services/feedback-widget.js?v=20260513-free-text-privacy"></script>
 </body>

@@ -50,12 +50,14 @@ function writeState(patch) {
 function buildTeacherNavConfig() {
   const isDashboardPage = window.location.pathname.includes("/dashboards/");
   return isDashboardPage ? {
+    teacherSignup: "../auth/teacher-signup.html",
     teacherLogin: "../auth/teacher-login.html",
     createClass: "../auth/create-class.html",
     addStudents: "../auth/add-students.html",
     manageStudents: "../auth/manage-students.html",
     teacherDashboard: "./teacher.html"
   } : {
+    teacherSignup: "./teacher-signup.html",
     teacherLogin: "./teacher-login.html",
     createClass: "./create-class.html",
     addStudents: "./add-students.html",
@@ -69,6 +71,7 @@ function buildTeacherNavMarkup(activeKey) {
   const items = [
     { key: "teacher-dashboard", label: "Teacher Dashboard", href: paths.teacherDashboard },
     { key: "teacher-login", label: "Teacher Login", href: paths.teacherLogin },
+    { key: "teacher-signup", label: "Teacher Sign Up", href: paths.teacherSignup },
     { key: "create-class", label: "Create Class", href: paths.createClass },
     { key: "add-students", label: "Add Students", href: paths.addStudents },
     { key: "manage-students", label: "Manage Students", href: paths.manageStudents },
@@ -292,6 +295,14 @@ function generateStudentUsernameSuggestions(displayName) {
 function buildTeacherResetUrl() {
   const current = new URL(window.location.href);
   current.pathname = current.pathname.replace(/\/[^/]*$/, "/teacher-reset-password.html");
+  current.search = "";
+  current.hash = "";
+  return current.toString();
+}
+
+function buildTeacherLoginUrl() {
+  const current = new URL(window.location.href);
+  current.pathname = current.pathname.replace(/\/[^/]*$/, "/teacher-login.html");
   current.search = "";
   current.hash = "";
   return current.toString();
@@ -622,7 +633,8 @@ async function ensurePlayerProfile(supabase, studentId) {
 
 function initTeacherSignup() {
   const emailInput = document.getElementById("teacher-email");
-  const feedback = document.getElementById("teacher-email-feedback");
+  const emailFeedback = document.getElementById("teacher-email-feedback");
+  const signupFeedback = document.getElementById("teacher-signup-feedback") || emailFeedback;
   const help = document.getElementById("teacher-email-help");
   const form = document.getElementById("teacher-signup-form");
   if (!emailInput || !form) return;
@@ -630,8 +642,8 @@ function initTeacherSignup() {
   emailInput.addEventListener("input", () => {
     const email = emailInput.value.trim();
     if (!email) {
-      feedback.className = "feedback";
-      feedback.textContent = "";
+      emailFeedback.className = "feedback";
+      emailFeedback.textContent = "";
       if (help) {
         help.className = "helper";
         help.innerHTML = TEACHER_EMAIL_REQUIREMENT;
@@ -639,15 +651,15 @@ function initTeacherSignup() {
       return;
     }
     if (isAllowedTeacherEmail(email)) {
-      feedback.className = "feedback good";
-      feedback.textContent = "Approved school domain. This teacher account would be allowed.";
+      emailFeedback.className = "feedback good";
+      emailFeedback.textContent = "Approved school domain. This teacher account can be registered.";
       if (help) {
         help.className = "helper";
         help.innerHTML = TEACHER_EMAIL_REQUIREMENT;
       }
     } else {
-      feedback.className = "feedback bad";
-      feedback.textContent = "Only staff emails ending in cewa.edu.au or .wa.edu.au are allowed.";
+      emailFeedback.className = "feedback bad";
+      emailFeedback.textContent = "Only staff emails ending in cewa.edu.au or .wa.edu.au are allowed.";
       if (help) {
         help.className = "feedback warn";
         help.innerHTML = "If you're a teacher and your email address doesn't end in `@cewa.edu.au` or `.wa.edu.au`, please email <a href=\"mailto:tania.byrnes@cewa.edu.au\" style=\"color: inherit; font-weight: 700;\">tania.byrnes@cewa.edu.au</a> to add your email to the list of eligible registrations.";
@@ -661,10 +673,11 @@ function initTeacherSignup() {
     const email = emailInput.value.trim().toLowerCase();
     const schoolName = document.getElementById("teacher-school").value.trim();
     const password = document.getElementById("teacher-password").value;
+    const schoolConfirmed = document.getElementById("teacher-school-confirm")?.checked;
     const schoolFeedback = document.getElementById("teacher-school-feedback");
     if (!isAllowedTeacherEmail(email)) {
-      feedback.className = "feedback bad";
-      feedback.textContent = "Teacher signup blocked. Use an approved school email domain.";
+      signupFeedback.className = "feedback bad";
+      signupFeedback.textContent = "Teacher signup blocked. Use an approved school email domain.";
       return;
     }
     const validSchools = JSON.parse(document.getElementById("teacher-school").dataset.validSchools || "[]");
@@ -675,21 +688,29 @@ function initTeacherSignup() {
       }
       return;
     }
+    if (!schoolConfirmed) {
+      if (schoolFeedback) {
+        schoolFeedback.className = "feedback bad";
+        schoolFeedback.textContent = "Confirm that the selected school is correct before registering.";
+      }
+      return;
+    }
     const supabase = await getSupabaseClientOrNull();
     if (!supabase) {
-      feedback.className = "feedback bad";
-      feedback.textContent = "Supabase is not configured yet. Add your config file before using real signup.";
+      signupFeedback.className = "feedback bad";
+      signupFeedback.textContent = "Supabase is not configured yet. Add your config file before using real signup.";
       return;
     }
 
     try {
-      feedback.className = "feedback warn";
-      feedback.textContent = "Creating teacher account...";
+      signupFeedback.className = "feedback warn";
+      signupFeedback.textContent = "Creating teacher account and sending verification email...";
 
       const { data: authData, error: authError } = await supabase.auth.signUp({
         email,
         password,
         options: {
+          emailRedirectTo: buildTeacherLoginUrl(),
           data: {
             full_name: fullName,
             school_name: schoolName
@@ -718,14 +739,14 @@ function initTeacherSignup() {
       });
 
       const needsEmailConfirmation = !authData?.session;
-      feedback.className = "feedback good";
-      feedback.textContent = needsEmailConfirmation
-        ? "Teacher account created. Supabase may require email confirmation before login, depending on your auth settings."
+      signupFeedback.className = "feedback good";
+      signupFeedback.textContent = needsEmailConfirmation
+        ? `Teacher account created for ${schoolName}. Check your school email and confirm it before logging in.`
         : "Teacher account created and signed in. Next step: create a class.";
       initAuthContext();
     } catch (error) {
-      feedback.className = "feedback bad";
-      feedback.textContent = error.message || "Teacher signup failed.";
+      signupFeedback.className = "feedback bad";
+      signupFeedback.textContent = error.message || "Teacher signup failed.";
     }
   });
 }
@@ -759,9 +780,10 @@ function initTeacherLogin() {
 
       if (error) throw error;
 
+      const storedTeacher = readState().teacher || {};
       const fallback = {
-        fullName: document.getElementById("teacher-login-name")?.value.trim(),
-        schoolName: document.getElementById("teacher-login-school")?.value.trim()
+        fullName: storedTeacher.fullName || email,
+        schoolName: storedTeacher.schoolName || ""
       };
       let teacher = await getTeacherProfileByEmail(supabase, email);
       if (!teacher) {
@@ -936,6 +958,7 @@ function initStudentLogin() {
 
   form.addEventListener("submit", async (event) => {
     event.preventDefault();
+    const submitButton = form.querySelector("button[type='submit']");
     const username = usernameInput.value.trim();
     if (!isValidStudentUsername(username)) {
       feedback.className = "feedback bad";
@@ -951,6 +974,10 @@ function initStudentLogin() {
     }
 
     try {
+      if (submitButton) {
+        submitButton.disabled = true;
+        submitButton.textContent = "Logging in...";
+      }
       const student = await getStudentProfileByUsername(supabase, username);
       if (!student) {
         throw new Error("Incorrect username.");
@@ -996,11 +1023,15 @@ function initStudentLogin() {
       syncStudentPlayerSession(student);
 
       feedback.className = "feedback good";
-      feedback.textContent = `Welcome, ${student.display_name}. Redirecting you to your student hub.`;
-      redirectAfterDelay("../dashboards/student.html");
+      feedback.textContent = `Welcome, ${student.display_name}. Opening your student hub.`;
+      window.location.href = "../dashboards/student.html";
     } catch (error) {
       feedback.className = "feedback bad";
       feedback.textContent = error.message || "Student login failed.";
+      if (submitButton) {
+        submitButton.disabled = false;
+        submitButton.textContent = "Student Log In";
+      }
     }
   });
 }

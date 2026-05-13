@@ -7,7 +7,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="./auth.css">
+  <link rel="stylesheet" href="./auth.css?v=20260513-auth-simplify">
 </head>
 <body>
   <main class="auth-shell">
@@ -15,7 +15,6 @@
       <div class="brand"><div class="brand-mark">CE</div><div>Student Login</div></div>
       <div class="top-links">
         <a class="ghost-link" href="./index.html">Auth Home</a>
-        <a class="ghost-link" href="../dashboards/student.html">Student Dashboard</a>
         <a class="ghost-link" href="../shop/index.html">Global Shop</a>
       </div>
     </div>
@@ -38,19 +37,11 @@
           </div>
           <div class="button-row">
             <button class="button-primary" type="submit">Student Log In</button>
-            <button class="button-secondary" type="button" data-demo-student-launch="true" data-demo-student-target="../dashboards/student.html">Try Demo Student</button>
           </div>
         </form>
       </article>
 
       <div class="stack">
-        <article class="info-card">
-          <h2>Try before you register</h2>
-          <p class="muted">Teachers can open a fully playable demo student experience here. It uses a local-only profile, so no real student information or progress is saved.</p>
-          <div class="button-row">
-            <button class="button-primary" type="button" data-demo-student-launch="true" data-demo-student-target="../dashboards/student.html">Open demo student hub</button>
-          </div>
-        </article>
         <article class="info-card">
           <h2>Username rules</h2>
           <div class="list-box">
@@ -69,7 +60,7 @@
 
   <script src="../config/supabase-config.js"></script>
   <script src="../src/services/supabase-browser.js"></script>
-  <script src="./auth.js?v=20260513-teacher-nav-dashboard"></script>
+  <script src="./auth.js?v=20260513-auth-simplify"></script>
   <script src="../src/services/session-banner.js?v=20260507-session-banner"></script>
   <script src="../src/services/feedback-widget.js?v=20260513-free-text-privacy"></script>
 </body>

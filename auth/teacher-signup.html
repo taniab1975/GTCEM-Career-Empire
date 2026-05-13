@@ -7,9 +7,9 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="./auth.css">
+  <link rel="stylesheet" href="./auth.css?v=20260513-auth-simplify">
 </head>
-<body data-teacher-nav-active="teacher-login">
+<body data-teacher-nav-active="teacher-signup">
   <main class="auth-shell">
     <div class="auth-topbar">
       <div class="brand"><div class="brand-mark">CE</div><div>Teacher Sign Up</div></div>
@@ -22,7 +22,8 @@
     <section class="workflow-strip">
       <div class="workflow-title">Teacher tools</div>
       <div class="workflow-links">
-        <a class="workflow-link active" href="./teacher-login.html">Teacher Login</a>
+        <a class="workflow-link" href="./teacher-login.html">Teacher Login</a>
+        <a class="workflow-link active" href="./teacher-signup.html">Teacher Sign Up</a>
         <a class="workflow-link" href="./create-class.html">Create Class</a>
         <a class="workflow-link" href="./add-students.html">Add Students</a>
         <a class="workflow-link" href="./manage-students.html">Manage Students</a>
@@ -52,7 +53,7 @@
       <article class="form-card">
         <span class="eyebrow">Restricted Registration</span>
         <h1>Register as a teacher using an approved school email.</h1>
-        <p class="lead">Only staff with an email ending in `cewa.edu.au` or `.wa.edu.au` can create teacher accounts.</p>
+        <p class="lead">Only staff with an email ending in `cewa.edu.au` or `.wa.edu.au` can create teacher accounts. New accounts must confirm the verification email before logging in.</p>
 
         <form id="teacher-signup-form">
           <div class="field">
@@ -73,19 +74,24 @@
             <div id="teacher-school-feedback" class="feedback"></div>
             <div class="helper">Start typing the first few letters of your school name to filter the approved school list.</div>
           </div>
+          <label class="checkbox-row">
+            <input id="teacher-school-confirm" type="checkbox" required>
+            <span>I confirm this is my correct school. If it is wrong, my teacher access may need to be manually fixed.</span>
+          </label>
           <div class="field">
             <label for="teacher-password">Password</label>
             <input id="teacher-password" type="password" placeholder="Create a secure password" required>
-            <div class="helper">Final implementation should use a proper backend and password hashing.</div>
+            <div class="helper">Use a password you do not use for school systems.</div>
           </div>
+          <div id="teacher-signup-feedback" class="feedback"></div>
           <div class="button-row">
             <button class="button-primary" type="submit">Create Teacher Account</button>
-            <a class="button button-secondary" href="./create-class.html">Next: Create Class</a>
+            <a class="button button-secondary" href="./teacher-login.html">Back To Login</a>
           </div>
         </form>
         <div class="code-box" style="margin-top: 18px;">
           <p><strong>Not on an approved email domain?</strong></p>
-          <p class="muted">If you're a teacher and your email address doesn't end in `@cewa.edu.au` or `.wa.edu.au`, please email <a href="mailto:tania.byrnes@cewa.edu.au" style="color: var(--accent);">tania.byrnes@cewa.edu.au</a> to add your email to the list of eligible registrations.</p>
+          <p class="muted">If you're a teacher and your email address doesn't end in `@cewa.edu.au` or `.wa.edu.au`, please email <a href="mailto:tania.byrnes@cewa.edu.au" style="color: var(--accent);">tania.byrnes@cewa.edu.au</a> to request manual review.</p>
         </div>
       </article>
 
@@ -108,7 +114,7 @@
   <script src="../config/supabase-config.js"></script>
   <script src="../data/schools-list.js"></script>
   <script src="../src/services/supabase-browser.js"></script>
-  <script src="./auth.js?v=20260513-teacher-nav-dashboard"></script>
+  <script src="./auth.js?v=20260513-auth-simplify"></script>
   <script src="../src/services/session-banner.js?v=20260507-session-banner"></script>
   <script src="../src/services/feedback-widget.js?v=20260513-free-text-privacy"></script>
 </body>
