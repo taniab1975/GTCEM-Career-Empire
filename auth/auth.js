@@ -50,13 +50,13 @@ function writeState(patch) {
 function buildTeacherNavConfig() {
   const isDashboardPage = window.location.pathname.includes("/dashboards/");
   return isDashboardPage ? {
-    teacherHub: "../auth/teacher-login.html",
+    teacherLogin: "../auth/teacher-login.html",
     createClass: "../auth/create-class.html",
     addStudents: "../auth/add-students.html",
     manageStudents: "../auth/manage-students.html",
     teacherDashboard: "./teacher.html"
   } : {
-    teacherHub: "./teacher-login.html",
+    teacherLogin: "./teacher-login.html",
     createClass: "./create-class.html",
     addStudents: "./add-students.html",
     manageStudents: "./manage-students.html",
@@ -67,11 +67,11 @@ function buildTeacherNavConfig() {
 function buildTeacherNavMarkup(activeKey) {
   const paths = buildTeacherNavConfig();
   const items = [
-    { key: "teacher-hub", label: "Teacher Hub", href: paths.teacherHub },
+    { key: "teacher-dashboard", label: "Teacher Dashboard", href: paths.teacherDashboard },
+    { key: "teacher-login", label: "Teacher Login", href: paths.teacherLogin },
     { key: "create-class", label: "Create Class", href: paths.createClass },
     { key: "add-students", label: "Add Students", href: paths.addStudents },
     { key: "manage-students", label: "Manage Students", href: paths.manageStudents },
-    { key: "teacher-stats-dashboard", label: "Teacher Stats Dashboard", href: paths.teacherDashboard },
     { key: "test-student", label: "Play as Test Student", href: "#", testLaunch: true }
   ];
 
