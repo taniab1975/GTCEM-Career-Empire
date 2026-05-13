@@ -2478,6 +2478,62 @@ textarea {
   font-weight: 800;
 }
 
+.skill-star-review-status--approved {
+  color: #bbf7d0;
+  background: rgba(34, 197, 94, 0.12);
+  border-color: rgba(34, 197, 94, 0.32);
+}
+
+.skill-star-review-status--rejected {
+  display: grid;
+  gap: 6px;
+  color: #fecaca;
+  background: rgba(248, 113, 113, 0.12);
+  border-color: rgba(248, 113, 113, 0.34);
+}
+
+.skill-star-review-status--rejected strong,
+.skill-star-review-status--rejected span {
+  display: block;
+}
+
+.skill-star-resubmit {
+  justify-self: start;
+  border: 1px solid rgba(248, 113, 113, 0.38);
+  border-radius: 8px;
+  padding: 7px 10px;
+  background: rgba(248, 113, 113, 0.15);
+  color: #ffe1e1;
+  font: inherit;
+  font-size: 12px;
+  font-weight: 900;
+  cursor: pointer;
+}
+
+.student-review-notices-panel[hidden] {
+  display: none;
+}
+
+.student-review-notices {
+  display: grid;
+  gap: 10px;
+}
+
+.student-review-notice {
+  display: grid;
+  gap: 4px;
+  border: 1px solid rgba(251, 191, 36, 0.28);
+  border-radius: 8px;
+  padding: 12px;
+  background: rgba(251, 191, 36, 0.08);
+}
+
+.student-review-notice p,
+.student-review-notice small {
+  margin: 0;
+  color: var(--muted);
+}
+
 .skill-star-builder-field {
   display: grid;
   gap: 8px;

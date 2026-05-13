@@ -398,6 +398,26 @@ h1 { font-size: clamp(34px, 5vw, 56px); line-height: 0.95; margin: 18px 0 16px; 
   gap: 6px;
 }
 
+.free-text-privacy-note {
+  display: grid;
+  gap: 6px;
+  margin-top: 12px;
+  padding: 12px 14px;
+  border-radius: 8px;
+  border: 1px solid rgba(251, 191, 36, 0.34);
+  background: rgba(251, 191, 36, 0.1);
+  color: #fde68a;
+  line-height: 1.4;
+}
+
+.free-text-privacy-note strong {
+  color: #fef3c7;
+}
+
+.free-text-privacy-note span {
+  color: #f8e7b2;
+}
+
 textarea {
   width: 100%;
   min-height: 120px;

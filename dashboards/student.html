@@ -7,7 +7,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="./dashboard.css?v=20260508-clear-subskill-logos">
+  <link rel="stylesheet" href="./dashboard.css?v=20260513-student-review-status">
 </head>
 <body class="student-dashboard-page">
   <main class="page-shell">
@@ -144,6 +144,14 @@
       </div>
     </details>
 
+    <article id="student-review-notices-panel" class="panel student-review-notices-panel" hidden>
+      <div class="section-title">
+        <h2>Teacher Review Checks</h2>
+        <p>Shared response pool updates</p>
+      </div>
+      <div id="student-review-notices" class="student-review-notices"></div>
+    </article>
+
     <details class="panel dashboard-dropdown" open>
       <summary class="section-title dashboard-dropdown-summary">
         <span>
@@ -164,8 +172,8 @@
   <script src="../config/supabase-config.js"></script>
   <script src="../src/services/supabase-browser.js"></script>
   <script src="../src/services/response-moderation.js?v=student-review-queue-v1"></script>
-  <script src="./dashboard.js?v=20260508-ecc-future"></script>
+  <script src="./dashboard.js?v=20260513-student-review-status"></script>
   <script src="../src/services/session-banner.js?v=20260507-session-banner"></script>
-  <script src="../src/services/feedback-widget.js?v=20260507-session-banner"></script>
+  <script src="../src/services/feedback-widget.js?v=20260513-free-text-privacy"></script>
 </body>
 </html>

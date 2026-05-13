@@ -693,6 +693,10 @@ function createStoreRequestModal() {
         </div>
         <div>
           <label for="shop-request-message">Why should this be added?</label>
+          <div class="shop-request-privacy-note">
+            <strong>Note: your teacher can check anything you enter here.</strong>
+            <span>Do not include surnames, student emails, phone numbers, social handles, exact workplace names, suburbs, addresses, or anything that identifies you or someone else. Use general wording such as "a fast-food workplace" or "a local retail store".</span>
+          </div>
           <textarea id="shop-request-message" placeholder="Describe the item, why students would want it, and how it fits the shop."></textarea>
         </div>
         <div>

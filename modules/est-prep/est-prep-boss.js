@@ -122,6 +122,7 @@ function renderBossResponseBuilder(round) {
         <p>Build before you write</p>
       </div>
       <p class="small-copy">Use the scaffold blocks to build a stronger answer before drafting the final response.</p>
+      ${renderFreeTextPrivacyNotice()}
       <div class="builder-grid">
         ${lines.map((line, index) => `
           <div class="written-stage">
@@ -248,6 +249,7 @@ function renderBossStage() {
         <div class="written-stage">
           <strong>Why?</strong>
           <p class="small-copy">Explain what makes the stronger sample better.</p>
+          ${renderFreeTextPrivacyNotice()}
           <textarea id="boss-showdown-reason" placeholder="Explain what the stronger sample includes or does better..." oninput="window.ESTPrep.setBossShowdownReason(this.value)">${escapeHtml(state.answers.bossShowdownReason || "")}</textarea>
         </div>
       </div>
@@ -263,6 +265,7 @@ function renderBossStage() {
     <div class="written-stage">
       <strong>Final simulation response</strong>
       <p class="small-copy">${escapeHtml(round.scaffold)}</p>
+      ${renderFreeTextPrivacyNotice()}
       <textarea id="boss-response" placeholder="Write your EST-style answer here...">${escapeHtml(state.answers.bossText || "")}</textarea>
     </div>
     <div class="panel">

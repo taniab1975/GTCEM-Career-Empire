@@ -663,6 +663,15 @@ function renderStageRoot(html) {
   if (root) root.innerHTML = html;
 }
 
+function renderFreeTextPrivacyNotice() {
+  return `
+    <div class="skill-star-builder-privacy-note est-free-text-privacy-note">
+      <strong>Note: your teacher can check anything you enter here.</strong>
+      <span>Do not include surnames, student emails, phone numbers, social handles, exact workplace names, suburbs, addresses, or anything that identifies you or someone else. Use general wording such as "a fast-food workplace" or "a local retail store".</span>
+    </div>
+  `;
+}
+
 function renderOptionGroup(groupKey, title, options) {
   return `
     <div class="panel">

@@ -1,6 +1,10 @@
 const AUTH_DEMO_STATE_KEY = "career-empire-auth-demo";
 const PLAYER_SESSION_KEY = "career-empire-session";
 const MODULE_ID = "lifelong-learning";
+const FREE_TEXT_PRIVACY_NOTICE = {
+  title: "Note: your teacher can check anything you enter here.",
+  body: 'Do not include surnames, student emails, phone numbers, social handles, exact workplace names, suburbs, addresses, or anything that identifies you or someone else. Use general wording such as "a fast-food workplace" or "a local retail store".'
+};
 
 const SKILL_LOGOS = {
   communication: "../../Assets/employability-logos/main/communication.png",
@@ -361,6 +365,15 @@ function escapeHtml(value) {
     .replaceAll(">", "&gt;")
     .replaceAll('"', "&quot;")
     .replaceAll("'", "&#39;");
+}
+
+function renderFreeTextPrivacyNotice() {
+  return `
+    <div class="free-text-privacy-note">
+      <strong>${escapeHtml(FREE_TEXT_PRIVACY_NOTICE.title)}</strong>
+      <span>${escapeHtml(FREE_TEXT_PRIVACY_NOTICE.body)}</span>
+    </div>
+  `;
 }
 
 function clamp(value, min, max) {
@@ -872,6 +885,7 @@ function renderRoundStage() {
     <div class="stage-block">
       <span class="eyebrow">Teacher-Visible Evidence</span>
       <h3>${escapeHtml(round.reflectionLabel)}</h3>
+      ${renderFreeTextPrivacyNotice()}
       <textarea id="chapter-reflection" placeholder="${escapeHtml(round.reflectionPlaceholder)}"></textarea>
       <div class="button-row">
         <button id="submit-chapter" class="primary-button" type="button">Lock In This Round</button>

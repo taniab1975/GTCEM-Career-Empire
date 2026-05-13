@@ -17,6 +17,17 @@ const STUDENT_STATUS_ICONS = {
 
 const TEACHER_STATS_FILTER_KEY = "career-empire-teacher-stats-dashboard-filter";
 const LEGACY_TEACHER_FILTER_KEY = "career-empire-teacher-dashboard-filter";
+const STUDENT_FREE_TEXT_PRIVACY_NOTICE = {
+  title: "Note: your teacher can check anything you enter here.",
+  body: 'Do not include surnames, student emails, phone numbers, social handles, exact workplace names, suburbs, addresses, or anything that identifies you or someone else. Use general wording such as "a fast-food workplace" or "a local retail store".'
+};
+const RESPONSE_REJECTION_REASONS = [
+  "Contains personal or identifying information",
+  "Contains profanity or inappropriate language",
+  "Contains workplace or location details",
+  "Not suitable for the shared response pool",
+  "Other teacher concern"
+];
 
 async function loadEmployabilitySkills() {
   const response = await fetch("../data/employability-skills.json");
@@ -41,6 +52,10 @@ function readJsonStorage(key, fallback) {
   } catch (_) {
     return fallback;
   }
+}
+
+function normaliseWhitespace(value) {
+  return String(value || "").replace(/\s+/g, " ").trim();
 }
 
 function getPlayers() {
@@ -656,8 +671,12 @@ const STAR_CONTEXT_EXAMPLES = {
 
 let starBuilderState = null;
 
-function getSkillStarEvidenceMap() {
+function getSkillStarEvidenceEntries() {
   const entries = readJsonStorage(STAR_EVIDENCE_STORAGE_KEY, []);
+  return Array.isArray(entries) ? entries : [];
+}
+
+function getSkillStarEvidenceMap(entries = getSkillStarEvidenceEntries()) {
   return (Array.isArray(entries) ? entries : []).reduce((acc, entry) => {
     if (!entry?.skillId) return acc;
     acc[entry.skillId] = acc[entry.skillId] || [];
@@ -667,13 +686,21 @@ function getSkillStarEvidenceMap() {
 }
 
 function saveSkillStarEvidence(entry) {
-  const entries = readJsonStorage(STAR_EVIDENCE_STORAGE_KEY, []);
-  const safeEntries = Array.isArray(entries) ? entries : [];
-  localStorage.setItem(STAR_EVIDENCE_STORAGE_KEY, JSON.stringify([entry, ...safeEntries]));
+  const entries = getSkillStarEvidenceEntries();
+  localStorage.setItem(STAR_EVIDENCE_STORAGE_KEY, JSON.stringify([entry, ...entries]));
+}
+
+function replaceSkillStarEvidence(previousEntryId, nextEntry) {
+  const entries = getSkillStarEvidenceEntries();
+  localStorage.setItem(STAR_EVIDENCE_STORAGE_KEY, JSON.stringify([nextEntry, ...entries.filter(entry => entry.id !== previousEntryId)]));
+}
+
+function isSkillStarEvidenceActive(entry) {
+  return String(entry?.reviewStatus || "pending_review") !== "rejected";
 }
 
 function calculateSkillEvidenceProgress(entries) {
-  return clampPercent((entries || []).length * STAR_EVIDENCE_SKILL_POINTS);
+  return clampPercent((entries || []).filter(isSkillStarEvidenceActive).length * STAR_EVIDENCE_SKILL_POINTS);
 }
 
 function applySkillEvidenceProgress(progressMap, evidenceMap) {
@@ -758,6 +785,105 @@ async function queueSkillStarEvidenceForReview(entry) {
     responseText: entry.reviewText || createStarEvidenceReviewText(entry),
     student: context.student
   });
+}
+
+async function getCurrentStudentResponseReviews() {
+  const authState = getAuthPrototypeState();
+  const studentId = authState?.studentLogin?.id;
+  if (!studentId) return [];
+
+  const supabase = await getSupabaseClientOrNull();
+  if (!supabase) return [];
+
+  const { data, error } = await supabase
+    .from("student_response_reviews")
+    .select("id, evidence_type, task_key, task_label, prompt_text, raw_response_text, status, reviewer_note, reviewed_at, created_at, flags, flag_notes")
+    .eq("student_id", studentId)
+    .order("created_at", { ascending: false })
+    .limit(80);
+
+  if (error) {
+    console.error("Student response review status could not be loaded", error);
+    return [];
+  }
+  return data || [];
+}
+
+function findReviewForStarEntry(entry, reviewRows = []) {
+  return reviewRows.find(row => row.id === entry.reviewId)
+    || reviewRows.find(row => row.evidence_type === "employability-star" && String(row.task_key || "").includes(entry.id))
+    || reviewRows.find(row => row.evidence_type === "employability-star" && normaliseWhitespace(row.raw_response_text) === normaliseWhitespace(entry.reviewText || createStarEvidenceReviewText(entry)));
+}
+
+function syncSkillStarEvidenceWithReviews(entries = [], reviewRows = []) {
+  let changed = false;
+  const syncedEntries = entries.map(entry => {
+    const review = findReviewForStarEntry(entry, reviewRows);
+    if (!review) return entry;
+    const next = {
+      ...entry,
+      reviewId: review.id,
+      reviewStatus: review.status || entry.reviewStatus || "pending_review",
+      reviewerNote: review.reviewer_note || "",
+      reviewedAt: review.reviewed_at || null
+    };
+    changed = changed
+      || next.reviewId !== entry.reviewId
+      || next.reviewStatus !== entry.reviewStatus
+      || next.reviewerNote !== entry.reviewerNote
+      || next.reviewedAt !== entry.reviewedAt;
+    return next;
+  });
+
+  if (changed) {
+    localStorage.setItem(STAR_EVIDENCE_STORAGE_KEY, JSON.stringify(syncedEntries));
+  }
+  return syncedEntries;
+}
+
+function getStudentReviewNoticeText(row) {
+  const reason = getRejectionReasonFromNote(row.reviewer_note || "");
+  const flags = getResponseReviewFlags(row);
+  const isPersonalInfo = reason.toLowerCase().includes("personal")
+    || reason.toLowerCase().includes("workplace")
+    || reason.toLowerCase().includes("location")
+    || flags.some(flag => ["possible_email", "possible_phone", "possible_student_name", "possible_workplace_identifier", "possible_location", "possible_context_identifier"].includes(flag));
+  const hasLanguageConcern = reason.toLowerCase().includes("profanity")
+    || reason.toLowerCase().includes("inappropriate")
+    || flags.includes("possible_profanity");
+  const reasonText = isPersonalInfo
+    ? "because it may include personal or identifying information"
+    : hasLanguageConcern
+      ? "because it may include inappropriate language"
+    : reason
+      ? `because: ${reason.toLowerCase()}`
+      : "because it was not suitable for sharing";
+  return `This response was saved for your teacher, but it was not added to the shared response pool ${reasonText}.`;
+}
+
+function renderStudentResponseReviewNotices(reviewRows = []) {
+  const panel = document.getElementById("student-review-notices-panel");
+  const container = document.getElementById("student-review-notices");
+  if (!panel || !container) return;
+
+  const rejectedRows = reviewRows
+    .filter(row => row.status === "rejected" && row.evidence_type !== "employability-star")
+    .slice(0, 5);
+
+  if (!rejectedRows.length) {
+    panel.hidden = true;
+    container.innerHTML = "";
+    return;
+  }
+
+  panel.hidden = false;
+  container.innerHTML = rejectedRows.map(row => `
+    <div class="student-review-notice">
+      <strong>${escapeHtml(row.task_label || "Written response")}</strong>
+      <p>${escapeHtml(getStudentReviewNoticeText(row))}</p>
+      <small>${escapeHtml(formatDateTime(row.reviewed_at || row.created_at))}</small>
+    </div>
+  `).join("");
 }
 
 function bankStarEvidenceSalary(entry) {
@@ -1665,6 +1791,26 @@ function getResponseReviewFlagLabel(flag) {
   return labels[flag] || flag.replaceAll("_", " ");
 }
 
+function getRejectionReasonFromNote(note = "") {
+  const value = String(note || "");
+  return RESPONSE_REJECTION_REASONS.find(reason => value === reason || value.startsWith(`${reason}:`)) || "";
+}
+
+function getRejectionDetailsFromNote(note = "") {
+  const value = String(note || "");
+  const reason = getRejectionReasonFromNote(value);
+  return reason ? value.replace(reason, "").replace(/^:\s*/, "").trim() : value;
+}
+
+function buildReviewerNote(reviewStatus, reason = "", details = "") {
+  const cleanReason = String(reason || "").trim();
+  const cleanDetails = String(details || "").trim();
+  if (reviewStatus === "rejected" && cleanReason) {
+    return cleanDetails ? `${cleanReason}: ${cleanDetails}` : cleanReason;
+  }
+  return cleanDetails;
+}
+
 function renderTeacherResponseReviewInbox(rows = []) {
   const container = document.getElementById("teacher-response-review-list");
   if (!container) return;
@@ -1684,6 +1830,8 @@ function renderTeacherResponseReviewInbox(rows = []) {
     const studentName = row.students?.display_name || row.students?.username || "Student";
     const classLabel = row.classes?.class_code || row.classes?.name || "Class";
     const approvedText = row.approved_response_text || row.raw_response_text || "";
+    const selectedRejectionReason = getRejectionReasonFromNote(row.reviewer_note || "");
+    const reviewerNoteDetails = getRejectionDetailsFromNote(row.reviewer_note || "");
     const statusLabel = row.status === "pending_review"
       ? "Pending review"
       : row.status === "approved"
@@ -1717,8 +1865,13 @@ function renderTeacherResponseReviewInbox(rows = []) {
         <div class="response-review-form">
           <label>Approved anonymous version</label>
           <textarea data-review-field="approvedText">${escapeHtml(approvedText)}</textarea>
+          <label>Rejection reason</label>
+          <select data-review-field="rejectionReason">
+            <option value="">Choose only when rejecting...</option>
+            ${RESPONSE_REJECTION_REASONS.map(reason => `<option value="${escapeHtml(reason)}" ${reason === selectedRejectionReason ? "selected" : ""}>${escapeHtml(reason)}</option>`).join("")}
+          </select>
           <label>Teacher note</label>
-          <input type="text" data-review-field="reviewerNote" value="${escapeHtml(row.reviewer_note || "")}" placeholder="Optional internal note">
+          <input type="text" data-review-field="reviewerNote" value="${escapeHtml(reviewerNoteDetails)}" placeholder="Optional internal note">
         </div>
         <div class="module-actions">
           <button class="module-link" type="button" data-review-action="approve">Approve Edited Version</button>
@@ -1739,18 +1892,24 @@ function renderTeacherResponseReviewInbox(rows = []) {
 
       const statusEl = card.querySelector("[data-review-status]");
       const approvedText = card.querySelector('[data-review-field="approvedText"]')?.value.trim() || "";
+      const rejectionReason = card.querySelector('[data-review-field="rejectionReason"]')?.value.trim() || "";
       const reviewerNote = card.querySelector('[data-review-field="reviewerNote"]')?.value.trim() || "";
       if (action === "approve" && !approvedText) {
         if (statusEl) statusEl.innerHTML = "<strong>Error:</strong> Add an approved version before approving.";
         return;
       }
+      if (action === "reject" && !rejectionReason) {
+        if (statusEl) statusEl.innerHTML = "<strong>Error:</strong> Choose a rejection reason before rejecting.";
+        return;
+      }
 
       if (statusEl) statusEl.innerHTML = "<strong>Updating...</strong>";
       try {
+        const nextStatus = action === "approve" ? "approved" : "rejected";
         await updateStudentResponseReview(card.dataset.responseReviewId, {
-          status: action === "approve" ? "approved" : "rejected",
+          status: nextStatus,
           approvedText,
-          reviewerNote
+          reviewerNote: buildReviewerNote(nextStatus, rejectionReason, reviewerNote)
         });
         await initDashboards();
       } catch (error) {
@@ -2167,6 +2326,24 @@ function renderStarRows(rows) {
   `).join("");
 }
 
+function getSkillStarReviewStatusMarkup(entry) {
+  const status = String(entry?.reviewStatus || "pending_review");
+  if (status === "approved") {
+    return '<p class="skill-star-review-status skill-star-review-status--approved">Teacher approved this for anonymous examples.</p>';
+  }
+  if (status === "rejected") {
+    const reason = getRejectionReasonFromNote(entry.reviewerNote || "") || "Teacher requested changes";
+    return `
+      <div class="skill-star-review-status skill-star-review-status--rejected">
+        <strong>Teacher did not approve this for sharing.</strong>
+        <span>${escapeHtml(reason)}. Edit and resubmit a safer version.</span>
+        <button class="skill-star-resubmit" type="button" data-star-resubmit-entry-id="${escapeHtml(entry.id)}">Edit and resubmit</button>
+      </div>
+    `;
+  }
+  return '<p class="skill-star-review-status">Teacher review pending before this can be shared as an example.</p>';
+}
+
 function renderSkills(skillsData, targetId, progressMap, skillEvidenceMap = {}) {
   const container = document.getElementById(targetId);
   if (!container) return;
@@ -2185,7 +2362,7 @@ function renderSkills(skillsData, targetId, progressMap, skillEvidenceMap = {}) 
           <time>${escapeHtml(formatDateTime(entry.createdAt))}</time>
         </div>
         <strong class="skill-star-summary">${escapeHtml(entry.summary || createStarEvidenceSummary(entry))}</strong>
-        <p class="skill-star-review-status">Teacher review pending before this can be shared as an example.</p>
+        ${getSkillStarReviewStatusMarkup(entry)}
         <div class="skill-star-grid">
           ${renderStarRows([
             { label: "S", term: "Situation", text: entry.responses?.situation || "" },
@@ -2277,6 +2454,14 @@ function renderSkills(skillsData, targetId, progressMap, skillEvidenceMap = {}) 
       );
     });
   });
+
+  container.querySelectorAll("[data-star-resubmit-entry-id]").forEach(button => {
+    button.addEventListener("click", () => {
+      const entries = getSkillStarEvidenceEntries();
+      const entry = entries.find(item => item.id === button.dataset.starResubmitEntryId);
+      if (entry) openSkillStarBuilder(entry.skillId, entry.skillTitle, entry.contextId, entry);
+    });
+  });
 }
 
 function ensureSkillStarBuilderModal() {
@@ -2290,18 +2475,19 @@ function ensureSkillStarBuilderModal() {
   return modal;
 }
 
-function openSkillStarBuilder(skillId, skillTitle, contextId) {
+function openSkillStarBuilder(skillId, skillTitle, contextId, existingEntry = null) {
   starBuilderState = {
     skillId,
     skillTitle,
     contextId,
     stepIndex: 0,
     responses: {
-      situation: "",
-      task: "",
-      actions: "",
-      results: ""
+      situation: existingEntry?.responses?.situation || "",
+      task: existingEntry?.responses?.task || "",
+      actions: existingEntry?.responses?.actions || "",
+      results: existingEntry?.responses?.results || ""
     },
+    resubmittingEntryId: existingEntry?.id || null,
     error: "",
     status: "",
     isSaving: false
@@ -2338,6 +2524,7 @@ function renderSkillStarBuilder() {
   const examples = getStarBuilderExamples(starBuilderState.contextId, step.key, step.examples);
   const summaryPreview = createStarEvidenceSummary(starBuilderState);
   const actionDisabled = starBuilderState.isSaving ? "disabled" : "";
+  const finalButtonLabel = starBuilderState.resubmittingEntryId ? "Resubmit STAR evidence" : "Bank STAR evidence";
 
   modal.hidden = false;
   modal.innerHTML = `
@@ -2355,8 +2542,8 @@ function renderSkillStarBuilder() {
       <h2 id="skill-star-builder-title">So you improved ${escapeHtml(starBuilderState.skillTitle)} in a ${escapeHtml(contextLabel)} context?</h2>
       <p class="skill-star-builder-lead">${escapeHtml(step.lead)}</p>
       <div class="skill-star-builder-privacy-note">
-        <strong>Note: your teacher can check anything you enter here.</strong>
-        <span>Do not include surnames, student emails, phone numbers, social handles, exact workplace names, suburbs, addresses, or anything that identifies you or someone else. Use general wording such as "a fast-food workplace" or "a local retail store".</span>
+        <strong>${escapeHtml(STUDENT_FREE_TEXT_PRIVACY_NOTICE.title)}</strong>
+        <span>${escapeHtml(STUDENT_FREE_TEXT_PRIVACY_NOTICE.body)}</span>
       </div>
       <label class="skill-star-builder-field">
         <span>${escapeHtml(step.term)}</span>
@@ -2375,7 +2562,7 @@ function renderSkillStarBuilder() {
       ${starBuilderState.error ? `<div class="skill-star-builder-error">${escapeHtml(starBuilderState.error)}</div>` : ""}
       <div class="skill-star-builder-actions">
         <button class="module-link" type="button" data-star-builder-back ${starBuilderState.stepIndex === 0 || starBuilderState.isSaving ? "disabled" : ""}>Back</button>
-        <button class="module-link primary" type="button" data-star-builder-next ${actionDisabled}>${starBuilderState.isSaving ? "Saving..." : isFinalStep ? "Bank STAR evidence" : "Next"}</button>
+        <button class="module-link primary" type="button" data-star-builder-next ${actionDisabled}>${starBuilderState.isSaving ? "Saving..." : isFinalStep ? finalButtonLabel : "Next"}</button>
       </div>
     </div>
   `;
@@ -2423,15 +2610,22 @@ function renderSkillStarBuilder() {
       createdAt
     };
     starBuilderState.error = "";
-    starBuilderState.status = "Saving final entry for teacher review...";
+    starBuilderState.status = starBuilderState.resubmittingEntryId
+      ? "Resubmitting final entry for teacher review..."
+      : "Saving final entry for teacher review...";
     starBuilderState.isSaving = true;
     renderSkillStarBuilder();
-    await queueSkillStarEvidenceForReview(entry).catch(error => {
+    const review = await queueSkillStarEvidenceForReview(entry).catch(error => {
       console.warn("STAR evidence review could not be queued:", error.message || error);
       return null;
     });
-    saveSkillStarEvidence(entry);
-    bankStarEvidenceSalary(entry);
+    if (review?.id) entry.reviewId = review.id;
+    if (starBuilderState.resubmittingEntryId) {
+      replaceSkillStarEvidence(starBuilderState.resubmittingEntryId, entry);
+    } else {
+      saveSkillStarEvidence(entry);
+      bankStarEvidenceSalary(entry);
+    }
     closeSkillStarBuilder();
     initDashboards().catch(console.error);
   });
@@ -3411,7 +3605,9 @@ async function renderStudentLiveData(players, skillsData) {
   const hasESTProgress = hasMeaningfulModuleProgress(estProgressRow) || hasLocalESTProgress(session);
   const hasAnySavedProgress = hasPlayerProgress || hasLifelongProgress || hasESTProgress;
   const progressRecord = hasPlayerProgress ? record : null;
-  const skillEvidenceMap = getSkillStarEvidenceMap();
+  const reviewRows = await getCurrentStudentResponseReviews();
+  const skillEvidenceEntries = syncSkillStarEvidenceWithReviews(getSkillStarEvidenceEntries(), reviewRows);
+  const skillEvidenceMap = getSkillStarEvidenceMap(skillEvidenceEntries);
   const progressMap = applySkillEvidenceProgress(deriveEmployabilityProgress(progressRecord), skillEvidenceMap);
   const employabilityScore = average(Object.values(progressMap));
   const weakestSkillId = getWeakestSkill(progressMap)[0];
@@ -3518,6 +3714,7 @@ async function renderStudentLiveData(players, skillsData) {
   });
 
   renderSkills(skillsData, "student-skill-grid", progressMap, skillEvidenceMap);
+  renderStudentResponseReviewNotices(reviewRows);
   renderStudentModules([
     {
       title: "Megatrends",

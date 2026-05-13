@@ -206,6 +206,22 @@
         min-height: 140px;
         resize: vertical;
       }
+      .ce-feedback-privacy-note {
+        display: grid;
+        gap: 6px;
+        padding: 12px 14px;
+        border-radius: 8px;
+        border: 1px solid rgba(251, 191, 36, 0.34);
+        background: rgba(251, 191, 36, 0.1);
+        color: #fde68a;
+        line-height: 1.4;
+      }
+      .ce-feedback-privacy-note strong {
+        color: #fef3c7;
+      }
+      .ce-feedback-privacy-note span {
+        color: #f8e7b2;
+      }
       .ce-feedback-actions {
         display: flex;
         gap: 12px;
@@ -601,6 +617,10 @@
           </div>
           <div>
             <label for="ce-feedback-message">What would you like to report?</label>
+            <div class="ce-feedback-privacy-note">
+              <strong>Note: your teacher can check anything you enter here.</strong>
+              <span>Do not include surnames, student emails, phone numbers, social handles, exact workplace names, suburbs, addresses, or anything that identifies you or someone else. Use general wording such as "a fast-food workplace" or "a local retail store".</span>
+            </div>
             <textarea id="ce-feedback-message" placeholder="Describe the bug, issue, or idea here..."></textarea>
           </div>
         </div>

@@ -1187,6 +1187,7 @@ function renderContentResponseForge(group) {
       <div class="written-stage">
         <strong>Quick EST response</strong>
         <p class="small-copy">Write a short response so teachers can see how well you can explain this content area, not just select the right option. Students can compare this with a model answer after submission.</p>
+        ${renderFreeTextPrivacyNotice()}
         <textarea id="content-note" placeholder="Write one or two EST-ready sentences for this content strand...">${escapeHtml(state.answers[`content-note-${group.id}`] || "")}</textarea>
       </div>
     `;
@@ -1203,6 +1204,7 @@ function renderContentResponseForge(group) {
         <p>${escapeHtml(scaffold.subtitle || "Build the response in small steps, then combine it.")}</p>
       </div>
       <p class="small-copy">${escapeHtml(group.writePrompt)}</p>
+      ${renderFreeTextPrivacyNotice()}
       ${renderESTGuidePanel(group.id, "forge")}
       <div class="builder-grid" style="margin-top:14px;">
         ${segments.map((segment, index) => `
@@ -1224,6 +1226,7 @@ function renderContentResponseForge(group) {
     <div class="written-stage">
       <strong>Built EST response</strong>
       <p class="small-copy">This final paragraph is assembled from your sentence starters. You can still edit it before banking the lab.</p>
+      ${renderFreeTextPrivacyNotice()}
       <textarea id="content-note" placeholder="Your built EST response will appear here...">${escapeHtml(builtResponse)}</textarea>
     </div>
     ${builtResponse ? `
