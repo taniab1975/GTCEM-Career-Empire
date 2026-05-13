@@ -330,6 +330,201 @@
       flex-shrink: 0;
     }
 
+    .security-infographic {
+      position: relative;
+      overflow: hidden;
+      display: grid;
+      gap: clamp(18px, 3vw, 28px);
+      margin-top: 24px;
+      padding: clamp(18px, 3vw, 32px);
+      border: 1px solid rgba(253, 230, 138, 0.28);
+      border-radius: 24px;
+      background:
+        radial-gradient(circle at 92% 12%, rgba(253, 230, 138, 0.18), transparent 24%),
+        radial-gradient(circle at 8% 82%, rgba(20, 184, 166, 0.16), transparent 28%),
+        linear-gradient(135deg, rgba(2, 8, 23, 0.94), rgba(7, 20, 37, 0.9));
+      box-shadow: 0 26px 70px rgba(2, 8, 23, 0.42);
+      scroll-margin-top: 22px;
+    }
+
+    .security-infographic::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background:
+        linear-gradient(90deg, rgba(125, 211, 252, 0.08) 1px, transparent 1px),
+        linear-gradient(180deg, rgba(253, 230, 138, 0.08) 1px, transparent 1px);
+      background-size: 52px 52px;
+      opacity: 0.18;
+      pointer-events: none;
+    }
+
+    .security-infographic:target {
+      border-color: rgba(253, 230, 138, 0.58);
+      box-shadow:
+        0 0 0 1px rgba(253, 230, 138, 0.18),
+        0 26px 70px rgba(2, 8, 23, 0.42);
+    }
+
+    .security-infographic > * {
+      position: relative;
+      z-index: 1;
+    }
+
+    .security-header {
+      display: grid;
+      grid-template-columns: minmax(0, 0.9fr) minmax(260px, 1.1fr);
+      gap: clamp(18px, 3vw, 36px);
+      align-items: end;
+    }
+
+    .security-copy {
+      display: grid;
+      gap: 12px;
+    }
+
+    .security-copy h2 {
+      max-width: 640px;
+      color: #ffffff;
+      font-size: clamp(2rem, 4.2vw, 4.2rem);
+      font-weight: 800;
+      line-height: 0.94;
+      letter-spacing: 0;
+    }
+
+    .security-copy p,
+    .security-summary p,
+    .security-step p,
+    .security-note {
+      color: var(--muted);
+      font-weight: 700;
+      line-height: 1.38;
+    }
+
+    .security-summary {
+      display: grid;
+      gap: 12px;
+      padding: 18px;
+      border: 1px solid rgba(125, 211, 252, 0.24);
+      border-radius: 18px;
+      background: rgba(2, 8, 23, 0.54);
+    }
+
+    .security-summary strong {
+      display: block;
+      color: var(--gold);
+      font-size: 1.1rem;
+      line-height: 1.15;
+    }
+
+    .security-route {
+      display: grid;
+      grid-template-columns: repeat(5, minmax(0, 1fr));
+      gap: 12px;
+      align-items: stretch;
+    }
+
+    .security-step {
+      position: relative;
+      display: grid;
+      gap: 10px;
+      min-height: 176px;
+      padding: 16px;
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      border-radius: 16px;
+      background: rgba(2, 8, 23, 0.58);
+    }
+
+    .security-step:not(:last-child)::after {
+      content: "";
+      position: absolute;
+      top: 32px;
+      right: -13px;
+      width: 13px;
+      height: 2px;
+      background: linear-gradient(90deg, rgba(253, 230, 138, 0.78), rgba(125, 211, 252, 0.42));
+    }
+
+    .security-icon {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 42px;
+      height: 42px;
+      border: 1px solid rgba(253, 230, 138, 0.32);
+      border-radius: 14px;
+      background: rgba(253, 230, 138, 0.1);
+      color: var(--gold);
+    }
+
+    .security-icon svg {
+      width: 22px;
+      height: 22px;
+    }
+
+    .security-step h3 {
+      color: #ffffff;
+      font-size: 1.02rem;
+      font-weight: 800;
+      line-height: 1.12;
+    }
+
+    .security-step p {
+      font-size: 0.88rem;
+    }
+
+    .security-balances {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 12px;
+    }
+
+    .security-balance {
+      display: grid;
+      grid-template-columns: auto minmax(0, 1fr);
+      gap: 12px;
+      align-items: start;
+      padding: 16px;
+      border: 1px solid rgba(125, 211, 252, 0.18);
+      border-radius: 16px;
+      background: rgba(15, 23, 42, 0.52);
+    }
+
+    .security-balance .security-icon {
+      width: 36px;
+      height: 36px;
+      border-color: rgba(125, 211, 252, 0.32);
+      background: rgba(14, 165, 233, 0.1);
+      color: var(--accent);
+    }
+
+    .security-balance .security-icon svg {
+      width: 19px;
+      height: 19px;
+    }
+
+    .security-balance h3 {
+      margin-bottom: 4px;
+      color: #ffffff;
+      font-size: 0.98rem;
+      font-weight: 800;
+      line-height: 1.12;
+    }
+
+    .security-balance p {
+      color: var(--muted);
+      font-size: 0.86rem;
+      font-weight: 700;
+      line-height: 1.36;
+    }
+
+    .security-note {
+      padding: 14px 16px;
+      border-left: 3px solid var(--gold);
+      background: rgba(253, 230, 138, 0.08);
+      font-size: 0.92rem;
+    }
+
     @media (max-width: 900px) {
       body {
         background-attachment: scroll;
@@ -341,8 +536,25 @@
       }
 
       .teacher-stage,
-      .action-grid {
+      .action-grid,
+      .security-header,
+      .security-route,
+      .security-balances {
         grid-template-columns: 1fr;
+      }
+
+      .security-step {
+        min-height: 0;
+      }
+
+      .security-step:not(:last-child)::after {
+        top: auto;
+        right: auto;
+        bottom: -13px;
+        left: 36px;
+        width: 2px;
+        height: 13px;
+        background: linear-gradient(180deg, rgba(253, 230, 138, 0.78), rgba(125, 211, 252, 0.42));
       }
 
       .teacher-hero h1 {
@@ -437,14 +649,89 @@
               <i data-lucide="log-in"></i>
               Teacher Login
             </a>
-            <button class="button button-safety" type="button">
+            <a class="button button-safety" href="#security-checks" aria-label="View the security checks and balances infographic">
               <i data-lucide="shield-check"></i>
               Online safety concerns addressed
-            </button>
+            </a>
           </div>
         </section>
       </div>
     </article>
+
+    <section class="security-infographic" id="security-checks" aria-labelledby="security-checks-title">
+      <div class="security-header">
+        <div class="security-copy">
+          <span class="kicker">Security model</span>
+          <h2 id="security-checks-title">Checks and balances for a school-safe system.</h2>
+          <p>Access starts with verified teachers, stays tied to a school and class, and keeps student evidence behind teacher-controlled review.</p>
+        </div>
+        <div class="security-summary">
+          <strong>Plain-English promise</strong>
+          <p>Teachers control setup, students use lightweight classroom accounts, data is stored on Australian servers, class comparisons are de-identified, and free-text submissions are approved through the teacher dashboard.</p>
+        </div>
+      </div>
+
+      <div class="security-route" aria-label="Security checks sequence">
+        <article class="security-step">
+          <span class="security-icon"><i data-lucide="badge-check"></i></span>
+          <h3>Verified teacher entry</h3>
+          <p>Teacher signup is limited to approved school email domains with password-based login and email confirmation.</p>
+        </article>
+        <article class="security-step">
+          <span class="security-icon"><i data-lucide="users"></i></span>
+          <h3>Teacher-created students</h3>
+          <p>Students do not self-register or use email. Teachers can issue a first-name-and-initial username or a codename for a specific class.</p>
+        </article>
+        <article class="security-step">
+          <span class="security-icon"><i data-lucide="school"></i></span>
+          <h3>School and class ownership</h3>
+          <p>Every class and student belongs to one school, creating clear boundaries for dashboards and permissions.</p>
+        </article>
+        <article class="security-step">
+          <span class="security-icon"><i data-lucide="lock"></i></span>
+          <h3>School data boundaries</h3>
+          <p>The system checks each signed-in teacher's school before showing class records, so teachers only see the students and classes connected to their school.</p>
+        </article>
+        <article class="security-step">
+          <span class="security-icon"><i data-lucide="clipboard-check"></i></span>
+          <h3>Human review gate</h3>
+          <p>Learning evidence, feedback reports, and shareable responses are routed through teacher review before wider use.</p>
+        </article>
+      </div>
+
+      <div class="security-balances" aria-label="Additional security balances">
+        <article class="security-balance">
+          <span class="security-icon"><i data-lucide="eye-off"></i></span>
+          <div>
+            <h3>Private student evidence</h3>
+            <p>Students can see their own profile and progress, but not another student's private records.</p>
+          </div>
+        </article>
+        <article class="security-balance">
+          <span class="security-icon"><i data-lucide="bar-chart-3"></i></span>
+          <div>
+            <h3>De-identified class comparison</h3>
+            <p>Inside the class, students may see non-identified peer responses or totals for comparison, not named student records.</p>
+          </div>
+        </article>
+        <article class="security-balance">
+          <span class="security-icon"><i data-lucide="server"></i></span>
+          <div>
+            <h3>Australian data hosting</h3>
+            <p>Student and class data is stored on Australian servers.</p>
+          </div>
+        </article>
+        <article class="security-balance">
+          <span class="security-icon"><i data-lucide="monitor-check"></i></span>
+          <div>
+            <h3>Safe demo mode</h3>
+            <p>Teacher previews seed local demo data, keeping trial runs separate from real student accounts.</p>
+          </div>
+        </article>
+      </div>
+
+      <p class="security-note">Balance point: automation can surface patterns, but the teacher remains the accountable reviewer for class membership, student evidence, and any intervention decisions.</p>
+    </section>
   </main>
 
   <script>
