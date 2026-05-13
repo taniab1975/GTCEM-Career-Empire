@@ -782,8 +782,8 @@ function initTeacherLogin() {
       });
 
       feedback.className = "feedback good";
-      const nextPath = readState().classroom?.id ? "./manage-students.html" : "./create-class.html";
-      feedback.textContent = `Teacher login accepted for ${email}. Redirecting you to the next teacher step.`;
+      const nextPath = "../dashboards/teacher.html";
+      feedback.textContent = `Teacher login accepted for ${email}. Redirecting you to the teacher dashboard.`;
       initAuthContext();
       redirectAfterDelay(nextPath);
     } catch (error) {
