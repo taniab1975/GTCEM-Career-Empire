@@ -117,6 +117,7 @@ async function init() {
 
 window.ESTPrep = {
   openStage,
+  toggleCoreBriefingPause,
   openContentGroupIntro,
   startContentGroup,
   openContentResponse,

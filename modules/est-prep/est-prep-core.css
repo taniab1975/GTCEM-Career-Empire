@@ -325,21 +325,25 @@ body.est-lab-mode {
   gap: 18px;
   opacity: 0;
   transform: translateY(16px) scale(0.985);
-  animation: core-briefing-scene 24s infinite;
+  animation: core-briefing-scene 44s infinite;
 }
 
 .core-briefing-scene--topics {
-  animation-delay: 6s;
+  animation-delay: 11s;
 }
 
 .core-briefing-scene--sources {
   grid-template-columns: minmax(320px, 1.08fr) minmax(0, 0.92fr);
-  animation-delay: 12s;
+  animation-delay: 22s;
 }
 
 .core-briefing-scene--gameplay {
   grid-template-columns: minmax(360px, 1.15fr) minmax(0, 0.85fr);
-  animation-delay: 18s;
+  animation-delay: 33s;
+}
+
+.core-briefing-animation.is-paused .core-briefing-scene {
+  animation-play-state: paused;
 }
 
 .core-briefing-copy {
@@ -681,56 +685,41 @@ body.est-lab-mode {
   pointer-events: none;
 }
 
-.core-briefing-menu {
-  display: grid;
-  gap: 8px;
-  padding: 12px 14px;
-  border: 1px solid rgba(129, 166, 255, 0.2);
-  border-radius: 18px;
-  background: rgba(7, 17, 40, 0.68);
+.core-briefing-controls {
+  display: flex;
+  justify-content: flex-end;
 }
 
-.core-briefing-menu > strong {
-  color: var(--cyan);
-  font-size: 0.78rem;
+.core-briefing-pause {
+  min-height: 42px;
+  padding: 10px 16px;
+  border: 1px solid rgba(97, 240, 255, 0.34);
+  border-radius: 999px;
+  background: rgba(97, 240, 255, 0.12);
+  color: #e8fbff;
+  font: inherit;
+  font-size: 0.82rem;
   font-weight: 900;
-  letter-spacing: 0.08em;
+  letter-spacing: 0.04em;
   text-transform: uppercase;
+  cursor: pointer;
+  box-shadow: 0 14px 30px rgba(0, 0, 0, 0.18);
 }
 
-.core-briefing-menu > div {
-  display: grid;
-  grid-template-columns: repeat(6, minmax(0, 1fr));
-  gap: 7px;
+.core-briefing-pause:hover,
+.core-briefing-pause:focus-visible {
+  border-color: rgba(97, 240, 255, 0.7);
+  background: rgba(97, 240, 255, 0.2);
+  outline: none;
 }
 
-.core-briefing-menu span {
-  display: grid;
-  gap: 4px;
-  min-height: 58px;
-  padding: 8px;
-  border: 1px solid rgba(97, 240, 255, 0.18);
-  border-radius: 13px;
-  background: rgba(16, 30, 62, 0.72);
-  color: #ffffff;
-  font-size: 0.76rem;
-  font-weight: 900;
-  line-height: 1.1;
-}
-
-.core-briefing-menu span strong {
-  color: var(--cyan);
-  font-size: 0.68rem;
+.core-briefing-pause[aria-pressed="true"] {
+  border-color: rgba(255, 138, 202, 0.62);
+  background: rgba(255, 138, 202, 0.14);
 }
 
 @keyframes core-briefing-scene {
   0%,
-  3% {
-    opacity: 0;
-    transform: translateY(16px) scale(0.985);
-  }
-
-  7%,
   22% {
     opacity: 1;
     transform: translateY(0) scale(1);

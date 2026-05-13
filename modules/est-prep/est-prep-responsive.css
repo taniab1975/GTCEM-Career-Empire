@@ -37,10 +37,6 @@
     max-width: none;
   }
 
-  .core-briefing-menu > div {
-    grid-template-columns: repeat(3, minmax(0, 1fr));
-  }
-
   .stage-map-banner {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
@@ -259,8 +255,7 @@
 
   .core-source-board,
   .core-gameplay-layout,
-  .core-topic-cloud,
-  .core-briefing-menu > div {
+  .core-topic-cloud {
     grid-template-columns: 1fr;
   }
 

@@ -273,12 +273,6 @@ function renderCoreBriefingAnimation(groups) {
       <small>${escapeHtml(getContentGroupShortLabel(group.id))}</small>
     </span>
   `).join("");
-  const topicMenuPreview = topicGroups.map((group, index) => `
-    <span>
-      <strong>${escapeHtml(String(index + 1).padStart(2, "0"))}</strong>
-      ${escapeHtml(getContentGroupShortLabel(group.id))}
-    </span>
-  `).join("");
   const guideCharacter = EST_GUIDE_CHARACTERS?.romero?.pointing || "../../Assets/EST Preparation/guide-character/guide-pointing.png";
   const stageRail = STAGES.map(stage => `
     <span class="${stage.id === "content" ? "online" : ""}">
@@ -375,12 +369,24 @@ function renderCoreBriefingAnimation(groups) {
 
         <img class="core-briefing-guide" src="${escapeHtml(guideCharacter)}" alt="">
       </div>
-      <div class="core-briefing-menu" aria-hidden="true">
-        <strong>CORE topic menu</strong>
-        <div>${topicMenuPreview}</div>
+      <div class="core-briefing-controls">
+        <button
+          type="button"
+          class="core-briefing-pause"
+          aria-pressed="false"
+          onclick="window.ESTPrep.toggleCoreBriefingPause(this)"
+        >Pause briefing</button>
       </div>
     </div>
   `;
+}
+
+function toggleCoreBriefingPause(button) {
+  const briefing = button?.closest(".core-briefing-animation");
+  if (!briefing) return;
+  const isPaused = briefing.classList.toggle("is-paused");
+  button.setAttribute("aria-pressed", String(isPaused));
+  button.textContent = isPaused ? "Resume briefing" : "Pause briefing";
 }
 
 function renderContentModuleList() {
