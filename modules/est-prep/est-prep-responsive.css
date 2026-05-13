@@ -294,17 +294,15 @@
     padding: 10px;
   }
 
-  .core-video-sample {
+  .core-video-sample,
+  .core-gameplay-carousel {
     min-height: 250px;
   }
 
-  .core-gameplay-stack {
-    grid-template-columns: 1fr;
+  .core-gameplay-carousel-track,
+  .core-gameplay-slide {
     height: 290px;
-  }
-
-  .core-gameplay-stack figure {
-    min-height: 0;
+    min-height: 290px;
   }
 
   .core-briefing-guide {

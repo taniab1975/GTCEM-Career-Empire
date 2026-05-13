@@ -274,6 +274,66 @@ function renderCoreBriefingAnimation(groups) {
       <small>${escapeHtml(getContentGroupShortLabel(group.id))}</small>
     </span>
   `).join("");
+  const gameplaySteps = [
+    {
+      label: "Watch Topic Video",
+      detail: "Start with the quick explainer for the CORE topic.",
+      type: "image",
+      src: `${teaserBase}/core-initiative-video-teaser.png`,
+      alt: "Current CORE topic explainer screen"
+    },
+    {
+      label: "Open Graphic Organiser",
+      detail: "Review the topic summary before you answer.",
+      type: "image",
+      src: `${teaserBase}/core-graphic-organiser-teaser.png`,
+      alt: "Current CORE graphic organiser summary screen"
+    },
+    {
+      label: "Live CORE Gameplay",
+      detail: "Answer scenarios and questions for immediate feedback.",
+      type: "video",
+      src: `${teaserBase}/core-reactor-gameplay-teaser.webm`,
+      alt: "CORE gameplay teaser showing question practice and feedback"
+    },
+    {
+      label: "Bank Salary And Fund",
+      detail: "Earn salary and send tax contributions to the class fund.",
+      type: "image",
+      src: `${teaserBase}/core-reward-community-teaser.png`,
+      alt: "Current CORE salary and community fund reward screen"
+    },
+    {
+      label: "Use The Shop",
+      detail: "Spend earned salary on Career Empire upgrades.",
+      type: "image",
+      src: `${teaserBase}/core-shop-teaser.png`,
+      alt: "Current Career Empire shop screen"
+    },
+    {
+      label: "Track Class Impact",
+      detail: "See how the class community fund is growing.",
+      type: "image",
+      src: `${teaserBase}/core-community-fund-teaser.png`,
+      alt: "Current community fund dashboard screen"
+    }
+  ];
+  const gameplaySlides = gameplaySteps.map((step, index) => `
+    <figure class="core-gameplay-slide">
+      ${step.type === "video"
+        ? `<video src="${step.src}" autoplay muted loop playsinline aria-label="${escapeHtml(step.alt)}"></video>`
+        : `<img src="${step.src}" alt="${escapeHtml(step.alt)}">`
+      }
+      <figcaption>
+        <small>Step ${escapeHtml(String(index + 1).padStart(2, "0"))} of 06</small>
+        <strong>${escapeHtml(step.label)}</strong>
+        <span>${escapeHtml(step.detail)}</span>
+      </figcaption>
+    </figure>
+  `).join("");
+  const gameplayPips = gameplaySteps.map((step, index) => `
+    <span style="--pip-index: ${index}">${escapeHtml(String(index + 1))}</span>
+  `).join("");
   const guideCharacter = EST_GUIDE_CHARACTERS?.romero?.pointing || "../../Assets/EST Preparation/guide-character/guide-pointing.png";
   const stageRail = STAGES.map(stage => `
     <span class="${stage.id === "content" ? "online" : ""}">
@@ -302,15 +362,6 @@ function renderCoreBriefingAnimation(groups) {
           </div>
         </section>
 
-        <section class="core-briefing-scene core-briefing-scene--topics" aria-hidden="true">
-          <div class="core-briefing-copy">
-            <span class="core-briefing-kicker">CORE breakdown</span>
-            <h3>Six assessed topic reactors</h3>
-            <p>These are the topics from the Year 12 syllabus we have been learning each week and the areas being assessed in this year's EST.</p>
-          </div>
-          <div class="core-topic-cloud">${topicChips}</div>
-        </section>
-
         <section class="core-briefing-scene core-briefing-scene--sources" aria-hidden="true">
           <div class="core-source-board">
             <div class="core-authority-video-card">
@@ -331,39 +382,26 @@ function renderCoreBriefingAnimation(groups) {
           </div>
         </section>
 
+        <section class="core-briefing-scene core-briefing-scene--topics" aria-hidden="true">
+          <div class="core-briefing-copy">
+            <span class="core-briefing-kicker">CORE breakdown</span>
+            <h3>Six assessed topic reactors</h3>
+            <p>These are the topics from the Year 12 syllabus we have been learning each week and the areas being assessed in this year's EST.</p>
+          </div>
+          <div class="core-topic-cloud">${topicChips}</div>
+        </section>
+
         <section class="core-briefing-scene core-briefing-scene--gameplay" aria-hidden="true">
           <div class="core-gameplay-layout">
-            <div class="core-video-sample">
-              <video src="${teaserBase}/core-reactor-gameplay-teaser.webm" autoplay muted loop playsinline aria-label="CORE gameplay teaser showing question practice and feedback"></video>
-              <span>Live CORE gameplay teaser</span>
-            </div>
-            <div class="core-gameplay-stack">
-              <figure>
-                <img src="${teaserBase}/core-initiative-video-teaser.png" alt="Current CORE topic explainer screen">
-                <figcaption>Watch topic video</figcaption>
-              </figure>
-              <figure>
-                <img src="${teaserBase}/core-graphic-organiser-teaser.png" alt="Current CORE graphic organiser summary screen">
-                <figcaption>Open organiser</figcaption>
-              </figure>
-              <figure>
-                <img src="${teaserBase}/core-reward-community-teaser.png" alt="Current CORE salary and community fund reward screen">
-                <figcaption>Bank salary + fund</figcaption>
-              </figure>
-              <figure>
-                <img src="${teaserBase}/core-shop-teaser.png" alt="Current Career Empire shop screen">
-                <figcaption>Use the shop</figcaption>
-              </figure>
-              <figure>
-                <img src="${teaserBase}/core-community-fund-teaser.png" alt="Current community fund dashboard screen">
-                <figcaption>Track class impact</figcaption>
-              </figure>
+            <div class="core-gameplay-carousel">
+              <div class="core-gameplay-carousel-track">${gameplaySlides}</div>
+              <div class="core-gameplay-pips" aria-hidden="true">${gameplayPips}</div>
             </div>
           </div>
           <div class="core-briefing-copy">
             <span class="core-briefing-kicker">Gameplay loop</span>
-            <h3>Watch, organise, answer, bank rewards.</h3>
-            <p>Use the topic video, open the graphic organiser summaries, answer questions for immediate feedback, and bank salary plus tax contributions for the class community fund.</p>
+            <h3>One CORE move at a time.</h3>
+            <p>Watch the topic video, review the organiser, play the question reactor, bank salary and fund contributions, use the shop, then track class impact.</p>
           </div>
         </section>
 

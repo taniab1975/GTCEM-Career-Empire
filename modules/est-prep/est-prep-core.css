@@ -325,24 +325,25 @@ body.est-lab-mode {
   gap: 18px;
   opacity: 0;
   transform: translateY(16px) scale(0.985);
-  animation: core-briefing-scene 44s infinite;
-}
-
-.core-briefing-scene--topics {
-  animation-delay: 11s;
+  animation: core-briefing-scene 72s infinite;
 }
 
 .core-briefing-scene--sources {
   grid-template-columns: minmax(560px, 1.52fr) minmax(280px, 0.48fr);
-  animation-delay: 22s;
+  animation-delay: 18s;
+}
+
+.core-briefing-scene--topics {
+  animation-delay: 36s;
 }
 
 .core-briefing-scene--gameplay {
   grid-template-columns: minmax(360px, 1.15fr) minmax(0, 0.85fr);
-  animation-delay: 33s;
+  animation-delay: 54s;
 }
 
-.core-briefing-animation.is-paused .core-briefing-scene {
+.core-briefing-animation.is-paused .core-briefing-scene,
+.core-briefing-animation.is-paused .core-gameplay-carousel-track {
   animation-play-state: paused;
 }
 
@@ -510,7 +511,7 @@ body.est-lab-mode {
 .core-authority-video-card,
 .core-book-cover,
 .core-video-sample,
-.core-gameplay-stack figure,
+.core-gameplay-carousel,
 .core-authority-card,
 .core-authority-media {
   border: 1px solid rgba(129, 166, 255, 0.24);
@@ -665,22 +666,26 @@ body.est-lab-mode {
 
 .core-gameplay-layout {
   display: grid;
-  grid-template-columns: minmax(180px, 0.72fr) minmax(0, 1fr);
-  gap: 12px;
+  grid-template-columns: 1fr;
+  min-width: 0;
 }
 
-.core-video-sample {
+.core-video-sample,
+.core-gameplay-carousel {
   position: relative;
   min-height: 300px;
   overflow: hidden;
   background: rgba(7, 17, 40, 0.88);
 }
 
-.core-video-sample video {
+.core-video-sample video,
+.core-gameplay-slide img,
+.core-gameplay-slide video {
   width: 100%;
   height: 100%;
   display: block;
-  object-fit: cover;
+  object-fit: contain;
+  background: rgba(3, 9, 22, 0.92);
 }
 
 .core-video-sample span {
@@ -698,37 +703,84 @@ body.est-lab-mode {
   text-transform: uppercase;
 }
 
-.core-gameplay-stack {
-  display: grid;
-  grid-template-rows: repeat(5, minmax(0, 1fr));
-  gap: 10px;
-  height: 300px;
-  min-height: 0;
+.core-gameplay-carousel {
+  min-height: 340px;
 }
 
-.core-gameplay-stack figure {
+.core-gameplay-carousel-track {
+  display: flex;
+  width: 600%;
+  height: 100%;
+  min-height: 340px;
+  animation: core-gameplay-carousel 18s infinite;
+}
+
+.core-gameplay-slide {
   position: relative;
-  min-height: 0;
+  flex: 0 0 calc(100% / 6);
+  min-height: 340px;
   margin: 0;
   overflow: hidden;
 }
 
-.core-gameplay-stack img {
-  width: 100%;
-  height: 100%;
-  display: block;
-  object-fit: cover;
+.core-gameplay-slide figcaption {
+  position: absolute;
+  left: 14px;
+  right: 14px;
+  bottom: 14px;
+  display: grid;
+  gap: 5px;
+  max-width: 420px;
+  padding: 12px 14px;
+  border: 1px solid rgba(97, 240, 255, 0.28);
+  border-radius: 16px;
+  background: rgba(5, 12, 29, 0.78);
+  color: #eaf7ff;
+  backdrop-filter: blur(10px);
 }
 
-.core-gameplay-stack figcaption {
-  position: absolute;
-  left: 10px;
-  bottom: 8px;
-  padding: 6px 9px;
-  border-radius: 999px;
-  background: rgba(5, 12, 29, 0.78);
+.core-gameplay-slide figcaption small {
+  color: var(--cyan);
+  font-size: 0.68rem;
+  font-weight: 900;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.core-gameplay-slide figcaption strong {
   color: #ffffff;
-  font-size: 0.72rem;
+  font-size: 1.28rem;
+  font-weight: 900;
+  line-height: 1;
+}
+
+.core-gameplay-slide figcaption span {
+  color: #d8e8ff;
+  font-size: 0.92rem;
+  font-weight: 800;
+  line-height: 1.25;
+}
+
+.core-gameplay-pips {
+  position: absolute;
+  right: 14px;
+  bottom: 14px;
+  display: flex;
+  gap: 6px;
+  padding: 8px;
+  border-radius: 999px;
+  background: rgba(5, 12, 29, 0.66);
+}
+
+.core-gameplay-pips span {
+  display: grid;
+  width: 24px;
+  height: 24px;
+  place-items: center;
+  border: 1px solid rgba(97, 240, 255, 0.22);
+  border-radius: 999px;
+  color: #bfe9ff;
+  font-size: 0.7rem;
   font-weight: 900;
 }
 
@@ -878,17 +930,51 @@ body.core-briefing-max-active {
 
 @keyframes core-briefing-scene {
   0%,
-  22% {
+  24% {
     opacity: 1;
     transform: translateY(0) scale(1);
   }
 
-  26%,
+  25%,
   100% {
     opacity: 0;
     transform: translateY(-14px) scale(0.99);
   }
 }
+
+@keyframes core-gameplay-carousel {
+  0%,
+  13% {
+    transform: translateX(0);
+  }
+
+  16.66%,
+  29.66% {
+    transform: translateX(calc(-100% / 6));
+  }
+
+  33.33%,
+  46.33% {
+    transform: translateX(calc(-200% / 6));
+  }
+
+  50%,
+  63% {
+    transform: translateX(calc(-300% / 6));
+  }
+
+  66.66%,
+  79.66% {
+    transform: translateX(calc(-400% / 6));
+  }
+
+  83.33%,
+  96.33%,
+  100% {
+    transform: translateX(calc(-500% / 6));
+  }
+}
+
 
 .content-module-heading {
   display: flex;

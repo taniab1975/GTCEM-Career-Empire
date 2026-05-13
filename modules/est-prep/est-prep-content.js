@@ -1643,7 +1643,6 @@ function renderContentStage() {
     setText("stage-subtitle", "");
     renderStageRoot(`
       ${renderCoreBriefingAnimation(groups)}
-      ${renderCoreAuthorityEvidenceCard(groups)}
       <div class="focus-card">
         <p class="small-copy">Select one CORE curriculum area from the topic menu above to open that focused content module.</p>
       </div>
