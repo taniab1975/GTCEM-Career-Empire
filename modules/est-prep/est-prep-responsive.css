@@ -37,6 +37,14 @@
     max-width: none;
   }
 
+  .core-authority-card {
+    grid-template-columns: 1fr;
+  }
+
+  .core-authority-topics {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
   .stage-map-banner {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
@@ -257,13 +265,21 @@
 
   .core-source-board,
   .core-gameplay-layout,
-  .core-topic-cloud {
+  .core-topic-cloud,
+  .core-authority-topics {
     grid-template-columns: 1fr;
   }
 
   .core-syllabus-card,
-  .core-book-cover {
+  .core-book-cover,
+  .core-authority-video-card,
+  .core-authority-media {
     min-height: 230px;
+  }
+
+  .core-briefing-animation.is-maximized {
+    inset: 8px;
+    padding: 10px;
   }
 
   .core-video-sample {

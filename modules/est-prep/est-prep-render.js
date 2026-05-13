@@ -267,6 +267,7 @@ function renderMetrics() {
 function renderCoreBriefingAnimation(groups) {
   const topicGroups = (groups || []).slice(0, 6);
   const teaserBase = "../../Assets/EST Preparation/core-briefing";
+  const curriculumScrollVideo = `${teaserBase}/est-curriculum-authority-scroll.mov#t=8`;
   const topicChips = topicGroups.map((group, index) => `
     <span class="core-topic-chip" style="--topic-index: ${index}">
       <strong>${escapeHtml(String(index + 1).padStart(2, "0"))}</strong>
@@ -312,10 +313,9 @@ function renderCoreBriefingAnimation(groups) {
 
         <section class="core-briefing-scene core-briefing-scene--sources" aria-hidden="true">
           <div class="core-source-board">
-            <div class="core-syllabus-card">
-              <span>SCSA curriculum map</span>
-              <strong>Highlighted EST focus areas</strong>
-              <small>Year 12 curriculum points become the CORE topic reactors.</small>
+            <div class="core-authority-video-card">
+              <video src="${curriculumScrollVideo}" autoplay muted loop playsinline preload="metadata" aria-label="Scrollable curriculum authority document showing assessed EST topics"></video>
+              <span>Curriculum authority document</span>
             </div>
             <div class="core-book-cover" aria-label="Careers and Employability General 12 Coursebook by Michael Carolan">
               <div class="core-book-rays"></div>
@@ -326,8 +326,8 @@ function renderCoreBriefingAnimation(groups) {
           </div>
           <div class="core-briefing-copy">
             <span class="core-briefing-kicker">Source material</span>
-            <h3>Carolan text + class resources become revision content.</h3>
-            <p>The buttons below open summaries, scenarios, questions, and mini games built from the course text, class resources, and assessed syllabus points.</p>
+            <h3>The authority document tells us what is assessed.</h3>
+            <p>The six CORE topics come from that document. The Carolan text and class resources provide the curriculum content, examples, and language you revise for those topics.</p>
           </div>
         </section>
 
@@ -376,6 +376,12 @@ function renderCoreBriefingAnimation(groups) {
           aria-pressed="false"
           onclick="window.ESTPrep.toggleCoreBriefingPause(this)"
         >Pause briefing</button>
+        <button
+          type="button"
+          class="core-briefing-max"
+          aria-expanded="false"
+          onclick="window.ESTPrep.toggleCoreBriefingMax(this)"
+        >Max screen</button>
       </div>
     </div>
   `;
@@ -387,6 +393,42 @@ function toggleCoreBriefingPause(button) {
   const isPaused = briefing.classList.toggle("is-paused");
   button.setAttribute("aria-pressed", String(isPaused));
   button.textContent = isPaused ? "Resume briefing" : "Pause briefing";
+}
+
+function toggleCoreBriefingMax(button) {
+  const briefing = button?.closest(".core-briefing-animation");
+  if (!briefing) return;
+  const isMaximized = briefing.classList.toggle("is-maximized");
+  document.body.classList.toggle("core-briefing-max-active", isMaximized);
+  button.setAttribute("aria-expanded", String(isMaximized));
+  button.textContent = isMaximized ? "Close max screen" : "Max screen";
+  if (isMaximized) briefing.scrollIntoView({ block: "center", behavior: "smooth" });
+}
+
+function renderCoreAuthorityEvidenceCard(groups) {
+  const teaserBase = "../../Assets/EST Preparation/core-briefing";
+  const curriculumScrollVideo = `${teaserBase}/est-curriculum-authority-scroll.mov#t=8`;
+  const topicItems = (groups || []).slice(0, 6).map((group, index) => `
+    <span>
+      <strong>${escapeHtml(String(index + 1).padStart(2, "0"))}</strong>
+      ${escapeHtml(getContentGroupShortLabel(group.id))}
+    </span>
+  `).join("");
+
+  return `
+    <article class="core-authority-card" aria-label="Curriculum authority source for CORE assessed topics">
+      <div class="core-authority-media">
+        <video src="${curriculumScrollVideo}" autoplay muted loop playsinline preload="metadata" aria-label="Scrollable curriculum authority document beginning at the assessed EST topics"></video>
+        <span>Authority document preview</span>
+      </div>
+      <div class="core-authority-copy">
+        <span class="core-briefing-kicker">Assessment source</span>
+        <h3>The six CORE topics come from the curriculum authority document.</h3>
+        <p>This document tells us what will be assessed in this year's EST. The Carolan Coursebook and class resources are the curriculum content you use to revise those assessed areas.</p>
+        <div class="core-authority-topics">${topicItems}</div>
+      </div>
+    </article>
+  `;
 }
 
 function renderContentModuleList() {
