@@ -11,6 +11,36 @@ async function getSupabaseClientOrNull() {
   }
 }
 
+async function queueEvidenceForTeacherReview(supabase, evidenceRow, options = {}) {
+  const moderation = window.CareerEmpireResponseModeration;
+  if (!moderation || !evidenceRow?.id) return;
+
+  const session = getPlayerSession();
+  const student = state.student || {};
+  const responseText = options.reviewResponseText
+    || options.extraPayload?.built_response
+    || options.extraPayload?.response_text
+    || options.evidenceText
+    || "";
+
+  await moderation.queuePendingReview(supabase, {
+    sourceEvidenceId: evidenceRow.id,
+    studentId: student.id || session.studentId,
+    classId: student.classId || session.classId,
+    schoolId: student.schoolId || session.schoolId,
+    moduleId: MODULE_ID,
+    evidenceType: options.evidenceType,
+    taskKey: options.taskKey,
+    taskLabel: options.taskLabel,
+    promptText: options.promptText,
+    responseText,
+    student: {
+      displayName: student.displayName || session.playerName,
+      username: student.username || session.username
+    }
+  });
+}
+
 async function saveProgress(checkpoint, evidenceType = "artifact", evidenceText = "", autoScore = null, meta = {}) {
   const student = state.student;
   const session = getPlayerSession();
@@ -41,6 +71,7 @@ async function saveProgress(checkpoint, evidenceType = "artifact", evidenceText 
   });
   state.creditedSalaryBoost = Number(state.salaryBoost || 0);
   state.creditedTaxContribution = Number(state.taxContribution || 0);
+  persistESTProgressSnapshot();
   if (earnedDelta || taxDelta) {
     pushEconomyLog({
       eventType: "progress-saved",
@@ -85,6 +116,10 @@ async function saveProgress(checkpoint, evidenceType = "artifact", evidenceText 
     progressResult = await supabase.from("student_module_progress").upsert(progressPayload, { onConflict: "student_id,module_id" });
   }
 
+  if (progressResult.error) {
+    console.error("EST progress could not be saved to Supabase:", progressResult.error);
+  }
+
   if (evidenceText) {
     const evidencePayload = JSON.stringify({
       kind: "career-empire-evidence",
@@ -98,7 +133,7 @@ async function saveProgress(checkpoint, evidenceType = "artifact", evidenceText 
       response_text: evidenceText,
       ...meta.extraPayload
     });
-    await supabase.from("assessment_evidence").insert({
+    const evidenceResult = await supabase.from("assessment_evidence").insert({
       student_id: student.id,
       class_id: student.classId,
       module_id: MODULE_ID,
@@ -107,7 +142,20 @@ async function saveProgress(checkpoint, evidenceType = "artifact", evidenceText 
       response_text: evidencePayload,
       auto_score: autoScore,
       created_at: new Date().toISOString()
-    });
+    }).select("id").maybeSingle();
+    if (evidenceResult.error) {
+      console.error("EST evidence could not be saved to Supabase:", evidenceResult.error);
+    } else {
+      await queueEvidenceForTeacherReview(supabase, evidenceResult.data, {
+        evidenceType,
+        taskKey: checkpoint,
+        taskLabel: meta.taskName || state.selectedStageId || checkpoint,
+        promptText: meta.promptText || checkpoint,
+        evidenceText,
+        reviewResponseText: meta.reviewResponseText,
+        extraPayload: meta.extraPayload || {}
+      });
+    }
   }
 
   if (Array.isArray(meta.additionalEvidenceRows) && meta.additionalEvidenceRows.length) {
@@ -132,7 +180,24 @@ async function saveProgress(checkpoint, evidenceType = "artifact", evidenceText 
       auto_score: typeof item.autoScore === "number" ? item.autoScore : autoScore,
       created_at: new Date().toISOString()
     }));
-    await supabase.from("assessment_evidence").insert(additionalRows);
+    const additionalEvidenceResult = await supabase.from("assessment_evidence").insert(additionalRows).select("id, prompt, evidence_type");
+    if (additionalEvidenceResult.error) {
+      console.error("Additional EST evidence could not be saved to Supabase:", additionalEvidenceResult.error);
+    } else {
+      const insertedRows = additionalEvidenceResult.data || [];
+      await Promise.all(insertedRows.map((row, index) => {
+        const item = meta.additionalEvidenceRows[index] || {};
+        return queueEvidenceForTeacherReview(supabase, row, {
+          evidenceType: item.evidenceType || evidenceType,
+          taskKey: item.checkpoint || item.prompt || checkpoint,
+          taskLabel: item.taskName || meta.taskName || state.selectedStageId || checkpoint,
+          promptText: item.promptText || item.prompt || checkpoint,
+          evidenceText: item.responseText || "",
+          reviewResponseText: item.reviewResponseText,
+          extraPayload: item.extraPayload || {}
+        });
+      }));
+    }
   }
 
   const { data: existingProfile } = await supabase

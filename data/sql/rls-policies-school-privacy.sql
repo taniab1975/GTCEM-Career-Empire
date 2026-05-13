@@ -14,6 +14,7 @@ alter table classes enable row level security;
 alter table students enable row level security;
 alter table student_module_progress enable row level security;
 alter table assessment_evidence enable row level security;
+alter table student_response_reviews enable row level security;
 alter table player_profiles enable row level security;
 alter table player_assets enable row level security;
 alter table community_votes enable row level security;
@@ -23,6 +24,7 @@ drop policy if exists "Prototype can manage classes" on classes;
 drop policy if exists "Prototype can manage students" on students;
 drop policy if exists "Prototype can manage module progress" on student_module_progress;
 drop policy if exists "Prototype can manage assessment evidence" on assessment_evidence;
+drop policy if exists "Prototype can manage student response reviews" on student_response_reviews;
 drop policy if exists "Prototype can manage player profiles" on player_profiles;
 drop policy if exists "Prototype can manage player assets" on player_assets;
 drop policy if exists "Prototype can manage community votes" on community_votes;
@@ -109,6 +111,14 @@ using (
       and classes.school_id = public.current_teacher_school_id()
   )
 );
+
+drop policy if exists "Teachers can manage school response reviews" on student_response_reviews;
+create policy "Teachers can manage school response reviews"
+on student_response_reviews
+for all
+to authenticated
+using (school_id = public.current_teacher_school_id())
+with check (school_id = public.current_teacher_school_id());
 
 drop policy if exists "Teachers can read school player profiles" on player_profiles;
 create policy "Teachers can read school player profiles"

@@ -48,7 +48,7 @@
             <h2>Teacher Actions</h2>
             <p class="status-good">Ready</p>
           </div>
-          <p>Future controls should let teachers toggle modules, group students, review responses, and push targeted support activities.</p>
+          <p id="teacher-action-summary">Future controls should let teachers toggle modules, group students, review responses, and push targeted support activities.</p>
         </article>
       </div>
     </section>
@@ -187,6 +187,22 @@
 
     <section class="panel">
       <div class="section-title">
+        <h2>Response Approval Inbox</h2>
+        <p>Review student free text before it enters any shared comparison pool</p>
+      </div>
+      <div id="teacher-response-review-list" class="response-review-list"></div>
+    </section>
+
+    <section class="panel">
+      <div class="section-title">
+        <h2>Feedback Review Inbox</h2>
+        <p>Check feedback button reports and unstructured site feedback before actioning them</p>
+      </div>
+      <div id="teacher-feedback-review-list" class="response-review-list"></div>
+    </section>
+
+    <section class="panel">
+      <div class="section-title">
         <h2>Module & Strand Time</h2>
         <p>Captured time-on-task by module, stage, and EST content strand</p>
       </div>
@@ -204,6 +220,7 @@
 
   <script src="../config/supabase-config.js"></script>
   <script src="../src/services/supabase-browser.js"></script>
+  <script src="../src/services/response-moderation.js?v=student-review-queue-v1"></script>
   <script src="../auth/auth.js?v=20260507-wa-domain-live"></script>
   <script src="./dashboard.js?v=20260508-teacher-analytics-logo"></script>
   <script src="../src/services/session-banner.js?v=20260508-teacher-analytics-logo"></script>

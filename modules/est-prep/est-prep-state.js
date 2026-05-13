@@ -67,6 +67,8 @@ const state = {
   arcFlows: {}
 };
 
+const EST_PROGRESS_ARCHIVE_KEY = "career-empire-est-prep-progress-v1";
+
 function readJsonStorage(key, fallback) {
   try {
     return JSON.parse(localStorage.getItem(key) || JSON.stringify(fallback));
@@ -89,10 +91,19 @@ function writePlayerSession(patch) {
   return next;
 }
 
-function persistESTProgressSnapshot() {
-  const session = getPlayerSession();
-  writePlayerSession({
-    ...session,
+function getESTProgressArchiveIdentity(student = state.student, session = getPlayerSession()) {
+  const studentId = student?.id || session.studentId || "";
+  if (studentId) return `id:${studentId}`;
+
+  const username = String(student?.username || session.username || session.playerName || "").trim().toLowerCase();
+  if (!username) return "";
+
+  const classKey = String(student?.classId || student?.classCode || session.classId || session.classCode || "no-class").trim().toLowerCase();
+  return `user:${classKey}:${username}`;
+}
+
+function buildESTProgressSnapshot() {
+  return {
     estPrepDeck: state.stageDeck,
     estPrepProgress: {
       selectedStageId: state.selectedStageId,
@@ -131,15 +142,83 @@ function persistESTProgressSnapshot() {
       glossaryRecallResults: state.glossaryRecallResults,
       glossaryRecallIndex: state.glossaryRecallIndex,
       glossaryTermStats: state.glossaryTermStats
-    }
-  });
+    },
+    estPrepUpdatedAt: new Date().toISOString()
+  };
+}
+
+function hasESTProgressSnapshotData(snapshot) {
+  const progress = snapshot?.estPrepProgress || {};
+  const hasCompletedStage = Object.values(progress.completed || {}).some(Boolean);
+  const hasContentScore = Object.values(progress.contentTopicBestScores || {}).some(value => Number(value || 0) > 0);
+  const hasDecoderResult = Object.keys(progress.decoderResults || {}).length > 0;
+  const hasContentWork = Number(progress.contentGroupIndex) >= 0
+    || Object.keys(progress.arcFlows || {}).length > 0
+    || Object.keys(progress.answers || {}).some(key => key.startsWith("content-") || key.startsWith("training-"));
+  const hasGlossaryWork = Boolean(progress.glossaryHasStarted)
+    || Object.keys(progress.glossaryRecallAnswers || {}).length > 0
+    || Object.keys(progress.glossaryRecallResults || {}).length > 0
+    || Object.keys(progress.glossaryRoundRewards || {}).length > 0;
+  const hasBossWork = Object.keys(progress.answers || {}).some(key => key.startsWith("boss"));
+
+  return Number(progress.marksBanked || 0) > 0
+    || Number(progress.readiness || 0) > 0
+    || hasCompletedStage
+    || hasContentScore
+    || hasDecoderResult
+    || hasContentWork
+    || hasGlossaryWork
+    || hasBossWork;
+}
+
+function writeESTProgressArchive(snapshot, session) {
+  if (!hasESTProgressSnapshotData(snapshot)) return;
+
+  const archiveKey = getESTProgressArchiveIdentity(state.student, session);
+  if (!archiveKey) return;
+
+  const archive = readJsonStorage(EST_PROGRESS_ARCHIVE_KEY, {});
+  archive[archiveKey] = {
+    ...snapshot,
+    studentId: state.student?.id || session.studentId || null,
+    username: state.student?.username || session.username || "",
+    classId: state.student?.classId || session.classId || null,
+    classCode: state.student?.classCode || session.classCode || "",
+    playerProfile: {
+      annualSalary: Number(session.annualSalary || 25000),
+      cumulativeNetWorth: Number(session.cumulativeNetWorth || 0),
+      savings: Number(session.savings || 0),
+      taxPaid: Number(session.taxPaid || 0),
+      jobSecurity: Number(session.jobSecurity || 75),
+      workLifeBalance: Number(session.workLifeBalance || 60),
+      checkpoint: session.checkpoint || "",
+      economyLog: Array.isArray(session.economyLog) ? session.economyLog : []
+    },
+    updatedAt: snapshot.estPrepUpdatedAt
+  };
+  localStorage.setItem(EST_PROGRESS_ARCHIVE_KEY, JSON.stringify(archive));
+}
+
+function readESTProgressArchiveRecord() {
+  const archiveKey = getESTProgressArchiveIdentity();
+  if (!archiveKey) return null;
+  const archive = readJsonStorage(EST_PROGRESS_ARCHIVE_KEY, {});
+  return archive[archiveKey] || null;
+}
+
+function persistESTProgressSnapshot() {
+  const snapshot = buildESTProgressSnapshot();
+  const session = writePlayerSession(snapshot);
+  writeESTProgressArchive(snapshot, session);
 }
 
 function hydrateESTProgressSnapshot() {
   const session = getPlayerSession();
-  const progress = session.estPrepProgress || {};
-  if (session.estPrepDeck) {
-    state.stageDeck = session.estPrepDeck;
+  const archived = readESTProgressArchiveRecord();
+  const source = session.estPrepProgress || session.estPrepDeck ? session : (archived || {});
+  const progress = source.estPrepProgress || {};
+  if (source.estPrepDeck) {
+    state.stageDeck = source.estPrepDeck;
   }
   state.selectedStageId = progress.selectedStageId || null;
   state.marksBanked = Number(progress.marksBanked || state.marksBanked || 0);

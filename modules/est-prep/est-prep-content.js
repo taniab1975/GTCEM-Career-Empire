@@ -1983,6 +1983,7 @@ async function submitCurrentContentTopic() {
       taskName: `EST Content Topic - ${currentGroup.title}`,
       durationSeconds: state.contentGroupDurations[currentGroup.id] || 0,
       promptText: currentGroup.writePrompt,
+      reviewResponseText: summary.builtResponse || "No response entered.",
       extraPayload: {
         topic_group_id: currentGroup.id,
         topic_group: currentGroup.title,
@@ -2303,6 +2304,7 @@ async function submitContent() {
       prompt: summary.group.title,
       promptText: summary.group.writePrompt,
       responseText: summary.response || "No written response entered.",
+      reviewResponseText: summary.response || "No written response entered.",
         extraPayload: {
           topic_group_id: summary.group.id,
           topic_group: summary.group.title,

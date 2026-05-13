@@ -646,6 +646,24 @@ async function submitFeedback(payload) {
   localStorage.setItem(FEEDBACK_FALLBACK_KEY, JSON.stringify(existing));
 }
 
+function getStoreRequestStudentId(identity = {}) {
+  const session = readJsonStorage(PLAYER_SESSION_KEY, {});
+  return currentShopContext?.studentId || identity.id || identity.studentId || session.studentId || null;
+}
+
+function flagStoreRequestText(itemName, reason, identity = {}) {
+  const moderation = window.CareerEmpireResponseModeration;
+  if (!moderation || typeof moderation.flagResponseText !== "function") {
+    return { flags: [], flagNotes: "" };
+  }
+  return moderation.flagResponseText(`${itemName}\n${reason}`, {
+    student: {
+      displayName: currentShopContext?.studentName || identity.displayName,
+      username: identity.username
+    }
+  });
+}
+
 function createStoreRequestModal() {
   if (document.getElementById("shop-request-backdrop")) return;
   const backdrop = document.createElement("div");
@@ -774,6 +792,12 @@ async function submitStoreRequest() {
   const messageInput = document.getElementById("shop-request-message");
   const statusEl = document.getElementById("shop-request-status");
 
+  const studentId = getStoreRequestStudentId(identity);
+  if (!studentId) {
+    if (statusEl) statusEl.textContent = "Please log in as a student before suggesting store items.";
+    return;
+  }
+
   const itemName = nameInput?.value.trim() || "";
   const category = categoryInput?.value || "";
   const reason = messageInput?.value.trim() || "";
@@ -783,17 +807,25 @@ async function submitStoreRequest() {
     return;
   }
 
+  const flagged = flagStoreRequestText(itemName, reason, identity);
   const payload = {
     kind: "store-item-request",
+    status: "pending_review",
+    student_id: studentId,
     student_name: currentShopContext?.studentName || identity.displayName || identity.username || "Student",
     login_name: identity.username || currentShopContext?.studentName || "unknown",
+    school_id: currentShopContext?.schoolId || identity.schoolId || identity.school_id || "",
     school_name: currentShopContext?.schoolName || identity.schoolName || "",
+    class_id: currentShopContext?.classId || identity.classId || identity.class_id || "",
     class_code: currentShopContext?.classCode || identity.classCode || "",
     item_name: itemName,
     category,
     category_label: getCategoryMeta(category).label,
     reason,
-    image: pendingStoreImage
+    image: pendingStoreImage,
+    flags: flagged.flags || [],
+    flag_notes: flagged.flagNotes || "",
+    submitted_at: new Date().toISOString()
   };
 
   if (statusEl) statusEl.textContent = "Sending request...";

@@ -262,6 +262,29 @@ async function getSupabaseClientOrNull() {
   }
 }
 
+async function queueLifelongReflectionForReview(supabase, evidenceRow, round, reflection, studentLogin, classId) {
+  const moderation = window.CareerEmpireResponseModeration;
+  if (!moderation || !evidenceRow?.id || !studentLogin?.id) return;
+  const session = getPlayerSession();
+
+  await moderation.queuePendingReview(supabase, {
+    sourceEvidenceId: evidenceRow.id,
+    studentId: studentLogin.id,
+    classId,
+    schoolId: studentLogin.schoolId || session.schoolId,
+    moduleId: MODULE_ID,
+    evidenceType: round.evidenceType,
+    taskKey: round.id,
+    taskLabel: round.title,
+    promptText: round.reflectionLabel || round.prompt,
+    responseText: reflection,
+    student: {
+      displayName: studentLogin.displayName || session.playerName,
+      username: studentLogin.username || session.username
+    }
+  });
+}
+
 function getAuthState() {
   return readJsonStorage(AUTH_DEMO_STATE_KEY, {});
 }
@@ -1039,7 +1062,7 @@ async function saveRoundProgress(round, choice, outcome, reflection, correct) {
     reflection
   ].join("\n");
 
-  const { error: evidenceError } = await supabase
+  const { data: evidenceRow, error: evidenceError } = await supabase
     .from("assessment_evidence")
     .insert({
       student_id: studentLogin.id,
@@ -1049,9 +1072,12 @@ async function saveRoundProgress(round, choice, outcome, reflection, correct) {
       prompt: round.prompt,
       response_text: evidenceText,
       auto_score: correct ? 1 : 0.5
-    });
+    })
+    .select("id")
+    .maybeSingle();
 
   if (evidenceError) console.error(evidenceError);
+  else await queueLifelongReflectionForReview(supabase, evidenceRow, round, reflection, studentLogin, classId);
 
   const { data: existingProfile, error: profileReadError } = await supabase
     .from("player_profiles")

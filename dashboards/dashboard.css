@@ -1794,6 +1794,68 @@ h1 {
   color: var(--text);
 }
 
+.response-review-list {
+  display: grid;
+  gap: 16px;
+}
+
+.response-review-card {
+  display: grid;
+  gap: 14px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 18px;
+  background: rgba(255, 255, 255, 0.04);
+}
+
+.response-review-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.response-review-header h3 {
+  margin: 4px 0 6px;
+  font-size: 20px;
+}
+
+.response-review-header p,
+.response-review-prompt p,
+.response-review-source p {
+  margin: 0;
+  color: var(--muted);
+}
+
+.response-review-flags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.response-review-prompt,
+.response-review-source {
+  display: grid;
+  gap: 6px;
+}
+
+.response-review-source {
+  padding: 12px;
+  border-radius: 8px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: rgba(0, 0, 0, 0.12);
+}
+
+.response-review-form {
+  display: grid;
+  gap: 10px;
+}
+
+.response-review-form textarea {
+  min-height: 120px;
+  resize: vertical;
+}
+
 label {
   display: block;
   font-size: 13px;

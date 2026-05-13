@@ -1592,6 +1592,264 @@ function renderTeacherLongAnswerComparison(rows, students = []) {
   `;
 }
 
+function getResponseReviewFlags(row) {
+  if (Array.isArray(row?.flags)) return row.flags.filter(Boolean);
+  if (typeof row?.flags === "string") {
+    return row.flags.replace(/[{}"]/g, "").split(",").map(flag => flag.trim()).filter(Boolean);
+  }
+  return [];
+}
+
+function getResponseReviewFlagLabel(flag) {
+  const labels = {
+    possible_email: "Possible email",
+    possible_phone: "Possible phone",
+    possible_url: "Possible URL",
+    possible_handle: "Possible handle",
+    possible_profanity: "Language check",
+    possible_student_name: "Possible name",
+    possible_context_identifier: "Context clue",
+    too_short: "Very short"
+  };
+  return labels[flag] || flag.replaceAll("_", " ");
+}
+
+function renderTeacherResponseReviewInbox(rows = []) {
+  const container = document.getElementById("teacher-response-review-list");
+  if (!container) return;
+
+  const sortedRows = [...rows].sort((a, b) => {
+    const statusWeight = status => status === "pending_review" ? 0 : status === "approved" ? 1 : 2;
+    return statusWeight(a.status) - statusWeight(b.status) || parseTime(b.created_at) - parseTime(a.created_at);
+  });
+
+  if (!sortedRows.length) {
+    container.innerHTML = '<div class="timeline-item"><strong>No responses waiting for review</strong><p>Free-text EST and Lifelong Learning submissions will appear here before they can be shared as anonymous comparison examples.</p></div>';
+    return;
+  }
+
+  container.innerHTML = sortedRows.slice(0, 30).map(row => {
+    const flags = getResponseReviewFlags(row);
+    const studentName = row.students?.display_name || row.students?.username || "Student";
+    const classLabel = row.classes?.class_code || row.classes?.name || "Class";
+    const approvedText = row.approved_response_text || row.raw_response_text || "";
+    const statusLabel = row.status === "pending_review"
+      ? "Pending review"
+      : row.status === "approved"
+        ? "Approved for pool"
+        : "Rejected";
+
+    return `
+      <article class="response-review-card" data-response-review-id="${row.id}">
+        <div class="response-review-header">
+          <div>
+            <span class="eyebrow">${escapeHtml(getModuleLabel(row.module_id))} • ${escapeHtml(classLabel)}</span>
+            <h3>${escapeHtml(row.task_label || "Written response")}</h3>
+            <p>${escapeHtml(studentName)} • ${escapeHtml(formatDateTime(row.created_at))}</p>
+          </div>
+          <span class="teacher-matrix-code ${row.status === "approved" ? "teacher-matrix-code--high" : row.status === "rejected" ? "teacher-matrix-code--nys" : "teacher-matrix-code--mid"}">${escapeHtml(statusLabel)}</span>
+        </div>
+        <div class="response-review-flags">
+          ${flags.length
+            ? flags.map(flag => `<span class="pill">${escapeHtml(getResponseReviewFlagLabel(flag))}</span>`).join("")
+            : '<span class="pill">No automatic flags</span>'}
+        </div>
+        ${row.flag_notes ? `<p class="footer-note">${escapeHtml(row.flag_notes)}</p>` : ""}
+        <div class="response-review-prompt">
+          <strong>Prompt</strong>
+          <p>${escapeHtml(row.prompt_text || "Saved written response")}</p>
+        </div>
+        <div class="response-review-source">
+          <strong>Original student response</strong>
+          <p>${escapeHtml(row.raw_response_text || "")}</p>
+        </div>
+        <div class="response-review-form">
+          <label>Approved anonymous version</label>
+          <textarea data-review-field="approvedText">${escapeHtml(approvedText)}</textarea>
+          <label>Teacher note</label>
+          <input type="text" data-review-field="reviewerNote" value="${escapeHtml(row.reviewer_note || "")}" placeholder="Optional internal note">
+        </div>
+        <div class="module-actions">
+          <button class="module-link" type="button" data-review-action="approve">Approve Edited Version</button>
+          <button class="module-link button-danger" type="button" data-review-action="reject">Reject From Pool</button>
+        </div>
+        <p class="store-request-status" data-review-status>
+          <strong>Current status:</strong> ${escapeHtml(statusLabel)}${row.reviewed_at ? ` • Reviewed ${escapeHtml(formatDateTime(row.reviewed_at))}` : ""}
+        </p>
+      </article>
+    `;
+  }).join("");
+
+  container.querySelectorAll("[data-review-action]").forEach(button => {
+    button.addEventListener("click", async event => {
+      const action = event.currentTarget.dataset.reviewAction;
+      const card = event.currentTarget.closest("[data-response-review-id]");
+      if (!card) return;
+
+      const statusEl = card.querySelector("[data-review-status]");
+      const approvedText = card.querySelector('[data-review-field="approvedText"]')?.value.trim() || "";
+      const reviewerNote = card.querySelector('[data-review-field="reviewerNote"]')?.value.trim() || "";
+      if (action === "approve" && !approvedText) {
+        if (statusEl) statusEl.innerHTML = "<strong>Error:</strong> Add an approved version before approving.";
+        return;
+      }
+
+      if (statusEl) statusEl.innerHTML = "<strong>Updating...</strong>";
+      try {
+        await updateStudentResponseReview(card.dataset.responseReviewId, {
+          status: action === "approve" ? "approved" : "rejected",
+          approvedText,
+          reviewerNote
+        });
+        await initDashboards();
+      } catch (error) {
+        if (statusEl) statusEl.innerHTML = `<strong>Error:</strong> ${escapeHtml(error.message || "Could not update response review.")}`;
+      }
+    });
+  });
+}
+
+async function updateStudentResponseReview(reviewId, options = {}) {
+  const supabase = await getSupabaseClientOrNull();
+  if (!supabase) throw new Error("Supabase is not available.");
+  const context = getActiveTeacherContext();
+  const isApproved = options.status === "approved";
+  const payload = {
+    status: options.status,
+    approved_response_text: isApproved ? options.approvedText : null,
+    reviewer_note: options.reviewerNote || null,
+    reviewed_by_teacher_id: context.teacher?.id || null,
+    reviewed_at: new Date().toISOString(),
+    updated_at: new Date().toISOString()
+  };
+
+  const { error } = await supabase
+    .from("student_response_reviews")
+    .update(payload)
+    .eq("id", reviewId);
+
+  if (error) throw error;
+}
+
+function renderTeacherFeedbackReviewInbox(items = []) {
+  const container = document.getElementById("teacher-feedback-review-list");
+  if (!container) return;
+
+  const sortedItems = [...items].sort((a, b) => {
+    const statusWeight = status => normaliseReviewStatus(status) === "pending_review" ? 0 : 1;
+    return statusWeight(a.status) - statusWeight(b.status) || parseTime(b.createdAt) - parseTime(a.createdAt);
+  });
+
+  if (!sortedItems.length) {
+    container.innerHTML = '<div class="timeline-item"><strong>No feedback waiting for review</strong><p>Feedback button reports and other site feedback will appear here for teacher checking.</p></div>';
+    return;
+  }
+
+  container.innerHTML = sortedItems.slice(0, 40).map(item => {
+    const flags = normaliseFlagList(item.flags);
+    const status = normaliseReviewStatus(item.status);
+    const statusLabel = getReviewStatusLabel(status, "Checked");
+    const statusClass = status === "checked"
+      ? "teacher-matrix-code--high"
+      : status === "dismissed" || status === "rejected"
+        ? "teacher-matrix-code--nys"
+        : "teacher-matrix-code--mid";
+
+    return `
+      <article class="response-review-card feedback-review-card" data-feedback-review-id="${item.id}">
+        <div class="response-review-header">
+          <div>
+            <span class="eyebrow">${escapeHtml(getTeacherFeedbackTypeLabel(item.feedbackType))} • ${escapeHtml(item.actorRole || "unknown")}</span>
+            <h3>${escapeHtml(item.displayName || item.loginName || "Unknown sender")}</h3>
+            <p>${escapeHtml(item.pagePath || "Page not recorded")} • ${escapeHtml(formatDateTime(item.createdAt))}</p>
+          </div>
+          <span class="teacher-matrix-code ${statusClass}">${escapeHtml(statusLabel)}</span>
+        </div>
+        <div class="response-review-flags">
+          ${flags.length
+            ? flags.map(flag => `<span class="pill">${escapeHtml(getResponseReviewFlagLabel(flag))}</span>`).join("")
+            : '<span class="pill">No automatic flags</span>'}
+          ${item.schoolName ? `<span class="pill">School: ${escapeHtml(item.schoolName)}</span>` : ""}
+          ${item.classCode ? `<span class="pill">Class: ${escapeHtml(item.classCode)}</span>` : ""}
+        </div>
+        ${item.flagNotes ? `<p class="footer-note">${escapeHtml(item.flagNotes)}</p>` : ""}
+        <div class="response-review-source">
+          <strong>Feedback text</strong>
+          <p>${escapeHtml(item.text || "No message provided.")}</p>
+        </div>
+        <div class="response-review-form">
+          <label>Teacher note</label>
+          <input type="text" data-feedback-field="reviewerNote" value="${escapeHtml(item.reviewerNote || "")}" placeholder="Optional internal note">
+        </div>
+        <div class="module-actions">
+          <button class="module-link" type="button" data-feedback-action="checked">Mark Checked</button>
+          <button class="module-link button-danger" type="button" data-feedback-action="dismissed">Dismiss</button>
+        </div>
+        <p class="store-request-status" data-feedback-status>
+          <strong>Current status:</strong> ${escapeHtml(statusLabel)}${item.reviewedAt ? ` • Reviewed ${escapeHtml(formatDateTime(item.reviewedAt))}` : ""}
+        </p>
+      </article>
+    `;
+  }).join("");
+
+  container.querySelectorAll("[data-feedback-action]").forEach(button => {
+    button.addEventListener("click", async event => {
+      const status = event.currentTarget.dataset.feedbackAction;
+      const card = event.currentTarget.closest("[data-feedback-review-id]");
+      if (!card) return;
+      const item = items.find(entry => entry.id === card.dataset.feedbackReviewId);
+      if (!item) return;
+
+      const statusEl = card.querySelector("[data-feedback-status]");
+      const reviewerNote = card.querySelector('[data-feedback-field="reviewerNote"]')?.value.trim() || "";
+      if (statusEl) statusEl.innerHTML = "<strong>Updating...</strong>";
+
+      try {
+        await updateTeacherFeedbackReview(item, {
+          status,
+          reviewerNote
+        });
+        await initDashboards();
+      } catch (error) {
+        if (statusEl) statusEl.innerHTML = `<strong>Error:</strong> ${escapeHtml(error.message || "Could not update feedback review.")}`;
+      }
+    });
+  });
+}
+
+async function updateTeacherFeedbackReview(item, options = {}) {
+  const supabase = await getSupabaseClientOrNull();
+  if (!supabase) throw new Error("Supabase is not available.");
+  const context = getActiveTeacherContext();
+  const nextPayload = {
+    ...(item.payload || {}),
+    kind: "teacher-feedback",
+    status: normaliseReviewStatus(options.status),
+    feedback_type: item.feedbackType || item.payload?.feedback_type || "feedback",
+    feedback_text: item.text || item.payload?.feedback_text || "",
+    page_path: item.pagePath || item.payload?.page_path || "",
+    actor_role: item.actorRole || item.payload?.actor_role || "anonymous",
+    login_name: item.loginName || item.payload?.login_name || "unknown",
+    school_id: item.schoolId || item.payload?.school_id || null,
+    school_name: item.schoolName || item.payload?.school_name || "",
+    class_id: item.classId || item.payload?.class_id || null,
+    class_code: item.classCode || item.payload?.class_code || "",
+    reviewer_note: options.reviewerNote || null,
+    reviewed_by_teacher_id: context.teacher?.id || null,
+    reviewed_at: new Date().toISOString(),
+    updated_at: new Date().toISOString()
+  };
+
+  const { error } = await supabase
+    .from("feedback_reports")
+    .update({
+      message: JSON.stringify(nextPayload)
+    })
+    .eq("id", item.id);
+
+  if (error) throw error;
+}
+
 function renderTeacherStudentCompareList(items) {
   const container = document.getElementById("teacher-student-compare-list");
   if (!container) return;
@@ -2257,6 +2515,101 @@ function parseStructuredFeedback(row) {
   }
 }
 
+function normaliseFlagList(value) {
+  if (Array.isArray(value)) return value.filter(Boolean);
+  if (typeof value === "string") {
+    return value.replace(/[{}"]/g, "").split(",").map(flag => flag.trim()).filter(Boolean);
+  }
+  return [];
+}
+
+function normaliseReviewStatus(value, fallback = "pending_review") {
+  const status = String(value || fallback || "").trim();
+  if (!status || status === "pending") return "pending_review";
+  if (status === "checked" || status === "reviewed") return "checked";
+  return status;
+}
+
+function getTeacherFeedbackTypeLabel(value) {
+  const labels = {
+    bug: "Bug report",
+    suggestion: "Suggestion",
+    question: "Question",
+    "store-item-request": "Store item request"
+  };
+  return labels[value] || String(value || "Feedback").replaceAll("-", " ");
+}
+
+function getReviewStatusLabel(status, approvedLabel = "Approved") {
+  const labels = {
+    pending_review: "Pending review",
+    checked: "Checked",
+    dismissed: "Dismissed",
+    approved: approvedLabel,
+    rejected: "Rejected"
+  };
+  return labels[normaliseReviewStatus(status)] || String(status || "Pending review").replaceAll("_", " ");
+}
+
+function feedbackMatchesTeacherScope(item, dashboardContext, classCodeFilter) {
+  const teacherSchool = dashboardContext.teacherLogin?.schoolName
+    || dashboardContext.teacher?.schoolName
+    || dashboardContext.teacherSession?.schoolName
+    || "";
+  const teacherSchoolId = dashboardContext.teacherLogin?.schoolId
+    || dashboardContext.teacherLogin?.school_id
+    || dashboardContext.teacher?.schoolId
+    || dashboardContext.teacher?.school_id
+    || dashboardContext.teacherSession?.schoolId
+    || dashboardContext.teacherSession?.school_id
+    || "";
+  const matchesClass = Boolean(classCodeFilter && item.classCode && item.classCode === classCodeFilter);
+  const matchesSchoolId = Boolean(teacherSchoolId && item.schoolId && String(item.schoolId) === String(teacherSchoolId));
+  const matchesSchool = Boolean(teacherSchool && item.schoolName && normalizeSchoolName(item.schoolName) === normalizeSchoolName(teacherSchool));
+  const unscoped = !item.schoolId && !item.schoolName && !item.classCode;
+  if (classCodeFilter) return matchesClass || matchesSchoolId || matchesSchool || unscoped;
+  return matchesSchoolId || matchesSchool || unscoped || (!teacherSchool && !teacherSchoolId);
+}
+
+function normaliseTeacherFeedback(row) {
+  if (row.feedback_type === "store-item-request") return null;
+  const payload = parseStructuredFeedback(row);
+  if (payload && payload.kind === "store-item-request") return null;
+  const messageText = payload?.feedback_text || payload?.message || row.message || "";
+  return {
+    id: row.id,
+    createdAt: row.created_at,
+    pagePath: payload?.page_path || row.page_path || "",
+    actorRole: payload?.actor_role || row.actor_role || "anonymous",
+    loginName: payload?.login_name || row.login_name || "unknown",
+    displayName: payload?.display_name || "",
+    studentId: payload?.student_id || null,
+    teacherId: payload?.teacher_id || null,
+    schoolId: payload?.school_id || "",
+    schoolName: payload?.school_name || "",
+    classId: payload?.class_id || "",
+    classCode: payload?.class_code || "",
+    feedbackType: payload?.feedback_type || row.feedback_type || "feedback",
+    text: messageText,
+    status: normaliseReviewStatus(payload?.status),
+    flags: normaliseFlagList(payload?.flags),
+    flagNotes: payload?.flag_notes || payload?.flagNotes || "",
+    reviewerNote: payload?.reviewer_note || "",
+    reviewedAt: payload?.reviewed_at || "",
+    payload: payload || {
+      kind: "teacher-feedback",
+      status: "pending_review",
+      feedback_type: row.feedback_type || "feedback",
+      feedback_text: messageText,
+      page_path: row.page_path || "",
+      actor_role: row.actor_role || "anonymous",
+      login_name: row.login_name || "unknown",
+      flags: [],
+      flag_notes: ""
+    }
+  };
+}
+
 function normaliseStoreRequest(row) {
   const payload = parseStructuredFeedback(row);
   if (!payload || payload.kind !== "store-item-request") return null;
@@ -2265,7 +2618,10 @@ function normaliseStoreRequest(row) {
     id: row.id,
     createdAt: row.created_at,
     loginName: row.login_name,
-    status: payload.status || "pending",
+    status: normaliseReviewStatus(payload.status),
+    studentId: payload.student_id || null,
+    schoolId: payload.school_id || "",
+    classId: payload.class_id || "",
     studentName: payload.student_name || row.login_name || "Student",
     schoolName: payload.school_name || "",
     classCode: payload.class_code || "",
@@ -2275,6 +2631,8 @@ function normaliseStoreRequest(row) {
     reason: payload.reason || "",
     image: approvedItem?.image || payload.image || null,
     approvedItem,
+    flags: normaliseFlagList(payload.flags),
+    flagNotes: payload.flag_notes || payload.flagNotes || "",
     payload
   };
 }
@@ -2492,7 +2850,8 @@ function getPromoTeacherDashboardData() {
     evidenceRows,
     voteRows,
     profileRows: profiles,
-    feedbackRows
+    feedbackRows,
+    reviewRows: []
   };
 }
 
@@ -2522,6 +2881,9 @@ function renderTeacherStoreRequestList(items) {
     const defaultCost = item.approvedItem?.cost || 1000;
     const defaultIcon = item.approvedItem?.icon || "🛍️";
     const defaultBenefit = item.approvedItem?.benefit || item.reason || "Student-requested item for the Career Empire store.";
+    const status = normaliseReviewStatus(item.status);
+    const statusLabel = getReviewStatusLabel(status, "Approved");
+    const flags = normaliseFlagList(item.flags);
     return `
       <article class="module-card store-request-card" data-store-request-id="${item.id}">
         <div class="section-title">
@@ -2529,13 +2891,17 @@ function renderTeacherStoreRequestList(items) {
             <h2>${escapeHtml(item.itemName || "Requested item")}</h2>
             <p>${escapeHtml(item.studentName)} • ${escapeHtml(item.classCode || "Class not set")} • ${formatDateTime(item.createdAt)}</p>
           </div>
-          <p class="status-${item.status === "approved" ? "good" : item.status === "rejected" ? "risk" : "watch"}">${escapeHtml(item.status)}</p>
+          <p class="status-${status === "approved" ? "good" : status === "rejected" ? "risk" : "watch"}">${escapeHtml(statusLabel)}</p>
         </div>
         <div class="store-request-meta">
           <span class="pill">Category: ${escapeHtml(item.categoryLabel)}</span>
           <span class="pill">Login: ${escapeHtml(item.loginName || "unknown")}</span>
           ${item.schoolName ? `<span class="pill">School: ${escapeHtml(item.schoolName)}</span>` : ""}
+          ${flags.length
+            ? flags.map(flag => `<span class="pill">${escapeHtml(getResponseReviewFlagLabel(flag))}</span>`).join("")
+            : '<span class="pill">No automatic flags</span>'}
         </div>
+        ${item.flagNotes ? `<p class="footer-note">${escapeHtml(item.flagNotes)}</p>` : ""}
         ${item.image?.dataUrl ? `<img class="store-request-image" src="${item.image.dataUrl}" alt="${escapeHtml(item.itemName)} image">` : ""}
         <p>${escapeHtml(item.reason || "No reason provided.")}</p>
         <div class="store-request-form">
@@ -2581,7 +2947,7 @@ function renderTeacherStoreRequestList(items) {
           <button class="module-link button-danger" type="button" data-store-action="reject">Reject</button>
         </div>
         <p class="store-request-status" data-store-status>
-          <strong>Current status:</strong> ${escapeHtml(item.status)}${item.status === "approved" ? " and visible in the shop." : ""}
+          <strong>Current status:</strong> ${escapeHtml(statusLabel)}${status === "approved" ? " and visible in the shop." : ""}
         </p>
       </article>
     `;
@@ -2622,11 +2988,14 @@ function renderTeacherStoreRequestList(items) {
 async function updateStoreRequest(request, status, approvedItem = null) {
   const supabase = await getSupabaseClientOrNull();
   if (!supabase) throw new Error("Supabase is not available.");
+  const context = getActiveTeacherContext();
   const nextPayload = {
     ...request.payload,
     status,
     approved_item: approvedItem,
-    reviewed_at: new Date().toISOString()
+    reviewed_by_teacher_id: context.teacher?.id || null,
+    reviewed_at: new Date().toISOString(),
+    updated_at: new Date().toISOString()
   };
   const { error } = await supabase
     .from("feedback_reports")
@@ -2650,7 +3019,8 @@ function createEmptyTeacherDashboardData(context, dashboardFilter, selectedClass
     evidenceRows: [],
     voteRows: [],
     profileRows: [],
-    feedbackRows: []
+    feedbackRows: [],
+    reviewRows: []
   };
 }
 
@@ -2692,7 +3062,7 @@ async function getTeacherDashboardData() {
     ? `All classes at ${context.teacher?.schoolName || "School not resolved"}`
     : (selectedClassRows[0]?.name || "Selected class");
 
-  const [studentsResult, votesResult, feedbackResult] = await Promise.allSettled([
+  const [studentsResult, votesResult, feedbackResult, reviewsResult] = await Promise.allSettled([
     supabase
       .from("students")
       .select("id, display_name, username, created_at, last_login_at, school_id, class_id")
@@ -2703,20 +3073,18 @@ async function getTeacherDashboardData() {
       .from("community_votes")
       .select("*")
       .in("class_id", classIds),
-    (() => {
-      let query = supabase
-        .from("feedback_reports")
-        .select("*")
-        .eq("feedback_type", "store-item-request")
-        .order("created_at", { ascending: false })
-        .limit(40);
-      if (context.teacher?.schoolName) {
-        query = query.ilike("message", `%${context.teacher.schoolName}%`);
-      } else {
-        query = query.limit(0);
-      }
-      return query;
-    })()
+    supabase
+      .from("feedback_reports")
+      .select("*")
+      .order("created_at", { ascending: false })
+      .limit(160),
+    supabase
+      .from("student_response_reviews")
+      .select("*, students(display_name, username, class_id), classes(name, class_code)")
+      .eq("school_id", schoolId)
+      .in("class_id", classIds)
+      .order("created_at", { ascending: false })
+      .limit(120)
   ]);
 
   const unwrapResult = (result, label) => {
@@ -2734,6 +3102,7 @@ async function getTeacherDashboardData() {
   const students = unwrapResult(studentsResult, "students");
   const voteRows = unwrapResult(votesResult, "community_votes");
   const feedbackRows = unwrapResult(feedbackResult, "feedback_reports");
+  const reviewRows = unwrapResult(reviewsResult, "student_response_reviews");
 
   const studentIds = students.map(student => student.id);
   const [moduleProgressResult, evidenceResult] = studentIds.length
@@ -2806,7 +3175,8 @@ async function getTeacherDashboardData() {
     evidenceRows: evidenceRows || [],
     voteRows: voteRows || [],
     profileRows: (profileRows || []).map(mapRemotePlayerProfile),
-    feedbackRows: feedbackRows || []
+    feedbackRows: feedbackRows || [],
+    reviewRows: reviewRows || []
   };
 }
 
@@ -2891,6 +3261,7 @@ function buildFallbackTeacherDashboardData(players, context) {
     voteRows: [],
     profileRows,
     feedbackRows: [],
+    reviewRows: [],
     isFallback: true
   };
 }
@@ -3169,7 +3540,8 @@ function renderTeacherLiveData(players, skillsData, teacherData = null) {
     evidenceRows: [],
     voteRows: [],
     profileRows: [],
-    feedbackRows: []
+    feedbackRows: [],
+    reviewRows: []
   });
   const dashboardContext = safeTeacherData.context || teacherContext;
   const skillCategories = Array.isArray(skillsData?.categories) ? skillsData.categories : [];
@@ -3205,6 +3577,10 @@ function renderTeacherLiveData(players, skillsData, teacherData = null) {
     : allEvidenceRows;
   const voteRows = safeTeacherData?.voteRows || [];
   const feedbackRows = safeTeacherData?.feedbackRows || [];
+  const allReviewRows = safeTeacherData?.reviewRows || [];
+  const reviewRows = selectedStudent
+    ? allReviewRows.filter(row => row.student_id === selectedStudent.id)
+    : allReviewRows;
   const megatrendsProgressRows = moduleProgressRows.filter(row => (row.module_id || row.module_slug) === "megatrends");
   const estProgressRows = moduleProgressRows.filter(row => (row.module_id || row.module_slug) === "est-prep");
   const lifelongProgressRows = moduleProgressRows.filter(row => (row.module_id || row.module_slug) === "lifelong-learning");
@@ -3457,12 +3833,15 @@ function renderTeacherLiveData(players, skillsData, teacherData = null) {
   const storeRequests = feedbackRows
     .map(normaliseStoreRequest)
     .filter(Boolean)
-    .filter(request => {
-      const matchesClass = !classCodeFilter || request.classCode === classCodeFilter;
-      const teacherSchool = dashboardContext.teacherLogin?.schoolName || dashboardContext.teacher?.schoolName || "";
-      const matchesSchool = !teacherSchool || request.schoolName === teacherSchool;
-      return matchesClass || matchesSchool;
-    });
+    .filter(request => feedbackMatchesTeacherScope(request, dashboardContext, classCodeFilter));
+  const feedbackReviewItems = feedbackRows
+    .map(normaliseTeacherFeedback)
+    .filter(Boolean)
+    .filter(item => feedbackMatchesTeacherScope(item, dashboardContext, classCodeFilter));
+  const pendingReviewCount = reviewRows.filter(row => row.status === "pending_review").length;
+  const approvedReviewCount = reviewRows.filter(row => row.status === "approved").length;
+  const pendingFeedbackCount = feedbackReviewItems.filter(item => normaliseReviewStatus(item.status) === "pending_review").length;
+  const pendingStoreRequestCount = storeRequests.filter(item => normaliseReviewStatus(item.status) === "pending_review").length;
   const studentCompareRows = students.map(student => {
     const player = latestPlayers.find(entry => entry.id === student.id) || null;
     const studentProgress = moduleProgressRows.filter(row => row.student_id === student.id);
@@ -3642,6 +4021,10 @@ function renderTeacherLiveData(players, skillsData, teacherData = null) {
   setText("teacher-average-completion", `${moduleCompletion}%`);
   setText("teacher-average-score", evidenceScores.length ? `${averageEvidenceScore}%` : "N/A");
   setText("teacher-evidence-count", String(evidenceCount));
+  setText(
+    "teacher-action-summary",
+    `${pendingReviewCount} student free-text response${pendingReviewCount === 1 ? "" : "s"} waiting for sharing approval. ${pendingFeedbackCount} feedback report${pendingFeedbackCount === 1 ? "" : "s"} and ${pendingStoreRequestCount} shop request${pendingStoreRequestCount === 1 ? "" : "s"} need teacher checking. ${approvedReviewCount} approved response${approvedReviewCount === 1 ? "" : "s"} are ready for the comparison pool.`
+  );
 
   renderSkills({ categories: skillCategories }, "teacher-skill-grid", classSkillMap);
   const teacherModuleRows = [
@@ -3725,6 +4108,8 @@ function renderTeacherLiveData(players, skillsData, teacherData = null) {
   renderTeacherRosterActivity(engagementRows.slice(0, 8));
   renderTeacherGlossaryGapList(glossaryData);
   renderTeacherLongAnswerComparison(longAnswerRows, students);
+  renderTeacherResponseReviewInbox(reviewRows);
+  renderTeacherFeedbackReviewInbox(feedbackReviewItems);
   renderTeacherTaskTimeList(taskTimingRows);
   renderTeacherStudentCompareList(studentCompareRows);
   renderTeacherStudentProfile({
@@ -3825,7 +4210,8 @@ async function initDashboards() {
         evidenceRows: [],
         voteRows: [],
         profileRows: [],
-        feedbackRows: []
+        feedbackRows: [],
+        reviewRows: []
       });
     }
   }

@@ -73,10 +73,7 @@ function returnToTrack() {
 async function init() {
   state.student = getLoggedInStudent();
   registerLeaveWarning();
-  const session = getPlayerSession();
-  if (session.estPrepDeck || session.estPrepProgress) {
-    hydrateESTProgressSnapshot();
-  }
+  hydrateESTProgressSnapshot();
   const [bank, contentStageConfig] = await Promise.all([
     loadBank(),
     loadContentStageConfig()
@@ -154,6 +151,7 @@ window.ESTPrep = {
   setGlossaryRoundVote,
   startNewGlossaryPracticeRun,
   jumpToGlossaryRound,
+  jumpToGlossarySet,
   toggleReveal,
   toggleTopicIntroVideo,
   toggleTopicIntroPictureInPicture,

@@ -366,13 +366,13 @@ function hasGlossaryPerfectRecentRecall(stat) {
 function getGlossaryMasterySummary() {
   const source = buildGlossarySource();
   const stats = state.glossaryTermStats || {};
-  const rows = source.map(item => {
+  const rows = source.map((item, index) => {
     const stat = stats[item.id] || {};
     const tested = Number(stat.tested || 0);
     const correct = Number(stat.correct || 0);
     const accuracy = tested ? correct / tested : 0;
     const isMastered = hasGlossaryPerfectRecentRecall(stat);
-    return { item, stat, tested, correct, accuracy, isMastered };
+    return { index, item, stat, tested, correct, accuracy, isMastered };
   });
   const testedRows = rows.filter(row => row.tested > 0);
   const attempts = rows.reduce((sum, row) => sum + row.tested, 0);
@@ -397,14 +397,38 @@ function getGlossaryMasterySummary() {
 
 function buildGlossaryPracticeBatches(source = buildGlossarySource()) {
   const terms = Array.isArray(source) && source.length ? source : buildGlossarySource();
-  const roundCount = Math.max(1, GLOSSARY_ROUND_CONFIGS.length);
-  return GLOSSARY_ROUND_CONFIGS.map((_, roundIndex) => {
-    const start = roundIndex * GLOSSARY_TERMS_PER_ROUND;
-    const batch = terms.slice(start, start + GLOSSARY_TERMS_PER_ROUND);
-    if (batch.length) return batch;
-    const fallbackStart = (roundIndex * GLOSSARY_TERMS_PER_ROUND) % terms.length;
-    return terms.slice(fallbackStart, fallbackStart + GLOSSARY_TERMS_PER_ROUND);
-  }).slice(0, roundCount);
+  return chunkArray(terms, GLOSSARY_TERMS_PER_ROUND).filter(batch => batch.length);
+}
+
+function sortGlossaryRowsForPractice(rows) {
+  return [...rows].sort((a, b) => {
+    if (a.tested !== b.tested) return a.tested - b.tested;
+    if (a.accuracy !== b.accuracy) return a.accuracy - b.accuracy;
+    return a.index - b.index;
+  });
+}
+
+function rotateGlossaryRows(rows, offset = 0) {
+  if (!rows.length) return [];
+  const start = Math.max(0, Number(offset || 0)) % rows.length;
+  return [...rows.slice(start), ...rows.slice(0, start)];
+}
+
+function chooseGlossaryPracticeItems(count = GLOSSARY_TERMS_PER_ROUND, options = {}) {
+  const summary = getGlossaryMasterySummary();
+  const untestedRows = summary.rows.filter(row => row.tested === 0);
+  const reviewRows = summary.rows.filter(row => row.tested > 0 && !row.isMastered);
+  const secureRows = summary.rows.filter(row => row.isMastered);
+  const sortedSecureRows = sortGlossaryRowsForPractice(secureRows);
+  const replaySecureRows = untestedRows.length || reviewRows.length
+    ? sortedSecureRows
+    : rotateGlossaryRows(sortedSecureRows, Number(options.offset || 0));
+  const orderedRows = [
+    ...sortGlossaryRowsForPractice(untestedRows),
+    ...sortGlossaryRowsForPractice(reviewRows),
+    ...replaySecureRows
+  ];
+  return orderedRows.slice(0, Math.min(count, orderedRows.length)).map(row => row.item);
 }
 
 function refreshGlossaryPracticeDeck() {
@@ -412,7 +436,8 @@ function refreshGlossaryPracticeDeck() {
   const glossaryTerms = buildGlossarySource();
   state.stageDeck.glossaryTerms = glossaryTerms;
   state.stageDeck.glossaryBatches = buildGlossaryPracticeBatches(glossaryTerms);
-  state.glossaryRoundIndex = Math.max(0, Math.min(state.glossaryRoundIndex || 0, Math.max(0, state.stageDeck.glossaryBatches.length - 1)));
+  state.glossaryRoundIndex = Math.max(0, Math.min(state.glossaryRoundIndex || 0, Math.max(0, GLOSSARY_ROUND_CONFIGS.length - 1)));
+  state.glossaryBatchIndex = Math.max(0, Math.min(state.glossaryBatchIndex || 0, Math.max(0, state.stageDeck.glossaryBatches.length - 1)));
 }
 
 function getGlossaryCloze(item) {
@@ -552,9 +577,84 @@ function buildGlossaryBoard(rounds) {
   ])));
 }
 
-function getCurrentGlossaryBatch() {
-  const batches = state.stageDeck?.glossaryBatches || [];
-  return batches[state.glossaryRoundIndex] || [];
+function getGlossaryBatches() {
+  return state.stageDeck?.glossaryBatches?.length
+    ? state.stageDeck.glossaryBatches
+    : buildGlossaryPracticeBatches();
+}
+
+function getGlossaryBatchCount() {
+  return getGlossaryBatches().length || 1;
+}
+
+function getSafeGlossaryBatchIndex(index = state.glossaryBatchIndex) {
+  const count = getGlossaryBatchCount();
+  const safeIndex = Number.isFinite(Number(index)) ? Math.round(Number(index)) : 0;
+  return Math.max(0, Math.min(count - 1, safeIndex));
+}
+
+function getGlossaryBatchKeyFor(roundIndex = state.glossaryRoundIndex, batchIndex = state.glossaryBatchIndex) {
+  return `glossary-r${roundIndex}-b${batchIndex}`;
+}
+
+function getGlossaryBatchTermIdsKey(roundIndex = state.glossaryRoundIndex, batchIndex = state.glossaryBatchIndex) {
+  return `${getGlossaryBatchKeyFor(roundIndex, batchIndex)}-term-ids`;
+}
+
+function getGlossaryItemsById(ids) {
+  const source = buildGlossarySource();
+  const byId = new Map(source.map(item => [item.id, item]));
+  return (Array.isArray(ids) ? ids : [])
+    .map(id => byId.get(id))
+    .filter(Boolean);
+}
+
+function clearGlossarySetState(roundIndex = state.glossaryRoundIndex, batchIndex = state.glossaryBatchIndex) {
+  clearGlossaryRecallAdvanceTimeout();
+  clearGlossaryInvaderShotTimeout();
+  clearGlossaryCommunityAssetTimeout();
+  clearGlossaryMemoryResetTimeout();
+  const setKey = getGlossaryBatchKeyFor(roundIndex, batchIndex);
+  const termIds = state.answers[getGlossaryBatchTermIdsKey(roundIndex, batchIndex)] || [];
+  delete state.glossaryAssignments[setKey];
+  delete state.answers[`${setKey}-memory-open`];
+  delete state.answers[`${setKey}-memory-mismatch`];
+  delete state.answers[`${setKey}-memory-match`];
+
+  getGlossaryItemsById(termIds).forEach(item => {
+    delete state.glossaryRecallAnswers[`term-${item.id}`];
+    delete state.glossaryRecallAnswers[`keyword-${item.id}`];
+    delete state.glossaryRecallResults[item.id];
+  });
+
+  state.glossaryRecallIndex = 0;
+  state.glossaryRecallTransition = null;
+  state.glossarySelectedTermId = "";
+  state.glossarySelectedSocketId = "";
+  state.glossaryDraggedTermId = "";
+}
+
+function ensureGlossaryAdaptiveBatch(options = {}) {
+  const roundIndex = Number.isFinite(Number(options.roundIndex)) ? Math.round(Number(options.roundIndex)) : state.glossaryRoundIndex;
+  const batchIndex = getSafeGlossaryBatchIndex(options.batchIndex ?? state.glossaryBatchIndex);
+  const termIdsKey = getGlossaryBatchTermIdsKey(roundIndex, batchIndex);
+  const storedItems = getGlossaryItemsById(state.answers[termIdsKey]);
+  if (!options.force && storedItems.length) return storedItems;
+
+  clearGlossarySetState(roundIndex, batchIndex);
+  const selectedItems = chooseGlossaryPracticeItems(GLOSSARY_TERMS_PER_ROUND, {
+    offset: batchIndex * GLOSSARY_TERMS_PER_ROUND
+  });
+  state.answers[termIdsKey] = selectedItems.map(item => item.id);
+  return selectedItems;
+}
+
+function getCurrentGlossaryBatch(options = {}) {
+  return ensureGlossaryAdaptiveBatch(options);
+}
+
+function getGlossaryBatchLabel(batchIndex = state.glossaryBatchIndex) {
+  return `Set ${getSafeGlossaryBatchIndex(batchIndex) + 1}/${getGlossaryBatchCount()}`;
 }
 
 function getCurrentGlossaryRound() {
@@ -639,42 +739,22 @@ function startNewGlossaryPracticeRun() {
   const bestStreak = Number(state.glossaryBestStreak || 0);
   initialiseGlossaryBoard();
   state.glossaryBestStreak = bestStreak;
-  state.glossaryPulse = "New timed memory set loaded. Work through what you can, then return later for the next retrieval rep.";
+  ensureGlossaryAdaptiveBatch({ force: true });
+  state.glossaryPulse = "New timed set loaded. Untested terms are dealt before repeats, then weaker terms come back for another rep.";
   state.glossaryPulseType = "neutral";
   renderGlossaryStage();
   persistESTProgressSnapshot();
 }
 
 function clearGlossaryRoundState(roundIndex) {
-  clearGlossaryRecallAdvanceTimeout();
-  clearGlossaryInvaderShotTimeout();
-  clearGlossaryCommunityAssetTimeout();
-  clearGlossaryMemoryResetTimeout();
-  const roundBatchKey = `glossary-r${roundIndex}-b0`;
-  delete state.glossaryAssignments[roundBatchKey];
-  delete state.answers[`${roundBatchKey}-memory-open`];
-  delete state.answers[`${roundBatchKey}-memory-mismatch`];
-  delete state.answers[`${roundBatchKey}-memory-match`];
-
-  const batch = (state.stageDeck?.glossaryBatches || [])[roundIndex] || [];
-  batch.forEach(item => {
-    delete state.glossaryRecallAnswers[`term-${item.id}`];
-    delete state.glossaryRecallAnswers[`keyword-${item.id}`];
-    delete state.glossaryRecallResults[item.id];
-  });
-
-  state.glossaryRecallIndex = 0;
-  state.glossaryRecallTransition = null;
-  state.glossarySelectedTermId = "";
-  state.glossarySelectedSocketId = "";
-  state.glossaryDraggedTermId = "";
+  clearGlossarySetState(roundIndex, state.glossaryBatchIndex);
   state.glossaryStreak = 0;
   state.glossaryMisses = 0;
   if (GLOSSARY_ROUND_CONFIGS[roundIndex]?.id === "recall") clearGlossaryBridgeState();
 }
 
 function getGlossaryBatchKey() {
-  return `glossary-r${state.glossaryRoundIndex}-b${state.glossaryBatchIndex}`;
+  return getGlossaryBatchKeyFor(state.glossaryRoundIndex, state.glossaryBatchIndex);
 }
 
 function getGlossaryMemoryOpenKey() {
@@ -694,18 +774,11 @@ function getGlossaryAssignmentsForBatch() {
 }
 
 function getGlossaryAllRoundItems() {
-  return (state.stageDeck?.glossaryBatches || []).flat();
+  return buildGlossarySource();
 }
 
 function getGlossaryMatchedTermIds() {
-  const matchedIds = new Set();
-  (state.stageDeck?.glossaryBatches || []).forEach((batch, roundIndex) => {
-    const assignments = state.glossaryAssignments[`glossary-r${roundIndex}-b0`] || {};
-    batch.forEach(item => {
-      if (assignments[item.id] === item.id) matchedIds.add(item.id);
-    });
-  });
-  return matchedIds;
+  return new Set(getGlossaryMasterySummary().rows.filter(row => row.isMastered).map(row => row.item.id));
 }
 
 function getGlossaryMemoryDeck(batch = getCurrentGlossaryBatch()) {
@@ -917,8 +990,25 @@ function captureGlossaryFlightSignal() {
   submitGlossaryChallengeChoiceEncoded(item.id, encodeURIComponent(selected.value));
 }
 
+function getGlossaryBridgeTermIdsKey() {
+  return `${getGlossaryBatchKey()}-bridge-term-ids`;
+}
+
+function resetGlossaryBridgeSource() {
+  delete state.answers[getGlossaryBridgeTermIdsKey()];
+}
+
+function getGlossaryBridgeSource(options = {}) {
+  const key = getGlossaryBridgeTermIdsKey();
+  const storedItems = getGlossaryItemsById(state.answers[key]);
+  if (!options.force && storedItems.length) return storedItems;
+  const source = chooseGlossaryPracticeItems(buildGlossarySource().length);
+  state.answers[key] = source.map(item => item.id);
+  return source;
+}
+
 function getGlossaryBridgeLevels() {
-  const source = buildGlossarySource();
+  const source = getGlossaryBridgeSource();
   return Array.from({ length: Math.ceil(source.length / GLOSSARY_BRIDGE_TERMS_PER_LEVEL) }, (_, index) => {
     return source.slice(index * GLOSSARY_BRIDGE_TERMS_PER_LEVEL, (index + 1) * GLOSSARY_BRIDGE_TERMS_PER_LEVEL);
   }).filter(level => level.length);
@@ -2131,11 +2221,20 @@ function getGlossaryRoundEconomy(roundNumber) {
   return { salary, taxRate: glossaryStage.taxRate };
 }
 
+function getGlossaryRewardKey(roundNumber, batchIndex = state.glossaryBatchIndex) {
+  return `game-${roundNumber}-set-${getSafeGlossaryBatchIndex(batchIndex) + 1}`;
+}
+
+function hasGlossaryRewardForRound(roundIndex) {
+  const prefix = `game-${roundIndex + 1}-set-`;
+  return Object.keys(state.glossaryRoundRewards || {}).some(key => key === String(roundIndex + 1) || key.startsWith(prefix));
+}
+
 function formatGlossaryRoundTitle(roundNumber) {
-  const totalRounds = GLOSSARY_ROUND_CONFIGS.length;
-  return roundNumber >= totalRounds
-    ? "Final memory board cleared. Every glossary word has been covered."
-    : `Memory round ${roundNumber} cleared. The next glossary set is ready.`;
+  const summary = getGlossaryMasterySummary();
+  return summary.mastered >= summary.masteryTarget
+    ? "Every glossary word has been covered."
+    : `${GLOSSARY_ROUND_CONFIGS[roundNumber - 1]?.title.replace(/^Round \d+:\s*/, "") || "Glossary game"} cleared. The next term set is ready.`;
 }
 
 function buildGlossaryCelebration(roundNumber, scoreText) {
@@ -2146,15 +2245,21 @@ function buildGlossaryCelebration(roundNumber, scoreText) {
   const precisionBonus = state.glossaryMisses <= 1 ? 300 : state.glossaryMisses <= 4 ? 150 : 0;
   const totalSalary = salary + speedBand.bonus + precisionBonus;
   const tax = Math.round(totalSalary * taxRate);
+  const rewardKey = getGlossaryRewardKey(roundNumber);
+  const setLabel = getGlossaryBatchLabel();
+  const masterySummary = getGlossaryMasterySummary();
   state.salaryBoost += totalSalary;
   state.taxContribution += tax;
-  state.glossaryRoundRewards[roundNumber] = { salary: totalSalary, tax, scoreText, elapsedSeconds, speedBand, precisionBonus };
+  state.glossaryRoundRewards[rewardKey] = { salary: totalSalary, tax, scoreText, elapsedSeconds, speedBand, precisionBonus, roundNumber, batchIndex: state.glossaryBatchIndex };
   state.glossaryRoundCelebration = {
+    rewardKey,
     roundNumber,
+    batchIndex: state.glossaryBatchIndex,
+    setLabel,
     title: formatGlossaryRoundTitle(roundNumber),
-    subtitle: roundNumber >= GLOSSARY_ROUND_CONFIGS.length
+    subtitle: masterySummary.mastered >= masterySummary.masteryTarget
       ? "Choose the class tax destination, then finish TERM with all glossary entries recorded."
-      : "Choose the class tax destination, then move to the next six glossary terms.",
+      : "Choose the class tax destination, then keep using this game or pick another one for the next untested terms.",
     salary: totalSalary,
     tax,
     scoreText,
@@ -2162,7 +2267,7 @@ function buildGlossaryCelebration(roundNumber, scoreText) {
     speedBand,
     precisionBonus
   };
-  state.glossaryPulse = `Game ${roundNumber} cleared. Choose where the class community tax should land, then continue the memory run.`;
+  state.glossaryPulse = `${setLabel} cleared in game ${roundNumber}. Choose where the class community tax should land, then continue the term coverage run.`;
   state.glossaryPulseType = "good";
   state.recentReward = {
     type: "positive",
@@ -2193,17 +2298,17 @@ function buildGlossaryCelebration(roundNumber, scoreText) {
 
 function setGlossaryRoundVote(optionId) {
   if (!state.glossaryRoundCelebration) return;
-  const roundNumber = state.glossaryRoundCelebration.roundNumber;
-  state.glossaryRoundVotes[roundNumber] = optionId;
-  setGlossaryCommunityAssetReady(roundNumber, false);
+  const voteKey = state.glossaryRoundCelebration.rewardKey || getGlossaryRewardKey(state.glossaryRoundCelebration.roundNumber);
+  state.glossaryRoundVotes[voteKey] = optionId;
+  setGlossaryCommunityAssetReady(voteKey, false);
   const option = (state.stageDeck?.communityOptions || []).find(item => item.id === optionId);
   state.glossaryPulse = `${option?.label || "Community asset"} is growing from the class tax contribution.`;
   state.glossaryPulseType = "good";
   clearGlossaryCommunityAssetTimeout();
   glossaryCommunityAssetTimeout = setTimeout(() => {
     glossaryCommunityAssetTimeout = null;
-    setGlossaryCommunityAssetReady(roundNumber, true);
-    state.glossaryPulse = "Community asset built. Continue the memory run or return to the lab.";
+    setGlossaryCommunityAssetReady(voteKey, true);
+    state.glossaryPulse = "Community asset built. Continue this game, pick another game, or return to the lab.";
     state.glossaryPulseType = "good";
     renderGlossaryStage();
   }, getGlossaryCommunityAssetDelay());
@@ -2214,9 +2319,9 @@ function setGlossaryRoundVote(optionId) {
 async function continueGlossaryRound() {
   const celebration = state.glossaryRoundCelebration;
   if (!celebration) return;
-  const roundNumber = celebration.roundNumber;
-  const voteKey = state.glossaryRoundVotes[roundNumber];
-  if (!voteKey) {
+  const voteKey = celebration.rewardKey || getGlossaryRewardKey(celebration.roundNumber, celebration.batchIndex);
+  const voteValue = state.glossaryRoundVotes[voteKey];
+  if (!voteValue) {
     state.glossaryPulse = "Choose a class tax destination before you continue the memory run.";
     state.glossaryPulseType = "warn";
     state.recentReward = {
@@ -2228,21 +2333,25 @@ async function continueGlossaryRound() {
     renderGlossaryStage();
     return;
   }
-  state.answers[`glossaryVoteRound${roundNumber}`] = voteKey;
+  state.answers[`glossaryVote-${voteKey}`] = voteValue;
   clearGlossaryCommunityAssetTimeout();
-  setGlossaryCommunityAssetReady(roundNumber, true);
-  const finalRoundComplete = roundNumber >= GLOSSARY_ROUND_CONFIGS.length;
+  setGlossaryCommunityAssetReady(voteKey, true);
+  const masterySummary = getGlossaryMasterySummary();
+  const allTermsSecure = masterySummary.mastered >= masterySummary.masteryTarget;
   state.glossaryRoundCelebration = null;
   state.glossarySelectedTermId = "";
   state.glossaryDraggedTermId = "";
-  state.glossaryBatchIndex = 0;
-  if (finalRoundComplete) {
+  if (allTermsSecure) {
     await bankGlossaryResults();
     return;
   }
-  state.glossaryRoundIndex = Math.min(GLOSSARY_ROUND_CONFIGS.length - 1, state.glossaryRoundIndex + 1);
-  clearGlossaryRoundState(state.glossaryRoundIndex);
-  state.glossaryPulse = GLOSSARY_ROUND_CONFIGS[state.glossaryRoundIndex]?.cue || "Next memory board loaded.";
+  state.glossaryBatchIndex = (getSafeGlossaryBatchIndex(celebration.batchIndex) + 1) % getGlossaryBatchCount();
+  ensureGlossaryAdaptiveBatch({ force: true });
+  if (getCurrentGlossaryRound()?.id === "recall") {
+    clearGlossaryBridgeState();
+    resetGlossaryBridgeSource();
+  }
+  state.glossaryPulse = `${getGlossaryBatchLabel()} loaded. Untested terms are prioritised before any repeats.`;
   state.glossaryPulseType = "neutral";
   startGlossaryRoundTimer(true);
   renderGlossaryStage();
@@ -2474,21 +2583,12 @@ function setGlossaryRecallKeywordChoiceEncoded(itemId, encodedValue) {
 }
 
 function getGlossaryStabilityPercent() {
-  const completedRounds = Object.keys(state.glossaryRoundRewards || {}).length;
-  const roundWeight = 100 / Math.max(1, GLOSSARY_ROUND_CONFIGS.length);
-  const batch = getCurrentGlossaryBatch();
-  const assignments = getGlossaryAssignmentsForBatch();
-  const matchedCount = batch.filter(item => assignments[item.id] === item.id).length;
-  const partial = state.glossaryRoundCelebration
-    ? 0
-    : (matchedCount / Math.max(1, batch.length)) * roundWeight;
-  return Math.min(100, Math.round((completedRounds * roundWeight) + partial));
+  return getGlossaryMasterySummary().masteryTargetPercent;
 }
 
 function getGlossaryRoundBadge(roundIndex) {
-  const reward = state.glossaryRoundRewards[roundIndex + 1];
   if (state.glossaryRoundIndex === roundIndex && !state.glossaryRoundCelebration) return "Playing";
-  if (reward) return "Tried";
+  if (hasGlossaryRewardForRound(roundIndex)) return "Used";
   if (state.completed.glossary) return "Replay";
   return "Choose";
 }
@@ -2506,8 +2606,8 @@ function renderGlossaryMasterySnapshot() {
         <strong>${summary.mastered}/${summary.total}</strong>
       </article>
       <article>
-        <span>Target</span>
-        <strong>All ${summary.masteryTarget}</strong>
+        <span>Untested</span>
+        <strong>${summary.untested}</strong>
       </article>
       <article>
         <span>Overall accuracy</span>
@@ -2714,7 +2814,7 @@ function renderGlossaryChamberRail() {
       ${GLOSSARY_ROUND_CONFIGS.map((round, index) => {
         const status = getGlossaryRoundBadge(index);
         const active = state.glossaryRoundIndex === index && !state.glossaryRoundCelebration;
-        const complete = Boolean(state.glossaryRoundRewards[index + 1]);
+        const complete = hasGlossaryRewardForRound(index);
         const unlocked = isGlossaryRoundUnlocked(index);
         return `
           <button
@@ -2733,17 +2833,56 @@ function renderGlossaryChamberRail() {
   `;
 }
 
+function renderGlossarySetRail() {
+  const count = getGlossaryBatchCount();
+  return `
+    <div class="glossary-set-rail" aria-label="Glossary term set selector">
+      ${Array.from({ length: count }, (_, index) => {
+        const active = getSafeGlossaryBatchIndex() === index;
+        return `
+          <button
+            type="button"
+            class="glossary-set-chip ${active ? "active" : ""}"
+            onclick="window.ESTPrep.jumpToGlossarySet(${index})"
+          >
+            <strong>Set ${index + 1}</strong>
+            <span>${active ? "Current" : "Choose"}</span>
+          </button>
+        `;
+      }).join("")}
+    </div>
+  `;
+}
+
 function jumpToGlossaryRound(roundIndex) {
   if (!isGlossaryRoundUnlocked(roundIndex)) return;
   if (state.glossaryRoundIndex === roundIndex && !state.glossaryRoundCelebration) return;
-  clearGlossaryRoundState(roundIndex);
   state.glossaryRoundIndex = roundIndex;
-  state.glossaryBatchIndex = 0;
   state.glossaryRoundCelebration = null;
+  clearGlossaryRoundState(roundIndex);
+  ensureGlossaryAdaptiveBatch({ force: true });
+  if (GLOSSARY_ROUND_CONFIGS[roundIndex]?.id === "recall") resetGlossaryBridgeSource();
   state.glossaryPulse = GLOSSARY_ROUND_CONFIGS[roundIndex]?.cue || "";
   state.glossaryPulseType = "neutral";
   state.glossaryMode = "play";
   startGlossaryRoundTimer(true);
+  persistESTProgressSnapshot();
+  renderGlossaryStage();
+}
+
+function jumpToGlossarySet(batchIndex) {
+  const nextIndex = getSafeGlossaryBatchIndex(batchIndex);
+  if (state.glossaryBatchIndex === nextIndex && !state.glossaryRoundCelebration) return;
+  state.glossaryBatchIndex = nextIndex;
+  state.glossaryRoundCelebration = null;
+  ensureGlossaryAdaptiveBatch({ force: true });
+  clearGlossaryBridgeState();
+  resetGlossaryBridgeSource();
+  state.glossaryPulse = `${getGlossaryBatchLabel()} loaded. Untested terms are dealt first; secure terms wait until the untouched words are gone.`;
+  state.glossaryPulseType = "neutral";
+  state.glossaryMode = "play";
+  startGlossaryRoundTimer(true);
+  persistESTProgressSnapshot();
   renderGlossaryStage();
 }
 
@@ -2796,7 +2935,7 @@ function renderGlossaryRecallForge(batch, batchNumber, totalBatches) {
         </div>
         <div class="glossary-mission-actions">
           <span class="badge">Bridge recall</span>
-          <span class="badge">Target 30/30 secure</span>
+          <span class="badge">Target all terms secure</span>
           <span class="badge">Timer <strong id="glossary-round-timer">${formatSecondsAsClock(getGlossaryRoundElapsedSeconds())}</strong></span>
           <button class="choice-button" type="button" onclick="window.ESTPrep.startNewGlossaryPracticeRun()">New timed set</button>
           <button class="choice-button" type="button" onclick="window.ESTPrep.returnToLab()">Save and return</button>
@@ -3387,6 +3526,7 @@ function renderGlossaryMemoryMatchGame(round, batch, matchedCount, roundScore, p
         <p>${matchedCount}/${batch.length} term-definition pairs cleared</p>
       </div>
       <div class="badge-row" style="margin-bottom:14px;">
+        <span class="badge">${escapeHtml(getGlossaryBatchLabel())}</span>
         <span class="badge">${escapeHtml(theme.label)}</span>
         <span class="badge">${matchedCardCount}/${totalCards} cards cleared</span>
         <span class="badge">Current streak: x${state.glossaryStreak}</span>
@@ -3551,11 +3691,13 @@ function renderGlossaryChallengeArena(round, batch, batchNumber, totalBatches, m
 function renderGlossaryCelebration() {
   const celebration = state.glossaryRoundCelebration;
   if (!celebration) return "";
-  const isFinalRound = celebration.roundNumber >= GLOSSARY_ROUND_CONFIGS.length;
-  const voteKey = state.glossaryRoundVotes[celebration.roundNumber] || "";
+  const masterySummary = getGlossaryMasterySummary();
+  const isFinalRound = masterySummary.mastered >= masterySummary.masteryTarget;
+  const rewardKey = celebration.rewardKey || getGlossaryRewardKey(celebration.roundNumber, celebration.batchIndex);
+  const voteKey = state.glossaryRoundVotes[rewardKey] || "";
   const selectedOption = (state.stageDeck?.communityOptions || []).find(option => option.id === voteKey) || null;
   const selectedAsset = selectedOption ? GLOSSARY_COMMUNITY_ASSETS[selectedOption.id] : null;
-  const assetReady = voteKey ? isGlossaryCommunityAssetReady(celebration.roundNumber) : false;
+  const assetReady = voteKey ? isGlossaryCommunityAssetReady(rewardKey) : false;
   const communityOptions = (state.stageDeck?.communityOptions || []).map(option => `
     <button
       type="button"
@@ -3576,7 +3718,7 @@ function renderGlossaryCelebration() {
           <span class="glossary-reward-spark glossary-reward-spark--one"></span>
           <span class="glossary-reward-spark glossary-reward-spark--two"></span>
         </div>
-        <div class="kicker">Game ${celebration.roundNumber} cleared</div>
+        <div class="kicker">Game ${celebration.roundNumber} cleared • ${escapeHtml(celebration.setLabel || getGlossaryBatchLabel(celebration.batchIndex))}</div>
         <h3>${escapeHtml(celebration.title)}</h3>
         <p>${escapeHtml(celebration.subtitle)}</p>
         ${renderGlossarySceneGuide("reward", null, ["Salary", "Tax", "Community", "Next set"])}
@@ -3634,7 +3776,7 @@ function renderGlossaryCelebration() {
         `}
         ${voteKey && assetReady ? `
           <div class="builder-actions glossary-community-next-actions">
-            <button class="submit-button" type="button" onclick="window.ESTPrep.continueGlossaryRound()">${isFinalRound ? "Finish TERM" : "Continue Memory Run"}</button>
+            <button class="submit-button" type="button" onclick="window.ESTPrep.continueGlossaryRound()">${isFinalRound ? "Finish TERM" : "Next Term Set"}</button>
             <button class="choice-button" type="button" onclick="window.ESTPrep.returnToLab()">Save and return to EST Lab</button>
           </div>
         ` : ""}
@@ -3694,16 +3836,17 @@ function renderGlossaryStage() {
   const batch = getCurrentGlossaryBatch();
   const round = getCurrentGlossaryRound();
   const assignments = getGlossaryAssignmentsForBatch();
-  const totalBatches = 1;
+  const totalBatches = getGlossaryBatchCount();
   const roundNumber = state.glossaryRoundIndex + 1;
   const totalRounds = GLOSSARY_ROUND_CONFIGS.length;
-  const batchNumber = 1;
+  const batchNumber = getSafeGlossaryBatchIndex() + 1;
   const matchedCount = Object.keys(assignments).length;
+  const masterySummary = getGlossaryMasterySummary();
   const roundScopeLabel = round.id === "recall"
-    ? `${buildGlossarySource().length} terms • ${getGlossaryBridgeLevels().length} levels`
+    ? `${masterySummary.mastered}/${masterySummary.total} secure • ${masterySummary.untested} untested`
     : round.id === "memory-match"
-      ? `${batch.length} terms • ${batch.length * 2} cards`
-      : `${batch.length} terms`;
+      ? `${getGlossaryBatchLabel()} • ${batch.length * 2} cards`
+      : `${getGlossaryBatchLabel()} • ${batch.length} terms`;
   setText("stage-title", "TERM");
   setText("stage-subtitle", "The right language: short timed memory reps build coverage across the full glossary without forcing one giant sitting.");
 
@@ -3741,14 +3884,17 @@ function renderGlossaryStage() {
             <p class="small-copy">Use quick look-cover-retrieve-check reps, then jump back into the timed chamber.</p>
           </div>
           <div class="glossary-mission-actions">
-            <span class="badge">Game ${roundNumber} / ${totalRounds}</span>
-            <span class="badge">${batch.length} terms • ${batch.length * 2} cards</span>
+            <span class="badge">Mode ${roundNumber} / ${totalRounds}</span>
+            <span class="badge">${getGlossaryBatchLabel()} • ${batch.length} terms</span>
+            <span class="badge">${masterySummary.untested} untested</span>
             <span class="badge">Timer <strong id="glossary-round-timer">${formatSecondsAsClock(getGlossaryRoundElapsedSeconds())}</strong></span>
             <button class="choice-button" type="button" onclick="window.ESTPrep.startNewGlossaryPracticeRun()">New timed set</button>
             <button class="choice-button" type="button" onclick="window.ESTPrep.returnToLab()">Save and return</button>
           </div>
         </div>
         ${renderGlossaryChamberRail()}
+        ${renderGlossarySetRail()}
+        ${renderGlossaryMasterySnapshot()}
         ${renderGlossaryMissionFrame(`
           ${renderGlossarySceneGuide("study", batch[state.glossaryStudyIndex] || batch[0], ["Look", "Cover", "Retrieve", "Check"])}
           ${modeSwitch}
@@ -3770,14 +3916,17 @@ function renderGlossaryStage() {
           <p class="small-copy">${escapeHtml(round.cue)}</p>
         </div>
         <div class="glossary-mission-actions">
-          <span class="badge">Game ${roundNumber} / ${totalRounds}</span>
+          <span class="badge">Mode ${roundNumber} / ${totalRounds}</span>
           <span class="badge">${escapeHtml(roundScopeLabel)}</span>
+          <span class="badge">${masterySummary.untested} untested</span>
           <span class="badge">Timer <strong id="glossary-round-timer">${formatSecondsAsClock(getGlossaryRoundElapsedSeconds())}</strong></span>
           <button class="choice-button" type="button" onclick="window.ESTPrep.startNewGlossaryPracticeRun()">New timed set</button>
           <button class="choice-button" type="button" onclick="window.ESTPrep.returnToLab()">Save and return</button>
         </div>
       </div>
       ${renderGlossaryChamberRail()}
+      ${renderGlossarySetRail()}
+      ${renderGlossaryMasterySnapshot()}
       ${renderGlossaryMissionFrame(`
         ${modeSwitch}
         ${renderGlossaryChallengeArena(round, batch, batchNumber, totalBatches, matchedCount, roundScore)}
@@ -3888,7 +4037,7 @@ async function bankGlossaryResults() {
   await saveProgress("glossary-lock-in", "glossary-check", `TERM memory game: ${overallCorrect}/${total}`, scorePercent, {
     taskName: "TERM",
     durationSeconds,
-    promptText: "Complete five themed glossary memory boards by matching every term with its definition.",
+    promptText: "Practise TERM games until all glossary terms have a secure correct rep.",
     extraPayload: {
       round_summary: {
         rounds: GLOSSARY_ROUND_CONFIGS.map(item => item.title),
@@ -3903,10 +4052,16 @@ async function bankGlossaryResults() {
         round_votes: state.glossaryRoundVotes,
         term_stats: state.glossaryTermStats
       },
-      final_round_results: allTerms.map(item => ({
-        term: item.term,
-        definition: item.definition,
-        matched: matchedTermIds.has(item.id)
+      final_round_results: masterySummary.rows.map(row => ({
+        term: row.item.term,
+        definition: row.item.definition,
+        matched: matchedTermIds.has(row.item.id),
+        termCorrect: row.isMastered,
+        keywordCorrect: row.isMastered,
+        tested: row.tested,
+        correct: row.correct,
+        misses: Number(row.stat.misses || 0),
+        accuracyPercent: row.tested ? Math.round(row.accuracy * 100) : 0
       }))
     }
   });

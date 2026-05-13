@@ -533,6 +533,7 @@ async function submitBoss() {
       taskName: "BOSS",
       durationSeconds,
       promptText: round.question,
+      reviewResponseText: response || "No response entered",
       extraPayload: {
         showdown_choice: state.answers.bossShowdown || "",
         showdown_reason: state.answers.bossShowdownReason || "",

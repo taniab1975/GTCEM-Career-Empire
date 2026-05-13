@@ -12,6 +12,7 @@ alter table student_module_progress enable row level security;
 alter table employability_skills enable row level security;
 alter table student_skill_progress enable row level security;
 alter table assessment_evidence enable row level security;
+alter table student_response_reviews enable row level security;
 alter table player_profiles enable row level security;
 alter table player_assets enable row level security;
 alter table community_votes enable row level security;
@@ -80,6 +81,13 @@ with check (true);
 drop policy if exists "Prototype can manage assessment evidence" on assessment_evidence;
 create policy "Prototype can manage assessment evidence"
 on assessment_evidence
+for all
+using (true)
+with check (true);
+
+drop policy if exists "Prototype can manage student response reviews" on student_response_reviews;
+create policy "Prototype can manage student response reviews"
+on student_response_reviews
 for all
 using (true)
 with check (true);

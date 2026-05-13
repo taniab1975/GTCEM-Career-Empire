@@ -25,24 +25,114 @@
     }
   }
 
+  function firstPresent(...values) {
+    return values.find(value => value !== undefined && value !== null && value !== "") || "";
+  }
+
   function inferIdentity() {
     const authState = readJsonStorage("career-empire-auth-demo", {});
     const playerSession = readJsonStorage("career-empire-session", null);
     const teacherSession = readJsonStorage("career-empire-teacher-session", null);
+    const teacher = authState?.teacher || {};
+    const teacherLogin = authState?.teacherLogin || {};
+    const studentLogin = authState?.studentLogin || {};
+    const classroom = authState?.classroom || {};
 
-    if (authState?.teacherLogin?.email) {
-      return { actorRole: "teacher", loginName: authState.teacherLogin.email };
+    if (teacherLogin.email || teacher.email) {
+      return {
+        actorRole: "teacher",
+        loginName: teacherLogin.email || teacher.email,
+        displayName: firstPresent(teacher.fullName, teacherLogin.fullName, teacherLogin.email, teacher.email),
+        teacherId: firstPresent(teacher.id, teacherLogin.id),
+        schoolId: firstPresent(teacher.schoolId, teacher.school_id, teacherLogin.schoolId, teacherLogin.school_id, teacherSession?.schoolId, teacherSession?.school_id),
+        schoolName: firstPresent(teacher.schoolName, teacher.school_name, teacherLogin.schoolName, teacherLogin.school_name, teacherSession?.schoolName, teacherSession?.school_name),
+        classId: firstPresent(classroom.id, teacherSession?.classId, teacherSession?.class_id),
+        classCode: firstPresent(classroom.classCode, classroom.class_code, teacherSession?.classCode, teacherSession?.class_code)
+      };
     }
-    if (authState?.studentLogin?.username) {
-      return { actorRole: "student", loginName: authState.studentLogin.username };
+    if (studentLogin.username || studentLogin.id) {
+      return {
+        actorRole: "student",
+        loginName: studentLogin.username || studentLogin.displayName || studentLogin.id,
+        displayName: firstPresent(studentLogin.displayName, studentLogin.display_name, studentLogin.username),
+        studentId: firstPresent(studentLogin.id, playerSession?.studentId, playerSession?.student_id),
+        schoolId: firstPresent(studentLogin.schoolId, studentLogin.school_id, playerSession?.schoolId, playerSession?.school_id),
+        schoolName: firstPresent(studentLogin.schoolName, studentLogin.school_name, playerSession?.schoolName, playerSession?.school_name),
+        classId: firstPresent(studentLogin.classId, studentLogin.class_id, playerSession?.classId, playerSession?.class_id),
+        classCode: firstPresent(studentLogin.classCode, studentLogin.class_code, playerSession?.classCode, playerSession?.class_code)
+      };
     }
     if (playerSession?.playerName) {
-      return { actorRole: "player", loginName: playerSession.playerName };
+      return {
+        actorRole: "player",
+        loginName: playerSession.playerName,
+        displayName: playerSession.playerName,
+        studentId: firstPresent(playerSession.studentId, playerSession.student_id),
+        schoolId: firstPresent(playerSession.schoolId, playerSession.school_id),
+        schoolName: firstPresent(playerSession.schoolName, playerSession.school_name),
+        classId: firstPresent(playerSession.classId, playerSession.class_id),
+        classCode: firstPresent(playerSession.classCode, playerSession.class_code)
+      };
     }
     if (teacherSession?.classCode) {
-      return { actorRole: "teacher", loginName: teacherSession.classCode };
+      return {
+        actorRole: "teacher",
+        loginName: teacherSession.classCode,
+        displayName: teacherSession.classCode,
+        schoolId: firstPresent(teacherSession.schoolId, teacherSession.school_id),
+        schoolName: firstPresent(teacherSession.schoolName, teacherSession.school_name),
+        classId: firstPresent(teacherSession.classId, teacherSession.class_id),
+        classCode: firstPresent(teacherSession.classCode, teacherSession.class_code)
+      };
     }
     return { actorRole: "anonymous", loginName: "unknown" };
+  }
+
+  function flagFeedbackText(message, identity = {}) {
+    const moderation = windowObj.CareerEmpireResponseModeration;
+    if (moderation && typeof moderation.flagResponseText === "function") {
+      return moderation.flagResponseText(message, {
+        student: {
+          displayName: identity.displayName,
+          username: identity.loginName
+        }
+      });
+    }
+
+    const flags = [];
+    const notes = [];
+    const addFlag = (flag, note) => {
+      if (!flags.includes(flag)) flags.push(flag);
+      if (note && !notes.includes(note)) notes.push(note);
+    };
+    if (/[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}/i.test(message)) addFlag("possible_email", "Looks like it may contain an email address.");
+    if (/(?:\+?61|0)[\s-]?(?:\d[\s-]?){8,}/.test(message)) addFlag("possible_phone", "Looks like it may contain a phone number.");
+    if (/\b(?:https?:\/\/|www\.)\S+/i.test(message)) addFlag("possible_url", "Looks like it may contain a web link.");
+    if (/(^|\s)@[A-Za-z0-9_]{3,}\b/.test(message)) addFlag("possible_handle", "Looks like it may contain a social media handle.");
+    return { flags, flagNotes: notes.join(" ") };
+  }
+
+  function buildTeacherFeedbackMessage(feedbackType, message, identity = {}) {
+    const flagged = flagFeedbackText(`${feedbackType}\n${message}`, identity);
+    return {
+      kind: "teacher-feedback",
+      status: "pending_review",
+      feedback_type: feedbackType,
+      feedback_text: message,
+      page_path: windowObj.location.pathname,
+      actor_role: identity.actorRole || "anonymous",
+      login_name: identity.loginName || "unknown",
+      display_name: identity.displayName || "",
+      student_id: identity.studentId || null,
+      teacher_id: identity.teacherId || null,
+      school_id: identity.schoolId || null,
+      school_name: identity.schoolName || "",
+      class_id: identity.classId || null,
+      class_code: identity.classCode || "",
+      flags: flagged.flags || [],
+      flag_notes: flagged.flagNotes || "",
+      submitted_at: new Date().toISOString()
+    };
   }
 
   function ensureStyles() {
@@ -583,14 +673,15 @@
 
       statusEl.textContent = "Sending...";
       try {
+        const reviewPayload = buildTeacherFeedbackMessage(typeInput.value, message, identity);
         await submitFeedback({
           page_path: windowObj.location.pathname,
           actor_role: identity.actorRole,
           login_name: identity.loginName,
           feedback_type: typeInput.value,
-          message
+          message: JSON.stringify(reviewPayload)
         });
-        statusEl.textContent = "Thank you. Your feedback has been saved.";
+        statusEl.textContent = "Thank you. Your feedback has been saved for teacher review.";
         setTimeout(closeModal, 700);
       } catch (error) {
         statusEl.textContent = error.message || "Feedback could not be saved.";

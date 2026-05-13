@@ -275,6 +275,39 @@
   cursor: not-allowed;
 }
 
+.glossary-set-rail {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.glossary-set-chip {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  min-height: 48px;
+  padding: 10px 12px;
+  border-radius: 16px;
+  border: 1px solid rgba(129, 166, 255, 0.16);
+  background: rgba(10, 19, 40, 0.72);
+  color: #f7fbff;
+  text-align: left;
+  cursor: pointer;
+}
+
+.glossary-set-chip.active {
+  border-color: rgba(114, 247, 184, 0.52);
+  background: linear-gradient(180deg, rgba(14, 48, 44, 0.9), rgba(10, 20, 42, 0.9));
+}
+
+.glossary-set-chip span {
+  color: var(--muted);
+  font-size: 0.76rem;
+  font-weight: 800;
+  text-transform: uppercase;
+}
+
 .glossary-chamber-card strong,
 .glossary-stability-card strong {
   display: block;
