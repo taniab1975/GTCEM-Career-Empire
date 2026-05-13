@@ -270,6 +270,18 @@
     grid-template-columns: 1fr;
   }
 
+  .core-authority-copy {
+    grid-template-columns: 1fr;
+  }
+
+  .core-authority-copy > .core-briefing-kicker,
+  .core-authority-copy > h3,
+  .core-authority-copy > p,
+  .core-authority-topics {
+    grid-column: 1;
+    grid-row: auto;
+  }
+
   .core-syllabus-card,
   .core-book-cover,
   .core-authority-video-card,
