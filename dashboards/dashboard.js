@@ -711,6 +711,55 @@ function createStarEvidenceSummary({ contextId, skillTitle, responses }) {
   return `${contextLabel} ${skillTitle}: ${core}`;
 }
 
+function createStarEvidenceReviewText({ contextId, skillTitle, responses }) {
+  const clean = value => String(value || "").replace(/\s+/g, " ").trim();
+  const contextLabel = getStarContextLabel(contextId);
+  return [
+    `${contextLabel} example for ${skillTitle}.`,
+    `Situation: ${clean(responses?.situation)}`,
+    `Task: ${clean(responses?.task)}`,
+    `Actions: ${clean(responses?.actions)}`,
+    `Result: ${clean(responses?.results)}`
+  ].filter(line => !line.endsWith(": ")).join("\n");
+}
+
+function getStarEvidenceReviewContext() {
+  const authState = getAuthPrototypeState();
+  const studentLogin = authState?.studentLogin || {};
+  const session = getCurrentPlayerSession() || {};
+  return {
+    studentId: studentLogin.id || session.studentId || null,
+    classId: studentLogin.classId || session.classId || null,
+    schoolId: studentLogin.schoolId || session.schoolId || null,
+    student: {
+      displayName: studentLogin.displayName || session.playerName || studentLogin.username || "",
+      username: studentLogin.username || session.username || ""
+    }
+  };
+}
+
+async function queueSkillStarEvidenceForReview(entry) {
+  const moderation = window.CareerEmpireResponseModeration;
+  if (!moderation || typeof moderation.queuePendingReview !== "function") return null;
+
+  const supabase = await getSupabaseClientOrNull();
+  const context = getStarEvidenceReviewContext();
+  if (!supabase || !context.studentId || !context.classId || !context.schoolId) return null;
+
+  return moderation.queuePendingReview(supabase, {
+    studentId: context.studentId,
+    classId: context.classId,
+    schoolId: context.schoolId,
+    moduleId: "lifelong-learning",
+    evidenceType: "employability-star",
+    taskKey: `employability-star-${entry.skillId}-${entry.contextId}-${entry.id}`,
+    taskLabel: `${entry.skillTitle} STAR evidence`,
+    promptText: `Final STAR employability entry for ${entry.skillTitle}. Teacher checks this before it can be shared.`,
+    responseText: entry.reviewText || createStarEvidenceReviewText(entry),
+    student: context.student
+  });
+}
+
 function bankStarEvidenceSalary(entry) {
   const session = getCurrentPlayerSession() || {};
   const currentSalary = Number(session.annualSalary || session.salary || 25000);
@@ -1609,6 +1658,8 @@ function getResponseReviewFlagLabel(flag) {
     possible_profanity: "Language check",
     possible_student_name: "Possible name",
     possible_context_identifier: "Context clue",
+    possible_workplace_identifier: "Workplace clue",
+    possible_location: "Location clue",
     too_short: "Very short"
   };
   return labels[flag] || flag.replaceAll("_", " ");
@@ -2134,6 +2185,7 @@ function renderSkills(skillsData, targetId, progressMap, skillEvidenceMap = {}) 
           <time>${escapeHtml(formatDateTime(entry.createdAt))}</time>
         </div>
         <strong class="skill-star-summary">${escapeHtml(entry.summary || createStarEvidenceSummary(entry))}</strong>
+        <p class="skill-star-review-status">Teacher review pending before this can be shared as an example.</p>
         <div class="skill-star-grid">
           ${renderStarRows([
             { label: "S", term: "Situation", text: entry.responses?.situation || "" },
@@ -2250,7 +2302,9 @@ function openSkillStarBuilder(skillId, skillTitle, contextId) {
       actions: "",
       results: ""
     },
-    error: ""
+    error: "",
+    status: "",
+    isSaving: false
   };
   renderSkillStarBuilder();
 }
@@ -2267,6 +2321,7 @@ function updateSkillStarBuilderResponse(value) {
   const step = STAR_BUILDER_STEPS[starBuilderState.stepIndex];
   starBuilderState.responses[step.key] = value;
   starBuilderState.error = "";
+  starBuilderState.status = "";
 }
 
 function renderSkillStarBuilder() {
@@ -2282,6 +2337,7 @@ function renderSkillStarBuilder() {
   const isFinalStep = starBuilderState.stepIndex === STAR_BUILDER_STEPS.length - 1;
   const examples = getStarBuilderExamples(starBuilderState.contextId, step.key, step.examples);
   const summaryPreview = createStarEvidenceSummary(starBuilderState);
+  const actionDisabled = starBuilderState.isSaving ? "disabled" : "";
 
   modal.hidden = false;
   modal.innerHTML = `
@@ -2298,6 +2354,10 @@ function renderSkillStarBuilder() {
       </div>
       <h2 id="skill-star-builder-title">So you improved ${escapeHtml(starBuilderState.skillTitle)} in a ${escapeHtml(contextLabel)} context?</h2>
       <p class="skill-star-builder-lead">${escapeHtml(step.lead)}</p>
+      <div class="skill-star-builder-privacy-note">
+        <strong>Note: your teacher can check anything you enter here.</strong>
+        <span>Do not include surnames, student emails, phone numbers, social handles, exact workplace names, suburbs, addresses, or anything that identifies you or someone else. Use general wording such as "a fast-food workplace" or "a local retail store".</span>
+      </div>
       <label class="skill-star-builder-field">
         <span>${escapeHtml(step.term)}</span>
         <small>${escapeHtml(step.prompt)}</small>
@@ -2311,10 +2371,11 @@ function renderSkillStarBuilder() {
         <span>Summary preview</span>
         <strong data-star-builder-summary>${escapeHtml(summaryPreview)}</strong>
       </div>
+      ${starBuilderState.status ? `<div class="skill-star-builder-status">${escapeHtml(starBuilderState.status)}</div>` : ""}
       ${starBuilderState.error ? `<div class="skill-star-builder-error">${escapeHtml(starBuilderState.error)}</div>` : ""}
       <div class="skill-star-builder-actions">
-        <button class="module-link" type="button" data-star-builder-back ${starBuilderState.stepIndex === 0 ? "disabled" : ""}>Back</button>
-        <button class="module-link primary" type="button" data-star-builder-next>${isFinalStep ? "Bank STAR evidence" : "Next"}</button>
+        <button class="module-link" type="button" data-star-builder-back ${starBuilderState.stepIndex === 0 || starBuilderState.isSaving ? "disabled" : ""}>Back</button>
+        <button class="module-link primary" type="button" data-star-builder-next ${actionDisabled}>${starBuilderState.isSaving ? "Saving..." : isFinalStep ? "Bank STAR evidence" : "Next"}</button>
       </div>
     </div>
   `;
@@ -2331,9 +2392,10 @@ function renderSkillStarBuilder() {
     if (!starBuilderState || starBuilderState.stepIndex === 0) return;
     starBuilderState.stepIndex -= 1;
     starBuilderState.error = "";
+    starBuilderState.status = "";
     renderSkillStarBuilder();
   });
-  modal.querySelector("[data-star-builder-next]")?.addEventListener("click", () => {
+  modal.querySelector("[data-star-builder-next]")?.addEventListener("click", async () => {
     if (!starBuilderState) return;
     const latestValue = modal.querySelector("[data-star-builder-input]")?.value || "";
     updateSkillStarBuilderResponse(latestValue);
@@ -2347,6 +2409,7 @@ function renderSkillStarBuilder() {
       renderSkillStarBuilder();
       return;
     }
+    const createdAt = new Date().toISOString();
     const entry = {
       id: `star-${Date.now()}`,
       skillId: starBuilderState.skillId,
@@ -2354,9 +2417,19 @@ function renderSkillStarBuilder() {
       contextId: starBuilderState.contextId,
       responses: { ...starBuilderState.responses },
       summary: createStarEvidenceSummary(starBuilderState),
+      reviewText: createStarEvidenceReviewText(starBuilderState),
+      reviewStatus: "pending_review",
       salaryReward: STAR_EVIDENCE_SALARY_REWARD,
-      createdAt: new Date().toISOString()
+      createdAt
     };
+    starBuilderState.error = "";
+    starBuilderState.status = "Saving final entry for teacher review...";
+    starBuilderState.isSaving = true;
+    renderSkillStarBuilder();
+    await queueSkillStarEvidenceForReview(entry).catch(error => {
+      console.warn("STAR evidence review could not be queued:", error.message || error);
+      return null;
+    });
     saveSkillStarEvidence(entry);
     bankStarEvidenceSalary(entry);
     closeSkillStarBuilder();

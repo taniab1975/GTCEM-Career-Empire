@@ -2448,6 +2448,36 @@ textarea {
   line-height: 1.45;
 }
 
+.skill-star-builder-privacy-note,
+.skill-star-review-status {
+  border-radius: 8px;
+  border: 1px solid rgba(251, 191, 36, 0.34);
+  background: rgba(251, 191, 36, 0.1);
+  color: #fde68a;
+}
+
+.skill-star-builder-privacy-note {
+  display: grid;
+  gap: 6px;
+  padding: 12px 14px;
+  line-height: 1.4;
+}
+
+.skill-star-builder-privacy-note strong {
+  color: #fef3c7;
+}
+
+.skill-star-builder-privacy-note span {
+  color: #f8e7b2;
+}
+
+.skill-star-review-status {
+  margin: 0;
+  padding: 8px 10px;
+  font-size: 12px;
+  font-weight: 800;
+}
+
 .skill-star-builder-field {
   display: grid;
   gap: 8px;
@@ -2528,13 +2558,23 @@ textarea {
   line-height: 1.4;
 }
 
-.skill-star-builder-error {
+.skill-star-builder-error,
+.skill-star-builder-status {
   padding: 10px 12px;
   border-radius: 8px;
+  font-weight: 800;
+}
+
+.skill-star-builder-error {
   color: #ffd6d6;
   background: rgba(255, 90, 90, 0.12);
   border: 1px solid rgba(255, 120, 120, 0.32);
-  font-weight: 800;
+}
+
+.skill-star-builder-status {
+  color: #c7f9e5;
+  background: rgba(34, 197, 94, 0.12);
+  border: 1px solid rgba(34, 197, 94, 0.3);
 }
 
 .skill-star-builder-actions {

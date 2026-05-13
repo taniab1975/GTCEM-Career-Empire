@@ -1,5 +1,6 @@
 (function attachCareerEmpireResponseModeration(windowObj) {
   const REVIEWABLE_EVIDENCE_TYPES = new Set([
+    "employability-star",
     "est-response",
     "revision-topic-check",
     "justification"
@@ -90,6 +91,18 @@
       addFlag(flags, notes, "possible_context_identifier", "May include identifying school, teacher, or class context.");
     }
 
+    if (/\b(?:mcdonald'?s|kfc|hungry\s*jacks?|red\s*rooster|coles|woolworths|big\s*w|kmart|target|bunnings|subway|domino'?s|aldi|iga)\b/i.test(value)) {
+      addFlag(flags, notes, "possible_workplace_identifier", "May name a specific workplace; use a general description before sharing.");
+    }
+
+    if (/\b(?:worked|work|shift|workplace|job|manager|supervisor|customer|customers)\b.{0,48}\b(?:at|in|near)\s+[A-Z][A-Za-z' -]{2,}/.test(value)) {
+      addFlag(flags, notes, "possible_workplace_identifier", "May include a workplace or location clue.");
+    }
+
+    if (/\b(?:Cockburn|Success|Fremantle|Spearwood|Hamilton Hill|Bibra Lake|Beeliar|Yangebup|Atwell|Aubin Grove|Hammond Park|Jandakot|Canning Vale|Kwinana|Rockingham|Mandurah|Baldivis|Perth)\b/i.test(value)) {
+      addFlag(flags, notes, "possible_location", "May include a suburb, town, or other location clue.");
+    }
+
     return {
       flags,
       flagNotes: notes.join(" ")
@@ -98,6 +111,7 @@
 
   function isReviewableEvidence(evidenceType, responseText) {
     if (!REVIEWABLE_EVIDENCE_TYPES.has(String(evidenceType || ""))) return false;
+    if (evidenceType === "employability-star") return getWordCount(responseText) >= 3;
     return getWordCount(responseText) >= 8;
   }
 
