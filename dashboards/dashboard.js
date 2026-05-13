@@ -4250,7 +4250,7 @@ function renderTeacherLiveData(players, skillsData, teacherData = null) {
     || dashboardContext.teacherSession?.schoolName
     || "School not resolved";
   setText("teacher-school-name", teacherSchoolName);
-  setText("teacher-hero-title", "Data-Informed Interventions and Engagement Information");
+  setText("teacher-hero-title", "Class command centre");
   setText(
     "teacher-hero-subtitle",
     students.length

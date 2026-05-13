@@ -1068,6 +1068,266 @@ h1 {
   width: min(1280px, calc(100% - 36px));
 }
 
+.teacher-dashboard-page .panel,
+.teacher-dashboard-page .metric,
+.teacher-dashboard-page .timeline-item,
+.teacher-dashboard-page .skill-card,
+.teacher-dashboard-page .module-card {
+  border-radius: 12px;
+}
+
+.teacher-control-deck {
+  display: grid;
+  grid-template-columns: minmax(0, 1.12fr) minmax(360px, 0.88fr);
+  gap: 14px;
+  align-items: stretch;
+  margin-bottom: 14px;
+}
+
+.teacher-command-panel {
+  position: relative;
+  min-height: 254px;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(190px, 0.38fr);
+  grid-template-rows: auto 1fr;
+  gap: 18px;
+  overflow: hidden;
+  padding: 20px;
+  border: 1px solid rgba(136, 173, 255, 0.24);
+  border-radius: 12px;
+  background:
+    linear-gradient(90deg, rgba(5, 13, 26, 0.98), rgba(7, 18, 34, 0.84) 58%, rgba(5, 13, 26, 0.38)),
+    linear-gradient(180deg, rgba(5, 13, 26, 0.1), rgba(5, 13, 26, 0.92)),
+    url("../Assets/landing-screenshots/ecc-future-campus-hero.png") center center / cover no-repeat;
+  box-shadow: var(--shadow);
+}
+
+.teacher-command-panel::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background:
+    linear-gradient(90deg, rgba(104, 210, 255, 0.16) 1px, transparent 1px),
+    linear-gradient(180deg, rgba(128, 237, 153, 0.1) 1px, transparent 1px);
+  background-size: 42px 42px;
+  -webkit-mask-image: linear-gradient(90deg, transparent, #000 40%, transparent);
+  mask-image: linear-gradient(90deg, transparent, #000 40%, transparent);
+  opacity: 0.24;
+  pointer-events: none;
+}
+
+.teacher-command-panel > * {
+  position: relative;
+  z-index: 1;
+}
+
+.teacher-command-copy {
+  min-width: 0;
+}
+
+.teacher-command-copy h1 {
+  max-width: 13ch;
+  margin: 14px 0 10px;
+  font-size: clamp(34px, 4vw, 52px);
+  line-height: 0.98;
+}
+
+.teacher-command-copy .subtitle {
+  max-width: 66ch;
+  margin-bottom: 0;
+  color: #d6e5ff;
+}
+
+.teacher-school-chip {
+  align-self: start;
+  justify-self: end;
+  width: min(100%, 250px);
+  padding: 14px;
+  border: 1px solid rgba(104, 210, 255, 0.28);
+  border-radius: 8px;
+  background:
+    linear-gradient(135deg, rgba(9, 31, 53, 0.82), rgba(5, 13, 26, 0.58)),
+    rgba(255, 255, 255, 0.04);
+  color: #f0f6ff;
+  font-size: clamp(18px, 2vw, 26px);
+  font-weight: 900;
+  line-height: 1.02;
+  text-align: right;
+  text-transform: uppercase;
+}
+
+.teacher-status-bars {
+  grid-column: 1 / -1;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(168px, 1fr));
+  gap: 8px;
+  align-self: end;
+  margin-top: 0;
+}
+
+.teacher-status-bars .badge {
+  min-width: 0;
+  min-height: 38px;
+  display: inline-flex;
+  align-items: center;
+  border-radius: 8px;
+  background: rgba(6, 16, 31, 0.72);
+  color: #edf5ff;
+  font-size: 13px;
+  font-weight: 800;
+  line-height: 1.2;
+}
+
+.teacher-status-bars .badge.with-logo {
+  gap: 8px;
+}
+
+.teacher-status-bars .badge-logo {
+  width: 22px;
+  height: 22px;
+  border-radius: 6px;
+}
+
+.teacher-scope-panel {
+  display: grid;
+  align-content: start;
+  padding: 18px;
+  background:
+    linear-gradient(145deg, rgba(11, 31, 49, 0.92), rgba(6, 15, 30, 0.88)),
+    rgba(255, 255, 255, 0.035);
+}
+
+.teacher-scope-panel .teacher-grid {
+  grid-template-columns: 1fr;
+  gap: 12px;
+}
+
+.teacher-scope-panel input,
+.teacher-scope-panel select {
+  min-height: 44px;
+  border-radius: 8px;
+}
+
+.teacher-kpi-strip {
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+  gap: 10px;
+  margin-bottom: 14px;
+}
+
+.teacher-dashboard-page .teacher-kpi-strip .metric-card--art {
+  min-height: 116px;
+  padding: 14px 62px 14px 14px;
+  border-radius: 10px;
+  background:
+    linear-gradient(145deg, rgba(12, 30, 48, 0.82), rgba(5, 13, 26, 0.82)),
+    rgba(255, 255, 255, 0.035);
+  box-shadow: 0 18px 42px rgba(0, 0, 0, 0.24);
+}
+
+.teacher-dashboard-page .teacher-kpi-strip .metric-label {
+  margin-bottom: 8px;
+  font-size: 11px;
+}
+
+.teacher-dashboard-page .teacher-kpi-strip .metric-value {
+  font-size: clamp(26px, 2.6vw, 38px);
+}
+
+.teacher-dashboard-page .teacher-kpi-strip .metric-note {
+  font-size: 12px;
+  line-height: 1.35;
+}
+
+.teacher-dashboard-page .teacher-kpi-strip .metric-card--art::after {
+  right: -14px;
+  bottom: -16px;
+  width: 86px;
+  height: 86px;
+  opacity: 0.45;
+}
+
+.teacher-priority-strip {
+  display: grid;
+  grid-template-columns: minmax(0, 0.92fr) minmax(0, 1.08fr);
+  gap: 14px;
+  margin-bottom: 14px;
+}
+
+.teacher-priority-strip .panel {
+  min-height: 126px;
+  padding: 18px;
+  background:
+    linear-gradient(145deg, rgba(12, 28, 48, 0.88), rgba(7, 17, 31, 0.86)),
+    rgba(255, 255, 255, 0.035);
+}
+
+.teacher-priority-strip .panel p:last-child {
+  margin-bottom: 0;
+  color: #dfeaff;
+  font-weight: 700;
+}
+
+.teacher-dashboard-page .dashboard-dropdown {
+  margin-bottom: 14px;
+  border-radius: 12px;
+  overflow: hidden;
+}
+
+.teacher-dashboard-page .dashboard-dropdown + .dashboard-dropdown {
+  margin-top: 0;
+}
+
+.teacher-dashboard-page .dashboard-dropdown-summary {
+  min-height: 72px;
+  padding: 18px;
+  border-radius: 0;
+}
+
+.teacher-dashboard-page .dashboard-dropdown[open] .dashboard-dropdown-summary {
+  border-bottom: 1px solid rgba(136, 173, 255, 0.14);
+}
+
+.teacher-dashboard-page .dashboard-dropdown-content {
+  padding: 18px;
+}
+
+.teacher-primary-review {
+  border-color: rgba(255, 209, 102, 0.34);
+  background:
+    linear-gradient(145deg, rgba(43, 32, 13, 0.28), rgba(7, 17, 31, 0.84)),
+    var(--panel);
+}
+
+.teacher-primary-review .response-review-list {
+  max-height: min(740px, 72vh);
+  overflow-y: auto;
+  padding-right: 4px;
+  scrollbar-color: rgba(255, 209, 102, 0.58) rgba(255, 255, 255, 0.08);
+  scrollbar-width: thin;
+}
+
+.teacher-primary-review .response-review-list::-webkit-scrollbar {
+  width: 8px;
+}
+
+.teacher-primary-review .response-review-list::-webkit-scrollbar-track {
+  background: rgba(255, 255, 255, 0.08);
+  border-radius: 999px;
+}
+
+.teacher-primary-review .response-review-list::-webkit-scrollbar-thumb {
+  background: rgba(255, 209, 102, 0.58);
+  border-radius: 999px;
+}
+
+.teacher-dropdown-two-column {
+  margin-bottom: 0;
+}
+
+.teacher-inner-section {
+  min-width: 0;
+}
+
 .teacher-dashboard-page .teacher-hero-card {
   position: relative;
   overflow: hidden;
@@ -3096,6 +3356,15 @@ textarea {
     grid-template-columns: 1fr;
   }
 
+  .teacher-control-deck,
+  .teacher-priority-strip {
+    grid-template-columns: 1fr;
+  }
+
+  .teacher-kpi-strip {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
   .global-hero,
   .global-index-strip {
     grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -3312,6 +3581,45 @@ textarea {
 
   .teacher-dashboard-page #teacher-module-health {
     grid-template-columns: 1fr;
+  }
+
+  .teacher-control-deck {
+    gap: 10px;
+  }
+
+  .teacher-command-panel {
+    min-height: auto;
+    grid-template-columns: 1fr;
+    padding: 18px;
+  }
+
+  .teacher-command-copy h1 {
+    max-width: 12ch;
+    font-size: clamp(32px, 10vw, 42px);
+  }
+
+  .teacher-school-chip {
+    justify-self: start;
+    width: 100%;
+    text-align: left;
+    font-size: 18px;
+  }
+
+  .teacher-status-bars,
+  .teacher-kpi-strip {
+    grid-template-columns: 1fr;
+  }
+
+  .teacher-priority-strip .panel,
+  .teacher-scope-panel,
+  .teacher-dashboard-page .dashboard-dropdown-summary,
+  .teacher-dashboard-page .dashboard-dropdown-content {
+    padding: 16px;
+  }
+
+  .teacher-dashboard-page .dashboard-dropdown-summary {
+    align-items: flex-start;
+    gap: 14px;
   }
 
   .teacher-dashboard-page .teacher-hero-card {

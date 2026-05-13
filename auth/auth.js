@@ -243,6 +243,35 @@ function setHtml(id, value) {
   if (element) element.innerHTML = value;
 }
 
+function escapeHtml(value) {
+  return String(value ?? "").replace(/[&<>"']/g, char => ({
+    "&": "&amp;",
+    "<": "&lt;",
+    ">": "&gt;",
+    '"': "&quot;",
+    "'": "&#39;"
+  }[char]));
+}
+
+function formatDateTime(value) {
+  if (!value) return "";
+  const timestamp = new Date(value);
+  if (Number.isNaN(timestamp.getTime())) return "";
+  return timestamp.toLocaleString();
+}
+
+function getTimestamp(value) {
+  if (!value) return 0;
+  const timestamp = new Date(value).getTime();
+  return Number.isNaN(timestamp) ? 0 : timestamp;
+}
+
+function getDaysSince(value) {
+  const timestamp = getTimestamp(value);
+  if (!timestamp) return null;
+  return Math.max(0, Math.floor((Date.now() - timestamp) / 86400000));
+}
+
 function isAllowedTeacherEmail(email) {
   const domain = extractEmailDomain(email);
   return ALLOWED_TEACHER_DOMAINS.includes(domain)
@@ -1264,6 +1293,7 @@ async function initManageStudents() {
   const classNameEl = document.getElementById("manage-class-name");
   const classCodeEl = document.getElementById("manage-class-code");
   const resetResult = document.getElementById("reset-password-result");
+  const rosterFilter = document.getElementById("manage-student-filter");
   if (!list || !feedback || !classNameEl || !classCodeEl || !resetResult) return;
 
   const supabase = await getSupabaseClientOrNull();
@@ -1308,6 +1338,101 @@ async function initManageStudents() {
     classNameEl.textContent = classroom.className || "Current class";
     classCodeEl.textContent = classroom.classCode || "Pending";
 
+    const oldLoginDays = 90;
+    const neverUsedCleanupDays = 14;
+
+    const getStudentLoginState = student => {
+      const daysSinceLogin = getDaysSince(student.last_login_at);
+      const daysSinceCreated = getDaysSince(student.created_at);
+      const neverUsed = !student.last_login_at;
+      const staleNeverUsed = neverUsed && daysSinceCreated !== null && daysSinceCreated >= neverUsedCleanupDays;
+      const oldLogin = Boolean(student.last_login_at && daysSinceLogin !== null && daysSinceLogin >= oldLoginDays);
+      const deletedLogin = !student.is_active && /^Deleted/i.test(String(student.username || ""));
+
+      if (deletedLogin) {
+        return {
+          label: "Login deleted",
+          tone: "bad",
+          detail: "Old credentials have been removed.",
+          neverUsed,
+          oldLogin,
+          needsCleanup: false,
+          deletedLogin
+        };
+      }
+
+      if (!student.is_active) {
+        return {
+          label: "Inactive login",
+          tone: "bad",
+          detail: "Student cannot log in unless reactivated.",
+          neverUsed,
+          oldLogin,
+          needsCleanup: false,
+          deletedLogin
+        };
+      }
+
+      if (neverUsed) {
+        return {
+          label: staleNeverUsed ? "Never used" : "Not used yet",
+          tone: staleNeverUsed ? "warn" : "",
+          detail: daysSinceCreated === null
+            ? "No login recorded."
+            : `Created ${daysSinceCreated} day${daysSinceCreated === 1 ? "" : "s"} ago with no login.`,
+          neverUsed,
+          oldLogin,
+          needsCleanup: true,
+          deletedLogin
+        };
+      }
+
+      if (oldLogin) {
+        return {
+          label: "Old login",
+          tone: "warn",
+          detail: `Last used ${daysSinceLogin} day${daysSinceLogin === 1 ? "" : "s"} ago.`,
+          neverUsed,
+          oldLogin,
+          needsCleanup: true,
+          deletedLogin
+        };
+      }
+
+      return {
+        label: "Active",
+        tone: "good",
+        detail: daysSinceLogin === null ? "Ready for student login." : `Last used ${daysSinceLogin} day${daysSinceLogin === 1 ? "" : "s"} ago.`,
+        neverUsed,
+        oldLogin,
+        needsCleanup: false,
+        deletedLogin
+      };
+    };
+
+    const matchesRosterFilter = (student, state) => {
+      const filterValue = rosterFilter?.value || "active";
+      if (filterValue === "all") return true;
+      if (filterValue === "inactive") return !student.is_active;
+      if (filterValue === "never-used") return student.is_active && state.neverUsed;
+      if (filterValue === "needs-cleanup") return student.is_active && (state.neverUsed || state.oldLogin);
+      return student.is_active;
+    };
+
+    const buildDeletedUsername = student => {
+      const compactId = String(student.id || Date.now()).replace(/[^A-Za-z0-9]/g, "").slice(0, 9);
+      const timeSuffix = Date.now().toString(36).slice(-5);
+      return `Deleted${compactId}${timeSuffix}`.slice(0, 24);
+    };
+
+    const setActionStatus = (studentId, message, tone = "") => {
+      const status = list.querySelector(`[data-student-action-status="${studentId}"]`);
+      if (status) {
+        status.className = `small-note ${tone ? `feedback ${tone}` : ""}`.trim();
+        status.textContent = message;
+      }
+    };
+
     const renderStudents = async () => {
       const { data: students, error: studentError } = await supabase
         .from("students")
@@ -1324,48 +1449,172 @@ async function initManageStudents() {
         return;
       }
 
-      feedback.className = "feedback good";
-      feedback.textContent = `${students.length} student account(s) loaded.`;
-      list.innerHTML = students.map(student => `
-        <div class="generated-item">
-          <div>
-            <strong>${student.display_name}</strong>
-            <div class="small-note">Username: ${student.username}</div>
-            <div class="small-note">Last login: ${student.last_login_at ? new Date(student.last_login_at).toLocaleString() : "Not yet logged in"}</div>
+      const rows = students
+        .map(student => ({ student, state: getStudentLoginState(student) }))
+        .filter(({ student, state }) => matchesRosterFilter(student, state));
+
+      if (!rows.length) {
+        feedback.className = "feedback warn";
+        feedback.textContent = `${students.length} student account(s) loaded, but none match this roster view.`;
+        list.innerHTML = '<div class="small-note">Try another roster view to see more accounts.</div>';
+        return;
+      }
+
+      const cleanupCount = students
+        .map(student => getStudentLoginState(student))
+        .filter(state => state.needsCleanup).length;
+
+      feedback.className = cleanupCount ? "feedback warn" : "feedback good";
+      feedback.textContent = `${rows.length} of ${students.length} student account(s) shown. ${cleanupCount} active login${cleanupCount === 1 ? "" : "s"} may need cleanup.`;
+      list.innerHTML = rows.map(({ student, state }) => {
+        const actionLabel = student.is_active ? "Deactivate login" : "Reactivate login";
+        const actionType = student.is_active ? "deactivate" : "activate";
+        const canDeleteLogin = student.is_active || !state.deletedLogin;
+        return `
+        <div class="generated-item student-manager-item ${student.is_active ? "" : "is-inactive"}">
+          <div class="student-manager-main">
+            <strong>${escapeHtml(student.display_name)}</strong>
+            <div class="small-note">Username: ${escapeHtml(student.username)}</div>
+            <div class="small-note">Created: ${escapeHtml(formatDateTime(student.created_at) || "Date unavailable")}</div>
+            <div class="small-note">Last login: ${student.last_login_at ? escapeHtml(formatDateTime(student.last_login_at)) : "Not yet logged in"}</div>
+            <div class="student-manager-meta">
+              <span class="student-manager-status ${state.tone}">${escapeHtml(state.label)}</span>
+              <span class="student-manager-status">${escapeHtml(state.detail)}</span>
+            </div>
           </div>
-          <div class="button-row" style="margin-top: 0;">
-            <button type="button" class="button-secondary manage-reset-password" data-student-id="${student.id}" data-student-name="${student.display_name}" data-student-username="${student.username}">Reset password</button>
+          <div class="student-manager-actions">
+            <label for="reset-password-${escapeHtml(student.id)}">Optional new password</label>
+            <input id="reset-password-${escapeHtml(student.id)}" class="manage-password-input" type="text" placeholder="Blank = auto-generate" autocomplete="off" data-student-id="${escapeHtml(student.id)}">
+            <div class="button-row">
+              <button type="button" class="button-secondary manage-reset-password" data-student-id="${escapeHtml(student.id)}">Reset password</button>
+              <button type="button" class="button-secondary ${student.is_active ? "button-warning" : ""} manage-toggle-login" data-student-id="${escapeHtml(student.id)}" data-login-action="${actionType}">${actionLabel}</button>
+              ${canDeleteLogin ? `<button type="button" class="button-secondary button-danger manage-delete-login" data-student-id="${escapeHtml(student.id)}">Delete login</button>` : ""}
+            </div>
+            <div class="small-note" data-student-action-status="${escapeHtml(student.id)}"></div>
           </div>
         </div>
-      `).join("");
+      `;
+      }).join("");
 
       list.querySelectorAll(".manage-reset-password").forEach(button => {
         button.addEventListener("click", async () => {
-          const newPassword = generateStudentPassword();
-          const passwordHash = await hashValue(newPassword);
-          const { error: updateError } = await supabase
-            .from("students")
-            .update({ password_hash: passwordHash })
-            .eq("id", button.dataset.studentId);
+          const student = students.find(item => item.id === button.dataset.studentId);
+          if (!student) return;
+          const passwordInput = list.querySelector(`.manage-password-input[data-student-id="${student.id}"]`);
+          const enteredPassword = passwordInput?.value.trim() || "";
+          const usedGeneratedPassword = !enteredPassword;
+          const newPassword = enteredPassword || generateStudentPassword();
 
-          if (updateError) {
-            feedback.className = "feedback bad";
-            feedback.textContent = updateError.message || "Password reset failed.";
-            return;
-          }
+          try {
+            button.disabled = true;
+            setActionStatus(student.id, usedGeneratedPassword ? "No password entered. Generating a temporary password..." : "Resetting password...");
+            const passwordHash = await hashValue(newPassword);
+            const { error: updateError } = await supabase
+              .from("students")
+              .update({ password_hash: passwordHash, is_active: true })
+              .eq("id", student.id);
 
-          resetResult.innerHTML = `
+            if (updateError) throw updateError;
+
+            if (passwordInput) passwordInput.value = "";
+            resetResult.innerHTML = `
             <p><strong>Password reset successful</strong></p>
-            <p><strong>Name:</strong> ${button.dataset.studentName}</p>
-            <p><strong>Username:</strong> ${button.dataset.studentUsername}</p>
-            <p><strong>New temporary password:</strong> ${newPassword}</p>
-            <p class="small-note">Please copy this now and share it securely. The previous password is no longer valid.</p>
+            <p><strong>Name:</strong> ${escapeHtml(student.display_name)}</p>
+            <p><strong>Username:</strong> ${escapeHtml(student.username)}</p>
+            <p><strong>New ${usedGeneratedPassword ? "temporary" : "teacher-set"} password:</strong> ${escapeHtml(newPassword)}</p>
+            <p class="small-note">${usedGeneratedPassword ? "No password was entered, so a temporary password was generated and applied." : "The teacher-entered password was applied."} The previous password is no longer valid.</p>
           `;
-          feedback.className = "feedback good";
-          feedback.textContent = `Password reset for ${button.dataset.studentName}.`;
+            feedback.className = usedGeneratedPassword ? "feedback warn" : "feedback good";
+            feedback.textContent = usedGeneratedPassword
+              ? `Password reset for ${student.display_name}. No password was entered, so a temporary one was generated.`
+              : `Password reset for ${student.display_name}.`;
+            setActionStatus(student.id, "Password reset complete.", usedGeneratedPassword ? "warn" : "good");
+            await renderStudents();
+          } catch (error) {
+            feedback.className = "feedback bad";
+            feedback.textContent = error.message || "Password reset failed.";
+            setActionStatus(student.id, error.message || "Password reset failed.", "bad");
+          } finally {
+            button.disabled = false;
+          }
+        });
+      });
+
+      list.querySelectorAll(".manage-toggle-login").forEach(button => {
+        button.addEventListener("click", async () => {
+          const student = students.find(item => item.id === button.dataset.studentId);
+          if (!student) return;
+          const shouldActivate = button.dataset.loginAction === "activate";
+          try {
+            button.disabled = true;
+            setActionStatus(student.id, shouldActivate ? "Reactivating login..." : "Deactivating login...");
+            const { error: updateError } = await supabase
+              .from("students")
+              .update({ is_active: shouldActivate })
+              .eq("id", student.id);
+
+            if (updateError) throw updateError;
+
+            feedback.className = "feedback good";
+            feedback.textContent = shouldActivate
+              ? `Login reactivated for ${student.display_name}.`
+              : `Login deactivated for ${student.display_name}.`;
+            await renderStudents();
+          } catch (error) {
+            feedback.className = "feedback bad";
+            feedback.textContent = error.message || "Could not update login status.";
+            setActionStatus(student.id, error.message || "Could not update login status.", "bad");
+          } finally {
+            button.disabled = false;
+          }
+        });
+      });
+
+      list.querySelectorAll(".manage-delete-login").forEach(button => {
+        button.addEventListener("click", async () => {
+          const student = students.find(item => item.id === button.dataset.studentId);
+          if (!student) return;
+          const confirmed = window.confirm(`Delete login credentials for ${student.display_name}? This blocks old username/password access but keeps class evidence attached to the student record.`);
+          if (!confirmed) return;
+
+          try {
+            button.disabled = true;
+            setActionStatus(student.id, "Deleting login credentials...");
+            const deletedUsername = buildDeletedUsername(student);
+            const deletedPasswordHash = await hashValue(`${deletedUsername}:${crypto.randomUUID ? crypto.randomUUID() : Date.now()}`);
+            const { error: updateError } = await supabase
+              .from("students")
+              .update({
+                username: deletedUsername,
+                password_hash: deletedPasswordHash,
+                is_active: false
+              })
+              .eq("id", student.id);
+
+            if (updateError) throw updateError;
+
+            resetResult.innerHTML = `
+              <p><strong>Login deleted</strong></p>
+              <p><strong>Name:</strong> ${escapeHtml(student.display_name)}</p>
+              <p class="small-note">The old username and password no longer work. Any saved class evidence remains attached to this student record.</p>
+            `;
+            feedback.className = "feedback good";
+            feedback.textContent = `Login credentials deleted for ${student.display_name}.`;
+            await renderStudents();
+          } catch (error) {
+            feedback.className = "feedback bad";
+            feedback.textContent = error.message || "Could not delete login credentials.";
+            setActionStatus(student.id, error.message || "Could not delete login credentials.", "bad");
+          } finally {
+            button.disabled = false;
+          }
         });
       });
     };
+
+    if (rosterFilter) {
+      rosterFilter.addEventListener("change", renderStudents);
+    }
 
     await renderStudents();
   } catch (error) {

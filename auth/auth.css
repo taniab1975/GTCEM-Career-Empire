@@ -423,6 +423,22 @@ button:disabled {
   gap: 10px;
 }
 
+.student-manager-toolbar {
+  display: grid;
+  grid-template-columns: minmax(220px, 0.44fr) minmax(0, 1fr);
+  gap: 14px;
+  align-items: end;
+  margin-bottom: 18px;
+  padding: 14px;
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.04);
+}
+
+.student-manager-toolbar p {
+  margin-bottom: 0;
+}
+
 .generated-item {
   display: flex;
   justify-content: space-between;
@@ -439,6 +455,84 @@ button:disabled {
   margin-bottom: 4px;
 }
 
+.student-manager-item {
+  align-items: stretch;
+}
+
+.student-manager-item.is-inactive {
+  opacity: 0.78;
+}
+
+.student-manager-main {
+  min-width: 0;
+}
+
+.student-manager-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 7px;
+  margin: 8px 0;
+}
+
+.student-manager-status {
+  display: inline-flex;
+  align-items: center;
+  min-height: 28px;
+  padding: 6px 9px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  color: var(--muted);
+  background: rgba(255, 255, 255, 0.04);
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.student-manager-status.good {
+  color: var(--accent-2);
+  border-color: rgba(137, 240, 162, 0.28);
+}
+
+.student-manager-status.warn {
+  color: var(--warn);
+  border-color: rgba(255, 209, 102, 0.3);
+}
+
+.student-manager-status.bad {
+  color: var(--danger);
+  border-color: rgba(255, 123, 114, 0.32);
+}
+
+.student-manager-actions {
+  width: min(100%, 360px);
+  display: grid;
+  align-content: start;
+  gap: 10px;
+}
+
+.student-manager-actions label {
+  margin-bottom: 0;
+}
+
+.student-manager-actions .button-row {
+  margin-top: 0;
+}
+
+.student-manager-actions input {
+  border-radius: 10px;
+}
+
+.button-danger {
+  background: rgba(255, 123, 114, 0.12);
+  border: 1px solid rgba(255, 123, 114, 0.32);
+  color: #ffd4d1;
+}
+
+.button-warning {
+  background: rgba(255, 209, 102, 0.12);
+  border: 1px solid rgba(255, 209, 102, 0.3);
+  color: #ffe8a8;
+}
+
 .small-note {
   font-size: 12px;
   color: var(--muted);
@@ -453,6 +547,19 @@ button:disabled {
 @media (max-width: 680px) {
   .auth-shell {
     width: min(100% - 20px, 1160px);
+  }
+
+  .student-manager-toolbar,
+  .generated-item {
+    grid-template-columns: 1fr;
+  }
+
+  .generated-item {
+    display: grid;
+  }
+
+  .student-manager-actions {
+    width: 100%;
   }
 
   .tile-grid {

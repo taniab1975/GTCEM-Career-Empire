@@ -7,7 +7,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Outfit:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="./dashboard.css?v=20260508-teacher-logo-scene">
+  <link rel="stylesheet" href="./dashboard.css?v=20260513-teacher-command-centre">
 </head>
 <body class="teacher-dashboard-page" data-teacher-nav-active="teacher-dashboard">
   <main class="page-shell">
@@ -23,37 +23,45 @@
       <a class="dashboard-nav-link" href="../index.html">Open Megatrends</a>
     </div>
 
-    <section class="hero">
-      <article class="hero-card teacher-hero-card">
-        <div id="teacher-school-name" class="teacher-hero-school-name">School not resolved</div>
-        <span class="eyebrow">Teacher Dashboard</span>
-        <h1 id="teacher-hero-title">Data-Informed Interventions and Engagement Information</h1>
-        <p id="teacher-hero-subtitle" class="subtitle">
-          Live engagement, module time, strand results, glossary gaps, long-answer comparison, and next-step signals across the Career Empire ecosystem.
-        </p>
-        <div id="teacher-badge-stack" class="badge-stack">
+    <section class="teacher-control-deck">
+      <article class="teacher-command-panel">
+        <div class="teacher-command-copy">
+          <span class="eyebrow">Teacher Dashboard</span>
+          <h1 id="teacher-hero-title">Class command centre</h1>
+          <p id="teacher-hero-subtitle" class="subtitle">
+            Live engagement, module time, strand results, glossary gaps, long-answer comparison, and next-step signals across the Career Empire ecosystem.
+          </p>
+        </div>
+        <div id="teacher-school-name" class="teacher-school-chip">School not resolved</div>
+        <div id="teacher-badge-stack" class="badge-stack teacher-status-bars">
           <span class="badge">Loading class data...</span>
         </div>
       </article>
-      <div class="hero-side">
-        <article class="panel">
-          <div class="section-title">
-            <h2>Priority Alert</h2>
-            <p class="status-watch">Watch closely</p>
+
+      <article class="panel teacher-scope-panel">
+        <div class="section-title">
+          <h2>Main Controls</h2>
+          <p>Filter the view</p>
+        </div>
+        <div class="teacher-grid">
+          <div>
+            <label for="teacher-class-selector">Class view</label>
+            <select id="teacher-class-selector"></select>
           </div>
-          <p id="teacher-priority-text">Time Management is the weakest class-wide employability category. Lifelong Learning is the best next module to activate.</p>
-        </article>
-        <article class="panel">
-          <div class="section-title">
-            <h2>Teacher Actions</h2>
-            <p class="status-good">Ready</p>
+          <div>
+            <label for="teacher-student-selector">Student drill-down</label>
+            <select id="teacher-student-selector"></select>
           </div>
-          <p id="teacher-action-summary">Future controls should let teachers toggle modules, group students, review responses, and push targeted support activities.</p>
-        </article>
-      </div>
+          <div>
+            <label for="teacher-class-summary">Current view</label>
+            <input id="teacher-class-summary" type="text" readonly>
+          </div>
+        </div>
+        <p class="footer-note" id="teacher-class-scope-note">The dashboard will load classes linked to the logged-in teacher's school.</p>
+      </article>
     </section>
 
-    <section class="metrics-grid">
+    <section class="metrics-grid teacher-kpi-strip">
       <article class="metric metric-card--art" style="--metric-art: url('../Assets/Images and Animations/Celebration Reward Icons/Signal restored.png');">
         <div class="metric-label">Students On Track</div>
         <div id="teacher-students-on-track" class="metric-value">0</div>
@@ -86,143 +94,201 @@
       </article>
     </section>
 
-    <section class="panel">
-      <div class="section-title">
-        <h2>Class Scope</h2>
-        <p>Default view is all classes; refine by class, then by student</p>
-      </div>
-      <div class="teacher-grid">
+    <section class="teacher-priority-strip">
+      <article class="panel teacher-priority-panel">
+        <div class="section-title">
+          <h2>Priority Alert</h2>
+          <p class="status-watch">Watch closely</p>
+        </div>
+        <p id="teacher-priority-text">Time Management is the weakest class-wide employability category. Lifelong Learning is the best next module to activate.</p>
+      </article>
+      <article class="panel teacher-actions-panel">
+        <div class="section-title">
+          <h2>Teacher Actions</h2>
+          <p class="status-good">Ready</p>
+        </div>
+        <p id="teacher-action-summary">Future controls should let teachers toggle modules, group students, review responses, and push targeted support activities.</p>
+      </article>
+    </section>
+
+    <details class="panel dashboard-dropdown teacher-primary-review" open>
+      <summary class="section-title dashboard-dropdown-summary">
         <div>
-          <label for="teacher-class-selector">Class view</label>
-          <select id="teacher-class-selector"></select>
+          <h2>Student Submissions for Revision</h2>
+          <p>Review student free text before it enters any shared comparison pool</p>
         </div>
+        <span class="dashboard-dropdown-action"><span class="dashboard-action-open">Open</span><span class="dashboard-action-close">Close</span></span>
+      </summary>
+      <div class="dashboard-dropdown-content">
+        <div id="teacher-response-review-list" class="response-review-list"></div>
+      </div>
+    </details>
+
+    <details class="panel dashboard-dropdown teacher-profile-panel">
+      <summary class="section-title dashboard-dropdown-summary">
         <div>
-          <label for="teacher-student-selector">Student drill-down</label>
-          <select id="teacher-student-selector"></select>
+          <h2>Student Learning Profile</h2>
+          <p>Individual progress, engagement, evidence, and suggested next step</p>
         </div>
+        <span class="dashboard-dropdown-action"><span class="dashboard-action-open">Open</span><span class="dashboard-action-close">Close</span></span>
+      </summary>
+      <div class="dashboard-dropdown-content">
+        <div id="teacher-student-profile" class="student-profile-grid"></div>
+      </div>
+    </details>
+
+    <details class="panel dashboard-dropdown">
+      <summary class="section-title dashboard-dropdown-summary">
         <div>
-          <label for="teacher-class-summary">Selection summary</label>
-          <input id="teacher-class-summary" type="text" readonly>
+          <h2>Class Trends</h2>
+          <p>Graphs for engagement, module completion, task time, and glossary recall</p>
         </div>
+        <span class="dashboard-dropdown-action"><span class="dashboard-action-open">Open</span><span class="dashboard-action-close">Close</span></span>
+      </summary>
+      <div class="dashboard-dropdown-content">
+        <div id="teacher-class-chart-grid" class="teacher-chart-grid"></div>
       </div>
-      <p class="footer-note" id="teacher-class-scope-note">The dashboard will load classes linked to the logged-in teacher's school.</p>
-    </section>
+    </details>
 
-    <section class="panel teacher-profile-panel">
-      <div class="section-title">
-        <h2>Student Learning Profile</h2>
-        <p>Individual progress, engagement, evidence, and suggested next step</p>
-      </div>
-      <div id="teacher-student-profile" class="student-profile-grid"></div>
-    </section>
-
-    <section class="panel">
-      <div class="section-title">
-        <h2>Class Trends</h2>
-        <p>Graphs for engagement, module completion, task time, and glossary recall</p>
-      </div>
-      <div id="teacher-class-chart-grid" class="teacher-chart-grid"></div>
-    </section>
-
-    <section class="two-column">
-      <article class="panel">
-        <div class="section-title">
-          <h2>Module Health</h2>
-          <p>Curriculum visibility</p>
+    <details class="panel dashboard-dropdown">
+      <summary class="section-title dashboard-dropdown-summary">
+        <div>
+          <h2>Module Health & Interventions</h2>
+          <p>Curriculum visibility and immediate teaching support</p>
         </div>
-        <div id="teacher-module-health" class="module-grid"></div>
-      </article>
+        <span class="dashboard-dropdown-action"><span class="dashboard-action-open">Open</span><span class="dashboard-action-close">Close</span></span>
+      </summary>
+      <div class="dashboard-dropdown-content two-column teacher-dropdown-two-column">
+        <article class="teacher-inner-section">
+          <div class="section-title">
+            <h2>Module Health</h2>
+            <p>Curriculum visibility</p>
+          </div>
+          <div id="teacher-module-health" class="module-grid"></div>
+        </article>
 
-      <article class="panel">
-        <div class="section-title">
-          <h2>Suggested Interventions</h2>
-          <p>Actionable teaching support</p>
+        <article class="teacher-inner-section">
+          <div class="section-title">
+            <h2>Suggested Interventions</h2>
+            <p>Actionable teaching support</p>
+          </div>
+          <div id="teacher-interventions" class="list"></div>
+        </article>
+      </div>
+    </details>
+
+    <details class="panel dashboard-dropdown">
+      <summary class="section-title dashboard-dropdown-summary">
+        <div>
+          <h2>SCSA Careers and Employability Skills</h2>
+          <p>Category-level diagnostics</p>
         </div>
-        <div id="teacher-interventions" class="list"></div>
-      </article>
-    </section>
-
-    <section class="panel">
-      <div class="section-title">
-        <h2>SCSA Careers and Employability Skills</h2>
-        <p>Category-level diagnostics</p>
+        <span class="dashboard-dropdown-action"><span class="dashboard-action-open">Open</span><span class="dashboard-action-close">Close</span></span>
+      </summary>
+      <div class="dashboard-dropdown-content">
+        <div id="teacher-skill-grid" class="skill-grid"></div>
+        <p class="footer-note">Later versions should drill into sub-skills, evidence quality, student grouping, and intervention history.</p>
       </div>
-      <div id="teacher-skill-grid" class="skill-grid"></div>
-      <p class="footer-note">Later versions should drill into sub-skills, evidence quality, student grouping, and intervention history.</p>
-    </section>
+    </details>
 
-    <section class="panel">
-      <div class="section-title">
-        <h2>Student Compare View</h2>
-        <p>Students down the left; class measures across the top</p>
-      </div>
-      <div id="teacher-student-compare-list" class="teacher-matrix-wrap"></div>
-    </section>
-
-    <section class="two-column">
-      <article class="panel">
-        <div class="section-title">
-          <h2>Engagement & Interaction</h2>
-          <p>Login recency, captured task time, and progress status</p>
+    <details class="panel dashboard-dropdown">
+      <summary class="section-title dashboard-dropdown-summary">
+        <div>
+          <h2>Student Compare View</h2>
+          <p>Students down the left; class measures across the top</p>
         </div>
-        <div id="teacher-roster-activity" class="list"></div>
-      </article>
+        <span class="dashboard-dropdown-action"><span class="dashboard-action-open">Open</span><span class="dashboard-action-close">Close</span></span>
+      </summary>
+      <div class="dashboard-dropdown-content">
+        <div id="teacher-student-compare-list" class="teacher-matrix-wrap"></div>
+      </div>
+    </details>
 
-      <article class="panel">
-        <div class="section-title">
-          <h2>Glossary Results & Gaps</h2>
-          <p>Term recall, keyword accuracy, and class reteach signals</p>
+    <details class="panel dashboard-dropdown">
+      <summary class="section-title dashboard-dropdown-summary">
+        <div>
+          <h2>Engagement & Glossary Gaps</h2>
+          <p>Login recency, captured task time, progress status, and keyword reteach signals</p>
         </div>
-        <div id="teacher-glossary-gap-list" class="list"></div>
-      </article>
-    </section>
+        <span class="dashboard-dropdown-action"><span class="dashboard-action-open">Open</span><span class="dashboard-action-close">Close</span></span>
+      </summary>
+      <div class="dashboard-dropdown-content two-column teacher-dropdown-two-column">
+        <article class="teacher-inner-section">
+          <div class="section-title">
+            <h2>Engagement & Interaction</h2>
+            <p>Login recency, captured task time, and progress status</p>
+          </div>
+          <div id="teacher-roster-activity" class="list"></div>
+        </article>
 
-    <section class="panel">
-      <div class="section-title">
-        <h2>Long Answer Comparison</h2>
-        <p>Students down the left; written-response tasks across the top</p>
+        <article class="teacher-inner-section">
+          <div class="section-title">
+            <h2>Glossary Results & Gaps</h2>
+            <p>Term recall, keyword accuracy, and class reteach signals</p>
+          </div>
+          <div id="teacher-glossary-gap-list" class="list"></div>
+        </article>
       </div>
-      <div id="teacher-long-answer-compare-list" class="teacher-matrix-wrap"></div>
-    </section>
+    </details>
 
-    <section class="panel">
-      <div class="section-title">
-        <h2>Response Approval Inbox</h2>
-        <p>Review student free text before it enters any shared comparison pool</p>
+    <details class="panel dashboard-dropdown">
+      <summary class="section-title dashboard-dropdown-summary">
+        <div>
+          <h2>Long Answer Comparison</h2>
+          <p>Students down the left; written-response tasks across the top</p>
+        </div>
+        <span class="dashboard-dropdown-action"><span class="dashboard-action-open">Open</span><span class="dashboard-action-close">Close</span></span>
+      </summary>
+      <div class="dashboard-dropdown-content">
+        <div id="teacher-long-answer-compare-list" class="teacher-matrix-wrap"></div>
       </div>
-      <div id="teacher-response-review-list" class="response-review-list"></div>
-    </section>
+    </details>
 
-    <section class="panel">
-      <div class="section-title">
-        <h2>Feedback Review Inbox</h2>
-        <p>Check feedback button reports and unstructured site feedback before actioning them</p>
+    <details class="panel dashboard-dropdown">
+      <summary class="section-title dashboard-dropdown-summary">
+        <div>
+          <h2>Feedback Review Inbox</h2>
+          <p>Check feedback button reports and unstructured site feedback before actioning them</p>
+        </div>
+        <span class="dashboard-dropdown-action"><span class="dashboard-action-open">Open</span><span class="dashboard-action-close">Close</span></span>
+      </summary>
+      <div class="dashboard-dropdown-content">
+        <div id="teacher-feedback-review-list" class="response-review-list"></div>
       </div>
-      <div id="teacher-feedback-review-list" class="response-review-list"></div>
-    </section>
+    </details>
 
-    <section class="panel">
-      <div class="section-title">
-        <h2>Module & Strand Time</h2>
-        <p>Captured time-on-task by module, stage, and EST content strand</p>
+    <details class="panel dashboard-dropdown">
+      <summary class="section-title dashboard-dropdown-summary">
+        <div>
+          <h2>Module & Strand Time</h2>
+          <p>Captured time-on-task by module, stage, and EST content strand</p>
+        </div>
+        <span class="dashboard-dropdown-action"><span class="dashboard-action-open">Open</span><span class="dashboard-action-close">Close</span></span>
+      </summary>
+      <div class="dashboard-dropdown-content">
+        <div id="teacher-task-time-list" class="list"></div>
       </div>
-      <div id="teacher-task-time-list" class="list"></div>
-    </section>
+    </details>
 
-    <section class="panel">
-      <div class="section-title">
-        <h2>Store Requests</h2>
-        <p>Approve, edit, or reject student item ideas for the Global Shop</p>
+    <details class="panel dashboard-dropdown">
+      <summary class="section-title dashboard-dropdown-summary">
+        <div>
+          <h2>Store Requests</h2>
+          <p>Approve, edit, or reject student item ideas for the Global Shop</p>
+        </div>
+        <span class="dashboard-dropdown-action"><span class="dashboard-action-open">Open</span><span class="dashboard-action-close">Close</span></span>
+      </summary>
+      <div class="dashboard-dropdown-content">
+        <div id="teacher-store-request-list" class="module-grid"></div>
       </div>
-      <div id="teacher-store-request-list" class="module-grid"></div>
-    </section>
+    </details>
   </main>
 
   <script src="../config/supabase-config.js"></script>
   <script src="../src/services/supabase-browser.js"></script>
   <script src="../src/services/response-moderation.js?v=student-review-queue-v1"></script>
   <script src="../auth/auth.js?v=20260513-auth-simplify"></script>
-  <script src="./dashboard.js?v=20260508-teacher-analytics-logo"></script>
+  <script src="./dashboard.js?v=20260513-teacher-command-centre"></script>
   <script src="../src/services/session-banner.js?v=20260508-teacher-analytics-logo"></script>
   <script src="../src/services/feedback-widget.js?v=20260513-free-text-privacy"></script>
 </body>

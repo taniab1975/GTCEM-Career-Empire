@@ -7,7 +7,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="./auth.css?v=20260513-auth-simplify">
+  <link rel="stylesheet" href="./auth.css?v=20260513-student-login-cleanup">
 </head>
 <body data-teacher-nav-active="manage-students">
   <main class="auth-shell">
@@ -52,12 +52,26 @@
     <section class="auth-layout">
       <article class="form-card">
         <span class="eyebrow">Teacher Student Manager</span>
-        <h1>Review student accounts and reset passwords when needed.</h1>
-        <p class="lead">This page shows the current class roster and lets you generate a fresh temporary password for any student.</p>
+        <h1>Review student accounts, reset passwords, and clean up old logins.</h1>
+        <p class="lead">This page shows the current class roster, lets you set or auto-generate a new password, and gives you safe controls for inactive or never-used student logins.</p>
 
         <div class="code-box" style="margin-bottom: 18px;">
           <p><strong>Current class:</strong> <span id="manage-class-name">Loading...</span></p>
           <p><strong>Class code:</strong> <span id="manage-class-code">Loading...</span></p>
+        </div>
+
+        <div class="student-manager-toolbar">
+          <div>
+            <label for="manage-student-filter">Roster view</label>
+            <select id="manage-student-filter">
+              <option value="active">Active logins</option>
+              <option value="needs-cleanup">Old or never used</option>
+              <option value="never-used">Never logged in</option>
+              <option value="inactive">Inactive/deleted logins</option>
+              <option value="all">All student records</option>
+            </select>
+          </div>
+          <p class="small-note">Delete removes the login credentials while keeping any class evidence attached to the student record.</p>
         </div>
 
         <div id="manage-students-feedback" class="feedback"></div>
@@ -67,7 +81,11 @@
       <div class="stack">
         <article class="info-card">
           <h2>Password reset</h2>
-          <p class="muted">For security, existing passwords are not shown. Resetting creates a brand new temporary password that you can share with the student.</p>
+          <p class="muted">For security, existing passwords are not shown. Type a new password or leave the field blank to auto-generate one. Blank resets are flagged but still processed.</p>
+        </article>
+        <article class="info-card">
+          <h2>Login cleanup</h2>
+          <p class="muted">Deactivate temporarily blocks access. Delete login scrambles the username and password, then marks the account inactive so old credentials can no longer be used.</p>
         </article>
         <article class="info-card">
           <h2>Current reset result</h2>
@@ -82,7 +100,7 @@
   <script src="../config/supabase-config.js"></script>
   <script src="../data/schools-list.js"></script>
   <script src="../src/services/supabase-browser.js"></script>
-  <script src="./auth.js?v=20260513-auth-simplify"></script>
+  <script src="./auth.js?v=20260513-student-login-cleanup"></script>
   <script src="../src/services/session-banner.js?v=20260507-session-banner"></script>
   <script src="../src/services/feedback-widget.js?v=20260513-free-text-privacy"></script>
 </body>
