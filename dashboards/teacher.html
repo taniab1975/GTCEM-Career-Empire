@@ -7,7 +7,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Outfit:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="./dashboard.css?v=20260513-teacher-command-centre">
+  <link rel="stylesheet" href="./dashboard.css?v=20260514-module-records">
 </head>
 <body class="teacher-dashboard-page" data-teacher-nav-active="teacher-dashboard">
   <main class="page-shell">
@@ -53,12 +53,38 @@
             <select id="teacher-student-selector"></select>
           </div>
           <div>
+            <label for="teacher-student-status-selector">Student record view</label>
+            <select id="teacher-student-status-selector"></select>
+          </div>
+          <div>
             <label for="teacher-class-summary">Current view</label>
             <input id="teacher-class-summary" type="text" readonly>
           </div>
         </div>
         <p class="footer-note" id="teacher-class-scope-note">The dashboard will load classes linked to the logged-in teacher's school.</p>
       </article>
+    </section>
+
+    <details class="panel dashboard-dropdown teacher-module-control-panel" open>
+      <summary class="section-title dashboard-dropdown-summary">
+        <div>
+          <h2>Module Availability</h2>
+          <p>Choose what is active for this class now, and what stays historical</p>
+        </div>
+        <span class="dashboard-dropdown-action"><span class="dashboard-action-open">Open</span><span class="dashboard-action-close">Close</span></span>
+      </summary>
+      <div class="dashboard-dropdown-content">
+        <div id="teacher-module-availability-list" class="module-availability-grid"></div>
+        <p class="footer-note">Inactive and archived modules remain in history, but are removed from the default active teaching view and unavailable from the student hub.</p>
+      </div>
+    </details>
+
+    <section class="panel teacher-focus-panel">
+      <div class="section-title">
+        <h2>Dashboard Focus</h2>
+        <p>Show the module data you care about now</p>
+      </div>
+      <div id="teacher-dashboard-focus-strip" class="dashboard-focus-strip" role="group" aria-label="Dashboard module focus"></div>
     </section>
 
     <section class="metrics-grid teacher-kpi-strip">
@@ -177,11 +203,24 @@
       </div>
     </details>
 
+    <details class="panel dashboard-dropdown teacher-capability-evidence-panel" open>
+      <summary class="section-title dashboard-dropdown-summary">
+        <div>
+          <h2>Capability Evidence & Portfolio View</h2>
+          <p>Capability use, journal quality, and student articulation patterns</p>
+        </div>
+        <span class="dashboard-dropdown-action"><span class="dashboard-action-open">Open</span><span class="dashboard-action-close">Close</span></span>
+      </summary>
+      <div class="dashboard-dropdown-content">
+        <div id="teacher-capability-portfolio" class="capability-portfolio-grid"></div>
+      </div>
+    </details>
+
     <details class="panel dashboard-dropdown">
       <summary class="section-title dashboard-dropdown-summary">
         <div>
-          <h2>SCSA Careers and Employability Skills</h2>
-          <p>Category-level diagnostics</p>
+          <h2>Capability Percent Signals</h2>
+          <p>Secondary category-level diagnostics</p>
         </div>
         <span class="dashboard-dropdown-action"><span class="dashboard-action-open">Open</span><span class="dashboard-action-close">Close</span></span>
       </summary>
@@ -288,7 +327,7 @@
   <script src="../src/services/supabase-browser.js"></script>
   <script src="../src/services/response-moderation.js?v=student-review-queue-v1"></script>
   <script src="../auth/auth.js?v=20260513-auth-simplify"></script>
-  <script src="./dashboard.js?v=20260513-teacher-command-centre"></script>
+  <script src="./dashboard.js?v=20260514-module-records"></script>
   <script src="../src/services/session-banner.js?v=20260508-teacher-analytics-logo"></script>
   <script src="../src/services/feedback-widget.js?v=20260513-free-text-privacy"></script>
 </body>

@@ -17,6 +17,7 @@ const STUDENT_STATUS_ICONS = {
 
 const TEACHER_STATS_FILTER_KEY = "career-empire-teacher-stats-dashboard-filter";
 const LEGACY_TEACHER_FILTER_KEY = "career-empire-teacher-dashboard-filter";
+const MODULE_AVAILABILITY_STORAGE_KEY = "career-empire-module-availability-v1";
 const STUDENT_FREE_TEXT_PRIVACY_NOTICE = {
   title: "Note: your teacher can check anything you enter here.",
   body: 'Do not include surnames, student emails, phone numbers, social handles, exact workplace names, suburbs, addresses, or anything that identifies you or someone else. Use general wording such as "a fast-food workplace" or "a local retail store".'
@@ -27,6 +28,71 @@ const RESPONSE_REJECTION_REASONS = [
   "Contains workplace or location details",
   "Not suitable for the shared response pool",
   "Other teacher concern"
+];
+
+const DASHBOARD_MODULES = [
+  {
+    id: "est-prep",
+    title: "EST Prep",
+    shortTitle: "EST",
+    defaultStatus: "active",
+    currentLabel: "Current teaching focus",
+    inactiveLabel: "Unavailable from student hub",
+    archivedLabel: "Historical EST data",
+    launchPath: "../modules/est-prep/index.html"
+  },
+  {
+    id: "megatrends",
+    title: "Megatrends",
+    shortTitle: "Megatrends",
+    defaultStatus: "archived",
+    currentLabel: "Term 1 / historical",
+    inactiveLabel: "Unavailable from student hub",
+    archivedLabel: "Term 1 archive",
+    launchPath: "../index.html?screen=megatrends"
+  },
+  {
+    id: "lifelong-learning",
+    title: "Lifelong Learning",
+    shortTitle: "Lifelong",
+    defaultStatus: "archived",
+    currentLabel: "Trial prototype",
+    inactiveLabel: "Unavailable from student hub",
+    archivedLabel: "Prototype archive",
+    launchPath: "../modules/lifelong-learning/index.html"
+  }
+];
+
+const MODULE_STATUS_LABELS = {
+  active: "Active",
+  inactive: "Inactive",
+  archived: "Archived"
+};
+
+const MODULE_STATUS_COPY = {
+  active: "Included in active analytics and available to students.",
+  inactive: "Hidden from active analytics and greyed out for students.",
+  archived: "Preserved for cumulative/history views only."
+};
+
+const STUDENT_RECORD_STATUS_OPTIONS = [
+  { id: "active", label: "Active students", note: "Current class data only" },
+  { id: "inactive", label: "Inactive/deleted", note: "Hidden from default view" },
+  { id: "deleted", label: "Deleted logins", note: "Credentials removed" },
+  { id: "all", label: "All records", note: "Active plus historical" }
+];
+
+const STUDENT_RECORD_STATUS_LABELS = {
+  active: "Active",
+  inactive: "Inactive",
+  deleted: "Deleted login"
+};
+
+const CAPABILITY_LANGUAGE_MARKERS = [
+  { key: "explains", label: "Explains why", pattern: /\b(because|this means|therefore|as a result|so that|which means)\b/i },
+  { key: "evidence", label: "Uses evidence/example", pattern: /\b(for example|evidence|data|shows|according to|in my|during|when I)\b/i },
+  { key: "reflects", label: "Reflects on improvement", pattern: /\b(improved|learned|next time|feedback|changed|better|stronger|revised)\b/i },
+  { key: "specific", label: "Specific action", pattern: /\b(I used|I chose|I asked|I planned|I checked|I compared|I decided|I prioritised|I organized|I organised)\b/i }
 ];
 
 async function loadEmployabilitySkills() {
@@ -190,13 +256,13 @@ function getTeacherSession() {
 let hasTeacherDashboardFilterInteraction = false;
 
 function getTeacherDashboardFilter() {
-  const defaultFilter = { scope: "all", classId: "all", studentId: "all" };
+  const defaultFilter = { scope: "all", classId: "all", studentId: "all", moduleFocus: "active", studentRecordFocus: "active" };
   const filter = readJsonStorage(TEACHER_STATS_FILTER_KEY, null)
     || readJsonStorage(LEGACY_TEACHER_FILTER_KEY, defaultFilter);
   if (!hasTeacherDashboardFilterInteraction && document.getElementById("teacher-class-selector")) {
-    return { ...filter, scope: "all", classId: "all", studentId: "all" };
+    return { ...defaultFilter, ...filter, scope: "all", classId: "all", studentId: "all" };
   }
-  return filter;
+  return { ...defaultFilter, ...filter };
 }
 
 function requireStudentHubAccess() {
@@ -210,8 +276,150 @@ function requireStudentHubAccess() {
 
 function setTeacherDashboardFilter(nextFilter) {
   hasTeacherDashboardFilterInteraction = true;
-  localStorage.setItem(TEACHER_STATS_FILTER_KEY, JSON.stringify(nextFilter));
+  localStorage.setItem(TEACHER_STATS_FILTER_KEY, JSON.stringify({ ...getTeacherDashboardFilter(), ...nextFilter }));
   localStorage.removeItem(LEGACY_TEACHER_FILTER_KEY);
+}
+
+function getDefaultModuleStatusMap() {
+  return DASHBOARD_MODULES.reduce((acc, module) => {
+    acc[module.id] = module.defaultStatus;
+    return acc;
+  }, {});
+}
+
+function getModuleAvailabilitySettings() {
+  const fallback = {
+    classDefaults: {
+      global: getDefaultModuleStatusMap()
+    },
+    studentOverrides: {}
+  };
+  const settings = readJsonStorage(MODULE_AVAILABILITY_STORAGE_KEY, fallback);
+  return {
+    classDefaults: {
+      global: getDefaultModuleStatusMap(),
+      ...(settings?.classDefaults || {})
+    },
+    studentOverrides: settings?.studentOverrides || {}
+  };
+}
+
+function saveModuleAvailabilitySettings(settings) {
+  localStorage.setItem(MODULE_AVAILABILITY_STORAGE_KEY, JSON.stringify(settings));
+}
+
+function getModuleById(moduleId) {
+  return DASHBOARD_MODULES.find(module => module.id === moduleId) || null;
+}
+
+function normaliseModuleStatus(value, fallback = "inactive") {
+  return ["active", "inactive", "archived"].includes(value) ? value : fallback;
+}
+
+function getClassModuleStatuses(classId = "global") {
+  const settings = getModuleAvailabilitySettings();
+  const globalDefaults = settings.classDefaults.global || getDefaultModuleStatusMap();
+  const classDefaults = settings.classDefaults[classId] || {};
+  return DASHBOARD_MODULES.reduce((acc, module) => {
+    acc[module.id] = normaliseModuleStatus(classDefaults[module.id], normaliseModuleStatus(globalDefaults[module.id], module.defaultStatus));
+    return acc;
+  }, {});
+}
+
+function setClassModuleStatus(classId, moduleId, status) {
+  const settings = getModuleAvailabilitySettings();
+  const scopeId = classId || "global";
+  settings.classDefaults[scopeId] = {
+    ...getClassModuleStatuses(scopeId),
+    [moduleId]: normaliseModuleStatus(status)
+  };
+  saveModuleAvailabilitySettings(settings);
+}
+
+function getStudentModuleOverrides(studentId = "") {
+  const settings = getModuleAvailabilitySettings();
+  return studentId ? (settings.studentOverrides[studentId] || {}) : {};
+}
+
+function setStudentModuleOverride(studentId, moduleId, status) {
+  if (!studentId) return;
+  const settings = getModuleAvailabilitySettings();
+  const current = settings.studentOverrides[studentId] || {};
+  const next = { ...current };
+  if (!status || status === "inherit") delete next[moduleId];
+  else next[moduleId] = normaliseModuleStatus(status);
+  if (Object.keys(next).length) settings.studentOverrides[studentId] = next;
+  else delete settings.studentOverrides[studentId];
+  saveModuleAvailabilitySettings(settings);
+}
+
+function getEffectiveModuleStatuses({ classId = "global", studentId = "" } = {}) {
+  const classStatuses = getClassModuleStatuses(classId || "global");
+  const studentOverrides = getStudentModuleOverrides(studentId);
+  return DASHBOARD_MODULES.reduce((acc, module) => {
+    acc[module.id] = normaliseModuleStatus(studentOverrides[module.id], classStatuses[module.id] || module.defaultStatus);
+    return acc;
+  }, {});
+}
+
+function getTeacherVisibleModuleIds(moduleStatuses, moduleFocus = "active") {
+  if (moduleFocus === "cumulative") return DASHBOARD_MODULES.map(module => module.id);
+  if (moduleFocus === "archived") {
+    return DASHBOARD_MODULES.filter(module => moduleStatuses[module.id] === "archived").map(module => module.id);
+  }
+  if (DASHBOARD_MODULES.some(module => module.id === moduleFocus)) return [moduleFocus];
+  return DASHBOARD_MODULES.filter(module => moduleStatuses[module.id] === "active").map(module => module.id);
+}
+
+function getModuleStatusLabel(status) {
+  return MODULE_STATUS_LABELS[normaliseModuleStatus(status)] || "Inactive";
+}
+
+function getModuleStatusDescription(status) {
+  return MODULE_STATUS_COPY[normaliseModuleStatus(status)] || MODULE_STATUS_COPY.inactive;
+}
+
+function getStudentRecordState(student = {}) {
+  const inactive = student?.is_active === false;
+  const deleted = inactive && /^Deleted/i.test(String(student?.username || ""));
+  const status = deleted ? "deleted" : inactive ? "inactive" : "active";
+  return {
+    status,
+    label: STUDENT_RECORD_STATUS_LABELS[status] || "Active"
+  };
+}
+
+function studentMatchesRecordFocus(student, focus = "active") {
+  const state = getStudentRecordState(student);
+  if (focus === "all") return true;
+  if (focus === "inactive") return state.status === "inactive" || state.status === "deleted";
+  if (focus === "deleted") return state.status === "deleted";
+  return state.status === "active";
+}
+
+function getStudentRecordCounts(students = []) {
+  return students.reduce((acc, student) => {
+    const status = getStudentRecordState(student).status;
+    acc.total += 1;
+    acc[status] = (acc[status] || 0) + 1;
+    if (status !== "active") acc.hidden += 1;
+    return acc;
+  }, { total: 0, active: 0, inactive: 0, deleted: 0, hidden: 0 });
+}
+
+function getStudentRecordScopeBase(focus = "active") {
+  return focus === "inactive"
+    ? "inactive/deleted student"
+    : focus === "deleted"
+      ? "deleted-login student"
+      : focus === "all"
+        ? "student"
+        : "active student";
+}
+
+function getStudentRecordScopeLabel(focus = "active", count = 2) {
+  const base = getStudentRecordScopeBase(focus);
+  return `${base}${count === 1 ? "" : "s"}`;
 }
 
 function getAuthPrototypeState() {
@@ -982,7 +1190,7 @@ function renderStudentModules(modules) {
   if (!container) return;
 
   container.innerHTML = modules.map(module => `
-    <article class="module-card ${module.imagePath ? "module-card--image-bg" : ""} ${module.spotlight ? "spotlight" : ""}"${getModuleImageStyle(module.imagePath)}>
+    <article class="module-card ${module.imagePath ? "module-card--image-bg" : ""} ${module.spotlight ? "spotlight" : ""} ${module.available === false ? "module-card--unavailable" : ""}"${getModuleImageStyle(module.imagePath)}>
       <div class="module-visual-badge">
         ${module.logoPath ? `<img class="module-logo" src="${module.logoPath}" alt="${escapeHtml(module.logoLabel || module.title)} logo">` : ""}
         <span>${module.title}</span>
@@ -999,10 +1207,46 @@ function renderStudentModules(modules) {
         <div class="pill-row">
           ${module.tags.map(tag => `<span class="pill">${tag}</span>`).join("")}
         </div>
-        ${module.launchPath ? `<div class="module-actions"><a class="module-link" href="${module.launchPath}">${module.launchLabel || "Open Module"}</a></div>` : ""}
+        ${module.available === false
+          ? `<div class="module-actions"><span class="module-link module-link-disabled" aria-disabled="true">${escapeHtml(module.unavailableLabel || "Unavailable")}</span></div>`
+          : module.launchPath
+            ? `<div class="module-actions"><a class="module-link" href="${module.launchPath}">${module.launchLabel || "Open Module"}</a></div>`
+            : ""}
       </div>
     </article>
   `).join("");
+}
+
+function getCurrentStudentModuleStatuses() {
+  const authState = getAuthPrototypeState();
+  const studentLogin = authState?.studentLogin || {};
+  const session = getCurrentPlayerSession() || {};
+  const classId = studentLogin.classId || session.classId || "global";
+  const studentId = studentLogin.id || session.studentId || "";
+  return getEffectiveModuleStatuses({ classId, studentId });
+}
+
+function syncStudentPrimaryModuleActions(moduleStatuses) {
+  const actionMap = {
+    "student-hub-est-link": "est-prep",
+    "student-hub-megatrends-link": "megatrends",
+    "student-hub-lifelong-link": "lifelong-learning"
+  };
+  Object.entries(actionMap).forEach(([elementId, moduleId]) => {
+    const element = document.getElementById(elementId);
+    if (!element) return;
+    const module = getModuleById(moduleId);
+    const active = moduleStatuses[moduleId] === "active";
+    element.classList.toggle("module-link-disabled", !active);
+    element.setAttribute("aria-disabled", active ? "false" : "true");
+    element.tabIndex = active ? 0 : -1;
+    if (active) {
+      element.href = moduleId === "megatrends" ? buildMegatrendsLaunchPath() : module?.launchPath || element.href;
+    } else {
+      element.removeAttribute("href");
+      element.textContent = `${module?.shortTitle || moduleId} ${getModuleStatusLabel(moduleStatuses[moduleId])}`;
+    }
+  });
 }
 
 function renderStudentTimeline(items) {
@@ -2060,14 +2304,27 @@ async function updateTeacherFeedbackReview(item, options = {}) {
   if (error) throw error;
 }
 
-function renderTeacherStudentCompareList(items) {
+function getStudentCompareModuleValue(item, moduleId, metric) {
+  const keyMap = {
+    "megatrends": { completion: "megatrendsCompletion", mastery: "megatrendsMastery" },
+    "lifelong-learning": { completion: "lifelongCompletion", mastery: "lifelongMastery" },
+    "est-prep": { completion: "estCompletion", mastery: "estMastery" }
+  };
+  return item?.[keyMap[moduleId]?.[metric]] || 0;
+}
+
+function renderTeacherStudentCompareList(items, visibleModuleIds = DASHBOARD_MODULES.map(module => module.id)) {
   const container = document.getElementById("teacher-student-compare-list");
   if (!container) return;
 
   if (!items.length) {
-    container.innerHTML = '<div class="timeline-item"><strong>No student comparison data yet</strong><p>Once students have module progress and evidence saved, this area will compare them across Megatrends and EST Prep.</p></div>';
+    container.innerHTML = '<div class="timeline-item"><strong>No student comparison data yet</strong><p>Once students have progress or evidence in the selected module focus, this area will compare them.</p></div>';
     return;
   }
+
+  const moduleColumns = visibleModuleIds
+    .map(moduleId => getModuleById(moduleId))
+    .filter(Boolean);
 
   container.innerHTML = `
     <div class="teacher-matrix-scroll" role="region" aria-label="Student progress comparison table" tabindex="0">
@@ -2076,10 +2333,10 @@ function renderTeacherStudentCompareList(items) {
           <tr>
             <th scope="col" class="teacher-matrix-student-col">Student</th>
             <th scope="col">Engagement signal</th>
-            <th scope="col">Megatrends complete</th>
-            <th scope="col">Megatrends mastery</th>
-            <th scope="col">Lifelong complete</th>
-            <th scope="col">EST complete</th>
+            ${moduleColumns.map(module => `
+              <th scope="col">${escapeHtml(module.shortTitle)} complete</th>
+              <th scope="col">${escapeHtml(module.shortTitle)} mastery</th>
+            `).join("")}
             <th scope="col">Task time</th>
             <th scope="col">Progress score</th>
             <th scope="col">Strongest skill</th>
@@ -2087,29 +2344,25 @@ function renderTeacherStudentCompareList(items) {
         </thead>
         <tbody>
           ${items.map(item => {
-            const progressScore = Number(item.progressScore ?? average([
-              Number(item.megatrendsCompletion || 0),
-              Number(item.lifelongCompletion || 0),
-              Number(item.estCompletion || 0),
-              Number(item.megatrendsMastery || 0),
-              Number(item.lifelongMastery || 0),
-              Number(item.estMastery || 0)
-            ]));
+    const progressScore = Number(item.progressScore ?? average(moduleColumns.flatMap(module => [
+      Number(getStudentCompareModuleValue(item, module.id, "completion") || 0),
+      Number(getStudentCompareModuleValue(item, module.id, "mastery") || 0)
+    ])));
             const engagementState = item.status === "On track" ? "high" : item.status === "Building" ? "mid" : "nys";
             return `
               <tr>
                 <th scope="row" class="teacher-matrix-student-col">
                   <strong>${escapeHtml(item.name)}</strong>
                   <small>${escapeHtml(item.meta)}</small>
-                </th>
-                <td>${renderMatrixText(item.status, item.engagementCaption || "Login + progress signal", engagementState)}</td>
-                <td>${renderMatrixProgress(item.megatrendsCompletion, "complete")}</td>
-                <td>${renderMatrixProgress(item.megatrendsMastery, "mastery")}</td>
-                <td>${renderMatrixProgress(item.lifelongCompletion, "complete")}</td>
-                <td>${renderMatrixProgress(item.estCompletion, "complete")}</td>
-                <td>${renderMatrixText(item.averageTaskTimeLabel || "NYS", "captured time", item.averageTaskTimeSeconds ? "mid" : "nys")}</td>
-                <td>${renderMatrixProgress(progressScore, "progress score")}</td>
-                <td>${renderMatrixText(item.strongestSkillTitle || "NYS", "current signal", item.strongestSkillTitle ? "neutral" : "nys")}</td>
+	                </th>
+	                <td>${renderMatrixText(item.status, item.engagementCaption || "Login + progress signal", engagementState)}</td>
+	                ${moduleColumns.map(module => `
+	                  <td>${renderMatrixProgress(getStudentCompareModuleValue(item, module.id, "completion"), "complete")}</td>
+	                  <td>${renderMatrixProgress(getStudentCompareModuleValue(item, module.id, "mastery"), "mastery")}</td>
+	                `).join("")}
+	                <td>${renderMatrixText(item.averageTaskTimeLabel || "NYS", "captured time", item.averageTaskTimeSeconds ? "mid" : "nys")}</td>
+	                <td>${renderMatrixProgress(progressScore, "progress score")}</td>
+	                <td>${renderMatrixText(item.strongestSkillTitle || "NYS", "current signal", item.strongestSkillTitle ? "neutral" : "nys")}</td>
               </tr>
             `;
           }).join("")}
@@ -2288,6 +2541,239 @@ function renderTeacherClassCharts(data) {
         <p>${glossaryCorrect}/${glossaryAttempted || 0} final-round terms correct across captured glossary runs.</p>
       </div>
     </article>
+  `;
+}
+
+function inferCapabilityIdsFromEvidence(entry, skillCategories = []) {
+  const row = entry?.row || entry || {};
+  const payload = entry?.payload || parseStructuredEvidence(row) || {};
+  const text = [
+    payload.skill_id,
+    payload.skillId,
+    payload.skill_title,
+    payload.skillTitle,
+    payload.topic_group,
+    payload.task_name,
+    payload.prompt_text,
+    payload.response_text,
+    row.evidence_type,
+    row.task_label,
+    row.prompt_text,
+    row.raw_response_text,
+    row.prompt,
+    row.response_text
+  ].filter(Boolean).join(" ").toLowerCase();
+  const explicitSkill = payload.skill_id || payload.skillId;
+  if (explicitSkill && skillCategories.some(category => category.id === explicitSkill)) return [explicitSkill];
+  const key = String(row.task_key || "");
+  const starSkillMatch = key.match(/employability-star-([a-z-]+)-/);
+  if (starSkillMatch?.[1]) return [starSkillMatch[1]];
+
+  const matches = [];
+  const add = id => {
+    if (!matches.includes(id)) matches.push(id);
+  };
+  if (/\b(communicat|listen|audience|format|verbal|non-verbal|grammar|spelling|cover letter)\b/i.test(text)) add("communication");
+  if (/\b(digital|software|online|technology|automation|source|research|data|labour market|lmi)\b/i.test(text)) add("digital-literacy");
+  if (/\b(team|collaborat|rapport|role|responsibilit|consensus|reliable)\b/i.test(text)) add("teamwork");
+  if (/\b(time|prioritis|prioritiz|plan|deadline|schedule|sequence|productivity)\b/i.test(text)) add("time-management");
+  if (/\b(evidence|analyse|analyze|evaluate|compare|bias|reason|judg|interpret|conclude)\b/i.test(text)) add("critical-thinking");
+  if (/\b(problem|solution|decision|option|initiative|proactive|unexpected|challenge|resolve)\b/i.test(text)) add("problem-solving");
+  return matches.length ? matches : ["critical-thinking"];
+}
+
+function getCapabilityEvidenceQuality(text, score = null) {
+  const wordCount = String(text || "").split(/\s+/).filter(Boolean).length;
+  const markerCount = CAPABILITY_LANGUAGE_MARKERS.filter(marker => marker.pattern.test(text)).length;
+  const scoreBoost = typeof score === "number" ? Math.round(score / 20) : 0;
+  return Math.min(12, markerCount * 2 + Math.min(5, Math.floor(wordCount / 18)) + scoreBoost);
+}
+
+function getCapabilityProgressionLabel(entries = []) {
+  const sorted = [...entries].sort((a, b) => parseTime(a.createdAt) - parseTime(b.createdAt));
+  if (sorted.length < 2) return "Collect more journal evidence";
+  const midpoint = Math.ceil(sorted.length / 2);
+  const early = average(sorted.slice(0, midpoint).map(entry => entry.quality));
+  const recent = average(sorted.slice(midpoint).map(entry => entry.quality));
+  if (recent >= early + 2) return "Articulation is improving";
+  if (recent >= early) return "Articulation is steady";
+  return "Needs a fuller recent explanation";
+}
+
+function getCapabilityMarkerLabels(text) {
+  return CAPABILITY_LANGUAGE_MARKERS
+    .filter(marker => marker.pattern.test(text))
+    .map(marker => marker.label);
+}
+
+function buildCapabilityEvidenceEntries(parsedEvidenceRows = [], reviewRows = [], skillCategories = []) {
+  const assessmentEntries = parsedEvidenceRows.map(entry => {
+    const response = getEvidenceResponseText(entry.row, entry.payload);
+    const score = getEvidenceScorePercent(entry.row, entry.payload);
+    return {
+      id: entry.row.id || `${entry.row.student_id}-${entry.row.created_at}`,
+      studentId: entry.row.student_id || "",
+      studentName: getEvidenceStudentName(entry.row),
+      moduleId: getEvidenceModuleId(entry.row, entry.payload),
+      moduleLabel: getModuleLabel(getEvidenceModuleId(entry.row, entry.payload)),
+      taskLabel: getEvidenceTaskLabel(entry.row, entry.payload),
+      prompt: getEvidencePromptText(entry.row, entry.payload),
+      response,
+      score,
+      createdAt: entry.row.created_at,
+      capabilityIds: inferCapabilityIdsFromEvidence(entry, skillCategories)
+    };
+  });
+  const reviewEntries = reviewRows.map(row => {
+    const response = row.raw_response_text || row.approved_response_text || "";
+    const moduleId = row.module_id || "lifelong-learning";
+    return {
+      id: row.id,
+      studentId: row.student_id || "",
+      studentName: row.students?.display_name || row.students?.username || "Student",
+      moduleId,
+      moduleLabel: getModuleLabel(moduleId),
+      taskLabel: row.task_label || row.evidence_type || "Journal evidence",
+      prompt: row.prompt_text || "Teacher-reviewed journal evidence",
+      response,
+      score: null,
+      createdAt: row.created_at,
+      reviewStatus: row.status,
+      capabilityIds: inferCapabilityIdsFromEvidence(row, skillCategories)
+    };
+  });
+
+  return [...assessmentEntries, ...reviewEntries]
+    .map(entry => {
+      const cleanResponse = extractLongResponseText(entry.response);
+      return {
+        ...entry,
+        response: cleanResponse,
+        wordCount: cleanResponse.split(/\s+/).filter(Boolean).length,
+        quality: getCapabilityEvidenceQuality(cleanResponse, entry.score),
+        markerLabels: getCapabilityMarkerLabels(cleanResponse)
+      };
+    })
+    .filter(entry => entry.wordCount >= 8)
+    .sort((a, b) => parseTime(b.createdAt) - parseTime(a.createdAt));
+}
+
+function renderTeacherCapabilityPortfolio({ skillCategories = [], parsedEvidenceRows = [], reviewRows = [], students = [], selectedStudent = null }) {
+  const container = document.getElementById("teacher-capability-portfolio");
+  if (!container) return;
+
+  const evidenceEntries = buildCapabilityEvidenceEntries(parsedEvidenceRows, reviewRows, skillCategories);
+  const studentScope = selectedStudent ? [selectedStudent] : students;
+  const scopedStudentIds = new Set(studentScope.map(student => student.id).filter(Boolean));
+  const scopedEntries = selectedStudent
+    ? evidenceEntries.filter(entry => entry.studentId === selectedStudent.id)
+    : evidenceEntries.filter(entry => !scopedStudentIds.size || scopedStudentIds.has(entry.studentId));
+
+  if (!scopedEntries.length) {
+    container.innerHTML = `
+      <div class="timeline-item">
+        <strong>No capability journal evidence in this focus yet</strong>
+        <p>When students submit EST Prep responses or employability journals, this view will show what they said, which capability it evidences, and how their articulation is progressing.</p>
+      </div>
+    `;
+    return;
+  }
+
+  const capabilityCards = skillCategories.map(category => {
+    const entries = scopedEntries.filter(entry => entry.capabilityIds.includes(category.id));
+    const studentCount = new Set(entries.map(entry => entry.studentId || entry.studentName)).size;
+    const latest = entries[0];
+    const markerCounts = CAPABILITY_LANGUAGE_MARKERS.map(marker => ({
+      label: marker.label,
+      count: entries.filter(entry => entry.markerLabels.includes(marker.label)).length
+    })).filter(row => row.count);
+    return {
+      category,
+      entries,
+      studentCount,
+      latest,
+      markerCounts,
+      progression: getCapabilityProgressionLabel(entries)
+    };
+  }).sort((a, b) => b.entries.length - a.entries.length);
+
+  const portfolioStudents = (selectedStudent ? [selectedStudent] : studentScope)
+    .map(student => {
+      const entries = scopedEntries.filter(entry => entry.studentId === student.id || entry.studentName === getStudentDisplayName(student));
+      const capabilityCounts = skillCategories.map(category => ({
+        category,
+        count: entries.filter(entry => entry.capabilityIds.includes(category.id)).length
+      })).filter(row => row.count).sort((a, b) => b.count - a.count);
+      return {
+        student,
+        entries,
+        capabilityCounts,
+        progression: getCapabilityProgressionLabel(entries),
+        latest: entries[0]
+      };
+    })
+    .filter(row => row.entries.length)
+    .sort((a, b) => b.entries.length - a.entries.length)
+    .slice(0, selectedStudent ? 1 : 8);
+
+  container.innerHTML = `
+    <section class="capability-breakdown-panel">
+      <div class="section-title">
+        <h3>By Capability Type</h3>
+        <p>Class contribution count and journal language patterns</p>
+      </div>
+      <div class="capability-card-list">
+        ${capabilityCards.map(card => `
+          <article class="capability-evidence-card ${card.entries.length ? "" : "is-empty"}">
+            <div class="capability-evidence-header">
+              ${card.category.logoPath ? `<img src="${escapeHtml(card.category.logoPath)}" alt="">` : ""}
+              <div>
+                <h4>${escapeHtml(card.category.title)}</h4>
+                <p>${card.entries.length} journal item${card.entries.length === 1 ? "" : "s"} • ${card.studentCount} student${card.studentCount === 1 ? "" : "s"}</p>
+              </div>
+            </div>
+            <div class="capability-evidence-meter" style="--capability-width: ${Math.min(100, card.entries.length * 14)}%"></div>
+            <p class="capability-progression">${escapeHtml(card.progression)}</p>
+            ${card.markerCounts.length ? `<div class="pill-row">${card.markerCounts.slice(0, 3).map(row => `<span class="pill">${escapeHtml(row.label)}: ${row.count}</span>`).join("")}</div>` : ""}
+            ${card.latest ? `
+              <blockquote>
+                ${escapeHtml(makeSnippet(card.latest.response))}
+              </blockquote>
+              <small>${escapeHtml(card.latest.studentName)} • ${escapeHtml(card.latest.moduleLabel)} • ${escapeHtml(formatDateTime(card.latest.createdAt))}</small>
+            ` : `<p class="footer-note">No evidence for this capability in the selected focus.</p>`}
+          </article>
+        `).join("")}
+      </div>
+    </section>
+    <section class="capability-breakdown-panel">
+      <div class="section-title">
+        <h3>Student Portfolio View</h3>
+        <p>What each student is saying and how clearly they say it</p>
+      </div>
+      <div class="portfolio-card-list">
+        ${portfolioStudents.map(row => `
+          <article class="student-portfolio-card">
+            <div class="student-portfolio-header">
+              <div>
+                <h4>${escapeHtml(getStudentDisplayName(row.student))}</h4>
+                <p>${row.entries.length} journal item${row.entries.length === 1 ? "" : "s"} • ${escapeHtml(row.progression)}</p>
+              </div>
+              <strong>${row.capabilityCounts[0] ? escapeHtml(row.capabilityCounts[0].category.title) : "No pattern yet"}</strong>
+            </div>
+            <div class="pill-row">
+              ${row.capabilityCounts.slice(0, 4).map(item => `<span class="pill">${escapeHtml(item.category.title)}: ${item.count}</span>`).join("")}
+            </div>
+            ${row.latest ? `
+              <div class="portfolio-latest-entry">
+                <span>${escapeHtml(row.latest.taskLabel)} • ${escapeHtml(row.latest.moduleLabel)}</span>
+                <p>${escapeHtml(makeSnippet(row.latest.response))}</p>
+                <small>${escapeHtml(row.latest.markerLabels.join(" • ") || "Needs clearer reasoning markers")}</small>
+              </div>
+            ` : ""}
+          </article>
+        `).join("")}
+      </div>
+    </section>
   `;
 }
 
@@ -3280,6 +3766,8 @@ function createEmptyTeacherDashboardData(context, dashboardFilter, selectedClass
     availableClasses: [],
     selectedClassId: "all",
     selectedStudentId: dashboardFilter?.studentId || "all",
+    studentRecordFocus: dashboardFilter?.studentRecordFocus || "active",
+    studentRecordCounts: getStudentRecordCounts([]),
     selectedClassName,
     students: [],
     moduleProgress: [],
@@ -3328,11 +3816,12 @@ async function getTeacherDashboardData() {
   const selectedClassName = selectedClassId === "all"
     ? `All classes at ${context.teacher?.schoolName || "School not resolved"}`
     : (selectedClassRows[0]?.name || "Selected class");
+  const studentRecordFocus = dashboardFilter.studentRecordFocus || "active";
 
   const [studentsResult, votesResult, feedbackResult, reviewsResult] = await Promise.allSettled([
     supabase
       .from("students")
-      .select("id, display_name, username, created_at, last_login_at, school_id, class_id")
+      .select("id, display_name, username, created_at, last_login_at, school_id, class_id, is_active")
       .eq("school_id", schoolId)
       .in("class_id", classIds)
       .order("created_at", { ascending: true }),
@@ -3366,12 +3855,16 @@ async function getTeacherDashboardData() {
     return result.value?.data || [];
   };
 
-  const students = unwrapResult(studentsResult, "students");
+  const allStudents = unwrapResult(studentsResult, "students");
+  const studentRecordCounts = getStudentRecordCounts(allStudents);
+  const students = allStudents.filter(student => studentMatchesRecordFocus(student, studentRecordFocus));
   const voteRows = unwrapResult(votesResult, "community_votes");
   const feedbackRows = unwrapResult(feedbackResult, "feedback_reports");
-  const reviewRows = unwrapResult(reviewsResult, "student_response_reviews");
+  const allReviewRows = unwrapResult(reviewsResult, "student_response_reviews");
 
   const studentIds = students.map(student => student.id);
+  const allowedStudentIds = new Set(studentIds);
+  const selectedStudentId = allowedStudentIds.has(dashboardFilter.studentId) ? dashboardFilter.studentId : "all";
   const [moduleProgressResult, evidenceResult] = studentIds.length
     ? await Promise.allSettled([
       supabase
@@ -3386,12 +3879,12 @@ async function getTeacherDashboardData() {
         .limit(80)
     ])
     : [{ status: "fulfilled", value: { data: [] } }, { status: "fulfilled", value: { data: [] } }];
-  const allowedStudentIds = new Set(studentIds);
   const allowedClassIds = new Set(classIds);
   const moduleProgress = unwrapResult(moduleProgressResult, "student_module_progress")
     .filter(row => allowedStudentIds.has(row.student_id) && (!row.class_id || allowedClassIds.has(row.class_id)));
   const evidenceRows = unwrapResult(evidenceResult, "assessment_evidence")
     .filter(row => allowedStudentIds.has(row.student_id) && (!row.class_id || allowedClassIds.has(row.class_id)));
+  const reviewRows = allReviewRows.filter(row => allowedStudentIds.has(row.student_id));
   let profileRows = [];
   if (studentIds.length) {
     const { data, error: profilesError } = await supabase
@@ -3435,7 +3928,9 @@ async function getTeacherDashboardData() {
     context,
     availableClasses,
     selectedClassId,
-    selectedStudentId: dashboardFilter.studentId || "all",
+    selectedStudentId,
+    studentRecordFocus,
+    studentRecordCounts,
     selectedClassName,
     students: students || [],
     moduleProgress: moduleProgress || [],
@@ -3510,19 +4005,27 @@ function buildFallbackTeacherDashboardData(players, context) {
       username: player.username || player.player_name || "Student",
       created_at: player.timestamp || new Date().toISOString(),
       last_login_at: player.timestamp || null,
-      class_id: getFallbackClassId(classCode)
+      class_id: getFallbackClassId(classCode),
+      is_active: true
     };
   });
+  const studentRecordFocus = dashboardFilter.studentRecordFocus || "active";
+  const filteredStudents = students.filter(student => studentMatchesRecordFocus(student, studentRecordFocus));
+  const selectedStudentId = filteredStudents.some(student => student.id === dashboardFilter.studentId)
+    ? dashboardFilter.studentId
+    : "all";
 
   return {
     context,
     availableClasses,
     selectedClassId,
-    selectedStudentId: dashboardFilter.studentId || "all",
+    selectedStudentId,
+    studentRecordFocus,
+    studentRecordCounts: getStudentRecordCounts(students),
     selectedClassName: selectedClassId === "all"
       ? `All classes at ${context?.teacher?.schoolName || "School not resolved"}`
       : availableClasses.find(row => row.id === selectedClassId)?.name || "Selected class",
-    students,
+    students: filteredStudents,
     moduleProgress: [],
     evidenceRows: [],
     voteRows: [],
@@ -3540,34 +4043,59 @@ function getStudentDisplayName(student) {
 function renderTeacherClassSelector(teacherData, studentRows = []) {
   const selector = document.getElementById("teacher-class-selector");
   const studentSelector = document.getElementById("teacher-student-selector");
+  const studentStatusSelector = document.getElementById("teacher-student-status-selector");
   const summary = document.getElementById("teacher-class-summary");
   const note = document.getElementById("teacher-class-scope-note");
   if (!selector || !summary || !note) return;
 
   const classes = teacherData?.availableClasses || [];
   const selectedClassId = teacherData?.selectedClassId || "all";
-  const selectedStudentId = teacherData?.selectedStudentId || getTeacherDashboardFilter().studentId || "all";
+  const dashboardFilter = getTeacherDashboardFilter();
+  const selectedStudentId = teacherData?.selectedStudentId || dashboardFilter.studentId || "all";
+  const studentRecordFocus = teacherData?.studentRecordFocus || dashboardFilter.studentRecordFocus || "active";
+  const recordCounts = teacherData?.studentRecordCounts || getStudentRecordCounts(studentRows);
   const selectedStudent = studentRows.find(student => student.id === selectedStudentId);
   const selectedClassName = selectedClassId === "all"
     ? "All classes"
     : teacherData?.selectedClassName || classes.find(classroom => classroom.id === selectedClassId)?.name || "Selected class";
+  const currentRecordOption = STUDENT_RECORD_STATUS_OPTIONS.find(option => option.id === studentRecordFocus) || STUDENT_RECORD_STATUS_OPTIONS[0];
 
   selector.innerHTML = [
     `<option value="all" ${selectedClassId === "all" ? "selected" : ""}>All Classes At School</option>`,
     ...classes.map(classroom => `<option value="${classroom.id}" ${classroom.id === selectedClassId ? "selected" : ""}>${escapeHtml(classroom.name)} (${escapeHtml(classroom.class_code || "No code")})</option>`)
   ].join("");
 
+  if (studentStatusSelector) {
+    studentStatusSelector.innerHTML = STUDENT_RECORD_STATUS_OPTIONS.map(option => {
+      const count = option.id === "all"
+        ? recordCounts.total
+        : option.id === "inactive"
+          ? (recordCounts.inactive || 0) + (recordCounts.deleted || 0)
+          : recordCounts[option.id] || 0;
+      return `<option value="${option.id}" ${option.id === studentRecordFocus ? "selected" : ""}>${escapeHtml(option.label)} (${count})</option>`;
+    }).join("");
+    studentStatusSelector.onchange = () => {
+      setTeacherDashboardFilter({
+        studentRecordFocus: studentStatusSelector.value,
+        studentId: "all"
+      });
+      initDashboards().catch(console.error);
+    };
+  }
+
   if (studentSelector) {
     const sortedStudents = [...studentRows].sort((a, b) => getStudentDisplayName(a).localeCompare(getStudentDisplayName(b)));
     studentSelector.innerHTML = [
       `<option value="all" ${selectedStudentId === "all" || !selectedStudent ? "selected" : ""}>All Students</option>`,
-      ...sortedStudents.map(student => `<option value="${student.id}" ${student.id === selectedStudentId ? "selected" : ""}>${escapeHtml(getStudentDisplayName(student))}</option>`)
+      ...sortedStudents.map(student => {
+        const state = getStudentRecordState(student);
+        const stateLabel = state.status === "active" ? "" : ` - ${state.label}`;
+        return `<option value="${student.id}" ${student.id === selectedStudentId ? "selected" : ""}>${escapeHtml(getStudentDisplayName(student))}${escapeHtml(stateLabel)}</option>`;
+      })
     ].join("");
     studentSelector.disabled = !sortedStudents.length;
     studentSelector.onchange = () => {
-      const currentFilter = getTeacherDashboardFilter();
       setTeacherDashboardFilter({
-        ...currentFilter,
         studentId: studentSelector.value
       });
       initDashboards().catch(console.error);
@@ -3576,9 +4104,12 @@ function renderTeacherClassSelector(teacherData, studentRows = []) {
 
   summary.value = selectedStudent
     ? `${selectedClassName} - ${getStudentDisplayName(selectedStudent)}`
-    : `${selectedClassName} - all students`;
+    : `${selectedClassName} - ${currentRecordOption.label.toLowerCase()}`;
+  const hiddenNote = studentRecordFocus === "active" && recordCounts.hidden
+    ? ` ${recordCounts.hidden} inactive/deleted student record${recordCounts.hidden === 1 ? "" : "s"} hidden.`
+    : "";
   note.textContent = classes.length
-    ? `${classes.length} class option(s) found. Showing ${studentRows.length} student${studentRows.length === 1 ? "" : "s"} in the current scope.`
+    ? `${classes.length} class option(s) found. Showing ${studentRows.length} ${getStudentRecordScopeLabel(studentRecordFocus, studentRows.length)} in the current scope.${hiddenNote}`
     : "No live class records found yet. The dashboard will still show any saved local student profiles it can find.";
 
   selector.onchange = () => {
@@ -3591,6 +4122,129 @@ function renderTeacherClassSelector(teacherData, studentRows = []) {
   };
 }
 
+async function persistClassModuleStatusToSupabase(classId, moduleId, status) {
+  if (!classId || classId === "all" || classId === "global" || String(classId).startsWith("fallback-")) return;
+  const supabase = await getSupabaseClientOrNull();
+  if (!supabase) return;
+  const { error } = await supabase
+    .from("class_modules")
+    .upsert({
+      class_id: classId,
+      module_id: moduleId,
+      is_enabled: status === "active",
+      assigned_at: new Date().toISOString()
+    }, { onConflict: "class_id,module_id" });
+  if (error) console.warn("Class module status saved locally but not to Supabase:", error.message || error);
+}
+
+function getModuleAvailabilityScope(teacherData, selectedStudent = null) {
+  if (selectedStudent?.class_id) return selectedStudent.class_id;
+  const selectedClassId = teacherData?.selectedClassId || "all";
+  return selectedClassId === "all" ? "global" : selectedClassId;
+}
+
+function renderTeacherModuleAvailability(teacherData, students = [], selectedStudent = null) {
+  const container = document.getElementById("teacher-module-availability-list");
+  if (!container) return;
+
+  const scopeClassId = getModuleAvailabilityScope(teacherData, selectedStudent);
+  const classStatuses = getClassModuleStatuses(scopeClassId);
+  const effectiveStatuses = getEffectiveModuleStatuses({
+    classId: scopeClassId,
+    studentId: selectedStudent?.id || ""
+  });
+  const studentOverrides = getStudentModuleOverrides(selectedStudent?.id || "");
+  const classLabel = selectedStudent
+    ? `${getStudentDisplayName(selectedStudent)} override`
+    : scopeClassId === "global"
+      ? "All classes default"
+      : (teacherData?.availableClasses || []).find(row => row.id === scopeClassId)?.name || "Selected class";
+
+  container.innerHTML = `
+    <div class="module-availability-summary">
+      <strong>${escapeHtml(classLabel)}</strong>
+      <p>${selectedStudent ? "Set a student override only when their access should differ from the class." : "Set the default access state for the current class view."}</p>
+      <div class="pill-row">
+        ${DASHBOARD_MODULES.map(module => `<span class="pill">${escapeHtml(module.shortTitle)}: ${escapeHtml(getModuleStatusLabel(effectiveStatuses[module.id]))}</span>`).join("")}
+      </div>
+    </div>
+    ${DASHBOARD_MODULES.map(module => {
+      const status = classStatuses[module.id];
+      const effectiveStatus = effectiveStatuses[module.id];
+      const override = studentOverrides[module.id] || "inherit";
+      return `
+        <article class="module-availability-card module-availability-card--${escapeHtml(effectiveStatus)}">
+          <div>
+            <span class="kicker">${escapeHtml(module.currentLabel)}</span>
+            <h3>${escapeHtml(module.title)}</h3>
+            <p>${escapeHtml(getModuleStatusDescription(effectiveStatus))}</p>
+          </div>
+          <label>
+            <span>Class default</span>
+            <select data-module-class-status="${escapeHtml(module.id)}">
+              ${["active", "inactive", "archived"].map(value => `<option value="${value}" ${value === status ? "selected" : ""}>${escapeHtml(getModuleStatusLabel(value))}</option>`).join("")}
+            </select>
+          </label>
+          <label>
+            <span>Student override</span>
+            <select data-module-student-status="${escapeHtml(module.id)}" ${selectedStudent ? "" : "disabled"}>
+              <option value="inherit" ${override === "inherit" ? "selected" : ""}>Inherit class default</option>
+              ${["active", "inactive", "archived"].map(value => `<option value="${value}" ${value === override ? "selected" : ""}>${escapeHtml(getModuleStatusLabel(value))}</option>`).join("")}
+            </select>
+          </label>
+        </article>
+      `;
+    }).join("")}
+  `;
+
+  container.querySelectorAll("[data-module-class-status]").forEach(select => {
+    select.addEventListener("change", event => {
+      const moduleId = event.currentTarget.dataset.moduleClassStatus;
+      const status = event.currentTarget.value;
+      setClassModuleStatus(scopeClassId, moduleId, status);
+      persistClassModuleStatusToSupabase(scopeClassId, moduleId, status).catch(console.warn);
+      initDashboards().catch(console.error);
+    });
+  });
+
+  container.querySelectorAll("[data-module-student-status]").forEach(select => {
+    select.addEventListener("change", event => {
+      const moduleId = event.currentTarget.dataset.moduleStudentStatus;
+      setStudentModuleOverride(selectedStudent?.id || "", moduleId, event.currentTarget.value);
+      initDashboards().catch(console.error);
+    });
+  });
+}
+
+function renderTeacherDashboardFocusStrip(moduleStatuses, activeFocus = "active") {
+  const container = document.getElementById("teacher-dashboard-focus-strip");
+  if (!container) return;
+  const focusOptions = [
+    { id: "active", label: "Active Modules", note: "Default current teaching view" },
+    { id: "est-prep", label: "EST Prep", note: "Assessment prep only" },
+    { id: "archived", label: "Archived", note: "Term 1 and prototype history" },
+    { id: "cumulative", label: "Cumulative", note: "All module patterns" }
+  ];
+  const activeIds = getTeacherVisibleModuleIds(moduleStatuses, activeFocus);
+  container.innerHTML = focusOptions.map(option => `
+    <button class="dashboard-focus-chip ${option.id === activeFocus ? "is-active" : ""}" type="button" data-dashboard-focus="${escapeHtml(option.id)}">
+      <strong>${escapeHtml(option.label)}</strong>
+      <span>${escapeHtml(option.note)}</span>
+    </button>
+  `).join("") + `
+    <div class="dashboard-focus-current">
+      <span>Now showing</span>
+      <strong>${activeIds.length ? activeIds.map(id => getModuleById(id)?.shortTitle || getModuleLabel(id)).join(", ") : "No active modules"}</strong>
+    </div>
+  `;
+  container.querySelectorAll("[data-dashboard-focus]").forEach(button => {
+    button.addEventListener("click", () => {
+      setTeacherDashboardFilter({ moduleFocus: button.dataset.dashboardFocus });
+      initDashboards().catch(console.error);
+    });
+  });
+}
+
 async function renderStudentLiveData(players, skillsData) {
   const session = getCurrentPlayerSession();
   const authState = getAuthPrototypeState();
@@ -3600,6 +4254,8 @@ async function renderStudentLiveData(players, skillsData) {
   const moduleProgressById = await getCurrentStudentModuleProgress();
   const lifelongProgressRow = moduleProgressById["lifelong-learning"];
   const estProgressRow = moduleProgressById["est-prep"];
+  const moduleStatuses = getCurrentStudentModuleStatuses();
+  const activeModuleIds = DASHBOARD_MODULES.filter(module => moduleStatuses[module.id] === "active").map(module => module.id);
   const hasPlayerProgress = hasMeaningfulPlayerProgress(record);
   const hasLifelongProgress = hasMeaningfulModuleProgress(lifelongProgressRow);
   const hasESTProgress = hasMeaningfulModuleProgress(estProgressRow) || hasLocalESTProgress(session);
@@ -3628,11 +4284,12 @@ async function renderStudentLiveData(players, skillsData) {
   const lifelongMastery = Number(lifelongProgressRow?.mastery_percent || 0);
   const estProgress = Number(estProgressRow?.completion_percent || 0);
   const estMastery = Number(estProgressRow?.mastery_percent || 0);
-  const overallModuleCompletion = Math.round(average([
-    moduleCompletion,
-    lifelongProgress,
-    estProgress
-  ]));
+  const moduleCompletionMap = {
+    "megatrends": moduleCompletion,
+    "lifelong-learning": lifelongProgress,
+    "est-prep": estProgress
+  };
+  const overallModuleCompletion = Math.round(average((activeModuleIds.length ? activeModuleIds : DASHBOARD_MODULES.map(module => module.id)).map(moduleId => moduleCompletionMap[moduleId] || 0)));
 
   const signedInStudentName = authState?.studentLogin?.displayName || authState?.studentLogin?.username || session?.playerName || "";
   const dashboardStudentName = record?.player_name || signedInStudentName;
@@ -3676,15 +4333,22 @@ async function renderStudentLiveData(players, skillsData) {
 
   setText("student-current-mission-title", hasAnySavedProgress ? "Continue your next move" : "Start your first move");
   setText("student-hub-est-link", hasESTProgress ? "Continue EST Prep" : "Open EST Prep");
-  setText("student-focus-text", progressRecord && weakestSkill ? `${weakestSkill.title} is your current focus area. The next module should target this skill more directly.` : "Launch a module to begin skill tracking.");
+  setText("student-focus-text", moduleStatuses["est-prep"] === "active"
+    ? "EST Prep is the current active module. Use it to train command verbs, glossary terms, and short-answer structure before the assessment."
+    : progressRecord && weakestSkill
+      ? `${weakestSkill.title} is your current focus area. The next active module should target this skill more directly.`
+      : "Launch an active module to begin skill tracking.");
   if (document.getElementById("student-focus-text") && !hasAnySavedProgress) {
-    setText("student-focus-text", "EST Prep is ready next. Use it to train command verbs, glossary terms, and short-answer structure before the assessment.");
+    setText("student-focus-text", moduleStatuses["est-prep"] === "active"
+      ? "EST Prep is ready next. Use it to train command verbs, glossary terms, and short-answer structure before the assessment."
+      : "No active module has been assigned yet. Your previous module history will stay visible here.");
   }
   setText("student-overall-completion", `${overallModuleCompletion}%`);
-  setText("student-overall-completion-note", hasPlayerProgress ? `${record.years_played || 0} Megatrends rounds recorded, with live module sync across the platform.` : "No gameplay recorded yet");
+  setText("student-overall-completion-note", activeModuleIds.length ? `Across active module${activeModuleIds.length === 1 ? "" : "s"}: ${activeModuleIds.map(id => getModuleById(id)?.shortTitle || getModuleLabel(id)).join(", ")}.` : "No active modules assigned yet");
   setText("student-employability-score", `${employabilityScore}%`);
   setText("student-tax-paid", formatCurrency(taxPaid));
   setText("student-assets-owned", String(assetsOwned));
+  syncStudentPrimaryModuleActions(moduleStatuses);
 
   const voteLabels = getCommunityVoteLabels();
   const voteKeys = ["climate", "tech", "diversity", "global"];
@@ -3717,49 +4381,58 @@ async function renderStudentLiveData(players, skillsData) {
   renderStudentResponseReviewNotices(reviewRows);
   renderStudentModules([
     {
+      id: "megatrends",
       title: "Megatrends",
-      state: hasPlayerProgress ? "Module 1 Live" : "Ready to start",
-      summary: hasPlayerProgress ? "Your live Megatrends record is feeding your shared career profile." : "Start the game to begin building your first module record.",
+      state: hasPlayerProgress ? `${getModuleStatusLabel(moduleStatuses["megatrends"])} history saved` : getModuleStatusLabel(moduleStatuses["megatrends"]),
+      summary: hasPlayerProgress ? "Your Term 1 Megatrends record is preserved in your portfolio history." : "This module is not part of the current active teaching focus unless your teacher switches it on.",
       progress: moduleCompletion,
       mastery: overallMastery,
       variant: "",
-      spotlight: true,
+      spotlight: moduleStatuses["megatrends"] === "active",
       logoPath: skillsData.categories.find(category => category.id === "digital-literacy")?.logoPath,
       logoLabel: "Digital Literacy",
       imagePath: "../Assets/Images and Animations/Student Hub/module-megatrends-thumb.png",
       launchPath: buildMegatrendsLaunchPath(),
       launchLabel: "Open Megatrends",
-      tags: ["Live data", "Career stats", "Class impact"]
+      available: moduleStatuses["megatrends"] === "active",
+      unavailableLabel: moduleStatuses["megatrends"] === "archived" ? "Archived" : "Not assigned",
+      tags: [getModuleStatusLabel(moduleStatuses["megatrends"]), "Career stats", "History kept"]
     },
     {
+      id: "lifelong-learning",
       title: "Lifelong Learning",
-      state: hasLifelongProgress ? "Progress saved" : "Ready to start",
-      summary: "Build pathway flexibility, training choices, and professional growth through the first playable Lifelong Learning prototype.",
+      state: hasLifelongProgress ? `${getModuleStatusLabel(moduleStatuses["lifelong-learning"])} progress saved` : getModuleStatusLabel(moduleStatuses["lifelong-learning"]),
+      summary: "Prototype reflection work is preserved for portfolio evidence, but access depends on the current teacher setting.",
       progress: lifelongProgress,
       mastery: lifelongMastery,
       variant: "green",
-      spotlight: false,
+      spotlight: moduleStatuses["lifelong-learning"] === "active",
       logoPath: skillsData.categories.find(category => category.id === "time-management")?.logoPath,
       logoLabel: "Time Management",
       imagePath: "../Assets/Images and Animations/Student Hub/module-lifelong-learning-thumb.png",
       launchPath: "../modules/lifelong-learning/index.html",
       launchLabel: hasLifelongProgress ? "Continue Lifelong Learning" : "Start Lifelong Learning",
-      tags: ["Planning", "Growth", "Reflection"]
+      available: moduleStatuses["lifelong-learning"] === "active",
+      unavailableLabel: moduleStatuses["lifelong-learning"] === "archived" ? "Archived" : "Not assigned",
+      tags: [getModuleStatusLabel(moduleStatuses["lifelong-learning"]), "Planning", "Reflection"]
     },
     {
+      id: "est-prep",
       title: "EST Prep",
       state: hasESTProgress ? "Progress saved" : "Ready to start",
       summary: "Train for the upcoming EST by decoding questions, locking in glossary terms, and building mark-worthy responses.",
       progress: estProgress,
       mastery: estMastery,
       variant: "",
-      spotlight: false,
+      spotlight: moduleStatuses["est-prep"] === "active",
       logoPath: skillsData.categories.find(category => category.id === "critical-thinking")?.logoPath,
       logoLabel: "Critical Thinking",
       imagePath: "../Assets/Images and Animations/Student Hub/module-est-prep-thumb.png",
       launchPath: "../modules/est-prep/index.html",
       launchLabel: hasESTProgress ? "Continue EST Prep" : "Open EST Prep",
-      tags: ["Exam readiness", "Command verbs", "Short answer"]
+      available: moduleStatuses["est-prep"] === "active",
+      unavailableLabel: moduleStatuses["est-prep"] === "archived" ? "Archived" : "Not assigned",
+      tags: [getModuleStatusLabel(moduleStatuses["est-prep"]), "Command verbs", "Short answer"]
     }
   ]);
   renderStudentShopPreview([
@@ -3769,7 +4442,7 @@ async function renderStudentLiveData(players, skillsData) {
       summary: assetsOwned
         ? "Your shared inventory is live. Open the shop to buy more upgrades that carry across the platform."
         : "Buy study, tool, transport, and lifestyle upgrades that connect to the wider Career Empire build.",
-      spotlight: true,
+      spotlight: moduleStatuses["megatrends"] === "active",
       imagePath: "../Assets/Images and Animations/Global Shop/global-shop-student-hub.png",
       launchPath: "../shop/index.html",
       launchLabel: "Open Global Shop",
@@ -3805,6 +4478,8 @@ function renderTeacherLiveData(players, skillsData, teacherData = null) {
     selectedClassId: "all",
     selectedClassName: "No classes found",
     selectedStudentId: "all",
+    studentRecordFocus: dashboardFilter.studentRecordFocus || "active",
+    studentRecordCounts: getStudentRecordCounts([]),
     students: [],
     moduleProgress: [],
     evidenceRows: [],
@@ -3815,6 +4490,7 @@ function renderTeacherLiveData(players, skillsData, teacherData = null) {
   });
   const dashboardContext = safeTeacherData.context || teacherContext;
   const skillCategories = Array.isArray(skillsData?.categories) ? skillsData.categories : [];
+  const dashboardFilter = getTeacherDashboardFilter();
 
   const allStudents = safeTeacherData?.students || [];
   renderTeacherClassSelector(safeTeacherData, allStudents);
@@ -3824,6 +4500,17 @@ function renderTeacherLiveData(players, skillsData, teacherData = null) {
   const selectedStudent = selectedStudentId !== "all"
     ? allStudents.find(student => student.id === selectedStudentId) || null
     : null;
+  const moduleScopeClassId = getModuleAvailabilityScope(safeTeacherData, selectedStudent);
+  const moduleStatuses = getEffectiveModuleStatuses({
+    classId: moduleScopeClassId,
+    studentId: selectedStudent?.id || ""
+  });
+  const moduleFocus = dashboardFilter.moduleFocus || "active";
+  const visibleModuleIds = getTeacherVisibleModuleIds(moduleStatuses, moduleFocus);
+  const visibleModuleIdSet = new Set(visibleModuleIds);
+  const includeMegatrendsData = visibleModuleIdSet.has("megatrends");
+  renderTeacherModuleAvailability(safeTeacherData, allStudents, selectedStudent);
+  renderTeacherDashboardFocusStrip(moduleStatuses, moduleFocus);
   const selectedClassCode = selectedClassId !== "all"
     ? (safeTeacherData.availableClasses || []).find(row => row.id === selectedClassId)?.class_code || ""
     : "";
@@ -3833,32 +4520,42 @@ function renderTeacherLiveData(players, skillsData, teacherData = null) {
   const allLatestPlayers = safeTeacherData?.profileRows?.length
     ? dedupeLatestPlayers(safeTeacherData.profileRows)
     : dedupeLatestPlayers(players).filter(player => !classCodeFilter || player.class_code === classCodeFilter);
-  const latestPlayers = selectedStudent
+  const scopedLatestPlayers = selectedStudent
     ? allLatestPlayers.filter(player => player.id === selectedStudent.id)
     : allLatestPlayers;
+  const latestPlayers = includeMegatrendsData ? scopedLatestPlayers : [];
   const students = selectedStudent ? [selectedStudent] : allStudents;
+  const visibleStudentIds = new Set(students.map(student => student.id).filter(Boolean));
+  const studentRecordFocus = safeTeacherData?.studentRecordFocus || dashboardFilter.studentRecordFocus || "active";
+  const studentRecordOption = STUDENT_RECORD_STATUS_OPTIONS.find(option => option.id === studentRecordFocus) || STUDENT_RECORD_STATUS_OPTIONS[0];
   const allModuleProgressRows = safeTeacherData?.moduleProgress || [];
   const allEvidenceRows = safeTeacherData?.evidenceRows || [];
-  const moduleProgressRows = selectedStudent
+  const moduleProgressRowsBase = selectedStudent
     ? allModuleProgressRows.filter(row => row.student_id === selectedStudent.id)
     : allModuleProgressRows;
-  const evidenceRows = selectedStudent
+  const moduleProgressRows = moduleProgressRowsBase
+    .filter(row => visibleModuleIdSet.has(row.module_id || row.module_slug));
+  const evidenceRowsBase = selectedStudent
     ? allEvidenceRows.filter(row => row.student_id === selectedStudent.id)
     : allEvidenceRows;
   const voteRows = safeTeacherData?.voteRows || [];
   const feedbackRows = safeTeacherData?.feedbackRows || [];
   const allReviewRows = safeTeacherData?.reviewRows || [];
-  const reviewRows = selectedStudent
+  const reviewRowsBase = selectedStudent
     ? allReviewRows.filter(row => row.student_id === selectedStudent.id)
     : allReviewRows;
+  const reviewRows = reviewRowsBase.filter(row => visibleModuleIdSet.has(row.module_id || row.module_slug || "lifelong-learning"));
   const megatrendsProgressRows = moduleProgressRows.filter(row => (row.module_id || row.module_slug) === "megatrends");
   const estProgressRows = moduleProgressRows.filter(row => (row.module_id || row.module_slug) === "est-prep");
   const lifelongProgressRows = moduleProgressRows.filter(row => (row.module_id || row.module_slug) === "lifelong-learning");
-  const estEvidenceRows = evidenceRows.filter(row => (row.module_id || row.module_slug) === "est-prep");
-  const parsedEvidenceRows = evidenceRows.map(row => ({
+  const parsedEvidenceRows = evidenceRowsBase.map(row => ({
     row,
     payload: parseStructuredEvidence(row)
-  })).sort((a, b) => parseTime(b.row?.created_at) - parseTime(a.row?.created_at));
+  }))
+    .filter(entry => visibleModuleIdSet.has(getEvidenceModuleId(entry.row, entry.payload)))
+    .sort((a, b) => parseTime(b.row?.created_at) - parseTime(a.row?.created_at));
+  const evidenceRows = parsedEvidenceRows.map(entry => entry.row);
+  const estEvidenceRows = evidenceRows.filter(row => (row.module_id || row.module_slug) === "est-prep");
   const skillProgressRows = latestPlayers.map(deriveEmployabilityProgress);
   const classSkillMap = {
     "communication": average(skillProgressRows.map(row => row.communication || 0)),
@@ -4103,11 +4800,13 @@ function renderTeacherLiveData(players, skillsData, teacherData = null) {
   const storeRequests = feedbackRows
     .map(normaliseStoreRequest)
     .filter(Boolean)
-    .filter(request => feedbackMatchesTeacherScope(request, dashboardContext, classCodeFilter));
+    .filter(request => feedbackMatchesTeacherScope(request, dashboardContext, classCodeFilter))
+    .filter(request => !request.studentId || visibleStudentIds.has(request.studentId));
   const feedbackReviewItems = feedbackRows
     .map(normaliseTeacherFeedback)
     .filter(Boolean)
-    .filter(item => feedbackMatchesTeacherScope(item, dashboardContext, classCodeFilter));
+    .filter(item => feedbackMatchesTeacherScope(item, dashboardContext, classCodeFilter))
+    .filter(item => !item.studentId || visibleStudentIds.has(item.studentId));
   const pendingReviewCount = reviewRows.filter(row => row.status === "pending_review").length;
   const approvedReviewCount = reviewRows.filter(row => row.status === "approved").length;
   const pendingFeedbackCount = feedbackReviewItems.filter(item => normaliseReviewStatus(item.status) === "pending_review").length;
@@ -4160,14 +4859,12 @@ function renderTeacherLiveData(players, skillsData, teacherData = null) {
     const megatrendsMastery = Number(megatrendsProgress?.mastery_percent || overallMastery || 0);
     const lifelongMastery = Number(lifelongProgress?.mastery_percent || 0);
     const estMastery = Number(estProgress?.mastery_percent || 0);
-    const progressScore = average([
-      megatrendsCompletion,
-      lifelongCompletion,
-      estCompletion,
-      megatrendsMastery,
-      lifelongMastery,
-      estMastery
-    ]);
+    const moduleScoreValues = {
+      "megatrends": [megatrendsCompletion, megatrendsMastery],
+      "lifelong-learning": [lifelongCompletion, lifelongMastery],
+      "est-prep": [estCompletion, estMastery]
+    };
+    const progressScore = average(visibleModuleIds.flatMap(moduleId => moduleScoreValues[moduleId] || []));
     const lastActivity = getLastActivityTime(student, studentProgress, studentEvidence);
     const engagementCaption = [
       student.last_login_at ? `Login ${formatRelativeAge(parseTime(student.last_login_at))}` : "No login",
@@ -4185,7 +4882,7 @@ function renderTeacherLiveData(players, skillsData, teacherData = null) {
       ].join(" • "),
       lastLoginLabel: student.last_login_at ? formatDateTime(student.last_login_at) : "Not logged in yet",
       engagementCaption,
-      status: overallMastery >= 60 ? "On track" : estProgress || megatrendsProgress || lifelongProgress ? "Building" : "Not started",
+      status: progressScore >= 60 ? "On track" : visibleModuleIds.some(moduleId => moduleScoreValues[moduleId]?.some(value => value > 0)) ? "Building" : "Not started",
       summary: player
         ? `${player.career_title || "Career Builder"} with ${overallMastery}% overall megatrend mastery, ${formatCurrency(player.annual_salary || 0)} salary, and ${formatCurrency(player.cumulative_net_worth || 0)} net worth.`
         : "No live profile yet. This student needs first-play data to unlock deeper comparison.",
@@ -4254,7 +4951,7 @@ function renderTeacherLiveData(players, skillsData, teacherData = null) {
   setText(
     "teacher-hero-subtitle",
     students.length
-      ? `Showing ${scopeLabel}: ${students.length} student account${students.length === 1 ? "" : "s"}, ${loggedInStudents} logged in, ${evidenceCount} evidence item(s), and module data feeding the current intervention view.`
+      ? `Showing ${scopeLabel}: ${students.length} ${getStudentRecordScopeBase(studentRecordFocus)} account${students.length === 1 ? "" : "s"}, ${loggedInStudents} logged in, ${evidenceCount} evidence item(s), and module data feeding the current intervention view.`
       : "Unlock the teacher area in the game or create student progress first to populate this dashboard."
   );
 
@@ -4262,6 +4959,8 @@ function renderTeacherLiveData(players, skillsData, teacherData = null) {
   if (badgeStack) {
     badgeStack.innerHTML = students.length ? [
       renderBadge(`Class: ${classCodeFilter || "All classes"}`),
+      renderBadge(`Focus: ${visibleModuleIds.length ? visibleModuleIds.map(id => getModuleById(id)?.shortTitle || getModuleLabel(id)).join(", ") : "No active modules"}`),
+      renderBadge(`Students: ${studentRecordOption.label}`),
       renderBadge(`Scope: ${selectedStudent ? "Student drill-down" : selectedClassId === "all" ? "All classes" : "Single class"}`),
       ...(selectedStudent ? [renderBadge(`Student: ${getStudentDisplayName(selectedStudent)}`)] : []),
       renderBadge(`Students: ${students.length}`),
@@ -4296,13 +4995,23 @@ function renderTeacherLiveData(players, skillsData, teacherData = null) {
     `${pendingReviewCount} student free-text response${pendingReviewCount === 1 ? "" : "s"} waiting for sharing approval. ${pendingFeedbackCount} feedback report${pendingFeedbackCount === 1 ? "" : "s"} and ${pendingStoreRequestCount} shop request${pendingStoreRequestCount === 1 ? "" : "s"} need teacher checking. ${approvedReviewCount} approved response${approvedReviewCount === 1 ? "" : "s"} are ready for the comparison pool.`
   );
 
+  renderTeacherCapabilityPortfolio({
+    skillCategories,
+    parsedEvidenceRows,
+    reviewRows,
+    students,
+    selectedStudent
+  });
   renderSkills({ categories: skillCategories }, "teacher-skill-grid", classSkillMap);
   const teacherModuleRows = [
     {
+      id: "megatrends",
       label: "Megatrends",
       title: "Megatrends",
-      status: megatrendsProgressRows.length || latestPlayers.length ? "Live module" : "Awaiting class data",
-      summary: megatrendsProgressRows.length || latestPlayers.length ? `Tracking ${megatrendsProgressRows.length || latestPlayers.length} Megatrends progress signal(s), ${voteCount} community vote(s), and ${formatCurrency(classFund)} in saved community tax contributions.` : "Once students play, this module health card will populate automatically.",
+      status: getModuleStatusLabel(moduleStatuses["megatrends"]),
+      summary: visibleModuleIdSet.has("megatrends")
+        ? (megatrendsProgressRows.length || latestPlayers.length ? `Tracking ${megatrendsProgressRows.length || latestPlayers.length} Megatrends progress signal(s), ${voteCount} community vote(s), and ${formatCurrency(classFund)} in saved community tax contributions.` : "No Megatrends data in the current focus.")
+        : "Archived history is hidden from the active teaching view.",
       completion: average(megatrendsProgressRows.map(row => Number(row.completion_percent || 0))) || average(latestPlayers.map(player => Math.min(100, Number(player.years_played || 0) * 18))),
       mastery: average(megatrendsProgressRows.map(row => Number(row.mastery_percent || 0))) || classMastery,
       variant: "",
@@ -4312,31 +5021,37 @@ function renderTeacherLiveData(players, skillsData, teacherData = null) {
       logoLabel: "Digital Literacy"
     },
     {
+      id: "est-prep",
       label: "EST Prep",
       title: "EST Prep",
-      status: estProgressRows.length ? "Prototype live" : "Awaiting EST submissions",
-      summary: estProgressRows.length
+      status: getModuleStatusLabel(moduleStatuses["est-prep"]),
+      summary: visibleModuleIdSet.has("est-prep") && estProgressRows.length
         ? `Tracking ${estProgressRows.length} EST progress row(s) and ${estEvidenceRows.length} EST evidence artifact(s), including boss-round written responses.`
-        : "Once students complete EST stages, this card will show EST-specific progress, mastery, and written responses.",
+        : visibleModuleIdSet.has("est-prep")
+          ? "Once students complete EST stages, this card will show EST-specific progress, mastery, and written responses."
+          : "EST Prep is not included in the current dashboard focus.",
       completion: average(estProgressRows.map(row => Number(row.completion_percent || 0))),
       mastery: average(estProgressRows.map(row => Number(row.mastery_percent || 0))),
       variant: "green",
-      spotlight: false,
+      spotlight: moduleStatuses["est-prep"] === "active",
       imagePath: "../Assets/Images and Animations/Student Hub/module-est-prep-thumb.png",
       logoPath: getSkillCategoryById(skillsData, "critical-thinking")?.logoPath,
       logoLabel: "Critical Thinking"
     },
     {
+      id: "lifelong-learning",
       label: "Lifelong Learning",
       title: "Lifelong Learning",
-      status: lifelongProgressRows.length ? "Live module" : "Awaiting reflections",
-      summary: lifelongProgressRows.length
+      status: getModuleStatusLabel(moduleStatuses["lifelong-learning"]),
+      summary: visibleModuleIdSet.has("lifelong-learning") && lifelongProgressRows.length
         ? `Tracking ${lifelongProgressRows.length} Lifelong Learning progress row(s) and ${parsedEvidenceRows.filter(entry => getEvidenceModuleId(entry.row, entry.payload) === "lifelong-learning").length} reflection artifact(s).`
-        : "Once students complete Lifelong Learning rounds, planning, reflection, and self-management evidence will appear here.",
+        : visibleModuleIdSet.has("lifelong-learning")
+          ? "Once students complete Lifelong Learning rounds, planning, reflection, and self-management evidence will appear here."
+          : "Prototype history is hidden from the active teaching view.",
       completion: average(lifelongProgressRows.map(row => Number(row.completion_percent || 0))),
       mastery: average(lifelongProgressRows.map(row => Number(row.mastery_percent || 0))),
       variant: "gold",
-      spotlight: false,
+      spotlight: moduleStatuses["lifelong-learning"] === "active",
       imagePath: "../Assets/Images and Animations/Student Hub/module-lifelong-learning-thumb.png",
       logoPath: getSkillCategoryById(skillsData, "time-management")?.logoPath,
       logoLabel: "Time Management"
@@ -4381,7 +5096,7 @@ function renderTeacherLiveData(players, skillsData, teacherData = null) {
   renderTeacherResponseReviewInbox(reviewRows);
   renderTeacherFeedbackReviewInbox(feedbackReviewItems);
   renderTeacherTaskTimeList(taskTimingRows);
-  renderTeacherStudentCompareList(studentCompareRows);
+  renderTeacherStudentCompareList(studentCompareRows, visibleModuleIds);
   renderTeacherStudentProfile({
     students: allStudents,
     selectedStudent,
@@ -4390,7 +5105,7 @@ function renderTeacherLiveData(players, skillsData, teacherData = null) {
   });
   renderTeacherClassCharts({
     engagementRows,
-    moduleRows: teacherModuleRows,
+    moduleRows: teacherModuleRows.filter(row => visibleModuleIdSet.has(row.id)),
     timeRows: strandTimeRows,
     glossary: glossaryData
   });
@@ -4475,6 +5190,9 @@ async function initDashboards() {
         availableClasses: [],
         selectedClassId: "all",
         selectedClassName: "No classes found",
+        selectedStudentId: "all",
+        studentRecordFocus: getTeacherDashboardFilter().studentRecordFocus || "active",
+        studentRecordCounts: getStudentRecordCounts([]),
         students: [],
         moduleProgress: [],
         evidenceRows: [],
