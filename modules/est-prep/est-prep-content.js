@@ -986,7 +986,7 @@ function getContentResponseCoachChecks(group, scaffold = getContentResponseScaff
     "job-application": [
       { id: "concept", label: "Explains STAR or the application method", keywords: ["star", "situation", "task", "action", "result", "criteria"] },
       { id: "example", label: "Shows evidence or structure", keywords: ["example", "evidence", "criteria", "clear", "response", "structure"] },
-      { id: "impact", label: "Explains the employer benefit", keywords: ["because", "employer", "suitable", "show", "understand", "clear"] }
+      { id: "impact", label: "Explains the employer benefit", keywords: ["because", "employer", "suitable", "show", "understand", "clear", "role", "interview", "result", "outcome", "depth"] }
     ],
     communication: [
       { id: "concept", label: "Explains the communication skill", keywords: ["communic", "listen", "verbal", "non verbal", "clear"] },
@@ -1009,15 +1009,16 @@ function evaluateContentResponse(group) {
   const normalizedBuilt = normaliseCoachText(builtResponse);
   const segmentResults = (scaffold?.segments || []).map(segment => {
     const value = String(state.answers[getContentResponseSegmentKey(group.id, segment.id)] || "").trim();
-    const normalized = normaliseCoachText(value);
+    const evidenceText = value || builtResponse;
+    const normalized = normaliseCoachText(evidenceText);
     const coachCheck = checks.find(item => item.id === segment.id);
     const lengthPass = normalized.split(" ").filter(Boolean).length >= 3;
     const keywordPass = !coachCheck?.keywords?.length || coachCheck.keywords.some(keyword => normalized.includes(normaliseCoachText(keyword)));
     return {
       id: segment.id,
       label: coachCheck?.label || segment.label,
-      passed: Boolean(value) && lengthPass && keywordPass,
-      value
+      passed: Boolean(evidenceText) && lengthPass && keywordPass,
+      value: evidenceText
     };
   });
   const builtHasReasoning = /(^|\s)(because|so|which|therefore|helps|shows)\b/.test(normalizedBuilt);
@@ -1049,8 +1050,9 @@ function setContentNoteValue(groupId, value) {
 
 function buildContentResponseText(group) {
   const scaffold = getContentResponseScaffold(group);
-  if (!scaffold) return state.answers[`content-note-${group.id}`] || "";
-  return (scaffold.segments || [])
+  const freeTextResponse = state.answers[`content-note-${group.id}`] || "";
+  if (!scaffold) return freeTextResponse;
+  const scaffoldResponse = (scaffold.segments || [])
     .map(segment => {
       const value = String(state.answers[getContentResponseSegmentKey(group.id, segment.id)] || "").trim();
       if (!value) return "";
@@ -1059,6 +1061,7 @@ function buildContentResponseText(group) {
     })
     .filter(Boolean)
     .join(" ");
+  return scaffoldResponse || freeTextResponse;
 }
 
 function buildContentResponse(groupId) {
@@ -1087,6 +1090,25 @@ function getResponseCoachScorePercent(group) {
   return Math.round(((segmentPasses + reasoningPass) / totalChecks) * 100);
 }
 
+function hasKnowledgeAttempt(roundResults = []) {
+  return roundResults.some(result => result.selected && result.selected !== "not chosen");
+}
+
+function hasTrainingAttempt(config) {
+  return getTrainingInteractions(config).some(item => String(item.selected || "").trim());
+}
+
+function getWeightedContentTopicScore({ knowledgePercent, trainingPercent, responsePercent, knowledgeAttempted, trainingAttempted, responseAttempted }) {
+  const components = [
+    knowledgeAttempted ? { value: knowledgePercent, weight: 25 } : null,
+    trainingAttempted ? { value: trainingPercent, weight: 15 } : null,
+    responseAttempted ? { value: responsePercent, weight: 60 } : null
+  ].filter(Boolean);
+  if (!components.length) return 0;
+  const totalWeight = components.reduce((sum, item) => sum + item.weight, 0);
+  return Math.round(components.reduce((sum, item) => sum + (item.value * item.weight), 0) / totalWeight);
+}
+
 function evaluateContentTopic(group) {
   const trainingConfig = getContentTrainingConfig(group.id);
   const trainingScore = trainingConfig ? getTrainingScore(trainingConfig) : { correct: 0, total: 0, percent: 0 };
@@ -1102,7 +1124,17 @@ function evaluateContentTopic(group) {
   const builtResponse = state.answers[`content-note-${group.id}`] || "";
   const responseCoach = evaluateContentResponse(group);
   const responsePercent = builtResponse ? getResponseCoachScorePercent(group) : 0;
-  const overallPercent = Math.round((knowledgePercent * 0.4) + (trainingScore.percent * 0.4) + (responsePercent * 0.2));
+  const knowledgeAttempted = hasKnowledgeAttempt(roundResults);
+  const trainingAttempted = trainingConfig ? hasTrainingAttempt(trainingConfig) : false;
+  const responseAttempted = Boolean(builtResponse.trim());
+  const overallPercent = getWeightedContentTopicScore({
+    knowledgePercent,
+    trainingPercent: trainingScore.percent,
+    responsePercent,
+    knowledgeAttempted,
+    trainingAttempted,
+    responseAttempted
+  });
   return {
     group,
     trainingConfig,
@@ -1113,6 +1145,9 @@ function evaluateContentTopic(group) {
     responseCoach,
     responsePercent,
     builtResponse,
+    knowledgeAttempted,
+    trainingAttempted,
+    responseAttempted,
     overallPercent
   };
 }
@@ -1137,10 +1172,10 @@ function awardContentTopicImprovement(summary) {
     };
   }
 
-  const stageMarksShare = stage.marks / totalTopics;
+  const stageMarksShare = Math.max(1, Math.round(stage.marks / totalTopics));
   const stageReadinessShare = stage.readiness / totalTopics;
   const stageCreditShare = stage.credits / totalTopics;
-  const earnedMarks = Math.max(0, Math.round(stageMarksShare * deltaRatio));
+  const earnedMarks = nextPercent >= 50 && deltaRatio > 0 ? Math.max(1, Math.round(stageMarksShare * deltaRatio)) : 0;
   const readinessGain = Math.max(0, Math.round(stageReadinessShare * deltaRatio));
   const credits = Math.max(0, Math.round(stageCreditShare * deltaRatio));
   const tax = Math.max(0, Math.round(credits * stage.taxRate));
@@ -1394,6 +1429,15 @@ function renderContentAnswerComparison(summary) {
 function renderContentTopicReview(summary) {
   if (!summary) return "";
   const reviewReward = getContentTopicReviewReward(summary);
+  const knowledgeLabel = summary.knowledgeAttempted
+    ? `${summary.knowledgeCorrect}/${summary.roundResults.length} knowledge`
+    : "knowledge skipped";
+  const trainingLabel = summary.trainingAttempted
+    ? `${summary.trainingScore.percent}% reactor`
+    : "reactor skipped";
+  const responseLabel = summary.responseAttempted
+    ? `${summary.responsePercent}% response`
+    : "no written response";
   return `
     <section class="est-scene-shell est-scene-shell--success" ${buildESTSceneStyle("success")}>
       <div class="panel training-bay training-campaign training-campaign--focus">
@@ -1404,7 +1448,7 @@ function renderContentTopicReview(summary) {
           </div>
           <div class="training-hud-status">
             <strong>${summary.overallPercent}% strand result</strong>
-            <small>${summary.knowledgeCorrect}/${summary.roundResults.length} knowledge • ${summary.trainingScore.percent}% reactor • ${summary.responsePercent}% response</small>
+            <small>${knowledgeLabel} • ${trainingLabel} • ${responseLabel}</small>
           </div>
         </div>
         ${renderContentAnswerComparison(summary)}
@@ -1439,17 +1483,17 @@ function renderContentTopicReview(summary) {
         ${renderContentTopicCommunityChoice(summary)}
         ${renderContentGuideReminder(summary.group, "wide")}
         <div class="rubric-grid" style="margin-top:16px;">
-          <div class="rubric-chip ${summary.knowledgePercent >= 70 ? "pass" : "fail"}">
+          <div class="rubric-chip ${!summary.knowledgeAttempted ? "" : summary.knowledgePercent >= 70 ? "pass" : "fail"}">
             <strong>Knowledge checks</strong>
-            <span>${summary.knowledgePercent}%</span>
+            <span>${summary.knowledgeAttempted ? `${summary.knowledgePercent}%` : "Skipped"}</span>
           </div>
-          <div class="rubric-chip ${summary.trainingScore.percent >= 70 ? "pass" : "fail"}">
+          <div class="rubric-chip ${!summary.trainingAttempted ? "" : summary.trainingScore.percent >= 70 ? "pass" : "fail"}">
             <strong>Reactor practice</strong>
-            <span>${summary.trainingScore.percent}%</span>
+            <span>${summary.trainingAttempted ? `${summary.trainingScore.percent}%` : "Skipped"}</span>
           </div>
-          <div class="rubric-chip ${summary.responsePercent >= 70 ? "pass" : "fail"}">
+          <div class="rubric-chip ${!summary.responseAttempted ? "" : summary.responsePercent >= 70 ? "pass" : "fail"}">
             <strong>EST response</strong>
-            <span>${summary.responsePercent}%</span>
+            <span>${summary.responseAttempted ? `${summary.responsePercent}%` : "Not entered"}</span>
           </div>
         </div>
         <div class="builder-actions" style="margin-top:18px;">
@@ -2027,6 +2071,9 @@ async function submitCurrentContentTopic() {
         knowledge_percent: summary.knowledgePercent,
         training_percent: summary.trainingScore.percent,
         response_percent: summary.responsePercent,
+        knowledge_attempted: summary.knowledgeAttempted,
+        training_attempted: summary.trainingAttempted,
+        response_attempted: summary.responseAttempted,
         built_response: summary.builtResponse,
         sample_response: currentGroup.sampleResponse,
         round_results: summary.roundResults
