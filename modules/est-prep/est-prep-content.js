@@ -442,11 +442,12 @@ function getArcProgressRailAsset(config) {
 function renderArcProgressRail(config, className = "", context = {}) {
   const { completedSteps, activeStep, stepStates } = getArcStepProgress(config);
   const totalSteps = stepStates.length || 4;
+  const visibleStepIndex = Number.isInteger(context.stepIndex) ? context.stepIndex : activeStep - 1;
+  const visibleStepNumber = Math.max(1, Math.min(totalSteps, visibleStepIndex + 1));
   const caption = completedSteps === totalSteps
     ? "All reactor steps complete"
-    : `Step ${activeStep} of ${totalSteps} • ${completedSteps}/${totalSteps} steps done`;
+    : `Step ${visibleStepNumber} of ${totalSteps} • ${completedSteps}/${totalSteps} steps done • all steps open`;
   const classes = ["arc-progress-rail", className].filter(Boolean).join(" ");
-  const visibleStepIndex = Number.isInteger(context.stepIndex) ? context.stepIndex : activeStep - 1;
   const visibleCardNumber = context.questionNumber || 1;
   return `
     <div class="${escapeHtml(classes)}">
@@ -456,8 +457,7 @@ function renderArcProgressRail(config, className = "", context = {}) {
           const isComplete = step.complete;
           const isActive = !isComplete && stepNumber === activeStep;
           const isCurrent = index === visibleStepIndex;
-          const isUnlocked = isComplete || isActive;
-          const status = isComplete ? "complete" : isActive ? "active" : "locked";
+          const status = isComplete ? "complete" : isCurrent || isActive ? "active" : "open";
           const shortTitle = String(step.title || `Step ${stepNumber}`).replace(/^Step\s+\d+:\s*/i, "");
           const itemCount = step.total || 0;
           const stepLabel = isCurrent && itemCount
@@ -466,19 +466,15 @@ function renderArcProgressRail(config, className = "", context = {}) {
               ? `Review ${itemCount || "step"} card${itemCount === 1 ? "" : "s"}`
               : isActive && itemCount
                 ? `Flash card ${step.correct + 1} of ${itemCount}`
-                : shortTitle;
+                : `Open ${shortTitle}`;
           const ariaLabel = isCurrent
             ? stepLabel
-            : `${shortTitle}: ${isUnlocked ? stepLabel : "locked"}`;
-          const elementTag = isUnlocked ? "button" : "div";
-          const actionAttrs = isUnlocked
-            ? `type="button" onclick="window.ESTPrep.jumpArcStep('${config.type}', ${index})"`
-            : "";
+            : `${shortTitle}: ${stepLabel}`;
           return `
-            <${elementTag} class="arc-progress-step ${status} ${isCurrent ? "current" : ""}" role="listitem" aria-label="${escapeHtml(ariaLabel)}" ${isCurrent ? "aria-current=\"step\"" : ""} ${actionAttrs}>
+            <button type="button" class="arc-progress-step ${status} ${isCurrent ? "current" : ""}" role="listitem" aria-label="${escapeHtml(ariaLabel)}" ${isCurrent ? "aria-current=\"step\"" : ""} onclick="window.ESTPrep.jumpArcStep('${config.type}', ${index})">
               <span>${stepNumber}</span>
               <strong>${escapeHtml(stepLabel)}</strong>
-            </${elementTag}>
+            </button>
           `;
         }).join("")}
       </div>
@@ -560,7 +556,7 @@ function renderArcGuideAside({ config, groupId, scene, flow, currentStep, curren
     ? "Reactor restored"
     : currentStep?.title || "Reactor step";
   const statusCopy = flow?.phase === "complete"
-    ? `${completedSteps}/${totalStepCount} steps complete. Build the EST response while the content is fresh.`
+    ? `${completedSteps}/${totalStepCount} steps complete. Click the response button while the content is fresh.`
     : currentItem
       ? `Flash card ${questionNumber} of ${questionCount}. ${stepProgress.correct}/${stepProgress.total} restored in this step.`
       : `${completedSteps}/${totalStepCount} steps complete.`;
@@ -662,6 +658,7 @@ function renderArcTrainingBay(config, score) {
           <div class="training-hud-status">
             <strong>${escapeHtml(stepStatusLabel)}</strong>
             <small>${escapeHtml(stepStatusCopy)}</small>
+            <button class="submit-button compact ghost training-hud-skip" type="button" onclick="window.ESTPrep.openContentResponse()">Write response now</button>
           </div>
         </div>
         <div class="training-focus-shell training-focus-shell--arc ${isPilotLayout ? "training-focus-shell--pilot" : ""}">
@@ -677,7 +674,7 @@ function renderArcTrainingBay(config, score) {
                 <div class="training-answer-copy">
                   <div class="kicker">Reactor cleared</div>
                   <h3>All reactor steps complete</h3>
-                  <p class="training-feedback">${score.correct}/${score.total} decisions locked in. Move straight into the EST response while the content is fresh.</p>
+                  <p class="training-feedback">${score.correct}/${score.total} decisions locked in. Click the button below to write the EST response while the content is fresh.</p>
                 </div>
                 <div class="training-economy-note good">
                   <strong>Reward preview</strong>
@@ -685,7 +682,7 @@ function renderArcTrainingBay(config, score) {
                 </div>
                 <div class="arc-action-row">
                   ${renderArcActionButton({
-                    label: "Build EST response",
+                    label: "Click here to write your EST response",
                     onclick: "window.ESTPrep.openContentResponse()",
                     asset: EST_ANIMATED_ASSETS.progress,
                     className: "arc-action-button--overlay"
@@ -783,6 +780,11 @@ function renderArcTrainingBay(config, score) {
                       <strong>${isCorrect ? "Micro reward signal" : "Banking rule"}</strong>
                       <span>${escapeHtml(microReward)}</span>
                     </div>
+                    ${renderArcProgressRail(config, "arc-progress-rail--answer arc-progress-rail--state", {
+                      stepIndex: flow?.stepIndex || 0,
+                      questionNumber,
+                      questionCount
+                    })}
                     ${isCorrect ? `
                       <div class="arc-action-row">
                         ${renderArcActionButton({
@@ -791,6 +793,7 @@ function renderArcTrainingBay(config, score) {
                           asset: EST_ANIMATED_ASSETS.next,
                           className: "arc-action-button--overlay"
                         })}
+                        <button class="submit-button compact ghost" type="button" onclick="window.ESTPrep.openContentResponse()">Write response now</button>
                       </div>
                     ` : `
                       <div class="training-hint-inline training-hint-inline--state">
@@ -804,6 +807,7 @@ function renderArcTrainingBay(config, score) {
                           asset: EST_ANIMATED_ASSETS.hint,
                           className: "arc-action-button--overlay arc-action-button--retry"
                         })}
+                        <button class="submit-button compact ghost" type="button" onclick="window.ESTPrep.openContentResponse()">Write response now</button>
                       </div>
                     `}
                   </section>
@@ -935,6 +939,21 @@ function getContentResponseScaffold(group) {
   return group?.responseScaffold || DEFAULT_CONTENT_RESPONSE_SCAFFOLDS[group?.id] || null;
 }
 
+function getContentESTQuestion(group) {
+  if (!group) return "Write a short EST-ready response.";
+  return group.writePrompt || "Write one or two EST-ready sentences for this content strand.";
+}
+
+function renderContentESTQuestion(group, className = "") {
+  const classes = ["est-question-card", className].filter(Boolean).join(" ");
+  return `
+    <div class="${escapeHtml(classes)}">
+      <span>EST-style question</span>
+      <strong>${escapeHtml(getContentESTQuestion(group))}</strong>
+    </div>
+  `;
+}
+
 function getContentResponseSegmentKey(groupId, segmentId) {
   return `content-scaffold-${groupId}-${segmentId}`;
 }
@@ -951,8 +970,8 @@ function getContentResponseCoachChecks(group, scaffold = getContentResponseScaff
   const defaultChecks = {
     initiative: [
       { id: "concept", label: "Names initiative clearly", keywords: ["initiative", "proactive", "improvement", "responsib", "help"] },
-      { id: "example", label: "Uses a workplace action or example", keywords: ["restock", "suggest", "help", "volunteer", "system", "colleague"] },
-      { id: "impact", label: "Explains the workplace effect", keywords: ["because", "productiv", "team", "safety", "efficient", "workplace"] }
+      { id: "example", label: "Explains the workplace culture effect", keywords: ["culture", "team", "support", "positive", "workplace", "solve"] },
+      { id: "impact", label: "Uses a workplace action or example", keywords: ["example", "restock", "suggest", "help", "volunteer", "system", "colleague"] }
     ],
     "time-management": [
       { id: "concept", label: "Explains planning and prioritising", keywords: ["plan", "prioritis", "deadline", "schedule", "organis"] },
@@ -1187,6 +1206,7 @@ function renderContentResponseForge(group) {
       <div class="written-stage">
         <strong>Quick EST response</strong>
         <p class="small-copy">Write a short response so teachers can see how well you can explain this content area, not just select the right option. Students can compare this with a model answer after submission.</p>
+        ${renderContentESTQuestion(group, "est-question-card--written")}
         ${renderFreeTextPrivacyNotice()}
         <textarea id="content-note" placeholder="Write one or two EST-ready sentences for this content strand...">${escapeHtml(state.answers[`content-note-${group.id}`] || "")}</textarea>
       </div>
@@ -1223,6 +1243,7 @@ function renderContentResponseForge(group) {
         <button class="submit-button" type="button" onclick="window.ESTPrep.buildContentResponse('${group.id}')">Build Response Paragraph</button>
       </div>
     </div>
+    ${renderContentESTQuestion(group, "est-question-card--final")}
     <div class="written-stage">
       <strong>Built EST response</strong>
       <p class="small-copy">This final paragraph is assembled from your sentence starters. You can still edit it before banking the lab.</p>
@@ -1301,23 +1322,27 @@ function renderContentTopicCommunityChoice(summary) {
       data-value="${escapeHtml(option.id)}"
       onclick="window.ESTPrep.setContentTopicVote('${escapeHtml(groupId)}', '${escapeHtml(option.id)}')"
     >
-      <strong>${escapeHtml(option.label || option.id)}</strong>
+      <strong class="content-vote-title"><span class="content-vote-box" aria-hidden="true">${voteKey === option.id ? "[x]" : "[ ]"}</span>${escapeHtml(option.label || option.id)}</strong>
       <span>${escapeHtml(option.description || "Class community focus")}</span>
     </button>
   `).join("");
   return `
     <div class="panel content-community-panel">
       <div class="section-title">
-        <h2>Choose where the community fund goes</h2>
-        <p class="status-watch">Required before continuing</p>
+        <h2>Choose where the community tax goes</h2>
+        <p class="status-watch">Tick one box before continuing</p>
       </div>
-      <p class="small-copy">You earned ${formatCurrency(reviewReward.credits)} salary. ${formatCurrency(reviewReward.tax)} is now class/community tax. Choose where that contribution should land.</p>
+      <div class="content-module-end-copy">
+        <strong>That is the end of this module.</strong>
+        <p>You have earned ${formatCurrency(reviewReward.credits)} salary and can now contribute ${formatCurrency(reviewReward.tax)} in community tax.</p>
+        <p>Click one of the boxes below to decide where to contribute the funds. One box must be selected before you can continue to the next module.</p>
+      </div>
       <div class="choice-grid">${communityOptions}</div>
-      ${voteKey ? `<p class="small-copy content-vote-confirmed">Selected: <strong>${escapeHtml(getContentTopicVoteOption(groupId)?.label || voteKey)}</strong></p>` : ""}
+      ${voteKey ? `<p class="small-copy content-vote-confirmed">Ticked: <strong>${escapeHtml(getContentTopicVoteOption(groupId)?.label || voteKey)}</strong></p>` : ""}
     </div>
     ${voteKey ? "" : `
       <div class="feedback-box warn content-vote-warning">
-        <p><strong>Select one community fund before continuing.</strong></p>
+        <p><strong>Tick one community tax box before continuing.</strong></p>
         <p>The salary has been earned, but the class contribution needs a destination.</p>
       </div>
     `}
@@ -1331,16 +1356,43 @@ function getContentReviewContinueButton(label, action) {
   const handler = needsVote && !hasVote
     ? "window.ESTPrep.requireContentTopicVote()"
     : `window.ESTPrep.${action}()`;
-  return `<button class="submit-button" type="button" onclick="${handler}">${needsVote && !hasVote ? "Choose community fund first" : label}</button>`;
+  return `<button class="submit-button" type="button" onclick="${handler}">${needsVote && !hasVote ? "Tick a community box first" : label}</button>`;
 }
 
-function renderContentTopicReview(summary) {
-  if (!summary) return "";
+function renderContentAnswerComparison(summary) {
   const coachLabel = summary.responseCoach.level === "strong"
     ? "Strong sentence signal"
     : summary.responseCoach.level === "developing"
       ? "Developing sentence signal"
       : "Needs sharpening";
+  return `
+    <div class="sample-review content-answer-comparison">
+      <h3>Answer comparison</h3>
+      <p class="small-copy">Compare your response with the model answer before you bank the salary and community tax.</p>
+      <div class="sample-grid">
+        <article class="sample-card">
+          <div class="sample-meta">
+            <strong>Your EST response</strong>
+            <span>${coachLabel}</span>
+          </div>
+          <p>${escapeHtml(summary.builtResponse || "No EST response entered yet.")}</p>
+          <p class="sample-commentary">${escapeHtml(summary.responseCoach.summary)}</p>
+        </article>
+        <article class="sample-card strong">
+          <div class="sample-meta">
+            <strong>Model answer</strong>
+            <span>Compare + improve</span>
+          </div>
+          <p>${escapeHtml(summary.group.sampleResponse)}</p>
+          <p class="sample-commentary">Use the model to compare specificity, workplace example, and the why-it-matters explanation.</p>
+        </article>
+      </div>
+    </div>
+  `;
+}
+
+function renderContentTopicReview(summary) {
+  if (!summary) return "";
   const reviewReward = getContentTopicReviewReward(summary);
   return `
     <section class="est-scene-shell est-scene-shell--success" ${buildESTSceneStyle("success")}>
@@ -1355,6 +1407,7 @@ function renderContentTopicReview(summary) {
             <small>${summary.knowledgeCorrect}/${summary.roundResults.length} knowledge • ${summary.trainingScore.percent}% reactor • ${summary.responsePercent}% response</small>
           </div>
         </div>
+        ${renderContentAnswerComparison(summary)}
         <div class="training-economy-note ${summary.reward?.improved ? "good" : "bad"}" style="margin-top:18px;">
           <strong>${summary.reward?.improved ? "Career Empire banked" : "Saved, best result kept"}</strong>
           <span>${escapeHtml(
@@ -1363,7 +1416,6 @@ function renderContentTopicReview(summary) {
               : `Your best result still stands at ${Math.round(summary.reward?.previousPercent || summary.overallPercent || 0)}%. No extra salary was added this time, but the banked community contribution can still be allocated.`
           )}</span>
         </div>
-        ${renderContentGuideReminder(summary.group, "wide")}
         ${reviewReward.credits || reviewReward.tax ? `
           <div class="glossary-reward-grid content-reward-grid">
             <article class="glossary-reward-chip">
@@ -1385,26 +1437,7 @@ function renderContentTopicReview(summary) {
           </div>
         ` : ""}
         ${renderContentTopicCommunityChoice(summary)}
-        <div class="sample-review" style="margin-top:18px;padding-top:0;border-top:0;">
-          <div class="sample-grid">
-            <article class="sample-card">
-              <div class="sample-meta">
-                <strong>Your EST response</strong>
-                <span>${coachLabel}</span>
-              </div>
-              <p>${escapeHtml(summary.builtResponse || "No EST response entered yet.")}</p>
-              <p class="sample-commentary">${escapeHtml(summary.responseCoach.summary)}</p>
-            </article>
-            <article class="sample-card strong">
-              <div class="sample-meta">
-                <strong>Model answer</strong>
-                <span>Compare + improve</span>
-              </div>
-              <p>${escapeHtml(summary.group.sampleResponse)}</p>
-              <p class="sample-commentary">Use the model to compare specificity, workplace example, and the why-it-matters explanation.</p>
-            </article>
-          </div>
-        </div>
+        ${renderContentGuideReminder(summary.group, "wide")}
         <div class="rubric-grid" style="margin-top:16px;">
           <div class="rubric-chip ${summary.knowledgePercent >= 70 ? "pass" : "fail"}">
             <strong>Knowledge checks</strong>
@@ -1423,7 +1456,7 @@ function renderContentTopicReview(summary) {
           ${getContentReviewContinueButton("Back to topic menu", "openContentTopicMenuAfterReview")}
           <button class="submit-button" type="button" onclick="window.ESTPrep.retryCurrentContentTopic()">Replay this topic</button>
           ${state.contentGroupIndex < ((state.stageDeck?.contentGroups || []).length - 1)
-            ? getContentReviewContinueButton("Next Topic", "nextContentGroupAfterReview")
+            ? getContentReviewContinueButton("Next module", "nextContentGroupAfterReview")
             : getContentReviewContinueButton("Bank Full Content Suite", "submitContentAfterReview")}
         </div>
       </div>
@@ -1606,6 +1639,7 @@ function renderContentTopicIntro(group) {
             <div class="topic-intro-button-row">
               <button class="submit-button compact" type="button" onclick="window.ESTPrep.openStage('content')">Back</button>
               <button class="submit-button compact" type="button" onclick="window.ESTPrep.startContentGroup()">${hasBankedResult ? "Replay topic" : "Start CORE check"}</button>
+              <button class="submit-button compact ghost" type="button" onclick="window.ESTPrep.openContentResponse()">Write EST response now</button>
               ${hasBankedResult ? '<button class="submit-button compact ghost" type="button" onclick="window.ESTPrep.resetCurrentContentTopic()">Reset topic</button>' : ""}
             </div>
             ${hasBankedResult ? `<p class="small-copy topic-intro-status">Best banked result: ${bankedPercent}% • replay from the first reactor card or reset to clear this topic.</p>` : ""}
@@ -1812,8 +1846,10 @@ function bankCurrentContentDuration() {
   const groups = state.stageDeck?.contentGroups || [];
   const currentGroup = groups[state.contentGroupIndex];
   if (!currentGroup || !state.contentGroupStartedAt) return;
-  const elapsed = Math.max(1, Math.round((Date.now() - state.contentGroupStartedAt) / 1000));
-  state.contentGroupDurations[currentGroup.id] = (state.contentGroupDurations[currentGroup.id] || 0) + elapsed;
+  const elapsed = getCappedActiveElapsedSeconds(state.contentGroupStartedAt);
+  if (elapsed > 0) {
+    state.contentGroupDurations[currentGroup.id] = (state.contentGroupDurations[currentGroup.id] || 0) + elapsed;
+  }
   state.contentGroupStartedAt = Date.now();
 }
 
@@ -1953,14 +1989,12 @@ function openContentResponse() {
   const groups = state.stageDeck?.contentGroups || [];
   const currentGroup = groups[state.contentGroupIndex];
   if (!currentGroup) return;
-  const trainingConfig = getContentTrainingConfig(currentGroup.id);
-  const trainingScore = getTrainingScore(trainingConfig);
-  if (trainingScore.total > 0 && trainingScore.correct === trainingScore.total) {
-    state.contentView = "response";
-    persistESTProgressSnapshot();
-    renderContentStage();
-    scrollToTopSmooth();
-  }
+  if (state.contentView === "response") persistCurrentContentNote();
+  if (!state.contentGroupStartedAt) state.contentGroupStartedAt = Date.now();
+  state.contentView = "response";
+  persistESTProgressSnapshot();
+  renderContentStage();
+  scrollToTopSmooth();
 }
 
 async function submitCurrentContentTopic() {
@@ -2192,10 +2226,8 @@ function jumpArcStep(configType, stepIndex) {
   const steps = config?.steps || [];
   if (!config || !Number.isInteger(targetStepIndex) || targetStepIndex < 0 || targetStepIndex >= steps.length) return;
 
-  const { stepStates, activeStep } = getArcStepProgress(config);
+  const { stepStates } = getArcStepProgress(config);
   const targetStepState = stepStates[targetStepIndex];
-  const isUnlocked = targetStepState?.complete || targetStepIndex === activeStep - 1;
-  if (!isUnlocked) return;
 
   const targetItems = steps[targetStepIndex]?.items || [];
   if (!targetItems.length) return;

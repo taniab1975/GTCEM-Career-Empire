@@ -5,6 +5,9 @@ const state = {
   stageDeck: null,
   selectedStageId: null,
   stageStartedAt: 0,
+  stageActiveSeconds: 0,
+  stageActiveLastAt: 0,
+  activeTimerLastUserAt: 0,
   completed: {},
   evidenceLog: [],
   debriefLog: [],
@@ -58,6 +61,8 @@ const state = {
   glossaryCommunityAssetReady: {},
   glossaryMissionMode: false,
   glossaryRoundStartedAt: 0,
+  glossaryRoundActiveSeconds: 0,
+  glossaryRoundLastAt: 0,
   glossaryRunStartedAt: 0,
   glossaryHasStarted: false,
   glossaryMode: "play",
@@ -68,6 +73,8 @@ const state = {
 };
 
 const EST_PROGRESS_ARCHIVE_KEY = "career-empire-est-prep-progress-v1";
+const ACTIVE_TASK_IDLE_GRACE_MS = 45000;
+const ACTIVE_TASK_MAX_GAP_MS = 15000;
 
 function readJsonStorage(key, fallback) {
   try {
@@ -251,6 +258,8 @@ function hydrateESTProgressSnapshot() {
   state.glossaryRoundRewards = progress.glossaryRoundRewards || state.glossaryRoundRewards || {};
   state.glossaryRoundVotes = progress.glossaryRoundVotes || state.glossaryRoundVotes || {};
   state.glossaryRoundStartedAt = 0;
+  state.glossaryRoundActiveSeconds = 0;
+  state.glossaryRoundLastAt = 0;
   state.glossaryRunStartedAt = Number(progress.glossaryRunStartedAt || state.glossaryRunStartedAt || 0);
   state.glossaryRecallAnswers = progress.glossaryRecallAnswers || {};
   state.glossaryRecallResults = progress.glossaryRecallResults || {};
@@ -341,9 +350,111 @@ async function loadContentStageConfig() {
   }
 }
 
+function isDocumentVisibleForActiveTiming() {
+  return typeof document === "undefined" || !document.hidden;
+}
+
+function hasRecentTaskActivity(now = Date.now()) {
+  return !state.activeTimerLastUserAt || now - Number(state.activeTimerLastUserAt || 0) <= ACTIVE_TASK_IDLE_GRACE_MS;
+}
+
+function resetActiveTaskTimer(totalKey, lastKey) {
+  const now = Date.now();
+  state[totalKey] = 0;
+  state[lastKey] = now;
+  state.activeTimerLastUserAt = now;
+}
+
+function bankActiveTaskTimer(totalKey, lastKey) {
+  const now = Date.now();
+  const last = Number(state[lastKey] || 0);
+  if (!last) {
+    state[lastKey] = now;
+    return 0;
+  }
+  if (!isDocumentVisibleForActiveTiming() || !hasRecentTaskActivity(now)) {
+    state[lastKey] = now;
+    return 0;
+  }
+  const elapsedMs = Math.max(0, Math.min(now - last, ACTIVE_TASK_MAX_GAP_MS));
+  const elapsedSeconds = elapsedMs / 1000;
+  state[totalKey] = Number(state[totalKey] || 0) + elapsedSeconds;
+  state[lastKey] = now;
+  return elapsedSeconds;
+}
+
+function getActiveTaskTimerSeconds(totalKey, lastKey) {
+  bankActiveTaskTimer(totalKey, lastKey);
+  return Math.round(Number(state[totalKey] || 0));
+}
+
+function getCappedActiveElapsedSeconds(startedAt) {
+  const now = Date.now();
+  const last = Number(startedAt || 0);
+  if (!last) return 0;
+  if (!isDocumentVisibleForActiveTiming() || !hasRecentTaskActivity(now)) return 0;
+  return Math.max(0, Math.round(Math.min(now - last, ACTIVE_TASK_MAX_GAP_MS) / 1000));
+}
+
+function resetStageTaskTimer() {
+  state.stageStartedAt = Date.now();
+  resetActiveTaskTimer("stageActiveSeconds", "stageActiveLastAt");
+}
+
+function bankStageTaskTimer() {
+  return bankActiveTaskTimer("stageActiveSeconds", "stageActiveLastAt");
+}
+
+function resetGlossaryRoundActiveTimer() {
+  state.glossaryRoundStartedAt = Date.now();
+  resetActiveTaskTimer("glossaryRoundActiveSeconds", "glossaryRoundLastAt");
+}
+
+function bankGlossaryRoundActiveTimer() {
+  return bankActiveTaskTimer("glossaryRoundActiveSeconds", "glossaryRoundLastAt");
+}
+
+function getGlossaryRoundActiveSeconds() {
+  return getActiveTaskTimerSeconds("glossaryRoundActiveSeconds", "glossaryRoundLastAt");
+}
+
+function bankESTActiveTimers() {
+  if (state.selectedStageId) bankStageTaskTimer();
+  if (state.glossaryRoundStartedAt) bankGlossaryRoundActiveTimer();
+  if (typeof bankCurrentContentDuration === "function") bankCurrentContentDuration();
+}
+
+function noteESTUserActivity() {
+  bankESTActiveTimers();
+  state.activeTimerLastUserAt = Date.now();
+}
+
+function installESTActiveTimerGuards() {
+  if (window.__careerEmpireESTActiveTimerGuardsInstalled) return;
+  window.__careerEmpireESTActiveTimerGuardsInstalled = true;
+  ["pointerdown", "keydown", "input", "change"].forEach(eventName => {
+    window.addEventListener(eventName, noteESTUserActivity, { capture: true, passive: true });
+  });
+  window.addEventListener("visibilitychange", () => {
+    bankESTActiveTimers();
+    state.activeTimerLastUserAt = document.hidden ? 0 : Date.now();
+    state.stageActiveLastAt = state.selectedStageId ? Date.now() : 0;
+    state.glossaryRoundLastAt = state.glossaryRoundStartedAt ? Date.now() : 0;
+    if (!document.hidden && state.contentGroupStartedAt) state.contentGroupStartedAt = Date.now();
+  });
+  window.addEventListener("pagehide", bankESTActiveTimers);
+  window.addEventListener("blur", bankESTActiveTimers);
+  window.addEventListener("focus", () => {
+    state.activeTimerLastUserAt = Date.now();
+    if (state.selectedStageId) state.stageActiveLastAt = Date.now();
+    if (state.glossaryRoundStartedAt) state.glossaryRoundLastAt = Date.now();
+    if (state.contentGroupStartedAt) state.contentGroupStartedAt = Date.now();
+  });
+}
+
 function getCurrentStageDurationSeconds() {
-  if (!state.stageStartedAt) return null;
-  return Math.max(1, Math.round((Date.now() - state.stageStartedAt) / 1000));
+  const seconds = getActiveTaskTimerSeconds("stageActiveSeconds", "stageActiveLastAt");
+  return seconds ? Math.max(1, seconds) : null;
 }
 
 function addEvidence(title, detail) {

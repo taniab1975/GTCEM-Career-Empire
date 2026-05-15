@@ -22,8 +22,8 @@
         "Helping fellow workers",
         "Seeking more responsibilities"
       ],
-      "writePrompt": "Write one or two EST-ready sentences explaining how initiative can be shown in a workplace situation.",
-      "sampleResponse": "Initiative can be shown when a worker acts proactively, suggests improvements, helps colleagues, or volunteers for extra responsibilities before being told. This matters because it improves productivity and shows the worker can contribute positively to the workplace."
+      "writePrompt": "Explain the concept of initiative and how it can improve workplace culture. Give at least one example.",
+      "sampleResponse": "Initiative means taking a proactive approach to completing tasks, overcoming challenges, and dealing with unexpected events. It can improve workplace culture because workers help each other, solve problems early, and contribute positively without always waiting to be told. For example, a retail worker might notice a safety hazard and clean it up, or help a colleague serve customers during a busy period."
     },
     {
       "id": "time-management",

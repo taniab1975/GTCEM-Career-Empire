@@ -70,6 +70,10 @@
     text-align: left;
   }
 
+  .training-hud-skip {
+    justify-self: start;
+  }
+
   .training-question-layout {
     grid-template-rows: auto;
     min-height: auto;

@@ -299,12 +299,12 @@ function clearGlossaryTimer() {
 
 function getGlossaryRoundElapsedSeconds() {
   if (!state.glossaryRoundStartedAt) return 0;
-  return Math.max(0, Math.round((Date.now() - state.glossaryRoundStartedAt) / 1000));
+  return Math.max(0, getGlossaryRoundActiveSeconds());
 }
 
 function startGlossaryRoundTimer(reset = false) {
   if (reset || !state.glossaryRoundStartedAt) {
-    state.glossaryRoundStartedAt = Date.now();
+    resetGlossaryRoundActiveTimer();
   }
   clearGlossaryTimer();
   glossaryTimerInterval = window.setInterval(() => {
@@ -701,6 +701,8 @@ function resetGlossaryRewardLoop() {
   state.glossaryRoundVotes = {};
   state.glossaryCommunityAssetReady = {};
   state.glossaryRoundStartedAt = 0;
+  state.glossaryRoundActiveSeconds = 0;
+  state.glossaryRoundLastAt = 0;
   state.glossaryRunStartedAt = 0;
 }
 
@@ -2365,10 +2367,14 @@ function returnToLab() {
   setStageMenuMode(false);
   setGameplayViewportMode(false);
   state.selectedStageId = null;
+  state.stageActiveSeconds = 0;
+  state.stageActiveLastAt = 0;
   state.contentGroupIndex = -1;
   state.glossaryMissionMode = false;
   state.glossaryRoundCelebration = null;
   state.glossaryRoundStartedAt = 0;
+  state.glossaryRoundActiveSeconds = 0;
+  state.glossaryRoundLastAt = 0;
   clearGlossaryTimer();
   syncMissionMode();
   renderFocusNav();
@@ -2586,9 +2592,51 @@ function getGlossaryStabilityPercent() {
   return getGlossaryMasterySummary().masteryTargetPercent;
 }
 
+function getGlossaryRoundName(roundIndex) {
+  return GLOSSARY_ROUND_CONFIGS[roundIndex]?.title.replace(/^Round \d+:\s*/, "") || "Glossary game";
+}
+
+function getGlossaryRoundTheme(roundIndex) {
+  const round = GLOSSARY_ROUND_CONFIGS[roundIndex] || GLOSSARY_ROUND_CONFIGS[0];
+  const fallbackThemes = ["aqua", "violet", "emerald", "solar"];
+  return GLOSSARY_MEMORY_THEMES[round?.theme || fallbackThemes[roundIndex % fallbackThemes.length]] || GLOSSARY_MEMORY_THEMES.aqua;
+}
+
+function buildGlossaryRoundThemeStyle(roundIndex) {
+  const theme = getGlossaryRoundTheme(roundIndex);
+  return [
+    `--game-accent:${theme.accent};`,
+    `--game-accent-2:${theme.accent2};`,
+    `--game-tint:${theme.tint};`
+  ].join("");
+}
+
+function getGlossarySetRewardKey(roundIndex, batchIndex) {
+  return `game-${roundIndex + 1}-set-${getSafeGlossaryBatchIndex(batchIndex) + 1}`;
+}
+
+function hasGlossaryRewardForSet(roundIndex, batchIndex) {
+  return Boolean(state.glossaryRoundRewards?.[getGlossarySetRewardKey(roundIndex, batchIndex)]);
+}
+
+function getGlossaryRoundSetProgress(roundIndex) {
+  const total = getGlossaryBatchCount();
+  const completed = Array.from({ length: total }, (_, index) => index)
+    .filter(index => hasGlossaryRewardForSet(roundIndex, index))
+    .length;
+  return {
+    completed,
+    total,
+    allComplete: total > 0 && completed >= total,
+    hasProgress: completed > 0
+  };
+}
+
 function getGlossaryRoundBadge(roundIndex) {
+  const progress = getGlossaryRoundSetProgress(roundIndex);
+  if (progress.allComplete) return "Complete";
   if (state.glossaryRoundIndex === roundIndex && !state.glossaryRoundCelebration) return "Playing";
-  if (hasGlossaryRewardForRound(roundIndex)) return "Used";
+  if (progress.hasProgress) return `${progress.completed}/${progress.total} sets`;
   if (state.completed.glossary) return "Replay";
   return "Choose";
 }
@@ -2814,18 +2862,22 @@ function renderGlossaryChamberRail() {
       ${GLOSSARY_ROUND_CONFIGS.map((round, index) => {
         const status = getGlossaryRoundBadge(index);
         const active = state.glossaryRoundIndex === index && !state.glossaryRoundCelebration;
-        const complete = hasGlossaryRewardForRound(index);
+        const progress = getGlossaryRoundSetProgress(index);
+        const complete = progress.allComplete;
         const unlocked = isGlossaryRoundUnlocked(index);
+        const roundName = getGlossaryRoundName(index);
         return `
           <button
             type="button"
-            class="glossary-chamber-card ${active ? "active" : ""} ${complete ? "complete" : ""} ${unlocked ? "" : "locked"}"
+            class="glossary-chamber-card ${active ? "active" : ""} ${progress.hasProgress ? "has-progress" : ""} ${complete ? "complete" : ""} ${unlocked ? "" : "locked"}"
+            style="${buildGlossaryRoundThemeStyle(index)}"
             ${unlocked ? `onclick="window.ESTPrep.jumpToGlossaryRound(${index})"` : "disabled"}
           >
             <div class="glossary-chamber-index">0${index + 1}</div>
-            <strong>${escapeHtml(round.title.replace(/^Round \d+:\s*/, ""))}</strong>
+            <strong>${escapeHtml(roundName)}</strong>
             <p>${escapeHtml(round.cue)}</p>
-            <span class="glossary-chamber-status">${status}</span>
+            <span class="glossary-chamber-status">${escapeHtml(status)}</span>
+            <span class="glossary-chamber-progress">${progress.completed}/${progress.total} sets</span>
           </button>
         `;
       }).join("")}
@@ -2835,22 +2887,39 @@ function renderGlossaryChamberRail() {
 
 function renderGlossarySetRail() {
   const count = getGlossaryBatchCount();
+  const roundIndex = state.glossaryRoundIndex;
+  const roundName = getGlossaryRoundName(roundIndex);
+  const progress = getGlossaryRoundSetProgress(roundIndex);
   return `
-    <div class="glossary-set-rail" aria-label="Glossary term set selector">
-      ${Array.from({ length: count }, (_, index) => {
-        const active = getSafeGlossaryBatchIndex() === index;
-        return `
-          <button
-            type="button"
-            class="glossary-set-chip ${active ? "active" : ""}"
-            onclick="window.ESTPrep.jumpToGlossarySet(${index})"
-          >
-            <strong>Set ${index + 1}</strong>
-            <span>${active ? "Current" : "Choose"}</span>
-          </button>
-        `;
-      }).join("")}
-    </div>
+    <section
+      class="glossary-game-set-panel ${progress.allComplete ? "complete" : ""}"
+      style="${buildGlossaryRoundThemeStyle(roundIndex)}"
+      aria-label="${escapeHtml(`${roundName} set selector`)}"
+    >
+      <div class="glossary-set-heading">
+        <div>
+          <span>Sets for this game</span>
+          <strong>${escapeHtml(roundName)}</strong>
+        </div>
+        <em>${progress.completed}/${progress.total} complete</em>
+      </div>
+      <div class="glossary-set-rail">
+        ${Array.from({ length: count }, (_, index) => {
+          const active = getSafeGlossaryBatchIndex() === index;
+          const complete = hasGlossaryRewardForSet(roundIndex, index);
+          return `
+            <button
+              type="button"
+              class="glossary-set-chip ${active ? "active" : ""} ${complete ? "complete" : ""}"
+              onclick="window.ESTPrep.jumpToGlossarySet(${index})"
+            >
+              <strong>Set ${index + 1}</strong>
+              <span>${active ? "Current" : complete ? "Complete" : "Choose"}</span>
+            </button>
+          `;
+        }).join("")}
+      </div>
+    </section>
   `;
 }
 
@@ -4007,6 +4076,7 @@ async function submitGlossary() {
 }
 
 async function bankGlossaryResults() {
+  bankGlossaryRoundActiveTimer();
   const allTerms = getGlossaryAllRoundItems();
   const matchedTermIds = getGlossaryMatchedTermIds();
   const durationSeconds = getCurrentStageDurationSeconds();

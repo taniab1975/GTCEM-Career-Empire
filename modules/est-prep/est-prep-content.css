@@ -876,7 +876,9 @@ body.est-lab-mode #stage-section.gameplay-viewport {
 
 #stage-section.gameplay-viewport .stage-root {
   min-height: auto;
-  display: flex;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 18px;
   align-items: stretch;
 }
 
@@ -1008,6 +1010,35 @@ body.est-lab-mode #stage-section.gameplay-viewport {
   background: linear-gradient(135deg, var(--blue-strong), #654dff);
 }
 
+.est-question-card {
+  display: grid;
+  gap: 8px;
+  margin-top: 14px;
+  padding: 14px 16px;
+  border-radius: 18px;
+  border: 1px solid rgba(255, 216, 108, 0.34);
+  background:
+    radial-gradient(circle at top left, rgba(255, 216, 108, 0.12), transparent 34%),
+    rgba(11, 22, 48, 0.78);
+}
+
+.est-question-card span {
+  color: var(--gold);
+  font-size: 0.76rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.est-question-card strong {
+  font-size: clamp(1.05rem, 1.5vw, 1.28rem);
+  line-height: 1.35;
+}
+
+.est-question-card--final {
+  margin-top: 16px;
+}
+
 .training-bay {
   background:
     linear-gradient(135deg, rgba(20, 44, 89, 0.95), rgba(19, 27, 62, 0.96)),
@@ -1134,6 +1165,12 @@ body.est-lab-mode #stage-section.gameplay-viewport {
 .training-hud-status small {
   color: var(--muted);
   font-size: 0.84rem;
+}
+
+.training-hud-skip {
+  justify-self: end;
+  white-space: normal;
+  max-width: 220px;
 }
 
 .training-campaign-grid {
@@ -1469,6 +1506,16 @@ button.arc-progress-step:hover {
   color: #072319;
 }
 
+.arc-progress-step.open {
+  border-color: rgba(129, 166, 255, 0.28);
+  color: #dce9ff;
+}
+
+.arc-progress-step.open span {
+  border-color: rgba(129, 166, 255, 0.28);
+  background: rgba(20, 36, 77, 0.92);
+}
+
 .arc-progress-step.locked {
   opacity: 0.62;
 }
@@ -1512,6 +1559,10 @@ button.arc-progress-step:hover {
     radial-gradient(circle at center, rgba(97, 240, 255, 0.1), transparent 48%),
     rgba(7, 15, 34, 0.72);
   box-shadow: inset 0 0 0 1px rgba(255,255,255,0.03), 0 14px 28px rgba(3, 8, 20, 0.22);
+}
+
+.arc-progress-rail--state {
+  width: min(100%, 620px);
 }
 
 .arc-progress-rail--wide {
@@ -1962,7 +2013,7 @@ button.arc-progress-step:hover {
 
 .arc-action-button--overlay {
   position: relative;
-  min-width: 220px;
+  min-width: min(100%, 360px);
   min-height: 54px;
   padding: 0;
   overflow: hidden;
@@ -1989,7 +2040,8 @@ button.arc-progress-step:hover {
   place-items: center;
   padding: 0 22px;
   text-align: center;
-  font-size: 0.8rem;
+  font-size: clamp(0.72rem, 1.4vw, 0.92rem);
+  line-height: 1.12;
   text-shadow: 0 4px 18px rgba(0, 0, 0, 0.85);
 }
 
@@ -2767,9 +2819,46 @@ body.est-gameplay-viewport .ce-feedback-launcher {
   margin-top: 16px;
 }
 
+.sample-review.content-answer-comparison {
+  margin-top: 18px;
+  padding-top: 0;
+  border-top: 0;
+}
+
+.sample-review.content-answer-comparison h3 {
+  margin: 0;
+  font-size: clamp(1.45rem, 2vw, 2rem);
+}
+
 .content-community-panel,
 .content-vote-warning {
   margin-top: 16px;
+}
+
+.content-module-end-copy {
+  display: grid;
+  gap: 8px;
+  margin-bottom: 16px;
+  color: #dbe8ff;
+  line-height: 1.55;
+}
+
+.content-module-end-copy strong {
+  color: #ffffff;
+  font-size: 1rem;
+}
+
+.choice-button .content-vote-title {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+}
+
+.content-vote-box {
+  flex: 0 0 auto;
+  color: var(--gold);
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
+  font-size: 0.94em;
 }
 
 .content-vote-confirmed {

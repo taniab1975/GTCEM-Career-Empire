@@ -132,8 +132,8 @@ const DEFAULT_CONTENT_TOPIC_GROUPS = [
     introMediaLayout: "portrait",
     introHighlights: ["Be proactive", "Improve work practices", "Vocalise opinions", "Help fellow workers"],
     topics: ["Initiative", "Being proactive", "Improving work practices", "Vocalising opinions", "Helping fellow workers", "Seeking more responsibilities"],
-    writePrompt: "Write one or two EST-ready sentences explaining how initiative can be shown in a workplace situation.",
-    sampleResponse: "Initiative can be shown when a worker acts proactively, suggests improvements, helps colleagues, or volunteers for extra responsibilities before being told. This matters because it improves productivity and shows the worker can contribute positively to the workplace."
+    writePrompt: "Explain the concept of initiative and how it can improve workplace culture. Give at least one example.",
+    sampleResponse: "Initiative means taking a proactive approach to completing tasks, overcoming challenges, and dealing with unexpected events. It can improve workplace culture because workers help each other, solve problems early, and contribute positively without always waiting to be told. For example, a retail worker might notice a safety hazard and clean it up, or help a colleague serve customers during a busy period."
   },
   {
     id: "time-management",
@@ -205,25 +205,25 @@ const DEFAULT_CONTENT_TOPIC_GROUPS = [
 const DEFAULT_CONTENT_RESPONSE_SCAFFOLDS = {
   initiative: {
     title: "Response Forge",
-    subtitle: "Build the key idea first, then the example, then the impact.",
+    subtitle: "Build the key idea first, then the workplace culture effect, then the example.",
     segments: [
       {
         id: "concept",
         label: "Sentence starter 1",
-        starter: "Initiative can be shown when a worker ",
-        placeholder: "acts proactively, suggests an improvement, or steps in to help..."
+        starter: "Initiative means ",
+        placeholder: "taking proactive action to complete tasks, overcome challenges, or deal with unexpected events..."
       },
       {
         id: "example",
         label: "Sentence starter 2",
-        starter: "For example, they might ",
-        placeholder: "restock early, suggest a safer system, or support a teammate..."
+        starter: "It can improve workplace culture because ",
+        placeholder: "workers support each other, solve problems early, and create a more positive workplace..."
       },
       {
         id: "impact",
         label: "Sentence starter 3",
-        starter: "This is effective because ",
-        placeholder: "it improves productivity, safety, teamwork, or workplace reliability..."
+        starter: "For example, ",
+        placeholder: "a worker might notice a teammate is overloaded and help before being asked..."
       }
     ]
   },
@@ -1333,10 +1333,10 @@ const GLOSSARY_ROUND_CONFIGS = [
 ];
 
 const STAGES = [
-  { id: "content", title: "CORE", state: "What to say", activity: "Assessed content modules", summary: "Check the actual revision content before answering under pressure.", marks: 4, readiness: 18, credits: 1600, taxRate: 0.1 },
-  { id: "glossary", title: "TERM", state: "The right language", activity: "Glossary terms", summary: "Use exact glossary terms and definitions, not vague wording.", marks: 4, readiness: 20, credits: 1600, taxRate: 0.1 },
-  { id: "decoder", title: "VTCS", state: "What the question wants", activity: "Question decode", summary: "Unpack verb, topic, context, and structure before you write.", marks: 4, readiness: 24, credits: 2200, taxRate: 0.1 },
-  { id: "boss", title: "BOSS", state: "The final response", activity: "Exam simulation", summary: "Build and justify a mark-worthy EST response with richer feedback.", marks: 8, readiness: 34, credits: 3400, taxRate: 0.1 }
+  { id: "content", title: "CORE", state: "What to say", activity: "Assessed content modules", summary: "Check the actual revision content before answering under pressure.", marks: 4, readiness: 18, credits: 36000, taxRate: 0.1 },
+  { id: "glossary", title: "TERM", state: "The right language", activity: "Glossary terms", summary: "Use exact glossary terms and definitions, not vague wording.", marks: 4, readiness: 20, credits: 24000, taxRate: 0.1 },
+  { id: "decoder", title: "VTCS", state: "What the question wants", activity: "Question decode", summary: "Unpack verb, topic, context, and structure before you write.", marks: 4, readiness: 24, credits: 18000, taxRate: 0.1 },
+  { id: "boss", title: "BOSS", state: "The final response", activity: "Exam simulation", summary: "Build and justify a mark-worthy EST response with richer feedback.", marks: 8, readiness: 34, credits: 26000, taxRate: 0.1 }
 ];
 
 const HUB_SECTION_IDS = ["hero-section", "track-section"];

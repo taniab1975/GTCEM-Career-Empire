@@ -11,7 +11,7 @@ function openStage(stageId) {
   }
   state.selectedStageId = stageId;
   state.lastBossReview = null;
-  state.stageStartedAt = Date.now();
+  resetStageTaskTimer();
   if (stageId === "content") {
     if (previousStageId === "content" && ["lesson", "response"].includes(state.contentView) && state.contentGroupIndex >= 0) {
       persistCurrentContentNote();
@@ -49,15 +49,20 @@ function openStage(stageId) {
 }
 
 function returnToTrack() {
+  bankESTActiveTimers();
   setLabMode(false);
   setStageMenuMode(false);
   setGameplayViewportMode(false);
   setStageScene("neutral");
   state.glossaryMissionMode = false;
   state.glossaryRoundStartedAt = 0;
+  state.glossaryRoundActiveSeconds = 0;
+  state.glossaryRoundLastAt = 0;
   clearGlossaryTimer();
   syncMissionMode();
   state.selectedStageId = null;
+  state.stageActiveSeconds = 0;
+  state.stageActiveLastAt = 0;
   state.lastBossReview = null;
   state.contentGroupIndex = -1;
   state.contentView = "menu";
@@ -72,6 +77,7 @@ function returnToTrack() {
 
 async function init() {
   state.student = getLoggedInStudent();
+  installESTActiveTimerGuards();
   registerLeaveWarning();
   hydrateESTProgressSnapshot();
   const [bank, contentStageConfig] = await Promise.all([
