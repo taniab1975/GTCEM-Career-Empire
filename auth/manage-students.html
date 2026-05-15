@@ -7,7 +7,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="./auth.css?v=20260513-student-login-cleanup">
+  <link rel="stylesheet" href="./auth.css?v=20260515-class-roster-sync">
 </head>
 <body data-teacher-nav-active="manage-students">
   <main class="auth-shell">
@@ -62,6 +62,10 @@
 
         <div class="student-manager-toolbar">
           <div>
+            <label for="manage-class-selector">Class roster</label>
+            <select id="manage-class-selector"></select>
+          </div>
+          <div>
             <label for="manage-student-filter">Roster view</label>
             <select id="manage-student-filter">
               <option value="active">Active logins</option>
@@ -100,7 +104,7 @@
   <script src="../config/supabase-config.js"></script>
   <script src="../data/schools-list.js"></script>
   <script src="../src/services/supabase-browser.js"></script>
-  <script src="./auth.js?v=20260513-student-login-cleanup"></script>
+  <script src="./auth.js?v=20260515-class-roster-sync"></script>
   <script src="../src/services/session-banner.js?v=20260507-session-banner"></script>
   <script src="../src/services/feedback-widget.js?v=20260513-free-text-privacy"></script>
 </body>

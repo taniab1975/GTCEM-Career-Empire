@@ -425,7 +425,7 @@ button:disabled {
 
 .student-manager-toolbar {
   display: grid;
-  grid-template-columns: minmax(220px, 0.44fr) minmax(0, 1fr);
+  grid-template-columns: minmax(220px, 0.5fr) minmax(220px, 0.44fr) minmax(0, 1fr);
   gap: 14px;
   align-items: end;
   margin-bottom: 18px;

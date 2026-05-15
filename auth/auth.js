@@ -47,6 +47,29 @@ function writeState(patch) {
   return next;
 }
 
+function getClassroomDisplayName(classroom = null, fallback = "No class created yet") {
+  if (!classroom) return fallback;
+  // Accept legacy/local Supabase shapes, but keep app state on className.
+  return classroom.className || classroom.name || (classroom.classCode ? `Class ${classroom.classCode}` : fallback);
+}
+
+function getClassroomCode(classroom = null, fallback = "Pending") {
+  return classroom?.classCode || classroom?.class_code || fallback;
+}
+
+function normaliseClassroomRecord(classroom = null) {
+  if (!classroom) return null;
+  const className = classroom.className || classroom.name || "";
+  const classCode = classroom.classCode || classroom.class_code || "";
+  return {
+    id: classroom.id || null,
+    className,
+    yearLevel: classroom.yearLevel || classroom.year_level || "",
+    classCode,
+    createdAt: classroom.createdAt || classroom.created_at || ""
+  };
+}
+
 function buildTeacherNavConfig() {
   const isDashboardPage = window.location.pathname.includes("/dashboards/");
   return isDashboardPage ? {
@@ -96,7 +119,7 @@ function seedDemoStudentSession() {
     classroom: {
       id: null,
       classCode: DEMO_STUDENT_PROFILE.classCode,
-      name: DEMO_STUDENT_PROFILE.className
+      className: DEMO_STUDENT_PROFILE.className
     }
   });
 
@@ -150,8 +173,8 @@ function launchTeacherTestStudentPreview() {
     schoolId: teacher.schoolId || null,
     schoolName: teacher.schoolName || "Teacher Preview School",
     classId: classroom.id || null,
-    classCode: classroom.classCode || "PREVIEW",
-    className: classroom.className || "Teacher Preview Class",
+    classCode: getClassroomCode(classroom, "PREVIEW"),
+    className: getClassroomDisplayName(classroom, "Teacher Preview Class"),
     preview: true
   };
 
@@ -1045,7 +1068,7 @@ function initStudentLogin() {
         classroom: student.class_id ? {
           id: student.class_id,
           classCode: student.classes?.class_code || "",
-          name: student.classes?.name || ""
+          className: student.classes?.name || ""
         } : null
       });
 
@@ -1145,7 +1168,7 @@ function initAddStudents() {
   const render = async () => {
     const supabase = await getSupabaseClientOrNull();
     const state = readState();
-    const currentClassName = state.classroom?.className || "Current class";
+    const currentClassName = getClassroomDisplayName(state.classroom, "Current class");
     if (!supabase || !state.classroom?.id) {
       list.innerHTML = '<div class="small-note">Create a class first, then student accounts will appear here.</div>';
       return;
@@ -1210,7 +1233,7 @@ function initAddStudents() {
     const displayName = document.getElementById("new-student-display-name").value.trim();
     const username = usernameInput.value.trim();
     const state = readState();
-    const className = state.classroom?.className || "Current class";
+    const className = getClassroomDisplayName(state.classroom, "Current class");
     if (!isValidStudentUsername(username)) {
       feedback.className = "feedback bad";
       feedback.textContent = "Student usernames must start with a letter and use only letters or numbers. No spaces or email addresses.";
@@ -1283,8 +1306,8 @@ function initAuthContext() {
   const state = readState();
   setText("teacher-name-preview", state.teacher?.fullName || "No teacher saved yet");
   setText("teacher-school-preview", state.teacher?.schoolName || "School not set yet");
-  setText("class-preview", state.classroom?.className || "No class created yet");
-  setText("class-code-preview", state.classroom?.classCode || "Pending");
+  setText("class-preview", getClassroomDisplayName(state.classroom));
+  setText("class-code-preview", getClassroomCode(state.classroom));
 }
 
 async function initManageStudents() {
@@ -1294,6 +1317,7 @@ async function initManageStudents() {
   const classCodeEl = document.getElementById("manage-class-code");
   const resetResult = document.getElementById("reset-password-result");
   const rosterFilter = document.getElementById("manage-student-filter");
+  const classSelector = document.getElementById("manage-class-selector");
   if (!list || !feedback || !classNameEl || !classCodeEl || !resetResult) return;
 
   const supabase = await getSupabaseClientOrNull();
@@ -1306,37 +1330,53 @@ async function initManageStudents() {
   try {
     const { teacher } = await requireLoggedInTeacher(supabase);
     const state = readState();
-    let classroom = state.classroom;
+    const { data: classRows, error: classError } = await supabase
+      .from("classes")
+      .select("id, name, year_level, class_code, created_at")
+      .eq("school_id", teacher.school_id)
+      .order("created_at", { ascending: false });
 
-    if (!classroom?.id) {
-      const { data: latestClass, error: classError } = await supabase
-        .from("classes")
-        .select("id, name, year_level, class_code")
-        .eq("teacher_id", teacher.id)
-        .order("created_at", { ascending: false })
-        .limit(1)
-        .maybeSingle();
+    if (classError) throw classError;
+    if (!classRows?.length) {
+      feedback.className = "feedback warn";
+      feedback.textContent = "No class found yet. Create a class first.";
+      classNameEl.textContent = "No class created yet";
+      classCodeEl.textContent = "Pending";
+      if (classSelector) classSelector.innerHTML = '<option value="">No classes found</option>';
+      return;
+    }
 
-      if (classError) throw classError;
-      if (!latestClass) {
-        feedback.className = "feedback warn";
-        feedback.textContent = "No class found yet. Create a class first.";
-        classNameEl.textContent = "No class created yet";
-        classCodeEl.textContent = "Pending";
-        return;
-      }
+    const normalisedClasses = classRows.map(normaliseClassroomRecord);
+    let classroom = normalisedClasses.find(row => row.id && row.id === state.classroom?.id)
+      || normalisedClasses.find(row => row.classCode && row.classCode === getClassroomCode(state.classroom, ""))
+      || normalisedClasses[0];
 
-      classroom = {
-        id: latestClass.id,
-        className: latestClass.name,
-        yearLevel: latestClass.year_level,
-        classCode: latestClass.class_code
-      };
+    const syncClassHeader = () => {
+      classNameEl.textContent = getClassroomDisplayName(classroom, "Current class");
+      classCodeEl.textContent = getClassroomCode(classroom);
+      initAuthContext();
+    };
+
+    if (!state.classroom?.id || state.classroom.id !== classroom.id || !state.classroom?.className || Object.prototype.hasOwnProperty.call(state.classroom, "name") || getClassroomDisplayName(state.classroom, "") !== getClassroomDisplayName(classroom, "")) {
       writeState({ classroom });
     }
 
-    classNameEl.textContent = classroom.className || "Current class";
-    classCodeEl.textContent = classroom.classCode || "Pending";
+    if (classSelector) {
+      classSelector.innerHTML = normalisedClasses.map(row => `
+        <option value="${escapeHtml(row.id)}" ${row.id === classroom.id ? "selected" : ""}>${escapeHtml(getClassroomDisplayName(row, "Current class"))} (${escapeHtml(getClassroomCode(row, "No code"))})</option>
+      `).join("");
+      classSelector.onchange = async () => {
+        const nextClassroom = normalisedClasses.find(row => row.id === classSelector.value);
+        if (!nextClassroom) return;
+        classroom = nextClassroom;
+        writeState({ classroom });
+        syncClassHeader();
+        resetResult.innerHTML = '<p class="small-note">Reset a student password to see the new temporary credential here.</p>';
+        await renderStudents();
+      };
+    }
+
+    syncClassHeader();
 
     const oldLoginDays = 90;
     const neverUsedCleanupDays = 14;
