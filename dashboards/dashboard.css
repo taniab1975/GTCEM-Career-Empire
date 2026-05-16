@@ -2358,6 +2358,54 @@ h1 {
   gap: 16px;
 }
 
+.teacher-review-filter {
+  grid-column: 1 / -1;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+}
+
+.teacher-review-filter-button {
+  min-width: 104px;
+  min-height: 38px;
+  display: inline-grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 8px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.05);
+  color: var(--muted);
+  padding: 8px 12px;
+  font: inherit;
+  font-size: 13px;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.teacher-review-filter-button span:first-child {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.teacher-review-filter-button span:last-child {
+  min-width: 2ch;
+  color: var(--text);
+  text-align: right;
+}
+
+.teacher-review-filter-button.is-active {
+  border-color: rgba(104, 210, 255, 0.48);
+  background: rgba(104, 210, 255, 0.14);
+  color: var(--text);
+}
+
+.teacher-review-filter + .timeline-item {
+  grid-column: 1 / -1;
+}
+
 .response-review-card {
   display: grid;
   gap: 14px;
@@ -3073,7 +3121,16 @@ textarea {
   display: none;
 }
 
+.student-approved-examples-panel[hidden] {
+  display: none;
+}
+
 .student-review-notices {
+  display: grid;
+  gap: 10px;
+}
+
+.student-approved-examples {
   display: grid;
   gap: 10px;
 }
@@ -3087,10 +3144,64 @@ textarea {
   background: rgba(251, 191, 36, 0.08);
 }
 
+.student-review-notice--approved {
+  border-color: rgba(74, 222, 128, 0.32);
+  background: rgba(74, 222, 128, 0.08);
+}
+
+.student-review-notice--rejected {
+  border-color: rgba(248, 113, 113, 0.32);
+  background: rgba(248, 113, 113, 0.08);
+}
+
+.student-review-notice-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 4px;
+}
+
+.student-approved-example {
+  display: grid;
+  gap: 8px;
+  border: 1px solid rgba(104, 210, 255, 0.24);
+  border-radius: 8px;
+  padding: 12px;
+  background: rgba(104, 210, 255, 0.07);
+}
+
+.student-approved-example > div {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: baseline;
+  justify-content: space-between;
+}
+
+.student-approved-example span {
+  color: #68d2ff;
+  font-size: 12px;
+  font-weight: 900;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
 .student-review-notice p,
-.student-review-notice small {
+.student-review-notice small,
+.student-approved-example p {
   margin: 0;
   color: var(--muted);
+}
+
+.student-review-notice blockquote,
+.student-approved-example blockquote {
+  margin: 0;
+  border-left: 3px solid rgba(104, 210, 255, 0.58);
+  padding: 8px 10px;
+  color: var(--text);
+  background: rgba(255, 255, 255, 0.045);
+  border-radius: 0 8px 8px 0;
+  line-height: 1.5;
 }
 
 .skill-star-builder-field {
@@ -4168,6 +4279,11 @@ textarea {
 
   .dashboard-dropdown-content {
     padding: 0 18px 18px;
+  }
+
+  .teacher-review-filter-button {
+    flex: 1 1 96px;
+    min-width: 0;
   }
 
   .metrics-grid,

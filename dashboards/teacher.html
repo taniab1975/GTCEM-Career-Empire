@@ -99,9 +99,9 @@
         <div class="metric-note">No login, no progress, or low mastery</div>
       </article>
       <article class="metric metric-card--art" style="--metric-art: url('../Assets/Images and Animations/Animated Buttons/animated_progress_bar_fill.gif');">
-        <div class="metric-label">Session & Task Time</div>
+        <div class="metric-label">Captured Task Time</div>
         <div id="teacher-captured-time" class="metric-value">0m</div>
-        <div class="metric-note">Shows timed module activity once saved</div>
+        <div class="metric-note">Saved tasks only; idle tabs ignored</div>
       </article>
       <article class="metric metric-card--art" style="--metric-art: url('../Assets/Images and Animations/Progress Bar/All steps complete.png');">
         <div class="metric-label">Average Completion</div>
@@ -167,7 +167,7 @@
       <summary class="section-title dashboard-dropdown-summary">
         <div>
           <h2>Class Trends</h2>
-          <p>Graphs for engagement, module completion, task time, and glossary recall</p>
+          <p>Graphs for engagement, module completion, captured task time, and glossary recall</p>
         </div>
         <span class="dashboard-dropdown-action"><span class="dashboard-action-open">Open</span><span class="dashboard-action-close">Close</span></span>
       </summary>
@@ -327,7 +327,7 @@
   <script src="../src/services/supabase-browser.js"></script>
   <script src="../src/services/response-moderation.js?v=student-review-queue-v1"></script>
   <script src="../auth/auth.js?v=20260513-auth-simplify"></script>
-  <script src="./dashboard.js?v=20260514-module-records"></script>
+  <script src="./dashboard.js?v=20260515-review-lifecycle"></script>
   <script src="../src/services/session-banner.js?v=20260508-teacher-analytics-logo"></script>
   <script src="../src/services/feedback-widget.js?v=20260513-free-text-privacy"></script>
 </body>

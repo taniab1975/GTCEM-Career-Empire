@@ -18,6 +18,16 @@ const STUDENT_STATUS_ICONS = {
 const TEACHER_STATS_FILTER_KEY = "career-empire-teacher-stats-dashboard-filter";
 const LEGACY_TEACHER_FILTER_KEY = "career-empire-teacher-dashboard-filter";
 const MODULE_AVAILABILITY_STORAGE_KEY = "career-empire-module-availability-v1";
+const TEACHER_REVIEW_FILTER_OPTIONS = [
+  { id: "new", label: "New" },
+  { id: "actioned", label: "Actioned" },
+  { id: "all", label: "All" }
+];
+const teacherReviewFilterState = {
+  responseReviews: "new",
+  feedbackReviews: "new",
+  storeRequests: "new"
+};
 const STUDENT_FREE_TEXT_PRIVACY_NOTICE = {
   title: "Note: your teacher can check anything you enter here.",
   body: 'Do not include surnames, student emails, phone numbers, social handles, exact workplace names, suburbs, addresses, or anything that identifies you or someone else. Use general wording such as "a fast-food workplace" or "a local retail store".'
@@ -1005,7 +1015,7 @@ async function getCurrentStudentResponseReviews() {
 
   const { data, error } = await supabase
     .from("student_response_reviews")
-    .select("id, evidence_type, task_key, task_label, prompt_text, raw_response_text, status, reviewer_note, reviewed_at, created_at, flags, flag_notes")
+    .select("id, source_evidence_id, student_id, class_id, module_id, evidence_type, task_key, task_label, prompt_text, raw_response_text, approved_response_text, status, reviewer_note, reviewed_at, created_at, flags, flag_notes")
     .eq("student_id", studentId)
     .order("created_at", { ascending: false })
     .limit(80);
@@ -1015,6 +1025,36 @@ async function getCurrentStudentResponseReviews() {
     return [];
   }
   return data || [];
+}
+
+async function getCurrentStudentApprovedPeerResponses() {
+  const authState = getAuthPrototypeState();
+  const session = getCurrentPlayerSession() || {};
+  const studentLogin = authState?.studentLogin || {};
+  const studentId = studentLogin.id || session.studentId || "";
+  const classId = studentLogin.classId || session.classId || "";
+  if (!classId) return [];
+
+  const supabase = await getSupabaseClientOrNull();
+  if (!supabase) return [];
+
+  let query = supabase
+    .from("student_response_reviews")
+    .select("id, student_id, module_id, evidence_type, task_key, task_label, prompt_text, approved_response_text, reviewed_at, created_at")
+    .eq("class_id", classId)
+    .eq("status", "approved")
+    .not("approved_response_text", "is", null)
+    .order("reviewed_at", { ascending: false, nullsFirst: false })
+    .limit(12);
+
+  if (studentId) query = query.neq("student_id", studentId);
+
+  const { data, error } = await query;
+  if (error) {
+    console.error("Approved peer responses could not be loaded", error);
+    return [];
+  }
+  return (data || []).filter(row => normaliseWhitespace(row.approved_response_text));
 }
 
 function findReviewForStarEntry(entry, reviewRows = []) {
@@ -1069,27 +1109,86 @@ function getStudentReviewNoticeText(row) {
   return `This response was saved for your teacher, but it was not added to the shared response pool ${reasonText}.`;
 }
 
+function getStudentReviewTopicId(row) {
+  const taskKey = String(row?.task_key || "");
+  const keyMatch = taskKey.match(/revision-topic-([a-z0-9-]+)/i);
+  if (keyMatch?.[1]) return keyMatch[1];
+  return "";
+}
+
+function getStudentReviewActionUrl(row) {
+  if ((row?.module_id || "") !== "est-prep") return "";
+  const topicId = getStudentReviewTopicId(row);
+  if (!topicId) return "../modules/est-prep/index.html";
+  const params = new URLSearchParams({
+    stage: "content",
+    topic: topicId,
+    view: "response"
+  });
+  return `../modules/est-prep/index.html?${params.toString()}`;
+}
+
+function getStudentReviewStatusText(row) {
+  if (row.status === "approved") {
+    return "Your response has been approved for the anonymous shared example pool. Other students may see the edited version, but your name is not shown.";
+  }
+  return getStudentReviewNoticeText(row);
+}
+
 function renderStudentResponseReviewNotices(reviewRows = []) {
   const panel = document.getElementById("student-review-notices-panel");
   const container = document.getElementById("student-review-notices");
   if (!panel || !container) return;
 
-  const rejectedRows = reviewRows
-    .filter(row => row.status === "rejected" && row.evidence_type !== "employability-star")
-    .slice(0, 5);
+  const actionedRows = reviewRows
+    .filter(row => ["approved", "rejected"].includes(row.status))
+    .slice(0, 6);
 
-  if (!rejectedRows.length) {
+  if (!actionedRows.length) {
     panel.hidden = true;
     container.innerHTML = "";
     return;
   }
 
   panel.hidden = false;
-  container.innerHTML = rejectedRows.map(row => `
-    <div class="student-review-notice">
+  container.innerHTML = actionedRows.map(row => {
+    const actionUrl = row.status === "rejected" ? getStudentReviewActionUrl(row) : "";
+    return `
+    <div class="student-review-notice student-review-notice--${escapeHtml(row.status)}">
       <strong>${escapeHtml(row.task_label || "Written response")}</strong>
-      <p>${escapeHtml(getStudentReviewNoticeText(row))}</p>
+      <p>${escapeHtml(getStudentReviewStatusText(row))}</p>
+      ${row.status === "approved" && row.approved_response_text ? `<blockquote>${escapeHtml(row.approved_response_text)}</blockquote>` : ""}
+      ${actionUrl ? `<div class="student-review-notice-actions"><a class="module-link" href="${escapeHtml(actionUrl)}">Revise and resubmit</a></div>` : ""}
       <small>${escapeHtml(formatDateTime(row.reviewed_at || row.created_at))}</small>
+    </div>
+  `;
+  }).join("");
+}
+
+function renderStudentApprovedPeerResponses(rows = []) {
+  const panel = document.getElementById("student-approved-examples-panel");
+  const container = document.getElementById("student-approved-examples");
+  if (!panel || !container) return;
+
+  const visibleRows = rows
+    .filter(row => normaliseWhitespace(row.approved_response_text))
+    .slice(0, 6);
+
+  if (!visibleRows.length) {
+    panel.hidden = true;
+    container.innerHTML = "";
+    return;
+  }
+
+  panel.hidden = false;
+  container.innerHTML = visibleRows.map(row => `
+    <div class="student-approved-example">
+      <div>
+        <strong>${escapeHtml(row.task_label || "Class example")}</strong>
+        <span>${escapeHtml(getModuleLabel(row.module_id || ""))}</span>
+      </div>
+      <p>${escapeHtml(row.prompt_text || "Teacher-approved class example")}</p>
+      <blockquote>${escapeHtml(row.approved_response_text)}</blockquote>
     </div>
   `).join("");
 }
@@ -1890,6 +1989,29 @@ function renderMatrixText(primary, caption = "", state = "neutral") {
   `;
 }
 
+function getTeacherResponseMatrixReviewStatus(status) {
+  const normalised = normaliseReviewStatus(status || "pending_review");
+  if (normalised === "approved") {
+    return {
+      label: "Approved",
+      className: "teacher-matrix-code--high",
+      note: "In anonymous pool"
+    };
+  }
+  if (normalised === "rejected") {
+    return {
+      label: "Rejected",
+      className: "teacher-matrix-code--nys",
+      note: "Not in pool"
+    };
+  }
+  return {
+    label: "Pending approval",
+    className: "teacher-matrix-code--mid",
+    note: "Teacher action needed"
+  };
+}
+
 function getTeacherMatrixStudentKey(student) {
   return String(student?.id || student?.studentId || student?.display_name || student?.username || student?.name || "").toLowerCase();
 }
@@ -1989,12 +2111,13 @@ function renderTeacherLongAnswerComparison(rows, students = []) {
                     </td>
                   `;
                 }
+                const reviewStatus = getTeacherResponseMatrixReviewStatus(response.reviewStatus);
                 return `
                   <td>
                     <div class="teacher-response-cell">
                       <div class="teacher-response-status">
-                        <span class="teacher-matrix-code teacher-matrix-code--mid">Pending approval</span>
-                        <span>${escapeHtml(response.scoreLabel)} • ${response.wordCount} words</span>
+                        <span class="teacher-matrix-code ${reviewStatus.className}">${escapeHtml(reviewStatus.label)}</span>
+                        <span>${escapeHtml(response.scoreLabel)} • ${response.wordCount} words • ${escapeHtml(reviewStatus.note)}</span>
                       </div>
                       <p class="teacher-response-prompt">${escapeHtml(response.prompt || column.prompt)}</p>
                       <div class="answer-response">${escapeHtml(response.response)}</div>
@@ -2063,13 +2186,15 @@ function renderTeacherResponseReviewInbox(rows = []) {
     const statusWeight = status => status === "pending_review" ? 0 : status === "approved" ? 1 : 2;
     return statusWeight(a.status) - statusWeight(b.status) || parseTime(b.created_at) - parseTime(a.created_at);
   });
+  const activeFilter = getTeacherReviewFilter("responseReviews");
+  const visibleRows = filterTeacherReviewItems(sortedRows, "responseReviews", row => row.status);
 
   if (!sortedRows.length) {
     container.innerHTML = '<div class="timeline-item"><strong>No responses waiting for review</strong><p>Free-text EST and Lifelong Learning submissions will appear here before they can be shared as anonymous comparison examples.</p></div>';
     return;
   }
 
-  container.innerHTML = sortedRows.slice(0, 30).map(row => {
+  const responseCards = visibleRows.slice(0, 30).map(row => {
     const flags = getResponseReviewFlags(row);
     const studentName = row.students?.display_name || row.students?.username || "Student";
     const classLabel = row.classes?.class_code || row.classes?.name || "Class";
@@ -2127,6 +2252,26 @@ function renderTeacherResponseReviewInbox(rows = []) {
       </article>
     `;
   }).join("");
+
+  container.innerHTML = `
+    ${renderTeacherReviewFilterControls("responseReviews", sortedRows, row => row.status, "Student submission status filter")}
+    ${responseCards || renderTeacherReviewEmptyState(activeFilter, {
+      new: {
+        title: "No new responses waiting for review",
+        body: "Approved and rejected responses are still available under Actioned or All."
+      },
+      actioned: {
+        title: "No actioned responses yet",
+        body: "Approved and rejected responses will appear here after review."
+      },
+      all: {
+        title: "No responses waiting for review",
+        body: "Free-text EST and Lifelong Learning submissions will appear here before they can be shared as anonymous comparison examples."
+      }
+    })}
+  `;
+
+  bindTeacherReviewFilterControls(container, "responseReviews", () => renderTeacherResponseReviewInbox(rows));
 
   container.querySelectorAll("[data-review-action]").forEach(button => {
     button.addEventListener("click", async event => {
@@ -2193,13 +2338,15 @@ function renderTeacherFeedbackReviewInbox(items = []) {
     const statusWeight = status => normaliseReviewStatus(status) === "pending_review" ? 0 : 1;
     return statusWeight(a.status) - statusWeight(b.status) || parseTime(b.createdAt) - parseTime(a.createdAt);
   });
+  const activeFilter = getTeacherReviewFilter("feedbackReviews");
+  const visibleItems = filterTeacherReviewItems(sortedItems, "feedbackReviews", item => item.status);
 
   if (!sortedItems.length) {
     container.innerHTML = '<div class="timeline-item"><strong>No feedback waiting for review</strong><p>Feedback button reports and other site feedback will appear here for teacher checking.</p></div>';
     return;
   }
 
-  container.innerHTML = sortedItems.slice(0, 40).map(item => {
+  const feedbackCards = visibleItems.slice(0, 40).map(item => {
     const flags = normaliseFlagList(item.flags);
     const status = normaliseReviewStatus(item.status);
     const statusLabel = getReviewStatusLabel(status, "Checked");
@@ -2245,6 +2392,26 @@ function renderTeacherFeedbackReviewInbox(items = []) {
       </article>
     `;
   }).join("");
+
+  container.innerHTML = `
+    ${renderTeacherReviewFilterControls("feedbackReviews", sortedItems, item => item.status, "Feedback review status filter")}
+    ${feedbackCards || renderTeacherReviewEmptyState(activeFilter, {
+      new: {
+        title: "No new feedback waiting for review",
+        body: "Checked and dismissed feedback is still available under Actioned or All."
+      },
+      actioned: {
+        title: "No actioned feedback yet",
+        body: "Checked and dismissed feedback will appear here after review."
+      },
+      all: {
+        title: "No feedback waiting for review",
+        body: "Feedback button reports and other site feedback will appear here for teacher checking."
+      }
+    })}
+  `;
+
+  bindTeacherReviewFilterControls(container, "feedbackReviews", () => renderTeacherFeedbackReviewInbox(items));
 
   container.querySelectorAll("[data-feedback-action]").forEach(button => {
     button.addEventListener("click", async event => {
@@ -2497,7 +2664,7 @@ function renderTeacherClassCharts(data) {
       valueLabel: formatDurationSeconds(row.seconds, "0m"),
       variant: row.variant
     })))
-    : `<div class="teacher-chart-empty">No timed task evidence yet</div>`;
+    : `<div class="teacher-chart-empty">No saved task time yet</div>`;
   const glossaryAttempted = data.glossary.totalTermsAttempted || 0;
   const glossaryCorrect = data.glossary.totalTermsCorrect || 0;
   const glossaryGap = Math.max(0, glossaryAttempted - glossaryCorrect);
@@ -2526,8 +2693,8 @@ function renderTeacherClassCharts(data) {
     </article>
     <article class="teacher-chart-card teacher-chart-card-wide">
       <div>
-        <div class="kicker">Task Time</div>
-        <h3>Time by strand or stage</h3>
+        <div class="kicker">Captured Task Time</div>
+        <h3>Saved time by section</h3>
       </div>
       <div class="teacher-chart-bars">${timeBars}</div>
     </article>
@@ -2625,7 +2792,9 @@ function buildCapabilityEvidenceEntries(parsedEvidenceRows = [], reviewRows = []
     };
   });
   const reviewEntries = reviewRows.map(row => {
-    const response = row.raw_response_text || row.approved_response_text || "";
+    const response = row.status === "approved" && row.approved_response_text
+      ? row.approved_response_text
+      : row.raw_response_text || "";
     const moduleId = row.module_id || "lifelong-learning";
     return {
       id: row.id,
@@ -3200,6 +3369,17 @@ function getEvidenceTaskLabel(row, payload = null) {
   return payload?.topic_group || payload?.task_name || row?.evidence_type || "Saved task";
 }
 
+function getEvidenceTimingLabel(row, payload = null) {
+  const moduleId = getEvidenceModuleId(row, payload);
+  if (moduleId !== "est-prep") return getEvidenceTaskLabel(row, payload);
+  if (payload?.topic_group) return `CORE - ${payload.topic_group}`;
+  const taskName = String(payload?.task_name || row?.evidence_type || "").toLowerCase();
+  if (taskName.includes("term") || row?.evidence_type === "glossary-check") return "TERM - Glossary";
+  if (taskName.includes("vtcs") || row?.evidence_type === "decoder-breakdown") return payload?.question_number ? `VTCS - Question ${payload.question_number}` : "VTCS - Decoder";
+  if (taskName.includes("boss") || row?.evidence_type === "est-response") return "BOSS - Final response";
+  return getEvidenceTaskLabel(row, payload);
+}
+
 function getLastActivityTime(student, progressRows, evidenceRows) {
   const values = [
     student?.last_login_at,
@@ -3302,6 +3482,71 @@ function getReviewStatusLabel(status, approvedLabel = "Approved") {
     rejected: "Rejected"
   };
   return labels[normaliseReviewStatus(status)] || String(status || "Pending review").replaceAll("_", " ");
+}
+
+function getTeacherReviewFilter(filterKey) {
+  const value = teacherReviewFilterState[filterKey] || "new";
+  return TEACHER_REVIEW_FILTER_OPTIONS.some(option => option.id === value) ? value : "new";
+}
+
+function setTeacherReviewFilter(filterKey, nextFilter) {
+  if (!TEACHER_REVIEW_FILTER_OPTIONS.some(option => option.id === nextFilter)) return false;
+  teacherReviewFilterState[filterKey] = nextFilter;
+  return true;
+}
+
+function getTeacherReviewStatusBucket(status) {
+  return normaliseReviewStatus(status) === "pending_review" ? "new" : "actioned";
+}
+
+function getTeacherReviewFilterCounts(items = [], getStatus = item => item?.status) {
+  return items.reduce((acc, item) => {
+    const bucket = getTeacherReviewStatusBucket(getStatus(item));
+    acc.all += 1;
+    acc[bucket] += 1;
+    return acc;
+  }, { all: 0, new: 0, actioned: 0 });
+}
+
+function filterTeacherReviewItems(items = [], filterKey, getStatus = item => item?.status) {
+  const activeFilter = getTeacherReviewFilter(filterKey);
+  if (activeFilter === "all") return items;
+  return items.filter(item => getTeacherReviewStatusBucket(getStatus(item)) === activeFilter);
+}
+
+function renderTeacherReviewFilterControls(filterKey, items = [], getStatus = item => item?.status, ariaLabel = "Review status filter") {
+  const activeFilter = getTeacherReviewFilter(filterKey);
+  const counts = getTeacherReviewFilterCounts(items, getStatus);
+  return `
+    <div class="teacher-review-filter" role="group" aria-label="${escapeHtml(ariaLabel)}">
+      ${TEACHER_REVIEW_FILTER_OPTIONS.map(option => `
+        <button
+          class="teacher-review-filter-button${option.id === activeFilter ? " is-active" : ""}"
+          type="button"
+          data-teacher-review-filter="${escapeHtml(filterKey)}"
+          data-teacher-review-filter-value="${escapeHtml(option.id)}"
+          aria-pressed="${option.id === activeFilter ? "true" : "false"}"
+        >
+          <span>${escapeHtml(option.label)}</span>
+          <span>${counts[option.id] || 0}</span>
+        </button>
+      `).join("")}
+    </div>
+  `;
+}
+
+function bindTeacherReviewFilterControls(container, filterKey, onChange) {
+  container.querySelectorAll(`[data-teacher-review-filter="${filterKey}"]`).forEach(button => {
+    button.addEventListener("click", event => {
+      const nextFilter = event.currentTarget.dataset.teacherReviewFilterValue;
+      if (setTeacherReviewFilter(filterKey, nextFilter)) onChange();
+    });
+  });
+}
+
+function renderTeacherReviewEmptyState(activeFilter, messages) {
+  const message = messages[activeFilter] || messages.all || messages.new;
+  return `<div class="timeline-item"><strong>${escapeHtml(message.title)}</strong><p>${escapeHtml(message.body)}</p></div>`;
 }
 
 function feedbackMatchesTeacherScope(item, dashboardContext, classCodeFilter) {
@@ -3624,13 +3869,19 @@ function buildStoreRequestApprovedItem(request, formData) {
 function renderTeacherStoreRequestList(items) {
   const container = document.getElementById("teacher-store-request-list");
   if (!container) return;
+  const sortedItems = [...items].sort((a, b) => {
+    const statusWeight = status => normaliseReviewStatus(status) === "pending_review" ? 0 : 1;
+    return statusWeight(a.status) - statusWeight(b.status) || parseTime(b.createdAt) - parseTime(a.createdAt);
+  });
+  const activeFilter = getTeacherReviewFilter("storeRequests");
+  const visibleItems = filterTeacherReviewItems(sortedItems, "storeRequests", item => item.status);
 
-  if (!items.length) {
+  if (!sortedItems.length) {
     container.innerHTML = '<div class="timeline-item"><strong>No store requests yet</strong><p>When students suggest new shop items, you will be able to review, edit, approve, and reject them here.</p></div>';
     return;
   }
 
-  container.innerHTML = items.map(item => {
+  const storeRequestCards = visibleItems.map(item => {
     const defaultCost = item.approvedItem?.cost || 1000;
     const defaultIcon = item.approvedItem?.icon || "🛍️";
     const defaultBenefit = item.approvedItem?.benefit || item.reason || "Student-requested item for the Career Empire store.";
@@ -3706,6 +3957,26 @@ function renderTeacherStoreRequestList(items) {
     `;
   }).join("");
 
+  container.innerHTML = `
+    ${renderTeacherReviewFilterControls("storeRequests", sortedItems, item => item.status, "Store request status filter")}
+    ${storeRequestCards || renderTeacherReviewEmptyState(activeFilter, {
+      new: {
+        title: "No new store requests",
+        body: "Approved and rejected requests are still available under Actioned or All."
+      },
+      actioned: {
+        title: "No actioned store requests yet",
+        body: "Approved and rejected requests will appear here after review."
+      },
+      all: {
+        title: "No store requests yet",
+        body: "When students suggest new shop items, you will be able to review, edit, approve, and reject them here."
+      }
+    })}
+  `;
+
+  bindTeacherReviewFilterControls(container, "storeRequests", () => renderTeacherStoreRequestList(items));
+
   container.querySelectorAll("[data-store-action]").forEach(button => {
     button.addEventListener("click", async event => {
       const action = event.currentTarget.dataset.storeAction;
@@ -3713,7 +3984,7 @@ function renderTeacherStoreRequestList(items) {
       if (!card) return;
       const requestId = card.dataset.storeRequestId;
       const fields = Object.fromEntries([...card.querySelectorAll("[data-store-field]")].map(field => [field.dataset.storeField, field.value.trim()]));
-      const request = items.find(entry => entry.id === requestId);
+      const request = sortedItems.find(entry => entry.id === requestId);
       if (!request) return;
 
       const categoryLabel = card.querySelector('[data-store-field="category"]')?.selectedOptions?.[0]?.textContent || fields.category;
@@ -4059,6 +4330,7 @@ function renderTeacherClassSelector(teacherData, studentRows = []) {
     ? "All classes"
     : teacherData?.selectedClassName || classes.find(classroom => classroom.id === selectedClassId)?.name || "Selected class";
   const currentRecordOption = STUDENT_RECORD_STATUS_OPTIONS.find(option => option.id === studentRecordFocus) || STUDENT_RECORD_STATUS_OPTIONS[0];
+  const classById = new Map(classes.map(classroom => [classroom.id, classroom]));
 
   selector.innerHTML = [
     `<option value="all" ${selectedClassId === "all" ? "selected" : ""}>All Classes At School</option>`,
@@ -4090,7 +4362,10 @@ function renderTeacherClassSelector(teacherData, studentRows = []) {
       ...sortedStudents.map(student => {
         const state = getStudentRecordState(student);
         const stateLabel = state.status === "active" ? "" : ` - ${state.label}`;
-        return `<option value="${student.id}" ${student.id === selectedStudentId ? "selected" : ""}>${escapeHtml(getStudentDisplayName(student))}${escapeHtml(stateLabel)}</option>`;
+        const classCodeLabel = selectedClassId === "all" && student.class_id
+          ? ` - ${classById.get(student.class_id)?.class_code || "No class"}`
+          : "";
+        return `<option value="${student.id}" ${student.id === selectedStudentId ? "selected" : ""}>${escapeHtml(getStudentDisplayName(student))}${escapeHtml(classCodeLabel)}${escapeHtml(stateLabel)}</option>`;
       })
     ].join("");
     studentSelector.disabled = !sortedStudents.length;
@@ -4261,7 +4536,10 @@ async function renderStudentLiveData(players, skillsData) {
   const hasESTProgress = hasMeaningfulModuleProgress(estProgressRow) || hasLocalESTProgress(session);
   const hasAnySavedProgress = hasPlayerProgress || hasLifelongProgress || hasESTProgress;
   const progressRecord = hasPlayerProgress ? record : null;
-  const reviewRows = await getCurrentStudentResponseReviews();
+  const [reviewRows, approvedPeerRows] = await Promise.all([
+    getCurrentStudentResponseReviews(),
+    getCurrentStudentApprovedPeerResponses()
+  ]);
   const skillEvidenceEntries = syncSkillStarEvidenceWithReviews(getSkillStarEvidenceEntries(), reviewRows);
   const skillEvidenceMap = getSkillStarEvidenceMap(skillEvidenceEntries);
   const progressMap = applySkillEvidenceProgress(deriveEmployabilityProgress(progressRecord), skillEvidenceMap);
@@ -4379,6 +4657,7 @@ async function renderStudentLiveData(players, skillsData) {
 
   renderSkills(skillsData, "student-skill-grid", progressMap, skillEvidenceMap);
   renderStudentResponseReviewNotices(reviewRows);
+  renderStudentApprovedPeerResponses(approvedPeerRows);
   renderStudentModules([
     {
       id: "megatrends",
@@ -4602,7 +4881,7 @@ function renderTeacherLiveData(players, skillsData, teacherData = null) {
   const timedEvidenceRows = parsedEvidenceRows.filter(entry => Number(entry.payload?.duration_seconds || 0) > 0);
   const strandTimeMap = timedEvidenceRows.reduce((acc, entry) => {
     const moduleId = getEvidenceModuleId(entry.row, entry.payload);
-    const label = entry.payload?.topic_group || entry.payload?.task_name || entry.row.evidence_type || "Task";
+    const label = getEvidenceTimingLabel(entry.row, entry.payload);
     const key = `${moduleId || "module"}::${label}`;
     if (!acc[key]) {
       acc[key] = {
@@ -4708,10 +4987,18 @@ function renderTeacherLiveData(players, skillsData, teacherData = null) {
     })
     .filter(item => item.wordCount >= 25 && !String(item.entry.row.evidence_type || "").includes("glossary"));
   const longAnswerScoreAverage = average(longAnswerCandidates.map(item => item.score).filter(value => typeof value === "number"));
+  const reviewByEvidenceId = new Map(
+    reviewRows
+      .filter(row => row.source_evidence_id)
+      .map(row => [row.source_evidence_id, row])
+  );
   const longAnswerRows = longAnswerCandidates.map(item => {
     const scoreGap = typeof item.score === "number" && longAnswerScoreAverage
       ? item.score - longAnswerScoreAverage
       : null;
+    const reviewRow = reviewByEvidenceId.get(item.entry.row.id)
+      || reviewRows.find(row => row.student_id === item.entry.row.student_id
+        && normaliseWhitespace(row.raw_response_text) === normaliseWhitespace(item.response));
     const moduleLabel = getModuleLabel(getEvidenceModuleId(item.entry.row, item.entry.payload));
     const prompt = getEvidencePromptText(item.entry.row, item.entry.payload);
     const columnKey = [
@@ -4732,7 +5019,8 @@ function renderTeacherLiveData(players, skillsData, teacherData = null) {
       classCompare: typeof scoreGap === "number" ? `${Math.abs(scoreGap)} points ${scoreGap >= 0 ? "above" : "below"} class average` : "No class score comparison",
       wordCount: item.wordCount,
       prompt,
-      response: item.response,
+      response: reviewRow?.status === "approved" && reviewRow.approved_response_text ? reviewRow.approved_response_text : item.response,
+      reviewStatus: reviewRow?.status || "pending_review",
       feedback: buildTeacherFeedbackSuggestion(item.response, item.score, longAnswerScoreAverage)
     };
   });

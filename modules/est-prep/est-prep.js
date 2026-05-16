@@ -75,6 +75,39 @@ function returnToTrack() {
   scrollToTopSmooth();
 }
 
+function handleESTPrepDeepLink() {
+  const params = new URLSearchParams(window.location.search || "");
+  if (params.get("stage") !== "content") return false;
+
+  const topicId = params.get("topic") || "";
+  const groups = state.stageDeck?.contentGroups || [];
+  const topicIndex = groups.findIndex(group => group.id === topicId);
+  if (topicIndex < 0) return false;
+
+  setLabMode(true);
+  setStageMenuMode(false);
+  setGameplayViewportMode(false);
+  setStagePulseVisible(false);
+  state.glossaryMissionMode = false;
+  clearGlossaryTimer();
+  syncMissionMode();
+  state.selectedStageId = "content";
+  state.lastBossReview = null;
+  state.lastContentTopicReview = null;
+  state.contentGroupIndex = topicIndex;
+  state.contentView = params.get("view") === "response" ? "response" : "intro";
+  state.contentGroupStartedAt = Date.now();
+  persistESTProgressSnapshot();
+  renderFocusNav();
+  renderMap();
+  renderContentStage();
+  scrollToTopSmooth();
+
+  const cleanUrl = `${window.location.pathname}${window.location.hash || ""}`;
+  window.history.replaceState({}, document.title, cleanUrl);
+  return true;
+}
+
 async function init() {
   state.student = getLoggedInStudent();
   installESTActiveTimerGuards();
@@ -116,6 +149,7 @@ async function init() {
   renderRewardPulse();
   renderDebrief();
   renderEvidence();
+  handleESTPrepDeepLink();
 }
 
 window.ESTPrep = {
