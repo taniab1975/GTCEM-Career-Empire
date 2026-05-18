@@ -187,3 +187,55 @@ create index if not exists idx_student_response_reviews_status on student_respon
 create index if not exists idx_student_response_reviews_class_id on student_response_reviews(class_id, status, created_at desc);
 create index if not exists idx_student_response_reviews_student_id on student_response_reviews(student_id, created_at desc);
 create index if not exists idx_community_votes_class_id on community_votes(class_id);
+
+-- Explicit Supabase Data API grants for core tables.
+-- RLS policies still decide which rows each role may read or write.
+grant usage on schema public to anon, authenticated, service_role;
+
+grant select
+  on table public.schools, public.modules, public.employability_skills
+  to anon, authenticated;
+
+grant select, insert
+  on table public.teachers
+  to anon;
+
+grant select, update
+  on table public.students
+  to anon;
+
+grant select
+  on table public.classes
+  to anon;
+
+grant select, insert, update
+  on table
+    public.student_module_progress,
+    public.assessment_evidence,
+    public.student_response_reviews,
+    public.player_profiles,
+    public.player_assets,
+    public.community_votes
+  to anon;
+
+grant select, insert, update
+  on table public.teachers
+  to authenticated;
+
+grant select, insert, update, delete
+  on table
+    public.classes,
+    public.students,
+    public.class_modules,
+    public.student_module_progress,
+    public.student_skill_progress,
+    public.assessment_evidence,
+    public.student_response_reviews,
+    public.player_profiles,
+    public.player_assets,
+    public.community_votes
+  to authenticated;
+
+grant all privileges
+  on all tables in schema public
+  to service_role;

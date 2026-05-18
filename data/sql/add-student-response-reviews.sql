@@ -35,6 +35,18 @@ on student_response_reviews(class_id, status, created_at desc);
 create index if not exists idx_student_response_reviews_student_id
 on student_response_reviews(student_id, created_at desc);
 
+grant select, insert, update
+  on table public.student_response_reviews
+  to anon;
+
+grant select, insert, update, delete
+  on table public.student_response_reviews
+  to authenticated;
+
+grant all privileges
+  on table public.student_response_reviews
+  to service_role;
+
 alter table student_response_reviews enable row level security;
 
 drop policy if exists "Prototype can manage student response reviews" on student_response_reviews;

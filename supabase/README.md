@@ -47,9 +47,12 @@ This matches the platform rule that student email addresses are not collected.
 6. Run `data/sql/add-feedback-reports.sql`
 7. Run `data/sql/add-game-progress-fields.sql`
 8. Run `data/sql/seed-schools.sql`
-9. For production privacy hardening, run `data/sql/rls-policies-school-privacy.sql`
-10. Copy `config/supabase-config.example.js` to a real config file
-11. Paste your project URL and anon key into that config file
+9. Run `data/sql/data-api-grants.sql`
+10. Choose one RLS mode:
+    - for browser-prototype access, run `data/sql/rls-policies-prototype.sql`
+    - for production privacy hardening, run `data/sql/rls-policies-school-privacy.sql`
+11. Copy `config/supabase-config.example.js` to a real config file
+12. Paste your project URL and anon key into that config file
 
 ## Suggested Config File
 
@@ -78,4 +81,6 @@ Do not commit your real Supabase anon key if you later move to a private deploym
 
 For the browser prototype phase, the anon key is expected to be public, but keep service-role keys out of the front end.
 
-Before using live student data, apply `data/sql/rls-policies-school-privacy.sql` so teacher reads are scoped to their school and the Global Index has aggregate-only RPC summaries available.
+Before using live student data, apply `data/sql/rls-policies-school-privacy.sql` so anonymous reads from student/sensitive tables are removed, teacher reads are scoped to their school, and the Global Index has aggregate-only RPC summaries available.
+
+`data/sql/rls-policies-school-privacy.sql` intentionally removes direct anonymous access to student gameplay tables. The current browser-only student login needs an RPC or backend session flow before that hardened script can be applied without breaking student login and gameplay writes.
