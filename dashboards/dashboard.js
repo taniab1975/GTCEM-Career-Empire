@@ -143,6 +143,14 @@ function normaliseWhitespace(value) {
   return String(value || "").replace(/\s+/g, " ").trim();
 }
 
+function normaliseComparableReviewText(value) {
+  return normaliseWhitespace(value)
+    .toLowerCase()
+    .replace(/[^a-z0-9\s]/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
 function isShareableReviewEvidence(rowOrType) {
   const evidenceType = typeof rowOrType === "string" ? rowOrType : rowOrType?.evidence_type;
   return SHAREABLE_REVIEW_EVIDENCE_TYPES.has(String(evidenceType || ""));
@@ -173,16 +181,11 @@ function isNonStudentReviewText(value) {
 }
 
 function matchesReviewExcludedText(responseText, excludedTexts = []) {
-  const normaliseComparableText = value => normaliseWhitespace(value)
-    .toLowerCase()
-    .replace(/[^a-z0-9\s]/g, " ")
-    .replace(/\s+/g, " ")
-    .trim();
-  const response = normaliseComparableText(responseText);
+  const response = normaliseComparableReviewText(responseText);
   if (!response) return false;
   return excludedTexts
     .flatMap(item => Array.isArray(item) ? item : [item])
-    .map(normaliseComparableText)
+    .map(normaliseComparableReviewText)
     .filter(Boolean)
     .some(item => item === response);
 }
@@ -205,6 +208,47 @@ function isTeacherLongAnswerCandidate(entry, responseText) {
     entry?.payload?.strong_answer
   ])) return false;
   return true;
+}
+
+function getTeacherReviewDedupeKey(row) {
+  return [
+    row?.student_id || "",
+    row?.class_id || "",
+    row?.module_id || "",
+    row?.evidence_type || "",
+    row?.task_key || "",
+    normaliseComparableReviewText(row?.raw_response_text || row?.approved_response_text || "")
+  ].join("::");
+}
+
+function getTeacherReviewDedupeWeight(row) {
+  const status = normaliseReviewStatus(row?.status);
+  if (status === "approved") return 3;
+  if (status === "rejected") return 2;
+  return 1;
+}
+
+function choosePreferredTeacherReviewRow(current, candidate) {
+  if (!current) return candidate;
+  const currentWeight = getTeacherReviewDedupeWeight(current);
+  const candidateWeight = getTeacherReviewDedupeWeight(candidate);
+  if (candidateWeight !== currentWeight) {
+    return candidateWeight > currentWeight ? candidate : current;
+  }
+  const currentTime = parseTime(current.reviewed_at || current.updated_at || current.created_at);
+  const candidateTime = parseTime(candidate.reviewed_at || candidate.updated_at || candidate.created_at);
+  return candidateTime > currentTime ? candidate : current;
+}
+
+function dedupeTeacherReviewRows(rows = []) {
+  const deduped = new Map();
+  rows.forEach(row => {
+    const key = getTeacherReviewDedupeKey(row);
+    if (!key.endsWith("::")) {
+      deduped.set(key, choosePreferredTeacherReviewRow(deduped.get(key), row));
+    }
+  });
+  return [...deduped.values()];
 }
 
 function getPlayers() {
@@ -1097,7 +1141,7 @@ async function getCurrentStudentResponseReviews() {
     console.error("Student response review status could not be loaded", error);
     return [];
   }
-  return (data || []).filter(isTeacherReviewableStudentResponse);
+  return dedupeTeacherReviewRows((data || []).filter(isTeacherReviewableStudentResponse));
 }
 
 async function getCurrentStudentApprovedPeerResponses() {
@@ -1127,7 +1171,7 @@ async function getCurrentStudentApprovedPeerResponses() {
     console.error("Approved peer responses could not be loaded", error);
     return [];
   }
-  return (data || []).filter(row => isTeacherReviewableStudentResponse(row) && normaliseWhitespace(row.approved_response_text));
+  return dedupeTeacherReviewRows((data || []).filter(row => isTeacherReviewableStudentResponse(row) && normaliseWhitespace(row.approved_response_text)));
 }
 
 function findReviewForStarEntry(entry, reviewRows = []) {
@@ -4257,9 +4301,9 @@ async function getTeacherDashboardData() {
     .filter(row => allowedStudentIds.has(row.student_id) && (!row.class_id || allowedClassIds.has(row.class_id)));
   const evidenceRows = unwrapResult(evidenceResult, "assessment_evidence")
     .filter(row => allowedStudentIds.has(row.student_id) && (!row.class_id || allowedClassIds.has(row.class_id)));
-  const reviewRows = allReviewRows
+  const reviewRows = dedupeTeacherReviewRows(allReviewRows
     .filter(row => allowedStudentIds.has(row.student_id))
-    .filter(isTeacherReviewableStudentResponse);
+    .filter(isTeacherReviewableStudentResponse));
   let profileRows = [];
   if (studentIds.length) {
     const { data, error: profilesError } = await supabase
@@ -4927,9 +4971,9 @@ function renderTeacherLiveData(players, skillsData, teacherData = null) {
   const reviewRowsBase = selectedStudent
     ? allReviewRows.filter(row => row.student_id === selectedStudent.id)
     : allReviewRows;
-  let reviewRows = reviewRowsBase
+  let reviewRows = dedupeTeacherReviewRows(reviewRowsBase
     .filter(row => visibleModuleIdSet.has(row.module_id || row.module_slug || "lifelong-learning"))
-    .filter(isTeacherReviewableStudentResponse);
+    .filter(isTeacherReviewableStudentResponse));
   const megatrendsProgressRows = moduleProgressRows.filter(row => (row.module_id || row.module_slug) === "megatrends");
   const estProgressRows = moduleProgressRows.filter(row => (row.module_id || row.module_slug) === "est-prep");
   const lifelongProgressRows = moduleProgressRows.filter(row => (row.module_id || row.module_slug) === "lifelong-learning");
@@ -4940,7 +4984,7 @@ function renderTeacherLiveData(players, skillsData, teacherData = null) {
     .filter(entry => visibleModuleIdSet.has(getEvidenceModuleId(entry.row, entry.payload)))
     .sort((a, b) => parseTime(b.row?.created_at) - parseTime(a.row?.created_at));
   const evidencePayloadById = new Map(parsedEvidenceRows.map(entry => [entry.row.id, entry.payload]));
-  reviewRows = reviewRows.filter(row => {
+  reviewRows = dedupeTeacherReviewRows(reviewRows.filter(row => {
     const payload = evidencePayloadById.get(row.source_evidence_id);
     if (!payload) return true;
     return !matchesReviewExcludedText(row.raw_response_text || row.approved_response_text, [
@@ -4949,7 +4993,7 @@ function renderTeacherLiveData(players, skillsData, teacherData = null) {
       payload.model_response,
       payload.strong_answer
     ]);
-  });
+  }));
   const evidenceRows = parsedEvidenceRows.map(entry => entry.row);
   const estEvidenceRows = evidenceRows.filter(row => (row.module_id || row.module_slug) === "est-prep");
   const skillProgressRows = latestPlayers.map(deriveEmployabilityProgress);
