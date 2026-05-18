@@ -441,6 +441,15 @@ function renderBossSamples(round) {
   `;
 }
 
+function getBossScaffoldReviewParts(round) {
+  return getBossScaffoldLines(round)
+    .map((line, index) => ({
+      label: line.replace(/\.\.\.$/, "").trim() || `Scaffold ${index + 1}`,
+      response: String(state.answers[`boss-scaffold-${index}`] || "").trim()
+    }))
+    .filter(part => part.response);
+}
+
 async function submitDecoder() {
   const rounds = getDecoderRounds();
   const roundIndex = getDecoderRoundIndex();
@@ -550,6 +559,9 @@ async function submitBoss() {
   const review = bossCriterionReview(round, response);
   state.lastBossReview = review;
   const scoreRatio = review.scorePercent / 100;
+  const showdownReason = String(state.answers.bossShowdownReason || "").trim();
+  const scaffoldParts = getBossScaffoldReviewParts(round);
+  const scaffoldReviewText = scaffoldParts.map(part => `${part.label}: ${part.response}`).join("\n");
   awardStage("boss", { scoreRatio });
   addEvidence("BOSS EST answer", `${round.question} • ${response || "No BOSS answer entered"}`);
   await saveProgress(
@@ -564,12 +576,45 @@ async function submitBoss() {
       reviewResponseText: response || "No response entered",
       extraPayload: {
         showdown_choice: state.answers.bossShowdown || "",
-        showdown_reason: state.answers.bossShowdownReason || "",
-        scaffold_parts: getBossScaffoldLines(round).map((line, index) => ({
-          label: line,
-          response: state.answers[`boss-scaffold-${index}`] || ""
-        }))
-      }
+        showdown_reason: showdownReason,
+        scaffold_parts: scaffoldParts,
+        sample_responses: (round.sampleResponses || []).map(sample => sample.response).filter(Boolean),
+        strong_answer: round.strongAnswer || ""
+      },
+      additionalEvidenceRows: [
+        showdownReason ? {
+          checkpoint: "boss-round-comparison",
+          evidenceType: "est-response",
+          taskName: "BOSS Sample Comparison",
+          durationSeconds,
+          autoScore: review.scorePercent,
+          prompt: "boss-round-comparison",
+          promptText: "Explain what makes the stronger sample better.",
+          responseText: `Selected sample: ${state.answers.bossShowdown || "Not selected"}\nReason: ${showdownReason}`,
+          reviewResponseText: showdownReason,
+          extraPayload: {
+            response_kind: "boss-sample-comparison",
+            showdown_choice: state.answers.bossShowdown || "",
+            sample_responses: (round.sampleResponses || []).map(sample => sample.response).filter(Boolean),
+            response_text: showdownReason
+          }
+        } : null,
+        scaffoldReviewText ? {
+          checkpoint: "boss-round-scaffold",
+          evidenceType: "est-response",
+          taskName: "BOSS Response Scaffold",
+          durationSeconds,
+          autoScore: review.scorePercent,
+          prompt: "boss-round-scaffold",
+          promptText: "Use the scaffold blocks to build a stronger answer before drafting the final response.",
+          responseText: scaffoldReviewText,
+          reviewResponseText: scaffoldReviewText,
+          extraPayload: {
+            response_kind: "boss-response-scaffold",
+            scaffold_parts: scaffoldParts
+          }
+        } : null
+      ].filter(Boolean)
     }
   );
 

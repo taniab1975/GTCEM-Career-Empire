@@ -1,7 +1,6 @@
 (function attachCareerEmpireResponseModeration(windowObj) {
   const REVIEWABLE_EVIDENCE_TYPES = new Set([
     "employability-star",
-    "decoder-breakdown",
     "est-response",
     "revision-topic-check",
     "justification"
@@ -26,6 +25,43 @@
 
   function getWordCount(value) {
     return normaliseText(value).split(/\s+/).filter(Boolean).length;
+  }
+
+  function normaliseComparableText(value) {
+    return normaliseText(value)
+      .toLowerCase()
+      .replace(/[^a-z0-9\s]/g, " ")
+      .replace(/\s+/g, " ")
+      .trim();
+  }
+
+  function isNonStudentResponseText(value) {
+    const text = normaliseText(value);
+    if (!text) return true;
+    const lower = text.toLowerCase();
+    const blockedExact = new Set([
+      "no response entered",
+      "no response entered.",
+      "no written response entered",
+      "no written response entered.",
+      "not chosen",
+      "not chosen."
+    ]);
+    if (blockedExact.has(lower)) return true;
+    if (/^(?:question\s+\d+\s*\/\s*\d+|final vtcs score|core check accuracy|term memory game)\b/i.test(text)) return true;
+    if (/\bverb:\s*.+\btopic:\s*.+\bcontext:\s*.+\bstructure:/i.test(text)) return true;
+    if (/\bselected:\s*.+\bcorrect answer:/i.test(text)) return true;
+    return false;
+  }
+
+  function matchesExcludedText(responseText, excludedTexts = []) {
+    const response = normaliseComparableText(responseText);
+    if (!response) return false;
+    return excludedTexts
+      .flatMap(item => Array.isArray(item) ? item : [item])
+      .map(normaliseComparableText)
+      .filter(Boolean)
+      .some(excluded => excluded === response);
   }
 
   function addFlag(flags, notes, key, note) {
@@ -112,6 +148,7 @@
 
   function isReviewableEvidence(evidenceType, responseText) {
     if (!REVIEWABLE_EVIDENCE_TYPES.has(String(evidenceType || ""))) return false;
+    if (isNonStudentResponseText(responseText)) return false;
     if (evidenceType === "employability-star") return getWordCount(responseText) >= 3;
     return getWordCount(responseText) >= 8;
   }
@@ -120,6 +157,7 @@
     const responseText = normaliseText(options.responseText);
     if (!supabase || !options.studentId || !options.classId || !options.schoolId) return null;
     if (!isReviewableEvidence(options.evidenceType, responseText)) return null;
+    if (matchesExcludedText(responseText, options.excludedResponseTexts || [])) return null;
 
     const flagged = flagResponseText(responseText, {
       student: options.student
@@ -143,6 +181,22 @@
       created_at: new Date().toISOString(),
       updated_at: new Date().toISOString()
     };
+
+    const existingResult = await supabase
+      .from("student_response_reviews")
+      .select("id")
+      .eq("student_id", row.student_id)
+      .eq("class_id", row.class_id)
+      .eq("module_id", row.module_id)
+      .eq("evidence_type", row.evidence_type)
+      .eq("task_key", row.task_key)
+      .eq("raw_response_text", row.raw_response_text)
+      .limit(1)
+      .maybeSingle();
+
+    if (existingResult.data?.id) {
+      return existingResult.data;
+    }
 
     const { data, error } = await supabase
       .from("student_response_reviews")

@@ -14,14 +14,17 @@ async function getSupabaseClientOrNull() {
 async function queueEvidenceForTeacherReview(supabase, evidenceRow, options = {}) {
   const moderation = window.CareerEmpireResponseModeration;
   if (!moderation || !evidenceRow?.id) return;
+  if (!Object.prototype.hasOwnProperty.call(options, "reviewResponseText")) return;
 
   const session = getPlayerSession();
   const student = state.student || {};
-  const responseText = options.reviewResponseText
-    || options.extraPayload?.built_response
-    || options.extraPayload?.response_text
-    || options.evidenceText
-    || "";
+  const responseText = options.reviewResponseText || "";
+  const excludedResponseTexts = [
+    options.extraPayload?.sample_response,
+    options.extraPayload?.sample_responses,
+    options.extraPayload?.model_response,
+    options.extraPayload?.strong_answer
+  ].flatMap(value => Array.isArray(value) ? value : [value]).filter(Boolean);
 
   await moderation.queuePendingReview(supabase, {
     sourceEvidenceId: evidenceRow.id,
@@ -34,6 +37,7 @@ async function queueEvidenceForTeacherReview(supabase, evidenceRow, options = {}
     taskLabel: options.taskLabel,
     promptText: options.promptText,
     responseText,
+    excludedResponseTexts,
     student: {
       displayName: student.displayName || session.playerName,
       username: student.username || session.username

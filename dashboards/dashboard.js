@@ -153,6 +153,60 @@ function isTeacherCheckOnlyReview(rowOrType) {
   return TEACHER_CHECK_ONLY_EVIDENCE_TYPES.has(String(evidenceType || ""));
 }
 
+function isNonStudentReviewText(value) {
+  const text = normaliseWhitespace(value);
+  if (!text) return true;
+  const lower = text.toLowerCase();
+  const blockedExact = new Set([
+    "no response entered",
+    "no response entered.",
+    "no written response entered",
+    "no written response entered.",
+    "not chosen",
+    "not chosen."
+  ]);
+  if (blockedExact.has(lower)) return true;
+  if (/^(?:question\s+\d+\s*\/\s*\d+|final vtcs score|core check accuracy|term memory game)\b/i.test(text)) return true;
+  if (/\bverb:\s*.+\btopic:\s*.+\bcontext:\s*.+\bstructure:/i.test(text)) return true;
+  if (/\bselected:\s*.+\bcorrect answer:/i.test(text)) return true;
+  return false;
+}
+
+function matchesReviewExcludedText(responseText, excludedTexts = []) {
+  const normaliseComparableText = value => normaliseWhitespace(value)
+    .toLowerCase()
+    .replace(/[^a-z0-9\s]/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+  const response = normaliseComparableText(responseText);
+  if (!response) return false;
+  return excludedTexts
+    .flatMap(item => Array.isArray(item) ? item : [item])
+    .map(normaliseComparableText)
+    .filter(Boolean)
+    .some(item => item === response);
+}
+
+function isTeacherReviewableStudentResponse(row) {
+  if (!isShareableReviewEvidence(row)) return false;
+  const responseText = row?.raw_response_text || row?.approved_response_text || "";
+  if (isNonStudentReviewText(responseText)) return false;
+  const wordCount = normaliseWhitespace(responseText).split(/\s+/).filter(Boolean).length;
+  return row?.evidence_type === "employability-star" ? wordCount >= 3 : wordCount >= 8;
+}
+
+function isTeacherLongAnswerCandidate(entry, responseText) {
+  if (isTeacherCheckOnlyReview(entry?.row?.evidence_type)) return false;
+  if (isNonStudentReviewText(responseText)) return false;
+  if (matchesReviewExcludedText(responseText, [
+    entry?.payload?.sample_response,
+    entry?.payload?.sample_responses,
+    entry?.payload?.model_response,
+    entry?.payload?.strong_answer
+  ])) return false;
+  return true;
+}
+
 function getPlayers() {
   return readJsonStorage("career-empire-players", []);
 }
@@ -1043,7 +1097,7 @@ async function getCurrentStudentResponseReviews() {
     console.error("Student response review status could not be loaded", error);
     return [];
   }
-  return data || [];
+  return (data || []).filter(isTeacherReviewableStudentResponse);
 }
 
 async function getCurrentStudentApprovedPeerResponses() {
@@ -1073,7 +1127,7 @@ async function getCurrentStudentApprovedPeerResponses() {
     console.error("Approved peer responses could not be loaded", error);
     return [];
   }
-  return (data || []).filter(row => isShareableReviewEvidence(row) && normaliseWhitespace(row.approved_response_text));
+  return (data || []).filter(row => isTeacherReviewableStudentResponse(row) && normaliseWhitespace(row.approved_response_text));
 }
 
 function findReviewForStarEntry(entry, reviewRows = []) {
@@ -1150,11 +1204,11 @@ function getStudentReviewActionUrl(row) {
 function getStudentReviewStatusText(row) {
   if (isTeacherCheckOnlyReview(row)) {
     if (row.status === "approved") {
-      return "Your VTCS decoder check has been checked by your teacher.";
+      return "Your saved check has been checked by your teacher.";
     }
     return row.reviewer_note
-      ? `Your VTCS decoder check was returned with teacher feedback: ${row.reviewer_note}`
-      : "Your VTCS decoder check was returned with teacher feedback.";
+      ? `Your saved check was returned with teacher feedback: ${row.reviewer_note}`
+      : "Your saved check was returned with teacher feedback.";
   }
   if (row.status === "approved") {
     return "Your response has been approved for the anonymous shared example pool. Other students may see the edited version, but your name is not shown.";
@@ -2218,7 +2272,7 @@ function renderTeacherResponseReviewInbox(rows = []) {
   const visibleRows = filterTeacherReviewItems(sortedRows, "responseReviews", row => row.status);
 
   if (!sortedRows.length) {
-    container.innerHTML = '<div class="timeline-item"><strong>No submissions waiting for review</strong><p>Free-text responses and VTCS decoder checks will appear here for teacher action.</p></div>';
+    container.innerHTML = '<div class="timeline-item"><strong>No written responses waiting for review</strong><p>Student-written CORE topic responses, BOSS comparison notes, scaffold drafts, and final answers will appear here for teacher action.</p></div>';
     return;
   }
 
@@ -2294,8 +2348,8 @@ function renderTeacherResponseReviewInbox(rows = []) {
         body: "Approved and rejected responses will appear here after review."
       },
       all: {
-        title: "No submissions waiting for review",
-        body: "Free-text responses and VTCS decoder checks will appear here for teacher action."
+        title: "No written responses waiting for review",
+        body: "Student-written CORE topic responses, BOSS comparison notes, scaffold drafts, and final answers will appear here for teacher action."
       }
     })}
   `;
@@ -4159,7 +4213,7 @@ async function getTeacherDashboardData() {
       .eq("school_id", schoolId)
       .in("class_id", classIds)
       .order("created_at", { ascending: false })
-      .limit(120)
+      .limit(300)
   ]);
 
   const unwrapResult = (result, label) => {
@@ -4203,7 +4257,9 @@ async function getTeacherDashboardData() {
     .filter(row => allowedStudentIds.has(row.student_id) && (!row.class_id || allowedClassIds.has(row.class_id)));
   const evidenceRows = unwrapResult(evidenceResult, "assessment_evidence")
     .filter(row => allowedStudentIds.has(row.student_id) && (!row.class_id || allowedClassIds.has(row.class_id)));
-  const reviewRows = allReviewRows.filter(row => allowedStudentIds.has(row.student_id));
+  const reviewRows = allReviewRows
+    .filter(row => allowedStudentIds.has(row.student_id))
+    .filter(isTeacherReviewableStudentResponse);
   let profileRows = [];
   if (studentIds.length) {
     const { data, error: profilesError } = await supabase
@@ -4871,7 +4927,9 @@ function renderTeacherLiveData(players, skillsData, teacherData = null) {
   const reviewRowsBase = selectedStudent
     ? allReviewRows.filter(row => row.student_id === selectedStudent.id)
     : allReviewRows;
-  const reviewRows = reviewRowsBase.filter(row => visibleModuleIdSet.has(row.module_id || row.module_slug || "lifelong-learning"));
+  let reviewRows = reviewRowsBase
+    .filter(row => visibleModuleIdSet.has(row.module_id || row.module_slug || "lifelong-learning"))
+    .filter(isTeacherReviewableStudentResponse);
   const megatrendsProgressRows = moduleProgressRows.filter(row => (row.module_id || row.module_slug) === "megatrends");
   const estProgressRows = moduleProgressRows.filter(row => (row.module_id || row.module_slug) === "est-prep");
   const lifelongProgressRows = moduleProgressRows.filter(row => (row.module_id || row.module_slug) === "lifelong-learning");
@@ -4881,6 +4939,17 @@ function renderTeacherLiveData(players, skillsData, teacherData = null) {
   }))
     .filter(entry => visibleModuleIdSet.has(getEvidenceModuleId(entry.row, entry.payload)))
     .sort((a, b) => parseTime(b.row?.created_at) - parseTime(a.row?.created_at));
+  const evidencePayloadById = new Map(parsedEvidenceRows.map(entry => [entry.row.id, entry.payload]));
+  reviewRows = reviewRows.filter(row => {
+    const payload = evidencePayloadById.get(row.source_evidence_id);
+    if (!payload) return true;
+    return !matchesReviewExcludedText(row.raw_response_text || row.approved_response_text, [
+      payload.sample_response,
+      payload.sample_responses,
+      payload.model_response,
+      payload.strong_answer
+    ]);
+  });
   const evidenceRows = parsedEvidenceRows.map(entry => entry.row);
   const estEvidenceRows = evidenceRows.filter(row => (row.module_id || row.module_slug) === "est-prep");
   const skillProgressRows = latestPlayers.map(deriveEmployabilityProgress);
@@ -5035,7 +5104,7 @@ function renderTeacherLiveData(players, skillsData, teacherData = null) {
     })
     .filter(item => item.wordCount >= 25
       && !String(item.entry.row.evidence_type || "").includes("glossary")
-      && !isTeacherCheckOnlyReview(item.entry.row.evidence_type));
+      && isTeacherLongAnswerCandidate(item.entry, item.response));
   const longAnswerScoreAverage = average(longAnswerCandidates.map(item => item.score).filter(value => typeof value === "number"));
   const reviewByEvidenceId = new Map(
     reviewRows
@@ -5146,9 +5215,8 @@ function renderTeacherLiveData(players, skillsData, teacherData = null) {
     .filter(item => feedbackMatchesTeacherScope(item, dashboardContext, classCodeFilter))
     .filter(item => !item.studentId || visibleStudentIds.has(item.studentId));
   const pendingReviewCount = reviewRows.filter(row => row.status === "pending_review").length;
-  const pendingDecoderCheckCount = reviewRows.filter(row => row.status === "pending_review" && isTeacherCheckOnlyReview(row)).length;
   const approvedReviewCount = reviewRows.filter(row => row.status === "approved" && isShareableReviewEvidence(row)).length;
-  const pendingShareableReviewCount = pendingReviewCount - pendingDecoderCheckCount;
+  const pendingShareableReviewCount = pendingReviewCount;
   const pendingFeedbackCount = feedbackReviewItems.filter(item => normaliseReviewStatus(item.status) === "pending_review").length;
   const pendingStoreRequestCount = storeRequests.filter(item => normaliseReviewStatus(item.status) === "pending_review").length;
   const studentCompareRows = students.map(student => {
@@ -5332,7 +5400,7 @@ function renderTeacherLiveData(players, skillsData, teacherData = null) {
   setText("teacher-evidence-count", String(evidenceCount));
   setText(
     "teacher-action-summary",
-    `${pendingShareableReviewCount} shareable response${pendingShareableReviewCount === 1 ? "" : "s"} waiting for approval and ${pendingDecoderCheckCount} VTCS check${pendingDecoderCheckCount === 1 ? "" : "s"} waiting for teacher feedback. ${pendingFeedbackCount} feedback report${pendingFeedbackCount === 1 ? "" : "s"} and ${pendingStoreRequestCount} shop request${pendingStoreRequestCount === 1 ? "" : "s"} need teacher checking. ${approvedReviewCount} approved response${approvedReviewCount === 1 ? "" : "s"} are ready for the comparison pool.`
+    `${pendingShareableReviewCount} student-written response${pendingShareableReviewCount === 1 ? "" : "s"} waiting for approval. ${pendingFeedbackCount} feedback report${pendingFeedbackCount === 1 ? "" : "s"} and ${pendingStoreRequestCount} shop request${pendingStoreRequestCount === 1 ? "" : "s"} need teacher checking. ${approvedReviewCount} approved response${approvedReviewCount === 1 ? "" : "s"} are ready for the comparison pool.`
   );
 
   renderTeacherCapabilityPortfolio({

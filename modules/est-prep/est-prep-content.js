@@ -2378,7 +2378,7 @@ async function submitContent() {
       }))
     },
     additionalEvidenceRows: topicSummaries.map(summary => ({
-      checkpoint: `revision-arena-${summary.group.id}`,
+      checkpoint: `revision-topic-${summary.group.id}`,
       evidenceType: "revision-topic-check",
       taskName: `CORE Check - ${summary.group.title}`,
       durationSeconds: summary.durationSeconds,
