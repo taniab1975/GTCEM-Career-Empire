@@ -24,6 +24,7 @@ const state = {
   answers: {},
   lastBossReview: null,
   decoderRoundIndex: 0,
+  decoderTransitionFeedback: null,
   decoderResults: {},
   contentGroupIndex: -1,
   contentView: "menu",

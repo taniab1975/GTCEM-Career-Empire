@@ -113,6 +113,16 @@ function getDecoderProgress() {
   };
 }
 
+function renderDecoderTransitionFeedback(feedback) {
+  if (!feedback) return "";
+  return `
+    <div class="feedback-box ${escapeHtml(feedback.type)} decoder-transition-feedback">
+      <p><strong>Question ${feedback.questionNumber} banked:</strong> ${feedback.correctCount}/${DECODER_PARTS.length} VTCS parts correct. Continue with Question ${feedback.nextQuestionNumber} below.</p>
+      <p>Best reading: <strong>${escapeHtml(feedback.correctVerb)}</strong> the issue of <strong>${escapeHtml(feedback.correctTopic)}</strong> in the context of <strong>${escapeHtml(feedback.correctContext)}</strong> using <strong>${escapeHtml(feedback.correctStructure)}</strong>.</p>
+    </div>
+  `;
+}
+
 function renderBossResponseBuilder(round) {
   const lines = getBossScaffoldLines(round);
   return `
@@ -152,6 +162,8 @@ function renderDecoderStage() {
   const round = rounds[roundIndex];
   if (!round) return;
   const progress = getDecoderProgress();
+  const transitionFeedback = state.decoderTransitionFeedback;
+  state.decoderTransitionFeedback = null;
   const progressBadges = rounds.map((_, index) => {
     const result = state.decoderResults?.[index];
     const stateClass = index === roundIndex ? "active" : result ? "complete" : "";
@@ -182,6 +194,7 @@ function renderDecoderStage() {
   setText("stage-title", "VTCS");
   setText("stage-subtitle", `What the question wants: run question forensics before you write. Question ${roundIndex + 1} of ${rounds.length}.`);
   renderStageRoot(`
+    ${renderDecoderTransitionFeedback(transitionFeedback)}
     <div class="badge-row decoder-progress-strip">${progressBadges}</div>
     <div class="question-card">
       <div class="kicker">VTCS ${roundIndex + 1}/${rounds.length}</div>
@@ -462,9 +475,21 @@ async function submitDecoder() {
   });
 
   if (roundIndex < rounds.length - 1) {
+    const type = questionScoreRatio >= 0.75 ? "good" : questionScoreRatio >= 0.5 ? "warn" : "bad";
     state.decoderRoundIndex = roundIndex + 1;
+    state.decoderTransitionFeedback = {
+      type,
+      questionNumber: roundIndex + 1,
+      nextQuestionNumber: roundIndex + 2,
+      correctCount,
+      correctVerb: round.correctVerb,
+      correctTopic: round.correctTopic,
+      correctContext: round.correctContext,
+      correctStructure: round.correctStructure
+    };
     persistESTProgressSnapshot();
-    showDecoderQuestionFeedback(round, roundIndex, correctCount, questionScoreRatio);
+    renderDecoderStage();
+    scrollToTopSmooth();
     return;
   }
 

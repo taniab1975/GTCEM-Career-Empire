@@ -28,6 +28,15 @@ const teacherReviewFilterState = {
   feedbackReviews: "new",
   storeRequests: "new"
 };
+const SHAREABLE_REVIEW_EVIDENCE_TYPES = new Set([
+  "employability-star",
+  "est-response",
+  "revision-topic-check",
+  "justification"
+]);
+const TEACHER_CHECK_ONLY_EVIDENCE_TYPES = new Set([
+  "decoder-breakdown"
+]);
 const STUDENT_FREE_TEXT_PRIVACY_NOTICE = {
   title: "Note: your teacher can check anything you enter here.",
   body: 'Do not include surnames, student emails, phone numbers, social handles, exact workplace names, suburbs, addresses, or anything that identifies you or someone else. Use general wording such as "a fast-food workplace" or "a local retail store".'
@@ -132,6 +141,16 @@ function readJsonStorage(key, fallback) {
 
 function normaliseWhitespace(value) {
   return String(value || "").replace(/\s+/g, " ").trim();
+}
+
+function isShareableReviewEvidence(rowOrType) {
+  const evidenceType = typeof rowOrType === "string" ? rowOrType : rowOrType?.evidence_type;
+  return SHAREABLE_REVIEW_EVIDENCE_TYPES.has(String(evidenceType || ""));
+}
+
+function isTeacherCheckOnlyReview(rowOrType) {
+  const evidenceType = typeof rowOrType === "string" ? rowOrType : rowOrType?.evidence_type;
+  return TEACHER_CHECK_ONLY_EVIDENCE_TYPES.has(String(evidenceType || ""));
 }
 
 function getPlayers() {
@@ -1054,7 +1073,7 @@ async function getCurrentStudentApprovedPeerResponses() {
     console.error("Approved peer responses could not be loaded", error);
     return [];
   }
-  return (data || []).filter(row => normaliseWhitespace(row.approved_response_text));
+  return (data || []).filter(row => isShareableReviewEvidence(row) && normaliseWhitespace(row.approved_response_text));
 }
 
 function findReviewForStarEntry(entry, reviewRows = []) {
@@ -1129,6 +1148,14 @@ function getStudentReviewActionUrl(row) {
 }
 
 function getStudentReviewStatusText(row) {
+  if (isTeacherCheckOnlyReview(row)) {
+    if (row.status === "approved") {
+      return "Your VTCS decoder check has been checked by your teacher.";
+    }
+    return row.reviewer_note
+      ? `Your VTCS decoder check was returned with teacher feedback: ${row.reviewer_note}`
+      : "Your VTCS decoder check was returned with teacher feedback.";
+  }
   if (row.status === "approved") {
     return "Your response has been approved for the anonymous shared example pool. Other students may see the edited version, but your name is not shown.";
   }
@@ -1153,11 +1180,12 @@ function renderStudentResponseReviewNotices(reviewRows = []) {
   panel.hidden = false;
   container.innerHTML = actionedRows.map(row => {
     const actionUrl = row.status === "rejected" ? getStudentReviewActionUrl(row) : "";
+    const showApprovedText = row.status === "approved" && row.approved_response_text && isShareableReviewEvidence(row);
     return `
     <div class="student-review-notice student-review-notice--${escapeHtml(row.status)}">
       <strong>${escapeHtml(row.task_label || "Written response")}</strong>
       <p>${escapeHtml(getStudentReviewStatusText(row))}</p>
-      ${row.status === "approved" && row.approved_response_text ? `<blockquote>${escapeHtml(row.approved_response_text)}</blockquote>` : ""}
+      ${showApprovedText ? `<blockquote>${escapeHtml(row.approved_response_text)}</blockquote>` : ""}
       ${actionUrl ? `<div class="student-review-notice-actions"><a class="module-link" href="${escapeHtml(actionUrl)}">Revise and resubmit</a></div>` : ""}
       <small>${escapeHtml(formatDateTime(row.reviewed_at || row.created_at))}</small>
     </div>
@@ -1171,7 +1199,7 @@ function renderStudentApprovedPeerResponses(rows = []) {
   if (!panel || !container) return;
 
   const visibleRows = rows
-    .filter(row => normaliseWhitespace(row.approved_response_text))
+    .filter(row => isShareableReviewEvidence(row) && normaliseWhitespace(row.approved_response_text))
     .slice(0, 6);
 
   if (!visibleRows.length) {
@@ -2190,7 +2218,7 @@ function renderTeacherResponseReviewInbox(rows = []) {
   const visibleRows = filterTeacherReviewItems(sortedRows, "responseReviews", row => row.status);
 
   if (!sortedRows.length) {
-    container.innerHTML = '<div class="timeline-item"><strong>No responses waiting for review</strong><p>Free-text EST and Lifelong Learning submissions will appear here before they can be shared as anonymous comparison examples.</p></div>';
+    container.innerHTML = '<div class="timeline-item"><strong>No submissions waiting for review</strong><p>Free-text responses and VTCS decoder checks will appear here for teacher action.</p></div>';
     return;
   }
 
@@ -2199,13 +2227,14 @@ function renderTeacherResponseReviewInbox(rows = []) {
     const studentName = row.students?.display_name || row.students?.username || "Student";
     const classLabel = row.classes?.class_code || row.classes?.name || "Class";
     const approvedText = row.approved_response_text || row.raw_response_text || "";
+    const checkOnly = isTeacherCheckOnlyReview(row);
     const selectedRejectionReason = getRejectionReasonFromNote(row.reviewer_note || "");
     const reviewerNoteDetails = getRejectionDetailsFromNote(row.reviewer_note || "");
     const statusLabel = row.status === "pending_review"
-      ? "Pending review"
+      ? checkOnly ? "Pending check" : "Pending review"
       : row.status === "approved"
-        ? "Approved for pool"
-        : "Rejected";
+        ? checkOnly ? "Checked" : "Approved for pool"
+        : checkOnly ? "Feedback sent" : "Rejected";
 
     return `
       <article class="response-review-card" data-response-review-id="${row.id}">
@@ -2228,11 +2257,11 @@ function renderTeacherResponseReviewInbox(rows = []) {
           <p>${escapeHtml(row.prompt_text || "Saved written response")}</p>
         </div>
         <div class="response-review-source">
-          <strong>Original student response</strong>
+          <strong>${checkOnly ? "Saved student check" : "Original student response"}</strong>
           <p>${escapeHtml(row.raw_response_text || "")}</p>
         </div>
         <div class="response-review-form">
-          <label>Approved anonymous version</label>
+          <label>${checkOnly ? "Teacher-readable checked record" : "Approved anonymous version"}</label>
           <textarea data-review-field="approvedText">${escapeHtml(approvedText)}</textarea>
           <label>Rejection reason</label>
           <select data-review-field="rejectionReason">
@@ -2243,8 +2272,8 @@ function renderTeacherResponseReviewInbox(rows = []) {
           <input type="text" data-review-field="reviewerNote" value="${escapeHtml(reviewerNoteDetails)}" placeholder="Optional internal note">
         </div>
         <div class="module-actions">
-          <button class="module-link" type="button" data-review-action="approve">Approve Edited Version</button>
-          <button class="module-link button-danger" type="button" data-review-action="reject">Reject From Pool</button>
+          <button class="module-link" type="button" data-review-action="approve">${checkOnly ? "Mark Checked" : "Approve Edited Version"}</button>
+          <button class="module-link button-danger" type="button" data-review-action="reject">${checkOnly ? "Return With Feedback" : "Reject From Pool"}</button>
         </div>
         <p class="store-request-status" data-review-status>
           <strong>Current status:</strong> ${escapeHtml(statusLabel)}${row.reviewed_at ? ` • Reviewed ${escapeHtml(formatDateTime(row.reviewed_at))}` : ""}
@@ -2265,8 +2294,8 @@ function renderTeacherResponseReviewInbox(rows = []) {
         body: "Approved and rejected responses will appear here after review."
       },
       all: {
-        title: "No responses waiting for review",
-        body: "Free-text EST and Lifelong Learning submissions will appear here before they can be shared as anonymous comparison examples."
+        title: "No submissions waiting for review",
+        body: "Free-text responses and VTCS decoder checks will appear here for teacher action."
       }
     })}
   `;
@@ -2322,12 +2351,31 @@ async function updateStudentResponseReview(reviewId, options = {}) {
     updated_at: new Date().toISOString()
   };
 
-  const { error } = await supabase
+  const { data, error } = await supabase
     .from("student_response_reviews")
     .update(payload)
-    .eq("id", reviewId);
+    .eq("id", reviewId)
+    .select("id, source_evidence_id, status, approved_response_text, reviewer_note")
+    .maybeSingle();
 
   if (error) throw error;
+
+  if (data?.source_evidence_id) {
+    const feedbackLines = [
+      `Teacher review: ${isApproved ? "checked/approved" : "returned for revision"}`,
+      options.reviewerNote ? `Teacher note: ${options.reviewerNote}` : "",
+      isApproved && options.approvedText ? `Checked version: ${options.approvedText}` : ""
+    ].filter(Boolean).join("\n");
+
+    const evidenceResult = await supabase
+      .from("assessment_evidence")
+      .update({ teacher_feedback: feedbackLines })
+      .eq("id", data.source_evidence_id);
+
+    if (evidenceResult.error) {
+      console.warn("Assessment evidence feedback mirror could not be updated:", evidenceResult.error);
+    }
+  }
 }
 
 function renderTeacherFeedbackReviewInbox(items = []) {
@@ -4985,7 +5033,9 @@ function renderTeacherLiveData(players, skillsData, teacherData = null) {
         taskLabel
       };
     })
-    .filter(item => item.wordCount >= 25 && !String(item.entry.row.evidence_type || "").includes("glossary"));
+    .filter(item => item.wordCount >= 25
+      && !String(item.entry.row.evidence_type || "").includes("glossary")
+      && !isTeacherCheckOnlyReview(item.entry.row.evidence_type));
   const longAnswerScoreAverage = average(longAnswerCandidates.map(item => item.score).filter(value => typeof value === "number"));
   const reviewByEvidenceId = new Map(
     reviewRows
@@ -5096,7 +5146,9 @@ function renderTeacherLiveData(players, skillsData, teacherData = null) {
     .filter(item => feedbackMatchesTeacherScope(item, dashboardContext, classCodeFilter))
     .filter(item => !item.studentId || visibleStudentIds.has(item.studentId));
   const pendingReviewCount = reviewRows.filter(row => row.status === "pending_review").length;
-  const approvedReviewCount = reviewRows.filter(row => row.status === "approved").length;
+  const pendingDecoderCheckCount = reviewRows.filter(row => row.status === "pending_review" && isTeacherCheckOnlyReview(row)).length;
+  const approvedReviewCount = reviewRows.filter(row => row.status === "approved" && isShareableReviewEvidence(row)).length;
+  const pendingShareableReviewCount = pendingReviewCount - pendingDecoderCheckCount;
   const pendingFeedbackCount = feedbackReviewItems.filter(item => normaliseReviewStatus(item.status) === "pending_review").length;
   const pendingStoreRequestCount = storeRequests.filter(item => normaliseReviewStatus(item.status) === "pending_review").length;
   const studentCompareRows = students.map(student => {
@@ -5280,7 +5332,7 @@ function renderTeacherLiveData(players, skillsData, teacherData = null) {
   setText("teacher-evidence-count", String(evidenceCount));
   setText(
     "teacher-action-summary",
-    `${pendingReviewCount} student free-text response${pendingReviewCount === 1 ? "" : "s"} waiting for sharing approval. ${pendingFeedbackCount} feedback report${pendingFeedbackCount === 1 ? "" : "s"} and ${pendingStoreRequestCount} shop request${pendingStoreRequestCount === 1 ? "" : "s"} need teacher checking. ${approvedReviewCount} approved response${approvedReviewCount === 1 ? "" : "s"} are ready for the comparison pool.`
+    `${pendingShareableReviewCount} shareable response${pendingShareableReviewCount === 1 ? "" : "s"} waiting for approval and ${pendingDecoderCheckCount} VTCS check${pendingDecoderCheckCount === 1 ? "" : "s"} waiting for teacher feedback. ${pendingFeedbackCount} feedback report${pendingFeedbackCount === 1 ? "" : "s"} and ${pendingStoreRequestCount} shop request${pendingStoreRequestCount === 1 ? "" : "s"} need teacher checking. ${approvedReviewCount} approved response${approvedReviewCount === 1 ? "" : "s"} are ready for the comparison pool.`
   );
 
   renderTeacherCapabilityPortfolio({

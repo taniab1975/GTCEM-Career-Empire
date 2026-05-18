@@ -1,6 +1,7 @@
 (function attachCareerEmpireResponseModeration(windowObj) {
   const REVIEWABLE_EVIDENCE_TYPES = new Set([
     "employability-star",
+    "decoder-breakdown",
     "est-response",
     "revision-topic-check",
     "justification"
