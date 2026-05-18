@@ -4968,10 +4968,7 @@ function renderTeacherLiveData(players, skillsData, teacherData = null) {
   const voteRows = safeTeacherData?.voteRows || [];
   const feedbackRows = safeTeacherData?.feedbackRows || [];
   const allReviewRows = safeTeacherData?.reviewRows || [];
-  const reviewRowsBase = selectedStudent
-    ? allReviewRows.filter(row => row.student_id === selectedStudent.id)
-    : allReviewRows;
-  let reviewRows = dedupeTeacherReviewRows(reviewRowsBase
+  let reviewRows = dedupeTeacherReviewRows(allReviewRows
     .filter(row => visibleModuleIdSet.has(row.module_id || row.module_slug || "lifelong-learning"))
     .filter(isTeacherReviewableStudentResponse));
   const megatrendsProgressRows = moduleProgressRows.filter(row => (row.module_id || row.module_slug) === "megatrends");
@@ -4983,7 +4980,13 @@ function renderTeacherLiveData(players, skillsData, teacherData = null) {
   }))
     .filter(entry => visibleModuleIdSet.has(getEvidenceModuleId(entry.row, entry.payload)))
     .sort((a, b) => parseTime(b.row?.created_at) - parseTime(a.row?.created_at));
-  const evidencePayloadById = new Map(parsedEvidenceRows.map(entry => [entry.row.id, entry.payload]));
+  const evidencePayloadById = new Map(allEvidenceRows
+    .map(row => ({
+      row,
+      payload: parseStructuredEvidence(row)
+    }))
+    .filter(entry => visibleModuleIdSet.has(getEvidenceModuleId(entry.row, entry.payload)))
+    .map(entry => [entry.row.id, entry.payload]));
   reviewRows = dedupeTeacherReviewRows(reviewRows.filter(row => {
     const payload = evidencePayloadById.get(row.source_evidence_id);
     if (!payload) return true;
