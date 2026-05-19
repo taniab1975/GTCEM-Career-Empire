@@ -2920,7 +2920,12 @@ function getCapabilityMarkerLabels(text) {
 }
 
 function buildCapabilityEvidenceEntries(parsedEvidenceRows = [], reviewRows = [], skillCategories = []) {
-  const assessmentEntries = parsedEvidenceRows.map(entry => {
+  const assessmentEntries = parsedEvidenceRows
+    .filter(entry => {
+      const moduleId = getEvidenceModuleId(entry.row, entry.payload);
+      return moduleId === "lifelong-learning" && entry.row.evidence_type === "employability-star";
+    })
+    .map(entry => {
     const response = getEvidenceResponseText(entry.row, entry.payload);
     const score = getEvidenceScorePercent(entry.row, entry.payload);
     return {
@@ -2937,7 +2942,9 @@ function buildCapabilityEvidenceEntries(parsedEvidenceRows = [], reviewRows = []
       capabilityIds: inferCapabilityIdsFromEvidence(entry, skillCategories)
     };
   });
-  const reviewEntries = reviewRows.map(row => {
+  const reviewEntries = reviewRows
+    .filter(row => row.evidence_type === "employability-star")
+    .map(row => {
     const response = row.status === "approved" && row.approved_response_text
       ? row.approved_response_text
       : row.raw_response_text || "";
@@ -4253,7 +4260,7 @@ async function getTeacherDashboardData() {
       .limit(160),
     supabase
       .from("student_response_reviews")
-      .select("*, students(display_name, username, class_id), classes(name, class_code)")
+      .select("*")
       .eq("school_id", schoolId)
       .in("class_id", classIds)
       .order("created_at", { ascending: false })
@@ -4277,7 +4284,24 @@ async function getTeacherDashboardData() {
   const students = allStudents.filter(student => studentMatchesRecordFocus(student, studentRecordFocus));
   const voteRows = unwrapResult(votesResult, "community_votes");
   const feedbackRows = unwrapResult(feedbackResult, "feedback_reports");
-  const allReviewRows = unwrapResult(reviewsResult, "student_response_reviews");
+  const studentById = new Map(allStudents.map(student => [student.id, student]));
+  const classById = new Map(availableClasses.map(classroom => [classroom.id, classroom]));
+  const allReviewRows = unwrapResult(reviewsResult, "student_response_reviews").map(row => {
+    const student = studentById.get(row.student_id) || {};
+    const classroom = classById.get(row.class_id) || {};
+    return {
+      ...row,
+      students: row.students || {
+        display_name: student.display_name || "",
+        username: student.username || "",
+        class_id: student.class_id || row.class_id || ""
+      },
+      classes: row.classes || {
+        name: classroom.name || "",
+        class_code: classroom.class_code || ""
+      }
+    };
+  });
 
   const studentIds = students.map(student => student.id);
   const allowedStudentIds = new Set(studentIds);
