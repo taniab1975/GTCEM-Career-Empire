@@ -30,11 +30,11 @@ const teacherReviewFilterState = {
 };
 const SHAREABLE_REVIEW_EVIDENCE_TYPES = new Set([
   "employability-star",
+  "est-response",
+  "revision-topic-check",
   "justification"
 ]);
 const TEACHER_CHECK_ONLY_EVIDENCE_TYPES = new Set([
-  "est-response",
-  "revision-topic-check",
   "decoder-breakdown"
 ]);
 const STUDENT_FREE_TEXT_PRIVACY_NOTICE = {
