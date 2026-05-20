@@ -41,6 +41,7 @@ const STUDENT_FREE_TEXT_PRIVACY_NOTICE = {
   title: "Note: your teacher can check anything you enter here.",
   body: 'Do not include surnames, student emails, phone numbers, social handles, exact workplace names, suburbs, addresses, or anything that identifies you or someone else. Use general wording such as "a fast-food workplace" or "a local retail store".'
 };
+const QUIET_REJECTION_NOTE_PREFIX = "[quiet-reject]";
 const RESPONSE_REJECTION_REASONS = [
   "Contains personal or identifying information",
   "Contains profanity or inappropriate language",
@@ -1141,7 +1142,7 @@ async function getCurrentStudentResponseReviews() {
     console.error("Student response review status could not be loaded", error);
     return [];
   }
-  return dedupeTeacherReviewRows((data || []).filter(isTeacherReviewableStudentResponse));
+  return dedupeTeacherReviewRows((data || []).filter(row => !isQuietReviewRejection(row) && isTeacherReviewableStudentResponse(row)));
 }
 
 async function getCurrentStudentApprovedPeerResponses() {
@@ -1266,7 +1267,7 @@ function renderStudentResponseReviewNotices(reviewRows = []) {
   if (!panel || !container) return;
 
   const actionedRows = reviewRows
-    .filter(row => ["approved", "rejected"].includes(row.status))
+    .filter(row => ["approved", "rejected"].includes(row.status) && !isQuietReviewRejection(row))
     .slice(0, 6);
 
   if (!actionedRows.length) {
@@ -2286,13 +2287,27 @@ function getResponseReviewFlagLabel(flag) {
 
 function getRejectionReasonFromNote(note = "") {
   const value = String(note || "");
+  if (isQuietReviewRejection(value)) return "";
   return RESPONSE_REJECTION_REASONS.find(reason => value === reason || value.startsWith(`${reason}:`)) || "";
 }
 
 function getRejectionDetailsFromNote(note = "") {
   const value = String(note || "");
+  if (isQuietReviewRejection(value)) {
+    return value.replace(QUIET_REJECTION_NOTE_PREFIX, "").replace(/^:\s*/, "").trim();
+  }
   const reason = getRejectionReasonFromNote(value);
   return reason ? value.replace(reason, "").replace(/^:\s*/, "").trim() : value;
+}
+
+function isQuietReviewRejection(rowOrNote) {
+  const note = typeof rowOrNote === "string" ? rowOrNote : rowOrNote?.reviewer_note;
+  return String(note || "").trim().startsWith(QUIET_REJECTION_NOTE_PREFIX);
+}
+
+function buildQuietRejectionNote(details = "") {
+  const cleanDetails = String(details || "").trim();
+  return cleanDetails ? `${QUIET_REJECTION_NOTE_PREFIX}: ${cleanDetails}` : QUIET_REJECTION_NOTE_PREFIX;
 }
 
 function buildReviewerNote(reviewStatus, reason = "", details = "") {
@@ -2326,13 +2341,14 @@ function renderTeacherResponseReviewInbox(rows = []) {
     const classLabel = row.classes?.class_code || row.classes?.name || "Class";
     const approvedText = row.approved_response_text || row.raw_response_text || "";
     const checkOnly = isTeacherCheckOnlyReview(row);
+    const quietlyRejected = row.status === "rejected" && isQuietReviewRejection(row);
     const selectedRejectionReason = getRejectionReasonFromNote(row.reviewer_note || "");
     const reviewerNoteDetails = getRejectionDetailsFromNote(row.reviewer_note || "");
     const statusLabel = row.status === "pending_review"
       ? checkOnly ? "Pending check" : "Pending review"
       : row.status === "approved"
         ? checkOnly ? "Checked" : "Approved for pool"
-        : checkOnly ? "Feedback sent" : "Rejected";
+        : quietlyRejected ? "Rejected quietly" : checkOnly ? "Feedback sent" : "Rejected";
 
     return `
       <article class="response-review-card" data-response-review-id="${row.id}">
@@ -2372,6 +2388,7 @@ function renderTeacherResponseReviewInbox(rows = []) {
         <div class="module-actions">
           <button class="module-link" type="button" data-review-action="approve">${checkOnly ? "Mark Checked" : "Approve Edited Version"}</button>
           <button class="module-link button-danger" type="button" data-review-action="reject">${checkOnly ? "Return With Feedback" : "Reject From Pool"}</button>
+          <button class="module-link button-danger" type="button" data-review-action="rejectQuiet">Reject - don't notify student</button>
         </div>
         <p class="store-request-status" data-review-status>
           <strong>Current status:</strong> ${escapeHtml(statusLabel)}${row.reviewed_at ? ` • Reviewed ${escapeHtml(formatDateTime(row.reviewed_at))}` : ""}
@@ -2403,6 +2420,7 @@ function renderTeacherResponseReviewInbox(rows = []) {
   container.querySelectorAll("[data-review-action]").forEach(button => {
     button.addEventListener("click", async event => {
       const action = event.currentTarget.dataset.reviewAction;
+      const isQuietReject = action === "rejectQuiet";
       const card = event.currentTarget.closest("[data-response-review-id]");
       if (!card) return;
 
@@ -2425,7 +2443,8 @@ function renderTeacherResponseReviewInbox(rows = []) {
         await updateStudentResponseReview(card.dataset.responseReviewId, {
           status: nextStatus,
           approvedText,
-          reviewerNote: buildReviewerNote(nextStatus, rejectionReason, reviewerNote)
+          reviewerNote: isQuietReject ? buildQuietRejectionNote(reviewerNote) : buildReviewerNote(nextStatus, rejectionReason, reviewerNote),
+          notifyStudent: !isQuietReject
         });
         await initDashboards();
       } catch (error) {
@@ -2457,6 +2476,18 @@ async function updateStudentResponseReview(reviewId, options = {}) {
     .maybeSingle();
 
   if (error) throw error;
+
+  if (data?.source_evidence_id && options.notifyStudent === false) {
+    const evidenceResult = await supabase
+      .from("assessment_evidence")
+      .update({ teacher_feedback: null })
+      .eq("id", data.source_evidence_id);
+
+    if (evidenceResult.error) {
+      console.warn("Assessment evidence feedback mirror could not be cleared:", evidenceResult.error);
+    }
+    return;
+  }
 
   if (data?.source_evidence_id) {
     const feedbackLines = [
