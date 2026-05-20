@@ -2440,13 +2440,17 @@ function renderTeacherResponseReviewInbox(rows = []) {
       if (statusEl) statusEl.innerHTML = "<strong>Updating...</strong>";
       try {
         const nextStatus = action === "approve" ? "approved" : "rejected";
-        await updateStudentResponseReview(card.dataset.responseReviewId, {
+        const updatedReview = await updateStudentResponseReview(card.dataset.responseReviewId, {
           status: nextStatus,
           approvedText,
           reviewerNote: isQuietReject ? buildQuietRejectionNote(reviewerNote) : buildReviewerNote(nextStatus, rejectionReason, reviewerNote),
           notifyStudent: !isQuietReject
         });
-        await initDashboards();
+        const updatedRows = rows.map(row => row.id === card.dataset.responseReviewId ? { ...row, ...updatedReview } : row);
+        renderTeacherResponseReviewInbox(updatedRows);
+        initDashboards().catch(error => {
+          console.error("Teacher dashboard refresh failed after review update", error);
+        });
       } catch (error) {
         if (statusEl) statusEl.innerHTML = `<strong>Error:</strong> ${escapeHtml(error.message || "Could not update response review.")}`;
       }
@@ -2472,10 +2476,11 @@ async function updateStudentResponseReview(reviewId, options = {}) {
     .from("student_response_reviews")
     .update(payload)
     .eq("id", reviewId)
-    .select("id, source_evidence_id, status, approved_response_text, reviewer_note")
+    .select("id, source_evidence_id, status, approved_response_text, reviewer_note, reviewed_at, updated_at")
     .maybeSingle();
 
   if (error) throw error;
+  if (!data) throw new Error("No review row was updated. Refresh the dashboard and try again.");
 
   if (data?.source_evidence_id && options.notifyStudent === false) {
     const evidenceResult = await supabase
@@ -2486,7 +2491,7 @@ async function updateStudentResponseReview(reviewId, options = {}) {
     if (evidenceResult.error) {
       console.warn("Assessment evidence feedback mirror could not be cleared:", evidenceResult.error);
     }
-    return;
+    return data;
   }
 
   if (data?.source_evidence_id) {
@@ -2505,6 +2510,7 @@ async function updateStudentResponseReview(reviewId, options = {}) {
       console.warn("Assessment evidence feedback mirror could not be updated:", evidenceResult.error);
     }
   }
+  return data;
 }
 
 function renderTeacherFeedbackReviewInbox(items = []) {
