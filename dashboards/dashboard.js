@@ -62,6 +62,16 @@ const DASHBOARD_MODULES = [
     launchPath: "../modules/est-prep/index.html"
   },
   {
+    id: "employability-skills",
+    title: "Employability Skills Portfolio",
+    shortTitle: "Employability",
+    defaultStatus: "active",
+    currentLabel: "STAR portfolio",
+    inactiveLabel: "Portfolio logging unavailable",
+    archivedLabel: "Portfolio archive",
+    launchPath: ""
+  },
+  {
     id: "megatrends",
     title: "Megatrends",
     shortTitle: "Megatrends",
@@ -1029,13 +1039,15 @@ function getSkillStarEvidenceEntries() {
 }
 
 function getSkillStarEvidenceMap(entries = getSkillStarEvidenceEntries()) {
-  return (Array.isArray(entries) ? entries : []).reduce((acc, entry) => {
+  const map = (Array.isArray(entries) ? entries : []).reduce((acc, entry) => {
     getStarEntrySkillIds(entry).forEach(skillId => {
       acc[skillId] = acc[skillId] || [];
       acc[skillId].push(entry);
     });
     return acc;
   }, {});
+  Object.values(map).forEach(skillEntries => skillEntries.sort(compareStarEntriesByExperienceDate));
+  return map;
 }
 
 function getSkillCategory(skillId) {
@@ -1083,6 +1095,54 @@ function normaliseStarSubskillTags(rawTags = []) {
 
 function getStarEntrySubskillTags(entry = {}) {
   return normaliseStarSubskillTags(entry.subskillTags || []);
+}
+
+function getTodayDateInputValue() {
+  const date = new Date();
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  const day = String(date.getDate()).padStart(2, "0");
+  return `${date.getFullYear()}-${month}-${day}`;
+}
+
+function formatDateInputValue(value) {
+  const raw = String(value || "").trim();
+  if (/^\d{4}-\d{2}-\d{2}$/.test(raw)) return raw;
+  const date = new Date(raw);
+  if (Number.isNaN(date.getTime())) return "";
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  const day = String(date.getDate()).padStart(2, "0");
+  return `${date.getFullYear()}-${month}-${day}`;
+}
+
+function extractStarExperienceDateFromText(text) {
+  const match = String(text || "").match(/(?:^|\n)(?:experience date|date of experience):\s*(\d{4}-\d{2}-\d{2})/i);
+  return match?.[1] || "";
+}
+
+function stripStarEvidenceMetadata(text) {
+  return String(text || "")
+    .split("\n")
+    .filter(line => !/^\s*(?:experience date|date of experience|tagged skills|sub-skills):/i.test(line))
+    .join("\n")
+    .trim();
+}
+
+function getStarEntryExperienceDate(entry = {}) {
+  return entry.experienceDate
+    || entry.dateOfExperience
+    || extractStarExperienceDateFromText(entry.reviewText || entry.response || "")
+    || entry.createdAt;
+}
+
+function formatExperienceDate(value) {
+  const dateValue = formatDateInputValue(value);
+  if (!dateValue) return "Experience date not set";
+  return new Date(`${dateValue}T00:00:00`).toLocaleDateString();
+}
+
+function compareStarEntriesByExperienceDate(a, b) {
+  return parseTime(getStarEntryExperienceDate(b)) - parseTime(getStarEntryExperienceDate(a))
+    || parseTime(b?.createdAt) - parseTime(a?.createdAt);
 }
 
 function saveSkillStarEvidence(entry) {
@@ -1151,6 +1211,7 @@ function createStarEvidenceReviewText(entry) {
   const subskillTags = getStarEntrySubskillTags(entry);
   return [
     `${contextLabel} example for ${skillTitles.length ? skillTitles.join(", ") : skillTitle}.`,
+    entry.experienceDate ? `Experience date: ${entry.experienceDate}` : "",
     skillTitles.length ? `Tagged skills: ${skillTitles.join("; ")}` : "",
     subskillTags.length ? `Sub-skills: ${subskillTags.map(tag => `${tag.skillTitle} - ${tag.subskillTitle}`).join("; ")}` : "",
     `Situation: ${clean(responses?.situation)}`,
@@ -1513,6 +1574,8 @@ function renderStudentModules(modules) {
         </div>
         ${module.available === false
           ? `<div class="module-actions"><span class="module-link module-link-disabled" aria-disabled="true">${escapeHtml(module.unavailableLabel || "Unavailable")}</span></div>`
+          : module.action === "portfolio"
+            ? `<div class="module-actions"><button class="module-link" type="button" data-open-student-portfolio data-portfolio-label="${escapeHtml(module.launchLabel || "Open Portfolio")}">${escapeHtml(module.launchLabel || "Open Portfolio")}</button></div>`
           : module.launchPath
             ? `<div class="module-actions"><a class="module-link" href="${module.launchPath}">${module.launchLabel || "Open Module"}</a></div>`
             : ""}
@@ -2397,6 +2460,22 @@ function buildReviewerNote(reviewStatus, reason = "", details = "") {
   return cleanDetails;
 }
 
+function stripCapabilityTagMetadata(value = "") {
+  return String(value || "")
+    .split(/\n+/)
+    .filter(line => !/^\s*(?:Tagged skills|Capability tags|Teacher tags|Teacher flagged skills):/i.test(line))
+    .join("\n")
+    .trim();
+}
+
+function buildCapabilityReviewerNote(note = "", capabilityIds = []) {
+  const cleanNote = stripCapabilityTagMetadata(note);
+  const tagText = capabilityIds.length
+    ? capabilityIds.map(skillId => getSkillCategoryTitle(skillId)).join(", ")
+    : "None";
+  return [cleanNote, `Teacher tags: ${tagText}`].filter(Boolean).join("\n");
+}
+
 function renderTeacherResponseReviewInbox(rows = []) {
   const container = document.getElementById("teacher-response-review-list");
   if (!container) return;
@@ -2419,9 +2498,13 @@ function renderTeacherResponseReviewInbox(rows = []) {
     const classLabel = row.classes?.class_code || row.classes?.name || "Class";
     const approvedText = row.approved_response_text || row.raw_response_text || "";
     const checkOnly = isTeacherCheckOnlyReview(row);
+    const isStarReview = row.evidence_type === "employability-star";
+    const selectedCapabilityIds = isStarReview
+      ? inferCapabilityIdsFromEvidence(row, employabilitySkillCategoriesCache)
+      : [];
     const quietlyRejected = row.status === "rejected" && isQuietReviewRejection(row);
     const selectedRejectionReason = getRejectionReasonFromNote(row.reviewer_note || "");
-    const reviewerNoteDetails = getRejectionDetailsFromNote(row.reviewer_note || "");
+    const reviewerNoteDetails = stripCapabilityTagMetadata(getRejectionDetailsFromNote(row.reviewer_note || ""));
     const statusLabel = row.status === "pending_review"
       ? checkOnly ? "Pending check" : "Pending review"
       : row.status === "approved"
@@ -2429,7 +2512,7 @@ function renderTeacherResponseReviewInbox(rows = []) {
         : quietlyRejected ? "Rejected quietly" : checkOnly ? "Feedback sent" : "Rejected";
 
     return `
-      <article class="response-review-card" data-response-review-id="${row.id}">
+      <article class="response-review-card" data-response-review-id="${row.id}" data-response-review-type="${escapeHtml(row.evidence_type || "")}">
         <div class="response-review-header">
           <div>
             <span class="eyebrow">${escapeHtml(getModuleLabel(row.module_id))} • ${escapeHtml(classLabel)}</span>
@@ -2455,6 +2538,20 @@ function renderTeacherResponseReviewInbox(rows = []) {
         <div class="response-review-form">
           <label>${checkOnly ? "Teacher-readable checked record" : "Approved anonymous version"}</label>
           <textarea data-review-field="approvedText">${escapeHtml(approvedText)}</textarea>
+          ${isStarReview ? `
+            <div class="response-review-tags">
+              <strong>Teacher capability tags</strong>
+              <p>Confirm or adjust the student-selected tags before approving.</p>
+              <div class="skill-star-builder-chip-row">
+                ${employabilitySkillCategoriesCache.map(category => `
+                  <label class="response-review-tag-chip">
+                    <input type="checkbox" data-review-capability-tag="${escapeHtml(category.id)}" ${selectedCapabilityIds.includes(category.id) ? "checked" : ""}>
+                    <span>${escapeHtml(category.title)}</span>
+                  </label>
+                `).join("")}
+              </div>
+            </div>
+          ` : ""}
           <label>Rejection reason</label>
           <select data-review-field="rejectionReason">
             <option value="">Choose only when rejecting...</option>
@@ -2506,8 +2603,16 @@ function renderTeacherResponseReviewInbox(rows = []) {
       const approvedText = card.querySelector('[data-review-field="approvedText"]')?.value.trim() || "";
       const rejectionReason = card.querySelector('[data-review-field="rejectionReason"]')?.value.trim() || "";
       const reviewerNote = card.querySelector('[data-review-field="reviewerNote"]')?.value.trim() || "";
+      const isStarReview = card.dataset.responseReviewType === "employability-star";
+      const selectedCapabilityIds = [...card.querySelectorAll("[data-review-capability-tag]:checked")]
+        .map(input => input.dataset.reviewCapabilityTag)
+        .filter(Boolean);
       if (action === "approve" && !approvedText) {
         if (statusEl) statusEl.innerHTML = "<strong>Error:</strong> Add an approved version before approving.";
+        return;
+      }
+      if (action === "approve" && isStarReview && !selectedCapabilityIds.length) {
+        if (statusEl) statusEl.innerHTML = "<strong>Error:</strong> Select at least one capability tag before approving this STAR reflection.";
         return;
       }
       if (action === "reject" && !rejectionReason) {
@@ -2518,10 +2623,16 @@ function renderTeacherResponseReviewInbox(rows = []) {
       if (statusEl) statusEl.innerHTML = "<strong>Updating...</strong>";
       try {
         const nextStatus = action === "approve" ? "approved" : "rejected";
+        const nextReviewerNote = isStarReview
+          ? buildCapabilityReviewerNote(
+            isQuietReject ? buildQuietRejectionNote(reviewerNote) : buildReviewerNote(nextStatus, rejectionReason, reviewerNote),
+            selectedCapabilityIds
+          )
+          : isQuietReject ? buildQuietRejectionNote(reviewerNote) : buildReviewerNote(nextStatus, rejectionReason, reviewerNote);
         const updatedReview = await updateStudentResponseReview(card.dataset.responseReviewId, {
           status: nextStatus,
           approvedText,
-          reviewerNote: isQuietReject ? buildQuietRejectionNote(reviewerNote) : buildReviewerNote(nextStatus, rejectionReason, reviewerNote),
+          reviewerNote: nextReviewerNote,
           notifyStudent: !isQuietReject
         });
         const updatedRows = rows.map(row => row.id === card.dataset.responseReviewId ? { ...row, ...updatedReview } : row);
@@ -2736,7 +2847,8 @@ function getStudentCompareModuleValue(item, moduleId, metric) {
   const keyMap = {
     "megatrends": { completion: "megatrendsCompletion", mastery: "megatrendsMastery" },
     "lifelong-learning": { completion: "lifelongCompletion", mastery: "lifelongMastery" },
-    "est-prep": { completion: "estCompletion", mastery: "estMastery" }
+    "est-prep": { completion: "estCompletion", mastery: "estMastery" },
+    "employability-skills": { completion: "employabilityCompletion", mastery: "employabilityMastery" }
   };
   return item?.[keyMap[moduleId]?.[metric]] || 0;
 }
@@ -2975,11 +3087,30 @@ function renderTeacherClassCharts(data) {
 function inferCapabilityIdsFromEvidence(entry, skillCategories = []) {
   const row = entry?.row || entry || {};
   const payload = entry?.payload || parseStructuredEvidence(row) || {};
-  const text = [
+  const resolveCapabilityIds = value => {
+    const values = Array.isArray(value) ? value : [value];
+    const matchedIds = [];
+    values.filter(Boolean).forEach(item => {
+      const text = String(item).toLowerCase();
+      skillCategories.forEach(category => {
+        if (
+          text === category.id.toLowerCase()
+          || text.includes(category.id.toLowerCase())
+          || text.includes(category.title.toLowerCase())
+        ) {
+          matchedIds.push(category.id);
+        }
+      });
+    });
+    return [...new Set(matchedIds)];
+  };
+  const rawText = [
     payload.skill_id,
     payload.skillId,
+    Array.isArray(payload.skillIds) ? payload.skillIds.join(" ") : "",
     payload.skill_title,
     payload.skillTitle,
+    Array.isArray(payload.skillTitles) ? payload.skillTitles.join(" ") : "",
     payload.topic_group,
     payload.task_name,
     payload.prompt_text,
@@ -2988,26 +3119,48 @@ function inferCapabilityIdsFromEvidence(entry, skillCategories = []) {
     row.task_label,
     row.prompt_text,
     row.raw_response_text,
+    row.approved_response_text,
+    Array.isArray(row.flags) ? row.flags.join(" ") : row.flags,
+    row.flag_notes,
+    row.reviewer_note,
     row.prompt,
     row.response_text
-  ].filter(Boolean).join(" ").toLowerCase();
-  const explicitSkill = payload.skill_id || payload.skillId;
-  if (explicitSkill && skillCategories.some(category => category.id === explicitSkill)) return [explicitSkill];
+  ].filter(Boolean).join("\n");
+  const payloadSkillIds = resolveCapabilityIds([
+    payload.skill_id,
+    payload.skillId,
+    payload.skillIds,
+    payload.skill_title,
+    payload.skillTitle,
+    payload.skillTitles,
+    payload.tagged_skills,
+    payload.taggedSkills,
+    payload.capability_tags,
+    payload.capabilityTags,
+    payload.teacher_tags,
+    payload.teacherTags
+  ].flat());
+  const teacherTagText = [row.reviewer_note, row.flag_notes, row.approved_response_text]
+    .filter(Boolean)
+    .join("\n");
+  const teacherTagLineMatches = [...teacherTagText.matchAll(/(?:^|\n)\s*(?:Teacher tags|Teacher flagged skills):\s*([^\n]+)/gi)];
+  if (teacherTagLineMatches.length) {
+    const teacherTagValues = teacherTagLineMatches.map(match => match[1]);
+    if (teacherTagValues.some(value => /^\s*(?:none|no tags?)\s*$/i.test(String(value || "")))) return [];
+    return resolveCapabilityIds(teacherTagValues);
+  }
+  if (payloadSkillIds.length) return payloadSkillIds;
+  const tagLineMatches = [...rawText.matchAll(/(?:^|\n)\s*(?:Tagged skills|Capability tags|Teacher tags|Teacher flagged skills):\s*([^\n]+)/gi)];
+  const tagLineIds = resolveCapabilityIds(tagLineMatches.map(match => match[1]));
+  if (tagLineIds.length) return tagLineIds;
   const key = String(row.task_key || "");
-  const starSkillMatch = key.match(/employability-star-([a-z-]+)-/);
-  if (starSkillMatch?.[1]) return [starSkillMatch[1]];
-
-  const matches = [];
-  const add = id => {
-    if (!matches.includes(id)) matches.push(id);
-  };
-  if (/\b(communicat|listen|audience|format|verbal|non-verbal|grammar|spelling|cover letter)\b/i.test(text)) add("communication");
-  if (/\b(digital|software|online|technology|automation|source|research|data|labour market|lmi)\b/i.test(text)) add("digital-literacy");
-  if (/\b(team|collaborat|rapport|role|responsibilit|consensus|reliable)\b/i.test(text)) add("teamwork");
-  if (/\b(time|prioritis|prioritiz|plan|deadline|schedule|sequence|productivity)\b/i.test(text)) add("time-management");
-  if (/\b(evidence|analyse|analyze|evaluate|compare|bias|reason|judg|interpret|conclude)\b/i.test(text)) add("critical-thinking");
-  if (/\b(problem|solution|decision|option|initiative|proactive|unexpected|challenge|resolve)\b/i.test(text)) add("problem-solving");
-  return matches.length ? matches : ["critical-thinking"];
+  const colonStarSkillMatch = key.match(/^employability-star:([^:]+):/);
+  if (colonStarSkillMatch?.[1] && skillCategories.some(category => category.id === colonStarSkillMatch[1])) {
+    return [colonStarSkillMatch[1]];
+  }
+  const legacyStarSkill = skillCategories.find(category => key.includes(`employability-star-${category.id}-`));
+  if (legacyStarSkill) return [legacyStarSkill.id];
+  return [];
 }
 
 function getCapabilityEvidenceQuality(text, score = null) {
@@ -3043,6 +3196,11 @@ function buildCapabilityEvidenceEntries(parsedEvidenceRows = [], reviewRows = []
     })
     .map(entry => {
     const response = getEvidenceResponseText(entry.row, entry.payload);
+    const experienceDate = formatDateInputValue(
+      entry.payload?.experience_date
+      || entry.payload?.experienceDate
+      || extractStarExperienceDateFromText(response)
+    );
     const score = getEvidenceScorePercent(entry.row, entry.payload);
     return {
       id: entry.row.id || `${entry.row.student_id}-${entry.row.created_at}`,
@@ -3054,7 +3212,9 @@ function buildCapabilityEvidenceEntries(parsedEvidenceRows = [], reviewRows = []
       prompt: getEvidencePromptText(entry.row, entry.payload),
       response,
       score,
-      createdAt: entry.row.created_at,
+      createdAt: experienceDate || entry.row.created_at,
+      submittedAt: entry.row.created_at,
+      experienceDate,
       capabilityIds: inferCapabilityIdsFromEvidence(entry, skillCategories)
     };
   });
@@ -3064,6 +3224,7 @@ function buildCapabilityEvidenceEntries(parsedEvidenceRows = [], reviewRows = []
     const response = row.status === "approved" && row.approved_response_text
       ? row.approved_response_text
       : row.raw_response_text || "";
+    const experienceDate = formatDateInputValue(extractStarExperienceDateFromText(row.raw_response_text || response));
     const moduleId = row.module_id || EMPLOYABILITY_PORTFOLIO_MODULE_ID;
     return {
       id: row.id,
@@ -3075,7 +3236,9 @@ function buildCapabilityEvidenceEntries(parsedEvidenceRows = [], reviewRows = []
       prompt: row.prompt_text || "Teacher-reviewed journal evidence",
       response,
       score: null,
-      createdAt: row.created_at,
+      createdAt: experienceDate || row.created_at,
+      submittedAt: row.created_at,
+      experienceDate,
       reviewStatus: row.status,
       capabilityIds: inferCapabilityIdsFromEvidence(row, skillCategories)
     };
@@ -3083,7 +3246,7 @@ function buildCapabilityEvidenceEntries(parsedEvidenceRows = [], reviewRows = []
 
   return [...assessmentEntries, ...reviewEntries]
     .map(entry => {
-      const cleanResponse = extractLongResponseText(entry.response);
+      const cleanResponse = stripStarEvidenceMetadata(extractLongResponseText(entry.response));
       return {
         ...entry,
         response: cleanResponse,
@@ -3096,19 +3259,62 @@ function buildCapabilityEvidenceEntries(parsedEvidenceRows = [], reviewRows = []
     .sort((a, b) => parseTime(b.createdAt) - parseTime(a.createdAt));
 }
 
-function renderTeacherCapabilityPortfolio({ skillCategories = [], parsedEvidenceRows = [], reviewRows = [], students = [], selectedStudent = null }) {
+function renderTeacherCapabilityBoardEntry(entry) {
+  const markerText = entry.markerLabels?.length
+    ? entry.markerLabels.join(" | ")
+    : "Reflection language still developing";
+  return `
+    <article class="capability-board-entry">
+      <div class="capability-board-entry-top">
+        <strong>${escapeHtml(entry.studentName)}</strong>
+        <time>${escapeHtml(formatExperienceDate(entry.experienceDate || entry.createdAt))}</time>
+      </div>
+      <span>${escapeHtml(entry.taskLabel)} • ${escapeHtml(entry.moduleLabel)}</span>
+      <p>${escapeHtml(makeSnippet(entry.response))}</p>
+      <small>${escapeHtml(markerText)}</small>
+    </article>
+  `;
+}
+
+function renderTeacherCapabilityPortfolio({ skillCategories = [], parsedEvidenceRows = [], reviewRows = [], students = [], selectedStudent = null, evidenceEntries = null }) {
   const container = document.getElementById("teacher-capability-portfolio");
   if (!container) return;
 
-  const evidenceEntries = buildCapabilityEvidenceEntries(parsedEvidenceRows, reviewRows, skillCategories);
+  const portfolioEvidenceEntries = Array.isArray(evidenceEntries)
+    ? evidenceEntries
+    : buildCapabilityEvidenceEntries(parsedEvidenceRows, reviewRows, skillCategories);
+  const boardStudentIds = new Set((students || []).map(student => student.id).filter(Boolean));
+  const boardEntries = portfolioEvidenceEntries.filter(entry => !boardStudentIds.size || boardStudentIds.has(entry.studentId));
   const studentScope = selectedStudent ? [selectedStudent] : students;
   const scopedStudentIds = new Set(studentScope.map(student => student.id).filter(Boolean));
   const scopedEntries = selectedStudent
-    ? evidenceEntries.filter(entry => entry.studentId === selectedStudent.id)
-    : evidenceEntries.filter(entry => !scopedStudentIds.size || scopedStudentIds.has(entry.studentId));
+    ? portfolioEvidenceEntries.filter(entry => entry.studentId === selectedStudent.id)
+    : portfolioEvidenceEntries.filter(entry => !scopedStudentIds.size || scopedStudentIds.has(entry.studentId));
 
   if (!scopedEntries.length) {
     container.innerHTML = `
+      <section class="capability-board-panel">
+        <div class="section-title">
+          <h3>All Students x Capabilities</h3>
+          <p>Six capability columns will fill as STAR reflections are submitted.</p>
+        </div>
+        <div class="capability-board-scroll">
+          <div class="capability-board-track">
+            ${skillCategories.map(category => `
+              <article class="capability-board-column is-empty">
+                <div class="capability-board-column-header">
+                  ${category.logoPath ? `<img src="${escapeHtml(category.logoPath)}" alt="">` : ""}
+                  <div>
+                    <strong>${escapeHtml(category.title)}</strong>
+                    <span>No entries yet</span>
+                  </div>
+                </div>
+                <p class="capability-board-empty">No STAR reflections tagged to this capability yet.</p>
+              </article>
+            `).join("")}
+          </div>
+        </div>
+      </section>
       <div class="timeline-item">
         <strong>No capability journal evidence in this focus yet</strong>
         <p>When students submit EST Prep responses or employability journals, this view will show what they said, which capability it evidences, and how their articulation is progressing.</p>
@@ -3134,6 +3340,16 @@ function renderTeacherCapabilityPortfolio({ skillCategories = [], parsedEvidence
       progression: getCapabilityProgressionLabel(entries)
     };
   }).sort((a, b) => b.entries.length - a.entries.length);
+  const capabilityBoardColumns = skillCategories.map(category => {
+    const entries = boardEntries
+      .filter(entry => entry.capabilityIds.includes(category.id))
+      .sort((a, b) => parseTime(b.createdAt) - parseTime(a.createdAt));
+    return {
+      category,
+      entries,
+      studentCount: new Set(entries.map(entry => entry.studentId || entry.studentName)).size
+    };
+  });
 
   const portfolioStudents = (selectedStudent ? [selectedStudent] : studentScope)
     .map(student => {
@@ -3155,6 +3371,32 @@ function renderTeacherCapabilityPortfolio({ skillCategories = [], parsedEvidence
     .slice(0, selectedStudent ? 1 : 8);
 
   container.innerHTML = `
+    <section class="capability-board-panel">
+      <div class="section-title">
+        <h3>All Students x Capabilities</h3>
+        <p>Scroll left to right across the six capabilities. Scroll down inside a capability to review every student reflection tagged there.</p>
+      </div>
+      <div class="capability-board-scroll" aria-label="All students by employability capability">
+        <div class="capability-board-track">
+          ${capabilityBoardColumns.map(column => `
+            <article class="capability-board-column ${column.entries.length ? "" : "is-empty"}">
+              <div class="capability-board-column-header">
+                ${column.category.logoPath ? `<img src="${escapeHtml(column.category.logoPath)}" alt="">` : ""}
+                <div>
+                  <strong>${escapeHtml(column.category.title)}</strong>
+                  <span>${column.entries.length} reflection${column.entries.length === 1 ? "" : "s"} • ${column.studentCount} student${column.studentCount === 1 ? "" : "s"}</span>
+                </div>
+              </div>
+              <div class="capability-board-entry-list">
+                ${column.entries.length
+                  ? column.entries.map(renderTeacherCapabilityBoardEntry).join("")
+                  : '<p class="capability-board-empty">No STAR reflections tagged to this capability yet.</p>'}
+              </div>
+            </article>
+          `).join("")}
+        </div>
+      </div>
+    </section>
     <section class="capability-breakdown-panel">
       <div class="section-title">
         <h3>By Capability Type</h3>
@@ -3418,6 +3660,10 @@ function renderSkills(skillsData, targetId, progressMap, skillEvidenceMap = {}) 
     const progress = clampPercent(progressMap[category.id] || 0);
     const meta = EMPLOYABILITY_SKILL_META[category.id] || EMPLOYABILITY_SKILL_META.communication;
     const isStudentGrid = targetId === "student-skill-grid";
+    const studentPortfolioStatus = isStudentGrid
+      ? getCurrentStudentModuleStatuses()[EMPLOYABILITY_PORTFOLIO_MODULE_ID]
+      : "active";
+    const canBuildPortfolioEvidence = studentPortfolioStatus === "active";
     const subskills = category.subskills.slice(0, 4);
     const parentLogoPath = getEmployabilityLogoPath(meta.logoFile) || category.logoPath || "";
     const studentEvidenceEntries = isStudentGrid ? (skillEvidenceMap[category.id] || []) : [];
@@ -3426,7 +3672,7 @@ function renderSkills(skillsData, targetId, progressMap, skillEvidenceMap = {}) 
       <article class="skill-star-entry skill-star-entry-banked">
         <div class="skill-star-entry-meta">
           <span>${escapeHtml(getStarContextLabel(entry.contextId))}</span>
-          <time>${escapeHtml(formatDateTime(entry.createdAt))}</time>
+          <time>${escapeHtml(formatExperienceDate(getStarEntryExperienceDate(entry)))}</time>
         </div>
         <strong class="skill-star-summary">${escapeHtml(entry.summary || createStarEvidenceSummary(entry))}</strong>
         ${renderStarTagList(entry, category.id)}
@@ -3437,7 +3683,7 @@ function renderSkills(skillsData, targetId, progressMap, skillEvidenceMap = {}) 
         <div class="skill-star-reward">Salary signal +${formatCurrency(entry.salaryReward || STAR_EVIDENCE_SALARY_REWARD)}</div>
       </article>
     `).join("");
-    const starActionMarkup = isStudentGrid ? `
+    const starActionMarkup = isStudentGrid ? canBuildPortfolioEvidence ? `
       <div class="skill-star-actions">
         <span>Build STAR evidence from</span>
         <div class="skill-star-action-list">
@@ -3447,6 +3693,10 @@ function renderSkills(skillsData, targetId, progressMap, skillEvidenceMap = {}) 
             </button>
           `).join("")}
         </div>
+      </div>
+    ` : `
+      <div class="skill-star-actions">
+        <span>STAR portfolio logging is ${escapeHtml(getModuleStatusLabel(studentPortfolioStatus).toLowerCase())}.</span>
       </div>
     ` : "";
     const starExampleMarkup = isStudentGrid ? `
@@ -3547,6 +3797,7 @@ function openSkillStarBuilder(skillId, skillTitle, contextId, existingEntry = nu
     skillTitle: getSkillCategoryTitle(selectedSkillIds[0] || skillId) || skillTitle,
     selectedSkillIds,
     selectedSubskillIds,
+    experienceDate: formatDateInputValue(existingEntry?.experienceDate || existingEntry?.dateOfExperience || ""),
     contextId,
     stepIndex: 0,
     responses: {
@@ -3611,6 +3862,10 @@ function renderSkillStarBuilder() {
       </div>
       <h2 id="skill-star-builder-title">So you improved ${escapeHtml(taggedSkillLabel)} in a ${escapeHtml(contextLabel)} context?</h2>
       <p class="skill-star-builder-lead">${escapeHtml(step.lead)}</p>
+      <label class="skill-star-builder-date-field">
+        <span>Date of experience</span>
+        <input type="date" data-star-builder-experience-date max="${escapeHtml(getTodayDateInputValue())}" value="${escapeHtml(starBuilderState.experienceDate || "")}">
+      </label>
       <div class="skill-star-builder-privacy-note">
         <strong>${escapeHtml(STUDENT_FREE_TEXT_PRIVACY_NOTICE.title)}</strong>
         <span>${escapeHtml(STUDENT_FREE_TEXT_PRIVACY_NOTICE.body)}</span>
@@ -3650,6 +3905,10 @@ function renderSkillStarBuilder() {
     if (summaryTarget) summaryTarget.textContent = createStarEvidenceSummary(starBuilderState);
   });
   modal.querySelector("[data-star-builder-close]")?.addEventListener("click", closeSkillStarBuilder);
+  modal.querySelector("[data-star-builder-experience-date]")?.addEventListener("input", event => {
+    starBuilderState.experienceDate = event.target.value;
+    starBuilderState.error = "";
+  });
   modal.querySelectorAll("[data-star-toggle-skill]").forEach(button => {
     button.addEventListener("click", () => {
       toggleStarBuilderSkill(button.dataset.starToggleSkill);
@@ -3683,6 +3942,16 @@ function renderSkillStarBuilder() {
       renderSkillStarBuilder();
       return;
     }
+    if (!starBuilderState.experienceDate) {
+      starBuilderState.error = "Choose the date this experience happened.";
+      renderSkillStarBuilder();
+      return;
+    }
+    if (parseTime(starBuilderState.experienceDate) > Date.now()) {
+      starBuilderState.error = "Use the real date of the experience, not a future date.";
+      renderSkillStarBuilder();
+      return;
+    }
     const createdAt = new Date().toISOString();
     const entry = {
       id: `star-${Date.now()}`,
@@ -3691,6 +3960,7 @@ function renderSkillStarBuilder() {
       skillIds: [...starBuilderState.selectedSkillIds],
       skillTitles: getStarEntrySkillTitles(starBuilderState),
       subskillTags: getStarBuilderSelectedSubskillTags(),
+      experienceDate: starBuilderState.experienceDate,
       contextId: starBuilderState.contextId,
       responses: { ...starBuilderState.responses },
       summary: createStarEvidenceSummary(starBuilderState),
@@ -3749,7 +4019,7 @@ function renderStudentPortfolioEntry(entry, currentSkillId = "") {
           <span>${escapeHtml(getStarContextLabel(entry.contextId))}</span>
           <strong>${escapeHtml(entry.summary || createStarEvidenceSummary(entry))}</strong>
         </div>
-        <time>${escapeHtml(formatDateTime(entry.createdAt))}</time>
+        <time>${escapeHtml(formatExperienceDate(getStarEntryExperienceDate(entry)))}</time>
       </div>
       ${renderStarTagList(entry, currentSkillId)}
       ${getSkillStarReviewStatusMarkup(entry)}
@@ -3770,7 +4040,7 @@ function renderStudentPortfolio() {
     return;
   }
   const entries = [...(studentPortfolioState.entries || [])]
-    .sort((a, b) => parseTime(b.createdAt) - parseTime(a.createdAt));
+    .sort(compareStarEntriesByExperienceDate);
   const categories = studentPortfolioState.skillsData?.categories?.length
     ? studentPortfolioState.skillsData.categories
     : employabilitySkillCategoriesCache || [];
@@ -3842,11 +4112,15 @@ function renderStudentPortfolio() {
   });
 }
 
-function setupStudentPortfolioButton(skillsData, entries = []) {
-  const button = document.getElementById("student-hub-portfolio-button");
-  if (!button) return;
-  button.textContent = entries.length ? `View Portfolio (${entries.length})` : "View Portfolio";
-  button.onclick = () => {
+function setupStudentPortfolioButton(skillsData, entries = [], moduleStatus = "active") {
+  const buttons = [
+    document.getElementById("student-hub-portfolio-button"),
+    ...document.querySelectorAll("[data-open-student-portfolio]")
+  ].filter(Boolean);
+  if (!buttons.length) return;
+  const isAvailable = moduleStatus === "active";
+  const openPortfolio = () => {
+    if (!isAvailable) return;
     studentPortfolioState = {
       ...studentPortfolioState,
       open: true,
@@ -3855,6 +4129,14 @@ function setupStudentPortfolioButton(skillsData, entries = []) {
     };
     renderStudentPortfolio();
   };
+  buttons.forEach(button => {
+    const baseLabel = button.dataset.portfolioLabel || "View Portfolio";
+    button.textContent = entries.length ? `${baseLabel} (${entries.length})` : baseLabel;
+    button.classList.toggle("module-link-disabled", !isAvailable);
+    button.setAttribute("aria-disabled", isAvailable ? "false" : "true");
+    button.disabled = !isAvailable;
+    button.onclick = openPortfolio;
+  });
 }
 
 function setText(id, value) {
@@ -5040,13 +5322,23 @@ function renderTeacherModuleAvailability(teacherData, students = [], selectedStu
       const override = studentOverrides[module.id] || "inherit";
       return `
         <article class="module-availability-card module-availability-card--${escapeHtml(effectiveStatus)}">
-          <div>
-            <span class="kicker">${escapeHtml(module.currentLabel)}</span>
-            <h3>${escapeHtml(module.title)}</h3>
-            <p>${escapeHtml(getModuleStatusDescription(effectiveStatus))}</p>
+          <div class="module-availability-card-header">
+            <div>
+              <span class="kicker">${escapeHtml(module.currentLabel)}</span>
+              <h3>${escapeHtml(module.title)}</h3>
+              <p>${escapeHtml(getModuleStatusDescription(effectiveStatus))}</p>
+            </div>
+            <button
+              class="module-availability-switch ${status === "active" ? "is-on" : ""}"
+              type="button"
+              data-module-class-toggle="${escapeHtml(module.id)}"
+              aria-pressed="${status === "active" ? "true" : "false"}"
+            >
+              <span>${status === "active" ? "On" : "Off"}</span>
+            </button>
           </div>
           <label>
-            <span>Class default</span>
+            <span>Class default status</span>
             <select data-module-class-status="${escapeHtml(module.id)}">
               ${["active", "inactive", "archived"].map(value => `<option value="${value}" ${value === status ? "selected" : ""}>${escapeHtml(getModuleStatusLabel(value))}</option>`).join("")}
             </select>
@@ -5062,6 +5354,17 @@ function renderTeacherModuleAvailability(teacherData, students = [], selectedStu
       `;
     }).join("")}
   `;
+
+  container.querySelectorAll("[data-module-class-toggle]").forEach(button => {
+    button.addEventListener("click", event => {
+      const moduleId = event.currentTarget.dataset.moduleClassToggle;
+      const currentStatus = classStatuses[moduleId] || "inactive";
+      const nextStatus = currentStatus === "active" ? "inactive" : "active";
+      setClassModuleStatus(scopeClassId, moduleId, nextStatus);
+      persistClassModuleStatusToSupabase(scopeClassId, moduleId, nextStatus).catch(console.warn);
+      initDashboards().catch(console.error);
+    });
+  });
 
   container.querySelectorAll("[data-module-class-status]").forEach(select => {
     select.addEventListener("change", event => {
@@ -5088,6 +5391,7 @@ function renderTeacherDashboardFocusStrip(moduleStatuses, activeFocus = "active"
   const focusOptions = [
     { id: "active", label: "Active Modules", note: "Default current teaching view" },
     { id: "est-prep", label: "EST Prep", note: "Assessment prep only" },
+    { id: "employability-skills", label: "Employability", note: "STAR portfolio only" },
     { id: "archived", label: "Archived", note: "Term 1 and prototype history" },
     { id: "cumulative", label: "Cumulative", note: "All module patterns" }
   ];
@@ -5133,7 +5437,7 @@ async function renderStudentLiveData(players, skillsData) {
   ]);
   const skillEvidenceEntries = syncSkillStarEvidenceWithReviews(getSkillStarEvidenceEntries(), reviewRows);
   const skillEvidenceMap = getSkillStarEvidenceMap(skillEvidenceEntries);
-  setupStudentPortfolioButton(skillsData, skillEvidenceEntries);
+  setupStudentPortfolioButton(skillsData, skillEvidenceEntries, moduleStatuses[EMPLOYABILITY_PORTFOLIO_MODULE_ID]);
   const progressMap = applySkillEvidenceProgress(deriveEmployabilityProgress(progressRecord), skillEvidenceMap);
   const employabilityScore = average(Object.values(progressMap));
   const weakestSkillId = getWeakestSkill(progressMap)[0];
@@ -5154,10 +5458,13 @@ async function renderStudentLiveData(players, skillsData) {
   const lifelongMastery = Number(lifelongProgressRow?.mastery_percent || 0);
   const estProgress = Number(estProgressRow?.completion_percent || 0);
   const estMastery = Number(estProgressRow?.mastery_percent || 0);
+  const employabilityPortfolioProgress = calculateSkillEvidenceProgress(skillEvidenceEntries);
+  const employabilityPortfolioMastery = employabilityScore;
   const moduleCompletionMap = {
     "megatrends": moduleCompletion,
     "lifelong-learning": lifelongProgress,
-    "est-prep": estProgress
+    "est-prep": estProgress,
+    "employability-skills": employabilityPortfolioProgress
   };
   const overallModuleCompletion = Math.round(average((activeModuleIds.length ? activeModuleIds : DASHBOARD_MODULES.map(module => module.id)).map(moduleId => moduleCompletionMap[moduleId] || 0)));
 
@@ -5304,8 +5611,28 @@ async function renderStudentLiveData(players, skillsData) {
       available: moduleStatuses["est-prep"] === "active",
       unavailableLabel: moduleStatuses["est-prep"] === "archived" ? "Archived" : "Not assigned",
       tags: [getModuleStatusLabel(moduleStatuses["est-prep"]), "Command verbs", "Short answer"]
+    },
+    {
+      id: EMPLOYABILITY_PORTFOLIO_MODULE_ID,
+      title: "Employability Skills Portfolio",
+      state: skillEvidenceEntries.length
+        ? `${skillEvidenceEntries.length} STAR reflection${skillEvidenceEntries.length === 1 ? "" : "s"} saved`
+        : getModuleStatusLabel(moduleStatuses[EMPLOYABILITY_PORTFOLIO_MODULE_ID]),
+      summary: "Log STAR reflections against the six employability capabilities. Your examples stay chronological and also appear under every skill tag you choose.",
+      progress: employabilityPortfolioProgress,
+      mastery: employabilityPortfolioMastery,
+      variant: "green",
+      spotlight: moduleStatuses[EMPLOYABILITY_PORTFOLIO_MODULE_ID] === "active",
+      logoPath: skillsData.categories.find(category => category.id === strongestSkillId)?.logoPath || skillsData.categories.find(category => category.id === "communication")?.logoPath,
+      logoLabel: strongestSkill?.title || "Employability Skills",
+      action: "portfolio",
+      launchLabel: "View Portfolio",
+      available: moduleStatuses[EMPLOYABILITY_PORTFOLIO_MODULE_ID] === "active",
+      unavailableLabel: moduleStatuses[EMPLOYABILITY_PORTFOLIO_MODULE_ID] === "archived" ? "Archived" : "Not assigned",
+      tags: [getModuleStatusLabel(moduleStatuses[EMPLOYABILITY_PORTFOLIO_MODULE_ID]), "STAR reflections", "Student tags"]
     }
   ]);
+  setupStudentPortfolioButton(skillsData, skillEvidenceEntries, moduleStatuses[EMPLOYABILITY_PORTFOLIO_MODULE_ID]);
   renderStudentShopPreview([
     {
       title: "Global Shop",
@@ -5413,7 +5740,10 @@ function renderTeacherLiveData(players, skillsData, teacherData = null) {
   const feedbackRows = safeTeacherData?.feedbackRows || [];
   const allReviewRows = safeTeacherData?.reviewRows || [];
   let reviewRows = dedupeTeacherReviewRows(allReviewRows
-    .filter(row => visibleModuleIdSet.has(row.module_id || row.module_slug || "lifelong-learning"))
+    .filter(row => {
+      const reviewModuleId = row.module_id || row.module_slug || (row.evidence_type === "employability-star" ? EMPLOYABILITY_PORTFOLIO_MODULE_ID : "lifelong-learning");
+      return visibleModuleIdSet.has(reviewModuleId);
+    })
     .filter(isTeacherReviewableStudentResponse));
   const megatrendsProgressRows = moduleProgressRows.filter(row => (row.module_id || row.module_slug) === "megatrends");
   const estProgressRows = moduleProgressRows.filter(row => (row.module_id || row.module_slug) === "est-prep");
@@ -5441,6 +5771,7 @@ function renderTeacherLiveData(players, skillsData, teacherData = null) {
       payload.strong_answer
     ]);
   }));
+  const capabilityEvidenceEntries = buildCapabilityEvidenceEntries(parsedEvidenceRows, reviewRows, skillCategories);
   const evidenceRows = parsedEvidenceRows.map(entry => entry.row);
   const estEvidenceRows = evidenceRows.filter(row => (row.module_id || row.module_slug) === "est-prep");
   const skillProgressRows = latestPlayers.map(deriveEmployabilityProgress);
@@ -5720,6 +6051,7 @@ function renderTeacherLiveData(players, skillsData, teacherData = null) {
     const estEvidence = studentEvidence.filter(entry => (entry.row.module_id || entry.row.module_slug || entry.payload?.module_id) === "est-prep");
     const megatrendsEvidence = studentEvidence.filter(entry => (entry.row.module_id || entry.row.module_slug || entry.payload?.module_id) === "megatrends");
     const lifelongEvidence = studentEvidence.filter(entry => (entry.row.module_id || entry.row.module_slug || entry.payload?.module_id) === "lifelong-learning");
+    const studentCapabilityEntries = capabilityEvidenceEntries.filter(entry => entry.studentId === student.id);
     const latestEST = estEvidence[0]?.payload || null;
     const latestMegatrends = megatrendsEvidence[0]?.payload || null;
     const latestLifelong = lifelongEvidence[0] || null;
@@ -5755,13 +6087,18 @@ function renderTeacherLiveData(players, skillsData, teacherData = null) {
     const megatrendsCompletion = Number(megatrendsProgress?.completion_percent || Math.min(100, Number(player?.years_played || 0) * 18 || 0));
     const lifelongCompletion = Number(lifelongProgress?.completion_percent || 0);
     const estCompletion = Number(estProgress?.completion_percent || 0);
+    const employabilityCompletion = calculateSkillEvidenceProgress(studentCapabilityEntries);
     const megatrendsMastery = Number(megatrendsProgress?.mastery_percent || overallMastery || 0);
     const lifelongMastery = Number(lifelongProgress?.mastery_percent || 0);
     const estMastery = Number(estProgress?.mastery_percent || 0);
+    const employabilityMastery = studentCapabilityEntries.length
+      ? Math.round(average(studentCapabilityEntries.map(entry => Math.min(100, Number(entry.quality || 0) * 8))))
+      : 0;
     const moduleScoreValues = {
       "megatrends": [megatrendsCompletion, megatrendsMastery],
       "lifelong-learning": [lifelongCompletion, lifelongMastery],
-      "est-prep": [estCompletion, estMastery]
+      "est-prep": [estCompletion, estMastery],
+      "employability-skills": [employabilityCompletion, employabilityMastery]
     };
     const progressScore = average(visibleModuleIds.flatMap(moduleId => moduleScoreValues[moduleId] || []));
     const lastActivity = getLastActivityTime(student, studentProgress, studentEvidence);
@@ -5787,6 +6124,7 @@ function renderTeacherLiveData(players, skillsData, teacherData = null) {
         : "No live profile yet. This student needs first-play data to unlock deeper comparison.",
       pills: [
         `Megatrends mastery: ${Number(megatrendsProgress?.mastery_percent || overallMastery)}%`,
+        `Employability STAR: ${studentCapabilityEntries.length}`,
         `Lifelong mastery: ${Number(lifelongProgress?.mastery_percent || 0)}%`,
         `EST mastery: ${Number(estProgress?.mastery_percent || 0)}%`,
         `Avg task time: ${averageTaskTime ? formatDurationSeconds(averageTaskTime) : "No timings yet"}`,
@@ -5795,9 +6133,11 @@ function renderTeacherLiveData(players, skillsData, teacherData = null) {
       megatrendsCompletion,
       lifelongCompletion,
       estCompletion,
+      employabilityCompletion,
       megatrendsMastery,
       lifelongMastery,
       estMastery,
+      employabilityMastery,
       progressScore,
       averageTaskTimeSeconds: averageTaskTime,
       averageTaskTimeLabel: averageTaskTime ? formatDurationSeconds(averageTaskTime) : "NYS",
@@ -5831,8 +6171,8 @@ function renderTeacherLiveData(players, skillsData, teacherData = null) {
       ]
     };
   }).sort((a, b) => {
-    const aScore = Number(a.megatrendsCompletion || 0) + Number(a.lifelongCompletion || 0) + Number(a.estCompletion || 0);
-    const bScore = Number(b.megatrendsCompletion || 0) + Number(b.lifelongCompletion || 0) + Number(b.estCompletion || 0);
+    const aScore = Number(a.megatrendsCompletion || 0) + Number(a.lifelongCompletion || 0) + Number(a.estCompletion || 0) + Number(a.employabilityCompletion || 0);
+    const bScore = Number(b.megatrendsCompletion || 0) + Number(b.lifelongCompletion || 0) + Number(b.estCompletion || 0) + Number(b.employabilityCompletion || 0);
     return bScore - aScore;
   });
 
@@ -5899,9 +6239,12 @@ function renderTeacherLiveData(players, skillsData, teacherData = null) {
     parsedEvidenceRows,
     reviewRows,
     students,
-    selectedStudent
+    selectedStudent,
+    evidenceEntries: capabilityEvidenceEntries
   });
   renderSkills({ categories: skillCategories }, "teacher-skill-grid", classSkillMap);
+  const portfolioStudentCount = new Set(capabilityEvidenceEntries.map(entry => entry.studentId).filter(Boolean)).size;
+  const portfolioCapabilityCount = new Set(capabilityEvidenceEntries.flatMap(entry => entry.capabilityIds || [])).size;
   const teacherModuleRows = [
     {
       id: "megatrends",
@@ -5936,6 +6279,25 @@ function renderTeacherLiveData(players, skillsData, teacherData = null) {
       imagePath: "../Assets/Images and Animations/Student Hub/module-est-prep-thumb.png",
       logoPath: getSkillCategoryById(skillsData, "critical-thinking")?.logoPath,
       logoLabel: "Critical Thinking"
+    },
+    {
+      id: EMPLOYABILITY_PORTFOLIO_MODULE_ID,
+      label: "Employability",
+      title: "Employability Skills Portfolio",
+      status: getModuleStatusLabel(moduleStatuses[EMPLOYABILITY_PORTFOLIO_MODULE_ID]),
+      summary: visibleModuleIdSet.has(EMPLOYABILITY_PORTFOLIO_MODULE_ID) && capabilityEvidenceEntries.length
+        ? `Tracking ${capabilityEvidenceEntries.length} STAR reflection${capabilityEvidenceEntries.length === 1 ? "" : "s"} from ${portfolioStudentCount} student${portfolioStudentCount === 1 ? "" : "s"} across ${portfolioCapabilityCount || 0} tagged capability area${portfolioCapabilityCount === 1 ? "" : "s"}.`
+        : visibleModuleIdSet.has(EMPLOYABILITY_PORTFOLIO_MODULE_ID)
+          ? "Once students bank STAR reflections, this module will show their tagged employability evidence portfolio."
+          : "Employability Skills Portfolio is not included in the current dashboard focus.",
+      completion: calculateSkillEvidenceProgress(capabilityEvidenceEntries),
+      mastery: capabilityEvidenceEntries.length
+        ? Math.round(average(capabilityEvidenceEntries.map(entry => Math.min(100, Number(entry.quality || 0) * 8))))
+        : 0,
+      variant: "green",
+      spotlight: moduleStatuses[EMPLOYABILITY_PORTFOLIO_MODULE_ID] === "active",
+      logoPath: getSkillCategoryById(skillsData, "communication")?.logoPath,
+      logoLabel: "Employability Skills"
     },
     {
       id: "lifelong-learning",
