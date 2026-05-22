@@ -10,6 +10,38 @@
     min-height: 0;
   }
 
+  .hero-slide-deck {
+    aspect-ratio: auto;
+    min-height: 720px;
+  }
+
+  .hero-slide {
+    grid-template-columns: 1fr;
+    align-content: start;
+    gap: 18px;
+    overflow: auto;
+    padding: 26px 26px 104px;
+  }
+
+  .hero-slide-copy {
+    justify-items: center;
+    text-align: center;
+  }
+
+  .hero-slide-visual {
+    min-height: 330px;
+  }
+
+  .hero-slide-browser {
+    max-width: 760px;
+    min-height: 320px;
+  }
+
+  .hero-slide-scroll-pane,
+  .hero-slide-browser video {
+    height: 286px;
+  }
+
   .mission-brief-panel .mission-list {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
@@ -167,6 +199,71 @@
 
   .module-topbar {
     grid-template-columns: 1fr;
+  }
+
+  .hero-card--cinema {
+    padding: 16px;
+  }
+
+  .hero-slide-deck {
+    min-height: 840px;
+    border-radius: 18px;
+  }
+
+  .hero-slide {
+    padding: 20px 16px 126px;
+  }
+
+  .hero-slide-copy h2 {
+    font-size: clamp(1.55rem, 9vw, 2.25rem);
+  }
+
+  .hero-slide-visual {
+    min-height: 300px;
+  }
+
+  .hero-slide-browser {
+    min-height: 292px;
+    border-radius: 16px;
+  }
+
+  .hero-slide-scroll-pane,
+  .hero-slide-browser video {
+    height: 258px;
+  }
+
+  .hero-slide-card-image {
+    width: min(360px, 86%);
+  }
+
+  .hero-term-stream {
+    right: 2%;
+    bottom: 3%;
+  }
+
+  .hero-vtcs-grid {
+    left: 4%;
+    bottom: 4%;
+    grid-template-columns: repeat(4, 38px);
+  }
+
+  .hero-response-bars {
+    right: 4%;
+    width: min(260px, 72%);
+  }
+
+  .hero-slide-pips {
+    left: 14px;
+    right: 14px;
+    bottom: 66px;
+    justify-content: center;
+  }
+
+  .hero-slide-controls {
+    left: 14px;
+    right: 14px;
+    bottom: 16px;
+    justify-content: space-between;
   }
 
   .glossary-mission-topbar {

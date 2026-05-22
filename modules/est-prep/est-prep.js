@@ -108,6 +108,69 @@ function handleESTPrepDeepLink() {
   return true;
 }
 
+function getHeroSlideDeck() {
+  return document.querySelector("[data-hero-slide-deck]");
+}
+
+function setHeroSlide(index = 0) {
+  const deck = getHeroSlideDeck();
+  if (!deck) return;
+  const slides = Array.from(deck.querySelectorAll("[data-hero-slide]"));
+  if (!slides.length) return;
+
+  const nextIndex = ((Number(index) || 0) % slides.length + slides.length) % slides.length;
+  deck.dataset.currentSlide = String(nextIndex);
+
+  slides.forEach((slide, slideIndex) => {
+    const isActive = slideIndex === nextIndex;
+    slide.classList.toggle("is-active", isActive);
+    slide.setAttribute("aria-hidden", String(!isActive));
+    slide.querySelectorAll("video").forEach(video => {
+      if (isActive) {
+        const playback = video.play?.();
+        if (playback && typeof playback.catch === "function") playback.catch(() => {});
+      } else {
+        video.pause?.();
+      }
+    });
+  });
+
+  const current = deck.querySelector("[data-hero-slide-current]");
+  const total = deck.querySelector("[data-hero-slide-total]");
+  if (current) current.textContent = String(nextIndex + 1);
+  if (total) total.textContent = String(slides.length);
+
+  deck.querySelectorAll("[data-hero-jump]").forEach(button => {
+    const isActive = Number(button.dataset.heroJump) === nextIndex;
+    button.classList.toggle("is-active", isActive);
+    button.setAttribute("aria-selected", String(isActive));
+    button.tabIndex = isActive ? 0 : -1;
+  });
+}
+
+function moveHeroSlide(delta = 1) {
+  const deck = getHeroSlideDeck();
+  const currentIndex = Number(deck?.dataset.currentSlide || 0);
+  setHeroSlide(currentIndex + Number(delta || 0));
+}
+
+function initialiseHeroSlides() {
+  const deck = getHeroSlideDeck();
+  if (!deck || deck.dataset.bound === "true") return;
+  deck.dataset.bound = "true";
+  deck.addEventListener("keydown", event => {
+    if (event.key === "ArrowRight") {
+      event.preventDefault();
+      moveHeroSlide(1);
+    }
+    if (event.key === "ArrowLeft") {
+      event.preventDefault();
+      moveHeroSlide(-1);
+    }
+  });
+  setHeroSlide(0);
+}
+
 async function init() {
   state.student = getLoggedInStudent();
   installESTActiveTimerGuards();
@@ -143,6 +206,7 @@ async function init() {
   setStageScene("neutral");
   renderFocusNav();
   renderHero();
+  initialiseHeroSlides();
   renderMetrics();
   renderMap();
   renderResources();
@@ -154,6 +218,8 @@ async function init() {
 
 window.ESTPrep = {
   openStage,
+  setHeroSlide,
+  moveHeroSlide,
   toggleCoreBriefingPause,
   toggleCoreBriefingMax,
   openContentGroupIntro,
