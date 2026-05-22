@@ -935,6 +935,14 @@ function getEmployabilityLogoPath(fileName) {
 const STAR_EVIDENCE_STORAGE_KEY = "career-empire-star-evidence";
 const STAR_EVIDENCE_SKILL_POINTS = 15;
 const STAR_EVIDENCE_SALARY_REWARD = 500;
+const EMPLOYABILITY_PORTFOLIO_MODULE_ID = "employability-skills";
+const LEGACY_STAR_MODULE_ID = "lifelong-learning";
+
+let employabilitySkillCategoriesCache = [];
+let studentPortfolioState = {
+  open: false,
+  view: "timeline"
+};
 
 const STAR_CONTEXTS = [
   { id: "school", label: "School" },
@@ -975,6 +983,14 @@ const STAR_BUILDER_STEPS = [
     lead: "Now finish it off. What was the outcome or result?",
     prompt: "What changed, what feedback did you receive, or what evidence shows it worked?",
     examples: ["The group completed the task on time.", "The customer understood the options and thanked me.", "My teacher said the explanation was clear."]
+  },
+  {
+    key: "nextSteps",
+    label: "Review",
+    term: "Goal + Review",
+    lead: "Last piece. What will you do differently next time?",
+    prompt: "Set one goal for the next time you use this skill, and explain what you would improve or do differently.",
+    examples: ["Next time, I would ask a clarifying question earlier so I understand the task before starting.", "My goal is to use the same sub-skill more deliberately and check whether it helped.", "I would plan my role sooner so the group has more time to complete the task well."]
   }
 ];
 
@@ -1014,11 +1030,59 @@ function getSkillStarEvidenceEntries() {
 
 function getSkillStarEvidenceMap(entries = getSkillStarEvidenceEntries()) {
   return (Array.isArray(entries) ? entries : []).reduce((acc, entry) => {
-    if (!entry?.skillId) return acc;
-    acc[entry.skillId] = acc[entry.skillId] || [];
-    acc[entry.skillId].push(entry);
+    getStarEntrySkillIds(entry).forEach(skillId => {
+      acc[skillId] = acc[skillId] || [];
+      acc[skillId].push(entry);
+    });
     return acc;
   }, {});
+}
+
+function getSkillCategory(skillId) {
+  return employabilitySkillCategoriesCache.find(category => category.id === skillId) || null;
+}
+
+function getSkillCategoryTitle(skillId) {
+  return getSkillCategory(skillId)?.title || skillId.replaceAll("-", " ").replace(/\b\w/g, char => char.toUpperCase());
+}
+
+function getStarEntrySkillIds(entry = {}) {
+  const ids = Array.isArray(entry.skillIds) && entry.skillIds.length
+    ? entry.skillIds
+    : Array.isArray(entry.selectedSkillIds) && entry.selectedSkillIds.length
+      ? entry.selectedSkillIds
+      : [entry.skillId];
+  return [...new Set(ids.filter(Boolean))];
+}
+
+function getStarEntrySkillTitles(entry = {}) {
+  const storedTitles = Array.isArray(entry.skillTitles) ? entry.skillTitles : [];
+  return getStarEntrySkillIds(entry).map((skillId, index) => storedTitles[index] || getSkillCategoryTitle(skillId));
+}
+
+function normaliseStarSubskillTags(rawTags = []) {
+  const seen = new Set();
+  return (Array.isArray(rawTags) ? rawTags : []).map(tag => {
+    const skillId = tag.skillId || tag.categoryId || "";
+    const subskillId = tag.subskillId || tag.id || "";
+    const category = getSkillCategory(skillId);
+    const subskill = category?.subskills?.find(item => item.id === subskillId);
+    return {
+      skillId,
+      skillTitle: tag.skillTitle || category?.title || getSkillCategoryTitle(skillId),
+      subskillId,
+      subskillTitle: tag.subskillTitle || subskill?.title || tag.title || subskillId.replaceAll("-", " ")
+    };
+  }).filter(tag => {
+    const key = `${tag.skillId}:${tag.subskillId}`;
+    if (!tag.skillId || !tag.subskillId || seen.has(key)) return false;
+    seen.add(key);
+    return true;
+  });
+}
+
+function getStarEntrySubskillTags(entry = {}) {
+  return normaliseStarSubskillTags(entry.subskillTags || []);
 }
 
 function saveSkillStarEvidence(entry) {
@@ -1065,35 +1129,47 @@ function makeSnippet(value) {
   return source.length > 78 ? `${source.slice(0, 75).trim()}...` : source;
 }
 
-function createStarEvidenceSummary({ contextId, skillTitle, responses }) {
+function createStarEvidenceSummary(entry) {
+  const { contextId, skillTitle, responses } = entry;
   const contextLabel = getStarContextLabel(contextId);
+  const skillTitles = getStarEntrySkillTitles(entry);
+  const skillLabel = getStarEntrySkillIds(entry).length > 1
+    ? skillTitles.join(" + ")
+    : (skillTitle || skillTitles[0] || "Employability");
   const situation = makeSnippet(responses?.situation);
   const task = makeSnippet(responses?.task);
   const action = makeSnippet(responses?.actions);
   const core = situation || task || action || "STAR evidence";
-  return `${contextLabel} ${skillTitle}: ${core}`;
+  return `${contextLabel} ${skillLabel}: ${core}`;
 }
 
-function createStarEvidenceReviewText({ contextId, skillTitle, responses }) {
+function createStarEvidenceReviewText(entry) {
+  const { contextId, skillTitle, responses } = entry;
   const clean = value => String(value || "").replace(/\s+/g, " ").trim();
   const contextLabel = getStarContextLabel(contextId);
+  const skillTitles = getStarEntrySkillTitles(entry);
+  const subskillTags = getStarEntrySubskillTags(entry);
   return [
-    `${contextLabel} example for ${skillTitle}.`,
+    `${contextLabel} example for ${skillTitles.length ? skillTitles.join(", ") : skillTitle}.`,
+    skillTitles.length ? `Tagged skills: ${skillTitles.join("; ")}` : "",
+    subskillTags.length ? `Sub-skills: ${subskillTags.map(tag => `${tag.skillTitle} - ${tag.subskillTitle}`).join("; ")}` : "",
     `Situation: ${clean(responses?.situation)}`,
     `Task: ${clean(responses?.task)}`,
     `Actions: ${clean(responses?.actions)}`,
-    `Result: ${clean(responses?.results)}`
-  ].filter(line => !line.endsWith(": ")).join("\n");
+    `Result: ${clean(responses?.results)}`,
+    responses?.nextSteps ? `Goal and review: ${clean(responses.nextSteps)}` : ""
+  ].filter(line => line && !line.endsWith(": ")).join("\n");
 }
 
 function getStarEvidenceReviewContext() {
   const authState = getAuthPrototypeState();
   const studentLogin = authState?.studentLogin || {};
   const session = getCurrentPlayerSession() || {};
+  const untrackedDemo = Boolean(studentLogin.demo || session.demoMode || (studentLogin.preview && !studentLogin.id));
   return {
-    studentId: studentLogin.id || session.studentId || null,
-    classId: studentLogin.classId || session.classId || null,
-    schoolId: studentLogin.schoolId || session.schoolId || null,
+    studentId: untrackedDemo ? null : (studentLogin.id || session.studentId || null),
+    classId: untrackedDemo ? null : (studentLogin.classId || session.classId || null),
+    schoolId: untrackedDemo ? null : (studentLogin.schoolId || session.schoolId || null),
     student: {
       displayName: studentLogin.displayName || session.playerName || studentLogin.username || "",
       username: studentLogin.username || session.username || ""
@@ -1113,11 +1189,11 @@ async function queueSkillStarEvidenceForReview(entry) {
     studentId: context.studentId,
     classId: context.classId,
     schoolId: context.schoolId,
-    moduleId: "lifelong-learning",
+    moduleId: EMPLOYABILITY_PORTFOLIO_MODULE_ID,
     evidenceType: "employability-star",
-    taskKey: `employability-star-${entry.skillId}-${entry.contextId}-${entry.id}`,
-    taskLabel: `${entry.skillTitle} STAR evidence`,
-    promptText: `Final STAR employability entry for ${entry.skillTitle}. Teacher checks this before it can be shared.`,
+    taskKey: `employability-star:${entry.skillId}:${entry.contextId}:${entry.id}`,
+    taskLabel: `${getStarEntrySkillTitles(entry).join(" + ") || entry.skillTitle || "Employability"} STAR evidence`,
+    promptText: "Final STAR employability portfolio entry. Teacher checks this before it can be shared.",
     responseText: entry.reviewText || createStarEvidenceReviewText(entry),
     student: context.student
   });
@@ -1125,8 +1201,10 @@ async function queueSkillStarEvidenceForReview(entry) {
 
 async function getCurrentStudentResponseReviews() {
   const authState = getAuthPrototypeState();
-  const studentId = authState?.studentLogin?.id;
-  if (!studentId) return [];
+  const session = getCurrentPlayerSession();
+  const studentLogin = authState?.studentLogin || {};
+  const studentId = studentLogin.id;
+  if (!studentId || studentLogin.demo || session?.demoMode || (studentLogin.preview && !studentId)) return [];
 
   const supabase = await getSupabaseClientOrNull();
   if (!supabase) return [];
@@ -2960,7 +3038,8 @@ function buildCapabilityEvidenceEntries(parsedEvidenceRows = [], reviewRows = []
   const assessmentEntries = parsedEvidenceRows
     .filter(entry => {
       const moduleId = getEvidenceModuleId(entry.row, entry.payload);
-      return moduleId === "lifelong-learning" && entry.row.evidence_type === "employability-star";
+      return [EMPLOYABILITY_PORTFOLIO_MODULE_ID, LEGACY_STAR_MODULE_ID].includes(moduleId)
+        && entry.row.evidence_type === "employability-star";
     })
     .map(entry => {
     const response = getEvidenceResponseText(entry.row, entry.payload);
@@ -2985,7 +3064,7 @@ function buildCapabilityEvidenceEntries(parsedEvidenceRows = [], reviewRows = []
     const response = row.status === "approved" && row.approved_response_text
       ? row.approved_response_text
       : row.raw_response_text || "";
-    const moduleId = row.module_id || "lifelong-learning";
+    const moduleId = row.module_id || EMPLOYABILITY_PORTFOLIO_MODULE_ID;
     return {
       id: row.id,
       studentId: row.student_id || "",
@@ -3171,6 +3250,60 @@ function renderStarRows(rows) {
   `).join("");
 }
 
+function getStarRowsForEntry(entry = {}) {
+  const rows = [
+    { label: "S", term: "Situation", text: entry.responses?.situation || "" },
+    { label: "T", term: "Task", text: entry.responses?.task || "" },
+    { label: "A", term: "Actions", text: entry.responses?.actions || "" },
+    { label: "R", term: "Results", text: entry.responses?.results || "" }
+  ];
+  if (entry.responses?.nextSteps) {
+    rows.push({ label: "G", term: "Goal + Review", text: entry.responses.nextSteps });
+  }
+  return rows;
+}
+
+function renderStarTagList(entry = {}, currentSkillId = "") {
+  const skillTags = getStarEntrySkillIds(entry)
+    .filter(skillId => skillId !== currentSkillId)
+    .map(skillId => `<span>${escapeHtml(getSkillCategoryTitle(skillId))}</span>`);
+  const subskillTags = getStarEntrySubskillTags(entry)
+    .filter(tag => !currentSkillId || tag.skillId === currentSkillId || getStarEntrySkillIds(entry).length === 1)
+    .map(tag => `<span>${escapeHtml(tag.subskillTitle)}</span>`);
+  const tags = [...skillTags, ...subskillTags];
+  return tags.length ? `<div class="skill-star-tag-list">${tags.join("")}</div>` : "";
+}
+
+function getStarPresetExample(category, meta) {
+  if (meta.starExample) return meta.starExample;
+  const primarySubskill = category.subskills?.[0]?.title || category.title;
+  return {
+    title: `${category.title} STAR application`,
+    rows: [
+      {
+        label: "S",
+        term: "Situation",
+        text: `In a school, workplace, community, or gameplay situation, I had a chance to demonstrate ${category.title.toLowerCase()}.`
+      },
+      {
+        label: "T",
+        term: "Task",
+        text: `My task was to apply ${primarySubskill.toLowerCase()} so the work could be completed more effectively.`
+      },
+      {
+        label: "A",
+        term: "Actions",
+        text: "I chose a specific sub-skill, used it deliberately, and checked that my action matched the purpose of the task."
+      },
+      {
+        label: "R",
+        term: "Results",
+        text: "The result was clearer evidence of what I can do, plus one next step I can improve next time."
+      }
+    ]
+  };
+}
+
 function getSkillStarReviewStatusMarkup(entry) {
   const status = String(entry?.reviewStatus || "pending_review");
   if (status === "approved") {
@@ -3189,9 +3322,97 @@ function getSkillStarReviewStatusMarkup(entry) {
   return '<p class="skill-star-review-status">Teacher review pending before this can be shared as an example.</p>';
 }
 
+function getStarBuilderSelectedSubskillTags() {
+  if (!starBuilderState) return [];
+  return normaliseStarSubskillTags((starBuilderState.selectedSubskillIds || []).flatMap(key => {
+    const [skillId, subskillId] = key.split(":");
+    return { skillId, subskillId };
+  }));
+}
+
+function renderStarBuilderSkillPicker() {
+  const categories = employabilitySkillCategoriesCache;
+  if (!categories.length || !starBuilderState) return "";
+  const selectedSkillIds = starBuilderState.selectedSkillIds || [starBuilderState.skillId];
+  const selectedSubskillTags = getStarBuilderSelectedSubskillTags();
+  const subskillPrompt = selectedSubskillTags.length
+    ? `Try naming one in your Actions or Results, for example: "I used ${selectedSubskillTags[0].subskillTitle.toLowerCase()} by..."`
+    : "Choose one or more sub-skills, then weave their names into your STAR answer.";
+  return `
+    <div class="skill-star-builder-tags">
+      <div class="skill-star-builder-tag-header">
+        <strong>Portfolio tags</strong>
+        <span>Tag every employability skill this example demonstrates.</span>
+      </div>
+      <div class="skill-star-builder-chip-row">
+        ${categories.map(category => {
+          const selected = selectedSkillIds.includes(category.id);
+          return `
+            <button class="skill-star-builder-chip ${selected ? "is-selected" : ""}" type="button" data-star-toggle-skill="${escapeHtml(category.id)}">
+              ${escapeHtml(category.title)}
+            </button>
+          `;
+        }).join("")}
+      </div>
+      <div class="skill-star-builder-subskills">
+        ${categories.filter(category => selectedSkillIds.includes(category.id)).map(category => `
+          <div class="skill-star-builder-subskill-group">
+            <strong>${escapeHtml(category.title)} sub-skills</strong>
+            <div class="skill-star-builder-chip-row">
+              ${(category.subskills || []).map(subskill => {
+                const key = `${category.id}:${subskill.id}`;
+                const selected = starBuilderState.selectedSubskillIds.includes(key);
+                return `
+                  <button class="skill-star-builder-chip skill-star-builder-chip--subskill ${selected ? "is-selected" : ""}" type="button" data-star-toggle-subskill="${escapeHtml(key)}">
+                    ${escapeHtml(subskill.title)}
+                  </button>
+                `;
+              }).join("")}
+            </div>
+          </div>
+        `).join("")}
+      </div>
+      <p>${escapeHtml(subskillPrompt)}</p>
+    </div>
+  `;
+}
+
+function toggleStarBuilderSkill(skillId) {
+  if (!starBuilderState) return;
+  const current = starBuilderState.selectedSkillIds || [starBuilderState.skillId];
+  const next = current.includes(skillId)
+    ? current.filter(id => id !== skillId)
+    : [...current, skillId];
+  if (!next.length) {
+    starBuilderState.error = "Keep at least one employability skill tagged.";
+    return;
+  }
+  starBuilderState.selectedSkillIds = next;
+  starBuilderState.skillId = next[0];
+  starBuilderState.skillTitle = getSkillCategoryTitle(next[0]);
+  starBuilderState.selectedSubskillIds = (starBuilderState.selectedSubskillIds || [])
+    .filter(key => next.includes(key.split(":")[0]));
+  starBuilderState.error = "";
+}
+
+function toggleStarBuilderSubskill(key) {
+  if (!starBuilderState) return;
+  const [skillId] = key.split(":");
+  if (!starBuilderState.selectedSkillIds.includes(skillId)) {
+    starBuilderState.selectedSkillIds.push(skillId);
+  }
+  starBuilderState.selectedSubskillIds = starBuilderState.selectedSubskillIds.includes(key)
+    ? starBuilderState.selectedSubskillIds.filter(item => item !== key)
+    : [...starBuilderState.selectedSubskillIds, key];
+  starBuilderState.error = "";
+}
+
 function renderSkills(skillsData, targetId, progressMap, skillEvidenceMap = {}) {
   const container = document.getElementById(targetId);
   if (!container) return;
+  if (Array.isArray(skillsData.categories) && skillsData.categories.length) {
+    employabilitySkillCategoriesCache = skillsData.categories;
+  }
 
   container.innerHTML = skillsData.categories.map(category => {
     const progress = clampPercent(progressMap[category.id] || 0);
@@ -3200,6 +3421,7 @@ function renderSkills(skillsData, targetId, progressMap, skillEvidenceMap = {}) 
     const subskills = category.subskills.slice(0, 4);
     const parentLogoPath = getEmployabilityLogoPath(meta.logoFile) || category.logoPath || "";
     const studentEvidenceEntries = isStudentGrid ? (skillEvidenceMap[category.id] || []) : [];
+    const starExample = getStarPresetExample(category, meta);
     const bankedEvidenceMarkup = studentEvidenceEntries.map(entry => `
       <article class="skill-star-entry skill-star-entry-banked">
         <div class="skill-star-entry-meta">
@@ -3207,19 +3429,15 @@ function renderSkills(skillsData, targetId, progressMap, skillEvidenceMap = {}) 
           <time>${escapeHtml(formatDateTime(entry.createdAt))}</time>
         </div>
         <strong class="skill-star-summary">${escapeHtml(entry.summary || createStarEvidenceSummary(entry))}</strong>
+        ${renderStarTagList(entry, category.id)}
         ${getSkillStarReviewStatusMarkup(entry)}
         <div class="skill-star-grid">
-          ${renderStarRows([
-            { label: "S", term: "Situation", text: entry.responses?.situation || "" },
-            { label: "T", term: "Task", text: entry.responses?.task || "" },
-            { label: "A", term: "Actions", text: entry.responses?.actions || "" },
-            { label: "R", term: "Results", text: entry.responses?.results || "" }
-          ])}
+          ${renderStarRows(getStarRowsForEntry(entry))}
         </div>
         <div class="skill-star-reward">Salary signal +${formatCurrency(entry.salaryReward || STAR_EVIDENCE_SALARY_REWARD)}</div>
       </article>
     `).join("");
-    const starActionMarkup = isStudentGrid && meta.starExample ? `
+    const starActionMarkup = isStudentGrid ? `
       <div class="skill-star-actions">
         <span>Build STAR evidence from</span>
         <div class="skill-star-action-list">
@@ -3231,11 +3449,11 @@ function renderSkills(skillsData, targetId, progressMap, skillEvidenceMap = {}) 
         </div>
       </div>
     ` : "";
-    const starExampleMarkup = meta.starExample ? `
+    const starExampleMarkup = isStudentGrid ? `
       <div class="skill-star-example">
         <div class="skill-star-header">
           <div>
-            <div class="skill-star-title">${escapeHtml(meta.starExample.title)}</div>
+            <div class="skill-star-title">${escapeHtml(starExample.title)}</div>
             <p>${studentEvidenceEntries.length ? "Newest student evidence appears first. The preset example stays underneath for reference." : "The preset example stays here until students bank their own STAR evidence."}</p>
           </div>
           <span>Evidence stream</span>
@@ -3245,7 +3463,7 @@ function renderSkills(skillsData, targetId, progressMap, skillEvidenceMap = {}) 
           <article class="skill-star-entry">
             <div class="skill-star-entry-label">Predetermined example</div>
             <div class="skill-star-grid">
-              ${renderStarRows(meta.starExample.rows)}
+              ${renderStarRows(starExample.rows)}
             </div>
           </article>
         </div>
@@ -3256,7 +3474,7 @@ function renderSkills(skillsData, targetId, progressMap, skillEvidenceMap = {}) 
       logoPath: getEmployabilityLogoPath(meta.subskillLogoFiles?.[index] || "")
     }));
     return `
-      <article class="skill-card skill-card-modern ${meta.starExample ? "skill-card-has-star" : ""}" style="--skill-accent: ${meta.accent}; --skill-accent-soft: ${meta.accentSoft}; --skill-accent-strong: ${meta.accentStrong}; --skill-progress-angle: ${progress * 3.6}deg;">
+      <article class="skill-card skill-card-modern ${isStudentGrid ? "skill-card-has-star" : ""}" style="--skill-accent: ${meta.accent}; --skill-accent-soft: ${meta.accentSoft}; --skill-accent-strong: ${meta.accentStrong}; --skill-progress-angle: ${progress * 3.6}deg;">
         <div class="skill-card-top">
           <div class="skill-visual" aria-hidden="true">
             <img class="skill-hero-logo" src="${escapeHtml(parentLogoPath)}" alt="">
@@ -3271,7 +3489,7 @@ function renderSkills(skillsData, targetId, progressMap, skillEvidenceMap = {}) 
           <div class="skill-score-block">
             <div class="kicker">${escapeHtml(category.title)}</div>
             <strong class="skill-score">${progress}%</strong>
-            <span class="skill-score-label">${meta.starExample ? "STAR evidence signal" : "evidence signal"}</span>
+            <span class="skill-score-label">${isStudentGrid ? "STAR evidence signal" : "evidence signal"}</span>
           </div>
         </div>
         <p class="skill-description">${escapeHtml(category.description)}</p>
@@ -3321,16 +3539,22 @@ function ensureSkillStarBuilderModal() {
 }
 
 function openSkillStarBuilder(skillId, skillTitle, contextId, existingEntry = null) {
+  const selectedSkillIds = getStarEntrySkillIds(existingEntry || { skillId });
+  const selectedSubskillIds = getStarEntrySubskillTags(existingEntry || {})
+    .map(tag => `${tag.skillId}:${tag.subskillId}`);
   starBuilderState = {
-    skillId,
-    skillTitle,
+    skillId: selectedSkillIds[0] || skillId,
+    skillTitle: getSkillCategoryTitle(selectedSkillIds[0] || skillId) || skillTitle,
+    selectedSkillIds,
+    selectedSubskillIds,
     contextId,
     stepIndex: 0,
     responses: {
       situation: existingEntry?.responses?.situation || "",
       task: existingEntry?.responses?.task || "",
       actions: existingEntry?.responses?.actions || "",
-      results: existingEntry?.responses?.results || ""
+      results: existingEntry?.responses?.results || "",
+      nextSteps: existingEntry?.responses?.nextSteps || ""
     },
     resubmittingEntryId: existingEntry?.id || null,
     error: "",
@@ -3370,13 +3594,14 @@ function renderSkillStarBuilder() {
   const summaryPreview = createStarEvidenceSummary(starBuilderState);
   const actionDisabled = starBuilderState.isSaving ? "disabled" : "";
   const finalButtonLabel = starBuilderState.resubmittingEntryId ? "Resubmit STAR evidence" : "Bank STAR evidence";
+  const taggedSkillLabel = getStarEntrySkillTitles(starBuilderState).join(" + ");
 
   modal.hidden = false;
   modal.innerHTML = `
     <div class="skill-star-builder-dialog" role="dialog" aria-modal="true" aria-labelledby="skill-star-builder-title">
       <button class="skill-star-builder-close" type="button" data-star-builder-close aria-label="Close STAR builder">Close</button>
       <div class="skill-star-builder-topline">
-        <span>${escapeHtml(starBuilderState.skillTitle)}</span>
+        <span>${escapeHtml(taggedSkillLabel)}</span>
         <span>${escapeHtml(getStarContextLabel(starBuilderState.contextId))}</span>
       </div>
       <div class="skill-star-builder-progress" aria-label="STAR builder progress">
@@ -3384,12 +3609,13 @@ function renderSkillStarBuilder() {
           <span class="${index === starBuilderState.stepIndex ? "is-active" : index < starBuilderState.stepIndex ? "is-complete" : ""}">${escapeHtml(item.label)}</span>
         `).join("")}
       </div>
-      <h2 id="skill-star-builder-title">So you improved ${escapeHtml(starBuilderState.skillTitle)} in a ${escapeHtml(contextLabel)} context?</h2>
+      <h2 id="skill-star-builder-title">So you improved ${escapeHtml(taggedSkillLabel)} in a ${escapeHtml(contextLabel)} context?</h2>
       <p class="skill-star-builder-lead">${escapeHtml(step.lead)}</p>
       <div class="skill-star-builder-privacy-note">
         <strong>${escapeHtml(STUDENT_FREE_TEXT_PRIVACY_NOTICE.title)}</strong>
         <span>${escapeHtml(STUDENT_FREE_TEXT_PRIVACY_NOTICE.body)}</span>
       </div>
+      ${renderStarBuilderSkillPicker()}
       <label class="skill-star-builder-field">
         <span>${escapeHtml(step.term)}</span>
         <small>${escapeHtml(step.prompt)}</small>
@@ -3413,13 +3639,29 @@ function renderSkillStarBuilder() {
   `;
 
   const input = modal.querySelector("[data-star-builder-input]");
-  input?.focus();
+  try {
+    input?.focus({ preventScroll: true });
+  } catch (_) {
+    input?.focus();
+  }
   input?.addEventListener("input", event => {
     updateSkillStarBuilderResponse(event.target.value);
     const summaryTarget = modal.querySelector("[data-star-builder-summary]");
     if (summaryTarget) summaryTarget.textContent = createStarEvidenceSummary(starBuilderState);
   });
   modal.querySelector("[data-star-builder-close]")?.addEventListener("click", closeSkillStarBuilder);
+  modal.querySelectorAll("[data-star-toggle-skill]").forEach(button => {
+    button.addEventListener("click", () => {
+      toggleStarBuilderSkill(button.dataset.starToggleSkill);
+      renderSkillStarBuilder();
+    });
+  });
+  modal.querySelectorAll("[data-star-toggle-subskill]").forEach(button => {
+    button.addEventListener("click", () => {
+      toggleStarBuilderSubskill(button.dataset.starToggleSubskill);
+      renderSkillStarBuilder();
+    });
+  });
   modal.querySelector("[data-star-builder-back]")?.addEventListener("click", () => {
     if (!starBuilderState || starBuilderState.stepIndex === 0) return;
     starBuilderState.stepIndex -= 1;
@@ -3446,6 +3688,9 @@ function renderSkillStarBuilder() {
       id: `star-${Date.now()}`,
       skillId: starBuilderState.skillId,
       skillTitle: starBuilderState.skillTitle,
+      skillIds: [...starBuilderState.selectedSkillIds],
+      skillTitles: getStarEntrySkillTitles(starBuilderState),
+      subskillTags: getStarBuilderSelectedSubskillTags(),
       contextId: starBuilderState.contextId,
       responses: { ...starBuilderState.responses },
       summary: createStarEvidenceSummary(starBuilderState),
@@ -3474,6 +3719,142 @@ function renderSkillStarBuilder() {
     closeSkillStarBuilder();
     initDashboards().catch(console.error);
   });
+}
+
+function ensureStudentPortfolioModal() {
+  let modal = document.getElementById("student-portfolio-modal");
+  if (modal) return modal;
+  modal = document.createElement("div");
+  modal.id = "student-portfolio-modal";
+  modal.className = "student-portfolio-modal";
+  modal.hidden = true;
+  document.body.appendChild(modal);
+  return modal;
+}
+
+function closeStudentPortfolio() {
+  studentPortfolioState.open = false;
+  const modal = ensureStudentPortfolioModal();
+  modal.hidden = true;
+  modal.innerHTML = "";
+}
+
+function renderStudentPortfolioEntry(entry, currentSkillId = "") {
+  const primarySkillId = currentSkillId || getStarEntrySkillIds(entry)[0] || "communication";
+  const meta = EMPLOYABILITY_SKILL_META[primarySkillId] || EMPLOYABILITY_SKILL_META.communication;
+  return `
+    <article class="student-portfolio-entry" style="--skill-accent: ${meta.accent}; --skill-accent-strong: ${meta.accentStrong};">
+      <div class="student-portfolio-entry-header">
+        <div>
+          <span>${escapeHtml(getStarContextLabel(entry.contextId))}</span>
+          <strong>${escapeHtml(entry.summary || createStarEvidenceSummary(entry))}</strong>
+        </div>
+        <time>${escapeHtml(formatDateTime(entry.createdAt))}</time>
+      </div>
+      ${renderStarTagList(entry, currentSkillId)}
+      ${getSkillStarReviewStatusMarkup(entry)}
+      <div class="skill-star-grid">
+        ${renderStarRows(getStarRowsForEntry(entry))}
+      </div>
+      <div class="student-portfolio-entry-actions">
+        <button class="module-link" type="button" data-portfolio-edit-entry-id="${escapeHtml(entry.id)}">Edit STAR entry</button>
+      </div>
+    </article>
+  `;
+}
+
+function renderStudentPortfolio() {
+  const modal = ensureStudentPortfolioModal();
+  if (!studentPortfolioState.open) {
+    modal.hidden = true;
+    return;
+  }
+  const entries = [...(studentPortfolioState.entries || [])]
+    .sort((a, b) => parseTime(b.createdAt) - parseTime(a.createdAt));
+  const categories = studentPortfolioState.skillsData?.categories?.length
+    ? studentPortfolioState.skillsData.categories
+    : employabilitySkillCategoriesCache || [];
+  const view = studentPortfolioState.view || "timeline";
+  const activeEntries = entries.filter(isSkillStarEvidenceActive);
+  const subskillCount = new Set(entries.flatMap(entry => getStarEntrySubskillTags(entry).map(tag => `${tag.skillId}:${tag.subskillId}`))).size;
+  const skillCount = new Set(entries.flatMap(getStarEntrySkillIds)).size;
+  const timelineMarkup = entries.length
+    ? entries.map(entry => renderStudentPortfolioEntry(entry)).join("")
+    : `
+      <div class="student-portfolio-empty">
+        <strong>No STAR reflections banked yet</strong>
+        <p>Use any employability skill card to build STAR evidence from school, workplace, community, or gameplay.</p>
+      </div>
+    `;
+  const skillMarkup = categories.map(category => {
+    const skillEntries = entries.filter(entry => getStarEntrySkillIds(entry).includes(category.id));
+    return `
+      <section class="student-portfolio-skill-group" style="--skill-accent: ${(EMPLOYABILITY_SKILL_META[category.id] || EMPLOYABILITY_SKILL_META.communication).accent};">
+        <div class="student-portfolio-skill-header">
+          <strong>${escapeHtml(category.title)}</strong>
+          <span>${skillEntries.length} entr${skillEntries.length === 1 ? "y" : "ies"}</span>
+        </div>
+        ${skillEntries.length
+          ? skillEntries.map(entry => renderStudentPortfolioEntry(entry, category.id)).join("")
+          : '<p class="student-portfolio-skill-empty">No STAR reflections tagged to this skill yet.</p>'}
+      </section>
+    `;
+  }).join("");
+
+  modal.hidden = false;
+  modal.innerHTML = `
+    <div class="student-portfolio-dialog" role="dialog" aria-modal="true" aria-labelledby="student-portfolio-title">
+      <button class="student-portfolio-close" type="button" data-student-portfolio-close aria-label="Close portfolio">Close</button>
+      <div class="student-portfolio-heading">
+        <span>Employability Portfolio</span>
+        <h2 id="student-portfolio-title">Your STAR reflection log</h2>
+        <p>Saved employability evidence is separate from Lifelong Learning. Multi-skill reflections appear under every skill they are tagged to.</p>
+      </div>
+      <div class="student-portfolio-stats">
+        <span><strong>${entries.length}</strong> reflections</span>
+        <span><strong>${activeEntries.length}</strong> active evidence signals</span>
+        <span><strong>${skillCount}</strong> skill areas tagged</span>
+        <span><strong>${subskillCount}</strong> sub-skills named</span>
+      </div>
+      <div class="student-portfolio-tabs" role="tablist" aria-label="Portfolio view">
+        <button class="${view === "timeline" ? "is-active" : ""}" type="button" data-student-portfolio-view="timeline">Chronological</button>
+        <button class="${view === "skills" ? "is-active" : ""}" type="button" data-student-portfolio-view="skills">By Skill Type</button>
+      </div>
+      <div class="student-portfolio-list">
+        ${view === "skills" ? skillMarkup : timelineMarkup}
+      </div>
+    </div>
+  `;
+  modal.querySelector("[data-student-portfolio-close]")?.addEventListener("click", closeStudentPortfolio);
+  modal.querySelectorAll("[data-student-portfolio-view]").forEach(button => {
+    button.addEventListener("click", () => {
+      studentPortfolioState.view = button.dataset.studentPortfolioView;
+      renderStudentPortfolio();
+    });
+  });
+  modal.querySelectorAll("[data-portfolio-edit-entry-id]").forEach(button => {
+    button.addEventListener("click", () => {
+      const entry = entries.find(item => item.id === button.dataset.portfolioEditEntryId);
+      if (!entry) return;
+      closeStudentPortfolio();
+      openSkillStarBuilder(entry.skillId, entry.skillTitle, entry.contextId, entry);
+    });
+  });
+}
+
+function setupStudentPortfolioButton(skillsData, entries = []) {
+  const button = document.getElementById("student-hub-portfolio-button");
+  if (!button) return;
+  button.textContent = entries.length ? `View Portfolio (${entries.length})` : "View Portfolio";
+  button.onclick = () => {
+    studentPortfolioState = {
+      ...studentPortfolioState,
+      open: true,
+      skillsData,
+      entries
+    };
+    renderStudentPortfolio();
+  };
 }
 
 function setText(id, value) {
@@ -3515,7 +3896,8 @@ function getModuleLabel(moduleId) {
   const labels = {
     "megatrends": "Megatrends",
     "est-prep": "EST Prep",
-    "lifelong-learning": "Lifelong Learning"
+    "lifelong-learning": "Lifelong Learning",
+    "employability-skills": "Employability Skills"
   };
   return labels[moduleId] || String(moduleId || "Module");
 }
@@ -4751,6 +5133,7 @@ async function renderStudentLiveData(players, skillsData) {
   ]);
   const skillEvidenceEntries = syncSkillStarEvidenceWithReviews(getSkillStarEvidenceEntries(), reviewRows);
   const skillEvidenceMap = getSkillStarEvidenceMap(skillEvidenceEntries);
+  setupStudentPortfolioButton(skillsData, skillEvidenceEntries);
   const progressMap = applySkillEvidenceProgress(deriveEmployabilityProgress(progressRecord), skillEvidenceMap);
   const employabilityScore = average(Object.values(progressMap));
   const weakestSkillId = getWeakestSkill(progressMap)[0];
@@ -5633,6 +6016,13 @@ async function initDashboards() {
   let skillsData = { categories: [] };
   let players = [];
   const isTeacherDashboardPage = Boolean(document.getElementById("teacher-module-health"));
+  const authState = getAuthPrototypeState();
+  const session = getCurrentPlayerSession();
+  const studentLogin = authState?.studentLogin || {};
+  const isUntrackedStudentPreview = Boolean(
+    document.getElementById("student-module-grid")
+    && (studentLogin.demo || session?.demoMode || (studentLogin.preview && !studentLogin.id))
+  );
   const needsSharedPlayerData = Boolean(
     document.getElementById("student-module-grid")
     || document.getElementById("leaderboard-page-list")
@@ -5646,7 +6036,7 @@ async function initDashboards() {
     console.error("Failed to load employability skills", error);
   }
 
-  if (!isTeacherDashboardPage || needsSharedPlayerData || isPromoTeacherDashboardMode()) {
+  if (!isUntrackedStudentPreview && (!isTeacherDashboardPage || needsSharedPlayerData || isPromoTeacherDashboardMode())) {
     try {
       players = await getPlayers();
     } catch (error) {

@@ -2037,6 +2037,11 @@ h1 {
   font-weight: 700;
 }
 
+button.module-link {
+  font: inherit;
+  cursor: pointer;
+}
+
 .student-dashboard-page .panel {
   border-radius: 14px;
   box-shadow: 0 22px 56px rgba(0, 0, 0, 0.24);
@@ -2838,9 +2843,28 @@ textarea {
   padding: 8px 10px;
   border-radius: 999px;
   color: #06101c;
-  background: var(--skill-accent);
-  border: 1px solid var(--skill-accent-strong);
+  background: var(--skill-accent, #68d2ff);
+  border: 1px solid var(--skill-accent-strong, rgba(104, 210, 255, 0.34));
   font-size: 12px;
+  font-weight: 900;
+}
+
+.skill-star-tag-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.skill-star-tag-list span {
+  display: inline-flex;
+  align-items: center;
+  min-height: 28px;
+  padding: 5px 8px;
+  border-radius: 999px;
+  border: 1px solid var(--skill-accent-strong, rgba(104, 210, 255, 0.34));
+  color: #dbe8ff;
+  background: rgba(255, 255, 255, 0.055);
+  font-size: 11px;
   font-weight: 900;
 }
 
@@ -3068,6 +3092,85 @@ textarea {
   gap: 6px;
   padding: 12px 14px;
   line-height: 1.4;
+}
+
+.skill-star-builder-tags {
+  display: grid;
+  gap: 12px;
+  padding: 14px;
+  border-radius: 8px;
+  border: 1px solid rgba(104, 210, 255, 0.24);
+  background: rgba(104, 210, 255, 0.07);
+}
+
+.skill-star-builder-tag-header {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  align-items: baseline;
+}
+
+.skill-star-builder-tag-header strong {
+  color: #ffffff;
+  font-size: 14px;
+  font-weight: 900;
+}
+
+.skill-star-builder-tag-header span,
+.skill-star-builder-tags p {
+  margin: 0;
+  color: var(--muted);
+  font-size: 13px;
+  line-height: 1.4;
+}
+
+.skill-star-builder-chip-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.skill-star-builder-chip {
+  min-height: 34px;
+  padding: 7px 10px;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  color: #dbe8ff;
+  background: rgba(255, 255, 255, 0.055);
+  font: inherit;
+  font-size: 12px;
+  font-weight: 900;
+  cursor: pointer;
+}
+
+.skill-star-builder-chip.is-selected {
+  color: #06101c;
+  border-color: #68d2ff;
+  background: #68d2ff;
+}
+
+.skill-star-builder-chip--subskill.is-selected {
+  background: #80ed99;
+  border-color: #80ed99;
+}
+
+.skill-star-builder-subskills {
+  display: grid;
+  gap: 10px;
+}
+
+.skill-star-builder-subskill-group {
+  display: grid;
+  gap: 8px;
+  padding-top: 10px;
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.skill-star-builder-subskill-group strong {
+  color: #dbe8ff;
+  font-size: 12px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
 }
 
 .skill-star-builder-privacy-note strong {
@@ -3313,6 +3416,173 @@ textarea {
 .skill-star-builder-actions button[disabled] {
   opacity: 0.45;
   cursor: not-allowed;
+}
+
+.student-portfolio-modal[hidden] {
+  display: none;
+}
+
+.student-portfolio-modal {
+  position: fixed;
+  inset: 0;
+  z-index: 999;
+  display: grid;
+  place-items: center;
+  padding: 24px;
+  background: rgba(2, 8, 18, 0.78);
+  backdrop-filter: blur(14px);
+}
+
+.student-portfolio-dialog {
+  position: relative;
+  display: grid;
+  gap: 16px;
+  width: min(1060px, 100%);
+  max-height: min(820px, calc(100vh - 48px));
+  overflow-y: auto;
+  padding: 24px;
+  border-radius: 10px;
+  border: 1px solid rgba(104, 210, 255, 0.36);
+  background:
+    linear-gradient(135deg, rgba(104, 210, 255, 0.14), rgba(9, 20, 39, 0.96)),
+    var(--card);
+  box-shadow: 0 26px 70px rgba(0, 0, 0, 0.42);
+}
+
+.student-portfolio-close {
+  justify-self: end;
+  padding: 8px 10px;
+  border-radius: 8px;
+  color: var(--muted);
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  font: inherit;
+  font-weight: 900;
+  cursor: pointer;
+}
+
+.student-portfolio-heading {
+  display: grid;
+  gap: 8px;
+}
+
+.student-portfolio-heading span,
+.student-portfolio-tabs button,
+.student-portfolio-entry-header span {
+  color: #68d2ff;
+  font-size: 12px;
+  font-weight: 900;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.student-portfolio-heading h2 {
+  margin: 0;
+  font-size: clamp(30px, 4vw, 54px);
+  line-height: 0.98;
+}
+
+.student-portfolio-heading p {
+  margin: 0;
+  color: var(--muted);
+  line-height: 1.5;
+}
+
+.student-portfolio-stats,
+.student-portfolio-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.student-portfolio-stats span,
+.student-portfolio-tabs button {
+  min-height: 38px;
+  padding: 8px 10px;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  background: rgba(255, 255, 255, 0.055);
+}
+
+.student-portfolio-stats strong {
+  color: #ffffff;
+}
+
+.student-portfolio-tabs button {
+  color: var(--muted);
+  font: inherit;
+  cursor: pointer;
+}
+
+.student-portfolio-tabs button.is-active {
+  color: #06101c;
+  border-color: #68d2ff;
+  background: #68d2ff;
+}
+
+.student-portfolio-list,
+.student-portfolio-skill-group {
+  display: grid;
+  gap: 14px;
+}
+
+.student-portfolio-entry,
+.student-portfolio-empty,
+.student-portfolio-skill-group {
+  border: 1px solid rgba(104, 210, 255, 0.22);
+  border-radius: 8px;
+  background: rgba(4, 11, 23, 0.42);
+}
+
+.student-portfolio-entry {
+  display: grid;
+  gap: 14px;
+  padding: 16px;
+}
+
+.student-portfolio-entry-header,
+.student-portfolio-skill-header,
+.student-portfolio-entry-actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: 10px;
+  align-items: flex-start;
+}
+
+.student-portfolio-entry-header strong {
+  display: block;
+  margin-top: 4px;
+  color: #ffffff;
+  font-size: 18px;
+  line-height: 1.3;
+}
+
+.student-portfolio-entry-header time,
+.student-portfolio-skill-header span {
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.student-portfolio-empty {
+  padding: 20px;
+}
+
+.student-portfolio-empty p,
+.student-portfolio-skill-empty {
+  margin: 0;
+  color: var(--muted);
+}
+
+.student-portfolio-skill-group {
+  padding: 16px;
+  border-color: color-mix(in srgb, var(--skill-accent) 38%, rgba(255, 255, 255, 0.12));
+}
+
+.student-portfolio-skill-header strong {
+  color: var(--skill-accent);
+  font-size: 18px;
 }
 
 @keyframes skillLogoFloat {
