@@ -108,67 +108,209 @@ function handleESTPrepDeepLink() {
   return true;
 }
 
-function getHeroSlideDeck() {
-  return document.querySelector("[data-hero-slide-deck]");
+const HERO_VIDEO_CHAPTERS = [
+  {
+    label: "Intro",
+    kicker: "EST Lab briefing",
+    title: "Four systems offline",
+    detail: "Your EST prep is a training sequence. Watch each system, pause, then move on when you are ready.",
+    start: 0,
+    end: 5.6
+  },
+  {
+    label: "CORE",
+    kicker: "System 01 of 04",
+    title: "CORE shows what to say",
+    detail: "This is the content layer: topics, examples, facts, and syllabus points.",
+    start: 5.6,
+    end: 14.3
+  },
+  {
+    label: "TERM",
+    kicker: "System 02 of 04",
+    title: "TERM gives the right language",
+    detail: "This is the vocabulary layer: precise terms, definitions, and marker-friendly wording.",
+    start: 14.3,
+    end: 21.5
+  },
+  {
+    label: "VTCS",
+    kicker: "System 03 of 04",
+    title: "VTCS shows what the question wants",
+    detail: "This is the decoding layer: verb, topic, context, and structure before answering.",
+    start: 21.5,
+    end: 30.2
+  },
+  {
+    label: "BOSS",
+    kicker: "System 04 of 04",
+    title: "BOSS proves the final response",
+    detail: "This is the exam layer: combine CORE, TERM, and VTCS into one stronger response.",
+    start: 30.2,
+    end: 36.2
+  },
+  {
+    label: "Beat the Paper",
+    kicker: "Assessment portal restored",
+    title: "Put the systems together",
+    detail: "CORE gives what to say, TERM gives exact language, VTCS shows what the question wants, and BOSS pulls it together.",
+    start: 36.2,
+    end: 44.7
+  }
+];
+
+function getHeroVideoDeck() {
+  return document.querySelector("[data-hero-video-chapters]");
 }
 
-function setHeroSlide(index = 0) {
-  const deck = getHeroSlideDeck();
-  if (!deck) return;
-  const slides = Array.from(deck.querySelectorAll("[data-hero-slide]"));
-  if (!slides.length) return;
+function getHeroVideoPlayer() {
+  return document.querySelector("[data-hero-video]");
+}
 
-  const nextIndex = ((Number(index) || 0) % slides.length + slides.length) % slides.length;
-  deck.dataset.currentSlide = String(nextIndex);
+function playHeroVideo(video) {
+  const playback = video.play?.();
+  if (playback && typeof playback.catch === "function") playback.catch(() => {});
+}
 
-  slides.forEach((slide, slideIndex) => {
-    const isActive = slideIndex === nextIndex;
-    slide.classList.toggle("is-active", isActive);
-    slide.setAttribute("aria-hidden", String(!isActive));
-    slide.querySelectorAll("video").forEach(video => {
-      if (isActive) {
-        const playback = video.play?.();
-        if (playback && typeof playback.catch === "function") playback.catch(() => {});
-      } else {
-        video.pause?.();
-      }
-    });
-  });
+function seekHeroVideo(video, time, playAfterSeek = false) {
+  const targetTime = Math.max(0, Number(time) || 0);
+  video.pause();
 
-  const current = deck.querySelector("[data-hero-slide-current]");
-  const total = deck.querySelector("[data-hero-slide-total]");
-  if (current) current.textContent = String(nextIndex + 1);
-  if (total) total.textContent = String(slides.length);
+  const finish = () => {
+    video.removeEventListener("seeked", finish);
+    if (playAfterSeek && Math.abs(video.currentTime - targetTime) < 0.35) playHeroVideo(video);
+  };
 
-  deck.querySelectorAll("[data-hero-jump]").forEach(button => {
-    const isActive = Number(button.dataset.heroJump) === nextIndex;
+  if (Math.abs(video.currentTime - targetTime) < 0.05) {
+    finish();
+    return;
+  }
+
+  video.addEventListener("seeked", finish, { once: true });
+  video.currentTime = targetTime;
+  if (playAfterSeek) {
+    window.setTimeout(() => {
+      if (Math.abs(video.currentTime - targetTime) < 0.25) finish();
+    }, 700);
+  }
+}
+
+function updateHeroChapterUI(index) {
+  const deck = getHeroVideoDeck();
+  const chapter = HERO_VIDEO_CHAPTERS[index];
+  if (!deck || !chapter) return;
+
+  const count = deck.querySelector("[data-hero-chapter-count]");
+  const label = deck.querySelector("[data-hero-chapter-label]");
+  const kicker = deck.querySelector("[data-hero-chapter-kicker]");
+  const title = deck.querySelector("[data-hero-chapter-title]");
+  const detail = deck.querySelector("[data-hero-chapter-detail]");
+  const previous = deck.querySelector("[data-hero-prev]");
+  const next = deck.querySelector("[data-hero-next]");
+  const play = deck.querySelector("[data-hero-play]");
+
+  if (count) count.textContent = `${String(index + 1).padStart(2, "0")} / ${String(HERO_VIDEO_CHAPTERS.length).padStart(2, "0")}`;
+  if (label) label.textContent = chapter.label;
+  if (kicker) kicker.textContent = chapter.kicker;
+  if (title) title.textContent = chapter.title;
+  if (detail) detail.textContent = chapter.detail;
+  if (previous) previous.disabled = index === 0;
+  if (next) next.textContent = index === HERO_VIDEO_CHAPTERS.length - 1 ? "Restart" : "Next";
+  if (play) play.textContent = deck.dataset.chapterComplete === "true" ? "Replay section" : "Play section";
+
+  deck.querySelectorAll("[data-hero-chapter-jump]").forEach(button => {
+    const isActive = Number(button.dataset.heroChapterJump) === index;
     button.classList.toggle("is-active", isActive);
     button.setAttribute("aria-selected", String(isActive));
     button.tabIndex = isActive ? 0 : -1;
   });
 }
 
-function moveHeroSlide(delta = 1) {
-  const deck = getHeroSlideDeck();
-  const currentIndex = Number(deck?.dataset.currentSlide || 0);
-  setHeroSlide(currentIndex + Number(delta || 0));
+function setHeroChapter(index = 0, options = {}) {
+  const deck = getHeroVideoDeck();
+  const video = getHeroVideoPlayer();
+  if (!deck || !video) return;
+
+  const nextIndex = ((Number(index) || 0) % HERO_VIDEO_CHAPTERS.length + HERO_VIDEO_CHAPTERS.length) % HERO_VIDEO_CHAPTERS.length;
+  const chapter = HERO_VIDEO_CHAPTERS[nextIndex];
+  deck.dataset.currentChapter = String(nextIndex);
+  deck.dataset.chapterComplete = "false";
+  updateHeroChapterUI(nextIndex);
+
+  const setStart = () => seekHeroVideo(video, chapter.start + 0.02, Boolean(options.play));
+
+  if (Number.isFinite(video.duration) && video.duration > 0) {
+    setStart();
+  } else {
+    video.addEventListener("loadedmetadata", setStart, { once: true });
+    video.load();
+  }
 }
 
-function initialiseHeroSlides() {
-  const deck = getHeroSlideDeck();
-  if (!deck || deck.dataset.bound === "true") return;
+function playHeroChapter() {
+  const deck = getHeroVideoDeck();
+  const video = getHeroVideoPlayer();
+  if (!deck || !video) return;
+  const index = Number(deck.dataset.currentChapter || 0);
+  const chapter = HERO_VIDEO_CHAPTERS[index];
+  if (!chapter) return;
+
+  if (video.currentTime < chapter.start || video.currentTime >= chapter.end - 0.15) {
+    seekHeroVideo(video, chapter.start + 0.02, true);
+    return;
+  }
+  deck.dataset.chapterComplete = "false";
+  updateHeroChapterUI(index);
+  playHeroVideo(video);
+}
+
+function nextHeroChapter() {
+  const deck = getHeroVideoDeck();
+  const currentIndex = Number(deck?.dataset.currentChapter || 0);
+  const nextIndex = currentIndex >= HERO_VIDEO_CHAPTERS.length - 1 ? 0 : currentIndex + 1;
+  setHeroChapter(nextIndex, { play: true });
+}
+
+function prevHeroChapter() {
+  const deck = getHeroVideoDeck();
+  const currentIndex = Number(deck?.dataset.currentChapter || 0);
+  setHeroChapter(Math.max(0, currentIndex - 1), { play: true });
+}
+
+function initialiseHeroVideoChapters() {
+  const deck = getHeroVideoDeck();
+  const video = getHeroVideoPlayer();
+  if (!deck || !video || deck.dataset.bound === "true") return;
+
   deck.dataset.bound = "true";
   deck.addEventListener("keydown", event => {
     if (event.key === "ArrowRight") {
       event.preventDefault();
-      moveHeroSlide(1);
+      nextHeroChapter();
     }
     if (event.key === "ArrowLeft") {
       event.preventDefault();
-      moveHeroSlide(-1);
+      prevHeroChapter();
     }
   });
-  setHeroSlide(0);
+
+  video.addEventListener("timeupdate", () => {
+    const index = Number(deck.dataset.currentChapter || 0);
+    const chapter = HERO_VIDEO_CHAPTERS[index];
+    if (!chapter || video.paused) return;
+    if (video.currentTime >= chapter.end) {
+      video.pause();
+      deck.dataset.chapterComplete = "true";
+      updateHeroChapterUI(index);
+    }
+  });
+
+  video.addEventListener("ended", () => {
+    deck.dataset.chapterComplete = "true";
+    updateHeroChapterUI(Number(deck.dataset.currentChapter || 0));
+  });
+
+  setHeroChapter(0);
 }
 
 async function init() {
@@ -206,7 +348,7 @@ async function init() {
   setStageScene("neutral");
   renderFocusNav();
   renderHero();
-  initialiseHeroSlides();
+  initialiseHeroVideoChapters();
   renderMetrics();
   renderMap();
   renderResources();
@@ -218,8 +360,10 @@ async function init() {
 
 window.ESTPrep = {
   openStage,
-  setHeroSlide,
-  moveHeroSlide,
+  setHeroChapter,
+  playHeroChapter,
+  nextHeroChapter,
+  prevHeroChapter,
   toggleCoreBriefingPause,
   toggleCoreBriefingMax,
   openContentGroupIntro,

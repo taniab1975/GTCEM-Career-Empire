@@ -10,36 +10,12 @@
     min-height: 0;
   }
 
-  .hero-slide-deck {
-    aspect-ratio: auto;
-    min-height: 720px;
-  }
-
-  .hero-slide {
+  .hero-video-chapter-panel {
     grid-template-columns: 1fr;
-    align-content: start;
-    gap: 18px;
-    overflow: auto;
-    padding: 26px 26px 104px;
   }
 
-  .hero-slide-copy {
-    justify-items: center;
-    text-align: center;
-  }
-
-  .hero-slide-visual {
-    min-height: 330px;
-  }
-
-  .hero-slide-browser {
-    max-width: 760px;
-    min-height: 320px;
-  }
-
-  .hero-slide-scroll-pane,
-  .hero-slide-browser video {
-    height: 286px;
+  .hero-video-controls {
+    justify-content: flex-start;
   }
 
   .mission-brief-panel .mission-list {
@@ -205,65 +181,39 @@
     padding: 16px;
   }
 
-  .hero-slide-deck {
-    min-height: 840px;
-    border-radius: 18px;
+  .hero-video-badge {
+    top: 10px;
+    left: 10px;
+    max-width: calc(100% - 20px);
+    padding: 8px 10px;
   }
 
-  .hero-slide {
-    padding: 20px 16px 126px;
+  .hero-video-badge strong {
+    font-size: 0.82rem;
   }
 
-  .hero-slide-copy h2 {
-    font-size: clamp(1.55rem, 9vw, 2.25rem);
+  .hero-video-chapter-panel {
+    padding: 13px;
   }
 
-  .hero-slide-visual {
-    min-height: 300px;
+  .hero-video-controls {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    width: 100%;
   }
 
-  .hero-slide-browser {
-    min-height: 292px;
-    border-radius: 16px;
+  .hero-video-controls button {
+    min-width: 0;
+    padding: 8px 9px;
+    font-size: 0.72rem;
   }
 
-  .hero-slide-scroll-pane,
-  .hero-slide-browser video {
-    height: 258px;
+  .hero-video-chapter-pips {
+    padding: 0 13px 13px;
   }
 
-  .hero-slide-card-image {
-    width: min(360px, 86%);
-  }
-
-  .hero-term-stream {
-    right: 2%;
-    bottom: 3%;
-  }
-
-  .hero-vtcs-grid {
-    left: 4%;
-    bottom: 4%;
-    grid-template-columns: repeat(4, 38px);
-  }
-
-  .hero-response-bars {
-    right: 4%;
-    width: min(260px, 72%);
-  }
-
-  .hero-slide-pips {
-    left: 14px;
-    right: 14px;
-    bottom: 66px;
-    justify-content: center;
-  }
-
-  .hero-slide-controls {
-    left: 14px;
-    right: 14px;
-    bottom: 16px;
-    justify-content: space-between;
+  .hero-video-chapter-pips button {
+    flex: 1 1 92px;
   }
 
   .glossary-mission-topbar {
