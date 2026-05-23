@@ -7,7 +7,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="./dashboard.css?v=20260522-employability-module-tags-v4">
+  <link rel="stylesheet" href="./dashboard.css?v=20260522-student-hub-layout-v1">
 </head>
 <body class="student-dashboard-page">
   <main class="page-shell">
@@ -93,7 +93,7 @@
       </article>
     </section>
 
-    <section class="two-column">
+    <section class="student-hub-main">
       <article class="panel module-map-panel">
         <div class="section-title">
           <h2>Module Map</h2>
@@ -102,31 +102,37 @@
         <div id="student-module-grid" class="module-grid"></div>
       </article>
 
-      <div class="student-side-stack">
-        <article class="panel timeline-panel">
-          <div class="section-title">
+      <details class="panel dashboard-dropdown student-activity-dropdown" open>
+        <summary class="section-title dashboard-dropdown-summary">
+          <span>
             <h2>Recent Activity</h2>
             <p>Rewards, tax, spending, and mission updates</p>
-          </div>
+          </span>
+          <span class="dashboard-dropdown-action" aria-hidden="true">
+            <span class="dashboard-action-open">Open</span>
+            <span class="dashboard-action-close">Close</span>
+          </span>
+        </summary>
+        <div class="dashboard-dropdown-content">
           <div id="student-timeline" class="list"></div>
-        </article>
+        </div>
+      </details>
 
-        <details class="panel dashboard-dropdown student-side-dropdown" open>
-          <summary class="section-title dashboard-dropdown-summary">
-            <span>
-              <h2>Global Shop</h2>
-              <p>Shared across all modules</p>
-            </span>
-            <span class="dashboard-dropdown-action" aria-hidden="true">
-              <span class="dashboard-action-open">Open</span>
-              <span class="dashboard-action-close">Close</span>
-            </span>
-          </summary>
-          <div class="dashboard-dropdown-content">
-            <div id="student-shop-preview" class="module-grid shop-preview-grid"></div>
-          </div>
-        </details>
-      </div>
+      <details class="panel dashboard-dropdown student-shop-dropdown">
+        <summary class="section-title dashboard-dropdown-summary">
+          <span>
+            <h2>Global Shop</h2>
+            <p>Shared across all modules</p>
+          </span>
+          <span class="dashboard-dropdown-action" aria-hidden="true">
+            <span class="dashboard-action-open">Open</span>
+            <span class="dashboard-action-close">Close</span>
+          </span>
+        </summary>
+        <div class="dashboard-dropdown-content">
+          <div id="student-shop-preview" class="module-grid shop-preview-grid"></div>
+        </div>
+      </details>
     </section>
 
     <details class="panel dashboard-dropdown">
@@ -145,21 +151,21 @@
       </div>
     </details>
 
-    <article id="student-review-notices-panel" class="panel student-review-notices-panel" hidden>
-      <div class="section-title">
-        <h2>Teacher Review Checks</h2>
-        <p>Shared response pool updates</p>
+    <details id="student-review-notices-panel" class="panel dashboard-dropdown student-review-notices-panel" hidden>
+      <summary class="section-title dashboard-dropdown-summary">
+        <span>
+          <h2>Teacher Review Checks</h2>
+          <p>Returned and approved STAR evidence</p>
+        </span>
+        <span class="dashboard-dropdown-action" aria-hidden="true">
+          <span class="dashboard-action-open">Open</span>
+          <span class="dashboard-action-close">Close</span>
+        </span>
+      </summary>
+      <div class="dashboard-dropdown-content">
+        <div id="student-review-notices" class="student-review-notices"></div>
       </div>
-      <div id="student-review-notices" class="student-review-notices"></div>
-    </article>
-
-    <article id="student-approved-examples-panel" class="panel student-approved-examples-panel" hidden>
-      <div class="section-title">
-        <h2>Class Example Pool</h2>
-        <p>Anonymous teacher-approved responses</p>
-      </div>
-      <div id="student-approved-examples" class="student-approved-examples"></div>
-    </article>
+    </details>
 
     <details class="panel dashboard-dropdown" open>
       <summary class="section-title dashboard-dropdown-summary">
@@ -181,7 +187,7 @@
   <script src="../config/supabase-config.js"></script>
   <script src="../src/services/supabase-browser.js"></script>
   <script src="../src/services/response-moderation.js?v=teacher-written-filter-v5"></script>
-  <script src="./dashboard.js?v=20260522-employability-module-tags-v4"></script>
+  <script src="./dashboard.js?v=20260522-student-hub-layout-v1"></script>
   <script src="../src/services/session-banner.js?v=20260507-session-banner"></script>
   <script src="../src/services/feedback-widget.js?v=20260513-free-text-privacy"></script>
 </body>

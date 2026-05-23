@@ -1163,6 +1163,10 @@ function calculateSkillEvidenceProgress(entries) {
   return clampPercent((entries || []).filter(isSkillStarEvidenceActive).length * STAR_EVIDENCE_SKILL_POINTS);
 }
 
+function calculateStarReflectionCompletion(entries) {
+  return clampPercent((entries || []).length * STAR_EVIDENCE_SKILL_POINTS);
+}
+
 function applySkillEvidenceProgress(progressMap, evidenceMap) {
   return Object.entries(evidenceMap || {}).reduce((acc, [skillId, entries]) => {
     acc[skillId] = Math.max(Number(acc[skillId] || 0), calculateSkillEvidenceProgress(entries));
@@ -1395,7 +1399,7 @@ function getStudentReviewStatusText(row) {
       : "Your saved check was returned with teacher feedback.";
   }
   if (row.status === "approved") {
-    return "Your response has been approved for the anonymous shared example pool. Other students may see the edited version, but your name is not shown.";
+    return "Your teacher approved this response. Your portfolio evidence stays saved under the skills it was tagged to.";
   }
   return getStudentReviewNoticeText(row);
 }
@@ -1429,34 +1433,6 @@ function renderStudentResponseReviewNotices(reviewRows = []) {
     </div>
   `;
   }).join("");
-}
-
-function renderStudentApprovedPeerResponses(rows = []) {
-  const panel = document.getElementById("student-approved-examples-panel");
-  const container = document.getElementById("student-approved-examples");
-  if (!panel || !container) return;
-
-  const visibleRows = rows
-    .filter(row => isShareableReviewEvidence(row) && normaliseWhitespace(row.approved_response_text))
-    .slice(0, 6);
-
-  if (!visibleRows.length) {
-    panel.hidden = true;
-    container.innerHTML = "";
-    return;
-  }
-
-  panel.hidden = false;
-  container.innerHTML = visibleRows.map(row => `
-    <div class="student-approved-example">
-      <div>
-        <strong>${escapeHtml(row.task_label || "Class example")}</strong>
-        <span>${escapeHtml(getModuleLabel(row.module_id || ""))}</span>
-      </div>
-      <p>${escapeHtml(row.prompt_text || "Teacher-approved class example")}</p>
-      <blockquote>${escapeHtml(row.approved_response_text)}</blockquote>
-    </div>
-  `).join("");
 }
 
 function bankStarEvidenceSalary(entry) {
@@ -1555,7 +1531,7 @@ function renderStudentModules(modules) {
   if (!container) return;
 
   container.innerHTML = modules.map(module => `
-    <article class="module-card ${module.imagePath ? "module-card--image-bg" : ""} ${module.spotlight ? "spotlight" : ""} ${module.available === false ? "module-card--unavailable" : ""}"${getModuleImageStyle(module.imagePath)}>
+    <article class="module-card ${module.imagePath ? "module-card--image-bg" : ""} ${module.action === "portfolio" ? "module-card--portfolio" : ""} ${module.spotlight ? "spotlight" : ""} ${module.available === false ? "module-card--unavailable" : ""}"${getModuleImageStyle(module.imagePath)}>
       <div class="module-visual-badge">
         ${module.logoPath ? `<img class="module-logo" src="${module.logoPath}" alt="${escapeHtml(module.logoLabel || module.title)} logo">` : ""}
         <span>${module.title}</span>
@@ -1643,43 +1619,6 @@ function renderStudentTimeline(items) {
       </div>
     </div>
   `).join("");
-}
-
-let studentSideStackFrame = null;
-
-function syncStudentSideStackHeight() {
-  const mapPanel = document.querySelector(".student-dashboard-page .module-map-panel");
-  const moduleGrid = document.getElementById("student-module-grid");
-  const sideStack = document.querySelector(".student-dashboard-page .student-side-stack");
-  if (!mapPanel || !moduleGrid || !sideStack) return;
-
-  if (window.matchMedia("(max-width: 1000px)").matches) {
-    sideStack.style.removeProperty("--student-side-stack-height");
-    return;
-  }
-
-  const mapPanelTop = mapPanel.getBoundingClientRect().top;
-  const moduleGridBottom = moduleGrid.getBoundingClientRect().bottom;
-  const mapPanelStyles = window.getComputedStyle(mapPanel);
-  const mapHeight = Math.ceil(
-    moduleGridBottom -
-    mapPanelTop +
-    (parseFloat(mapPanelStyles.paddingBottom) || 0)
-  );
-  if (mapHeight > 0) {
-    sideStack.style.setProperty("--student-side-stack-height", `${mapHeight}px`);
-  }
-}
-
-function scheduleStudentSideStackHeightSync() {
-  if (studentSideStackFrame) {
-    window.cancelAnimationFrame(studentSideStackFrame);
-  }
-  studentSideStackFrame = window.requestAnimationFrame(() => {
-    studentSideStackFrame = null;
-    syncStudentSideStackHeight();
-    window.setTimeout(syncStudentSideStackHeight, 160);
-  });
 }
 
 function buildEconomyTimelineItems(session) {
@@ -5431,10 +5370,7 @@ async function renderStudentLiveData(players, skillsData) {
   const hasESTProgress = hasMeaningfulModuleProgress(estProgressRow) || hasLocalESTProgress(session);
   const hasAnySavedProgress = hasPlayerProgress || hasLifelongProgress || hasESTProgress;
   const progressRecord = hasPlayerProgress ? record : null;
-  const [reviewRows, approvedPeerRows] = await Promise.all([
-    getCurrentStudentResponseReviews(),
-    getCurrentStudentApprovedPeerResponses()
-  ]);
+  const reviewRows = await getCurrentStudentResponseReviews();
   const skillEvidenceEntries = syncSkillStarEvidenceWithReviews(getSkillStarEvidenceEntries(), reviewRows);
   const skillEvidenceMap = getSkillStarEvidenceMap(skillEvidenceEntries);
   setupStudentPortfolioButton(skillsData, skillEvidenceEntries, moduleStatuses[EMPLOYABILITY_PORTFOLIO_MODULE_ID]);
@@ -5458,7 +5394,7 @@ async function renderStudentLiveData(players, skillsData) {
   const lifelongMastery = Number(lifelongProgressRow?.mastery_percent || 0);
   const estProgress = Number(estProgressRow?.completion_percent || 0);
   const estMastery = Number(estProgressRow?.mastery_percent || 0);
-  const employabilityPortfolioProgress = calculateSkillEvidenceProgress(skillEvidenceEntries);
+  const employabilityPortfolioProgress = calculateStarReflectionCompletion(skillEvidenceEntries);
   const employabilityPortfolioMastery = employabilityScore;
   const moduleCompletionMap = {
     "megatrends": moduleCompletion,
@@ -5556,7 +5492,6 @@ async function renderStudentLiveData(players, skillsData) {
 
   renderSkills(skillsData, "student-skill-grid", progressMap, skillEvidenceMap);
   renderStudentResponseReviewNotices(reviewRows);
-  renderStudentApprovedPeerResponses(approvedPeerRows);
   renderStudentModules([
     {
       id: "megatrends",
@@ -5658,7 +5593,6 @@ async function renderStudentLiveData(players, skillsData) {
       Number(entry.economic_mastery || 0)
     ])}%`
   })));
-  scheduleStudentSideStackHeightSync();
 }
 
 function renderTeacherLiveData(players, skillsData, teacherData = null) {
@@ -6409,8 +6343,6 @@ async function initDashboards() {
   if (document.getElementById("student-module-grid")) {
     try {
       await renderStudentLiveData(players, skillsData);
-      window.addEventListener("resize", scheduleStudentSideStackHeightSync);
-      window.addEventListener("load", scheduleStudentSideStackHeightSync, { once: true });
     } catch (error) {
       console.error("Failed to render student dashboard", error);
     }

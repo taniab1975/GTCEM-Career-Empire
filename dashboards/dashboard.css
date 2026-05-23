@@ -2221,32 +2221,22 @@ button.module-link {
   box-shadow: 0 22px 56px rgba(0, 0, 0, 0.24);
 }
 
-.student-dashboard-page .two-column {
-  grid-template-columns: minmax(0, 1.18fr) minmax(300px, 0.82fr);
-  align-items: start;
+.student-hub-main {
+  display: grid;
+  gap: 20px;
+  margin-bottom: 20px;
 }
 
 .module-map-panel {
   min-height: 0;
 }
 
-.student-side-stack {
-  display: grid;
-  grid-template-rows: minmax(0, 1fr) auto;
-  gap: 16px;
-  align-content: stretch;
-  height: var(--student-side-stack-height, auto);
-  max-height: var(--student-side-stack-height, none);
-  min-height: 0;
-  overflow: hidden;
+.student-dashboard-page .module-map-panel .module-grid {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
 }
 
-.student-dashboard-page .module-grid {
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-}
-
-.student-dashboard-page .student-side-stack .shop-preview-grid {
-  grid-template-columns: 1fr;
+.student-dashboard-page .shop-preview-grid {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
 }
 
 .student-dashboard-page .module-card {
@@ -2274,27 +2264,6 @@ button.module-link {
     linear-gradient(180deg, rgba(4, 12, 26, 0.04), rgba(4, 12, 26, 0.94)),
     linear-gradient(90deg, rgba(4, 12, 26, 0.74), rgba(4, 12, 26, 0.08) 58%, rgba(4, 12, 26, 0.5)),
     var(--module-image) center center / cover no-repeat;
-}
-
-.student-dashboard-page .student-side-stack .module-card--image-bg {
-  min-height: 170px;
-}
-
-.student-dashboard-page .student-side-stack .module-card--image-bg .module-card-body {
-  padding: 62px 14px 14px;
-}
-
-.student-dashboard-page .student-side-stack .module-card h3 {
-  font-size: 18px;
-}
-
-.student-dashboard-page .student-side-dropdown .dashboard-dropdown-summary {
-  min-height: 72px;
-  padding: 18px 18px 12px;
-}
-
-.student-dashboard-page .student-side-dropdown .dashboard-dropdown-content {
-  padding: 0 18px 18px;
 }
 
 .student-dashboard-page .module-card--image-bg::before {
@@ -2327,6 +2296,39 @@ button.module-link {
 .student-dashboard-page .module-card--image-bg .module-card-body {
   padding: 96px 18px 18px;
   background: linear-gradient(180deg, transparent, rgba(4, 12, 26, 0.42) 18%, rgba(4, 12, 26, 0.72));
+}
+
+.student-dashboard-page .module-card--portfolio {
+  min-height: 390px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  background:
+    radial-gradient(circle at 22% 12%, rgba(122, 255, 170, 0.12), transparent 34%),
+    linear-gradient(145deg, rgba(10, 29, 51, 0.96), rgba(6, 16, 31, 0.96));
+}
+
+.student-dashboard-page .module-card--portfolio .module-visual-badge {
+  position: static;
+  flex-wrap: wrap;
+  width: fit-content;
+  max-width: calc(100% - 32px);
+  margin: 16px 16px 0;
+}
+
+.student-dashboard-page .module-card--portfolio .module-visual-badge span {
+  min-width: 0;
+  line-height: 1.12;
+}
+
+.student-dashboard-page .module-card--portfolio .module-card-body {
+  padding: 14px 16px 16px;
+}
+
+.student-dashboard-page .module-card--portfolio h3 {
+  font-size: 22px;
+  line-height: 1.08;
+  overflow-wrap: anywhere;
 }
 
 .student-dashboard-page .module-visual-badge .module-logo {
@@ -2393,6 +2395,7 @@ button.module-link {
 
 .student-dashboard-page #student-timeline {
   flex: 1 1 auto;
+  max-height: 460px;
   min-height: 0;
   overflow-y: auto;
   overscroll-behavior: contain;
@@ -3471,16 +3474,7 @@ textarea {
   display: none;
 }
 
-.student-approved-examples-panel[hidden] {
-  display: none;
-}
-
 .student-review-notices {
-  display: grid;
-  gap: 10px;
-}
-
-.student-approved-examples {
   display: grid;
   gap: 10px;
 }
@@ -3511,40 +3505,13 @@ textarea {
   margin-top: 4px;
 }
 
-.student-approved-example {
-  display: grid;
-  gap: 8px;
-  border: 1px solid rgba(104, 210, 255, 0.24);
-  border-radius: 8px;
-  padding: 12px;
-  background: rgba(104, 210, 255, 0.07);
-}
-
-.student-approved-example > div {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-  align-items: baseline;
-  justify-content: space-between;
-}
-
-.student-approved-example span {
-  color: #68d2ff;
-  font-size: 12px;
-  font-weight: 900;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-}
-
 .student-review-notice p,
-.student-review-notice small,
-.student-approved-example p {
+.student-review-notice small {
   margin: 0;
   color: var(--muted);
 }
 
-.student-review-notice blockquote,
-.student-approved-example blockquote {
+.student-review-notice blockquote {
   margin: 0;
   border-left: 3px solid rgba(104, 210, 255, 0.58);
   padding: 8px 10px;
@@ -4329,13 +4296,6 @@ textarea {
     grid-template-columns: 1fr;
   }
 
-  .student-side-stack {
-    grid-template-rows: auto;
-    height: auto;
-    max-height: none;
-    overflow: visible;
-  }
-
   .student-dashboard-page #student-timeline {
     max-height: 320px;
   }
@@ -4379,6 +4339,10 @@ textarea {
   .student-dashboard-page .student-status-strip,
   .student-dashboard-page .module-grid,
   .student-dashboard-page .skill-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .student-dashboard-page .module-map-panel .module-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
@@ -4786,6 +4750,11 @@ textarea {
   .student-dashboard-page .module-grid,
   .student-dashboard-page .skill-grid,
   .student-dashboard-page .community-board {
+    grid-template-columns: 1fr;
+  }
+
+  .student-dashboard-page .module-map-panel .module-grid,
+  .student-dashboard-page .shop-preview-grid {
     grid-template-columns: 1fr;
   }
 
