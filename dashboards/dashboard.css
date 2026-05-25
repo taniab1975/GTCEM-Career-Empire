@@ -1664,7 +1664,7 @@ h1 {
 
 .capability-portfolio-grid {
   display: grid;
-  grid-template-columns: minmax(0, 1.05fr) minmax(0, 0.95fr);
+  grid-template-columns: minmax(0, 1fr);
   gap: 16px;
   align-items: start;
 }
@@ -1789,6 +1789,159 @@ h1 {
   color: #eef5ff;
   font-size: 13px;
   line-height: 1.42;
+}
+
+.capability-matrix-panel {
+  min-width: 0;
+}
+
+.capability-matrix-scroll,
+.learning-profile-matrix-scroll {
+  max-height: 760px;
+}
+
+.capability-evidence-matrix {
+  width: max(100%, 2100px);
+}
+
+.learning-profile-matrix {
+  width: max(100%, 1540px);
+}
+
+.capability-evidence-matrix th:not(.teacher-matrix-student-col),
+.capability-evidence-matrix td:not(.teacher-matrix-student-col) {
+  width: 315px;
+}
+
+.learning-profile-matrix th:not(.teacher-matrix-student-col),
+.learning-profile-matrix td:not(.teacher-matrix-student-col) {
+  width: 350px;
+}
+
+.capability-matrix-logo {
+  width: 22px;
+  height: 22px;
+  margin-right: 8px;
+  vertical-align: middle;
+  object-fit: contain;
+}
+
+.portfolio-evidence-cell,
+.learning-profile-cell {
+  min-height: 318px;
+  display: grid;
+  align-content: start;
+  gap: 12px;
+  padding: 12px;
+  border: 1px solid rgba(136, 173, 255, 0.16);
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.035);
+}
+
+.portfolio-evidence-cell--empty,
+.learning-profile-cell--empty {
+  color: var(--muted);
+  background: rgba(159, 178, 211, 0.055);
+}
+
+.portfolio-evidence-cell--empty strong,
+.portfolio-evidence-cell--empty span,
+.learning-empty-note {
+  color: var(--muted);
+}
+
+.portfolio-evidence-cell-summary {
+  display: flex;
+  gap: 10px;
+  align-items: flex-start;
+  justify-content: space-between;
+}
+
+.portfolio-evidence-cell-summary strong,
+.learning-profile-cell-grid strong {
+  color: var(--text);
+  line-height: 1.1;
+}
+
+.portfolio-evidence-cell-summary span,
+.learning-profile-cell-grid span,
+.learning-profile-cell-grid small,
+.learning-profile-responses > span,
+.learning-response-entry small,
+.learning-response-prompt,
+.portfolio-evidence-tags {
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 1.3;
+}
+
+.portfolio-evidence-entry-list,
+.learning-profile-responses {
+  max-height: 245px;
+  overflow: auto;
+  display: grid;
+  gap: 10px;
+  padding-right: 4px;
+}
+
+.portfolio-evidence-entry,
+.learning-response-entry {
+  display: grid;
+  gap: 7px;
+  padding: 10px;
+  border: 1px solid rgba(136, 173, 255, 0.14);
+  border-radius: 8px;
+  background: rgba(5, 13, 26, 0.52);
+}
+
+.portfolio-evidence-entry p,
+.learning-response-entry p {
+  margin: 0;
+  color: #dce8ff;
+  font-size: 13px;
+  line-height: 1.4;
+  overflow-wrap: anywhere;
+  white-space: pre-wrap;
+}
+
+.portfolio-evidence-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.portfolio-evidence-tags span {
+  padding: 4px 7px;
+  border: 1px solid rgba(136, 173, 255, 0.14);
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.04);
+}
+
+.learning-profile-cell-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.learning-profile-cell-grid > div {
+  min-width: 0;
+  display: grid;
+  gap: 4px;
+  padding: 9px;
+  border: 1px solid rgba(136, 173, 255, 0.14);
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.04);
+}
+
+.learning-profile-cell-grid span,
+.learning-profile-responses > span {
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.teacher-matrix-student-col .teacher-matrix-code {
+  margin-top: 10px;
 }
 
 .capability-card-list,
@@ -4023,6 +4176,11 @@ textarea {
   background: rgba(255, 209, 102, 0.12);
 }
 
+.teacher-matrix-code--high {
+  color: #c8ffd5;
+  background: rgba(128, 237, 153, 0.12);
+}
+
 .teacher-response-cell {
   min-height: 228px;
   display: grid;
@@ -4260,8 +4418,7 @@ textarea {
   }
 
   .module-availability-grid,
-  .dashboard-focus-strip,
-  .capability-portfolio-grid {
+  .dashboard-focus-strip {
     grid-template-columns: 1fr 1fr;
   }
 
@@ -4390,8 +4547,7 @@ textarea {
   }
 
   .module-availability-grid,
-  .dashboard-focus-strip,
-  .capability-portfolio-grid {
+  .dashboard-focus-strip {
     grid-template-columns: 1fr;
   }
 

@@ -2880,67 +2880,228 @@ function renderTeacherChartBars(rows) {
   }).join("");
 }
 
+function extractAnswerStatsFromEvidence(entry) {
+  const payload = entry?.payload || {};
+  const stats = { correct: 0, total: 0 };
+  const addCorrectRows = rows => {
+    if (!Array.isArray(rows)) return;
+    rows.forEach(item => {
+      if (!item || typeof item !== "object") return;
+      if (typeof item.correct === "boolean") {
+        stats.total += 1;
+        if (item.correct) stats.correct += 1;
+        return;
+      }
+      if (typeof item.termCorrect === "boolean") {
+        stats.total += 1;
+        if (item.termCorrect) stats.correct += 1;
+      }
+      if (typeof item.keywordCorrect === "boolean") {
+        stats.total += 1;
+        if (item.keywordCorrect) stats.correct += 1;
+      }
+    });
+  };
+
+  addCorrectRows(payload.items);
+  addCorrectRows(payload.selected_options);
+  addCorrectRows(payload.final_round_results);
+  if (Array.isArray(payload.topic_groups)) {
+    payload.topic_groups.forEach(group => {
+      addCorrectRows(group.items);
+      if (typeof group.training?.correct === "number" && typeof group.training?.total === "number") {
+        stats.correct += Number(group.training.correct || 0);
+        stats.total += Number(group.training.total || 0);
+      }
+    });
+  }
+  if (Array.isArray(payload.decoder_results)) {
+    payload.decoder_results.forEach(result => {
+      stats.correct += Number(result.correct_count || 0);
+      stats.total += Number(result.total_parts || 0);
+    });
+  }
+  if (typeof payload.training?.correct === "number" && typeof payload.training?.total === "number") {
+    stats.correct += Number(payload.training.correct || 0);
+    stats.total += Number(payload.training.total || 0);
+  }
+
+  return stats;
+}
+
+function getEvidenceWrittenResponse(entry) {
+  const payload = entry?.payload || {};
+  const row = entry?.row || {};
+  return stripStarEvidenceMetadata(extractLongResponseText(
+    payload.written_response
+    || payload.built_response
+    || payload.response_text
+    || row.raw_response_text
+    || row.approved_response_text
+    || row.response_text
+    || ""
+  ));
+}
+
+function getReviewModuleId(row) {
+  return row?.module_id
+    || row?.module_slug
+    || (row?.evidence_type === "employability-star" ? EMPLOYABILITY_PORTFOLIO_MODULE_ID : "lifelong-learning");
+}
+
+function buildLearningProfileModuleCell(student, module, data) {
+  const moduleId = module.id;
+  const progressRows = data.moduleProgressRows || [];
+  const evidenceRows = data.parsedEvidenceRows || [];
+  const reviewRows = data.reviewRows || [];
+  const progress = progressRows.find(row => row.student_id === student.id && (row.module_id || row.module_slug) === moduleId) || null;
+  const moduleEvidence = evidenceRows
+    .filter(entry => entry.row?.student_id === student.id && getEvidenceModuleId(entry.row, entry.payload) === moduleId)
+    .sort((a, b) => parseTime(b.row?.created_at) - parseTime(a.row?.created_at));
+  const moduleReviews = reviewRows
+    .filter(row => row.student_id === student.id && getReviewModuleId(row) === moduleId)
+    .sort((a, b) => parseTime(b.created_at) - parseTime(a.created_at));
+  const totalSeconds = moduleEvidence.reduce((sum, entry) => sum + Number(entry.payload?.duration_seconds || 0), 0);
+  const answerStats = moduleEvidence.reduce((acc, entry) => {
+    const next = extractAnswerStatsFromEvidence(entry);
+    acc.correct += next.correct;
+    acc.total += next.total;
+    return acc;
+  }, { correct: 0, total: 0 });
+  const attempts = Number(progress?.attempts || 0);
+  const resetReplaySignals = moduleEvidence.filter(entry => {
+    const payload = entry.payload || {};
+    return /\b(reset|replay|restart)\b/i.test([
+      payload.task_name,
+      payload.checkpoint,
+      payload.evidence_type,
+      entry.row?.evidence_type,
+      entry.row?.prompt
+    ].filter(Boolean).join(" "));
+  }).length;
+  const responses = [
+    ...moduleEvidence.map(entry => ({
+      id: entry.row?.id || `${entry.row?.student_id}-${entry.row?.created_at}`,
+      label: getEvidenceTaskLabel(entry.row, entry.payload),
+      prompt: getEvidencePromptText(entry.row, entry.payload),
+      response: getEvidenceWrittenResponse(entry),
+      score: getEvidenceScorePercent(entry.row, entry.payload),
+      createdAt: entry.row?.created_at
+    })),
+    ...moduleReviews.map(row => ({
+      id: row.id,
+      label: row.task_label || row.evidence_type || "Teacher review",
+      prompt: row.prompt_text || "Teacher-reviewed response",
+      response: stripStarEvidenceMetadata(row.status === "approved" && row.approved_response_text ? row.approved_response_text : row.raw_response_text),
+      score: null,
+      createdAt: row.created_at
+    }))
+  ]
+    .filter(item => String(item.response || "").trim().length >= 8)
+    .sort((a, b) => parseTime(b.createdAt) - parseTime(a.createdAt));
+  const completion = Number(progress?.completion_percent || 0);
+  const mastery = Number(progress?.mastery_percent || 0);
+
+  return `
+    <div class="learning-profile-cell ${moduleEvidence.length || moduleReviews.length || progress ? "" : "learning-profile-cell--empty"}">
+      <div class="learning-profile-cell-grid">
+        <div>
+          <span>Progress</span>
+          <strong>${completion || mastery ? `${completion}% complete` : "NYS"}</strong>
+          <small>${mastery ? `${mastery}% mastery` : "No mastery yet"}</small>
+        </div>
+        <div>
+          <span>Logged time</span>
+          <strong>${escapeHtml(formatDurationSeconds(totalSeconds, "NYS"))}</strong>
+          <small>captured task time</small>
+        </div>
+        <div>
+          <span>Stats</span>
+          <strong>${answerStats.total ? `${answerStats.correct}/${answerStats.total}` : "NYS"}</strong>
+          <small>answers correct</small>
+        </div>
+        <div>
+          <span>Attempts</span>
+          <strong>${attempts || resetReplaySignals || "NYS"}</strong>
+          <small>attempts/replays</small>
+        </div>
+      </div>
+      <div class="learning-profile-responses">
+        <span>Written responses</span>
+        ${responses.length ? responses.map(item => `
+          <article class="learning-response-entry">
+            <strong>${escapeHtml(item.label)}</strong>
+            <small>${escapeHtml(formatDateTime(item.createdAt))}${typeof item.score === "number" ? ` - ${item.score}%` : ""}</small>
+            ${item.prompt ? `<p class="learning-response-prompt">${escapeHtml(makeSnippet(item.prompt, 96))}</p>` : ""}
+            <p>${escapeHtml(item.response)}</p>
+          </article>
+        `).join("") : '<p class="learning-empty-note">No written responses in this module yet.</p>'}
+      </div>
+    </div>
+  `;
+}
+
 function renderTeacherStudentProfile(data) {
   const container = document.getElementById("teacher-student-profile");
   if (!container) return;
+  const students = data.selectedStudent ? [data.selectedStudent] : (data.students || []);
 
-  if (!data.students.length) {
+  if (!students.length) {
     container.innerHTML = `
       <div class="timeline-item">
         <strong>No student profiles yet</strong>
-        <p>Create or sync student records first, then this panel will show an individual learning profile.</p>
+        <p>Create or sync student records first, then this panel will show the student-by-module profile matrix.</p>
       </div>
     `;
     return;
   }
 
-  if (!data.selectedStudent) {
-    const needsSupport = data.engagementRows.filter(row => ["No interaction", "Needs support", "Review evidence"].includes(row.status)).length;
+  const moduleColumns = (data.visibleModuleIds || DASHBOARD_MODULES.map(module => module.id))
+    .map(moduleId => getModuleById(moduleId))
+    .filter(Boolean);
+  if (!moduleColumns.length) {
     container.innerHTML = `
-      <article class="module-card student-learning-card">
-        <div class="section-title">
-          <div>
-            <h3>All students selected</h3>
-            <p>${data.students.length} learner profile${data.students.length === 1 ? "" : "s"} in this scope</p>
-          </div>
-          <p>Choose a student above</p>
-        </div>
-        <p>Select a student in the drill-down menu to see their learning profile, latest evidence, module progress, and suggested next step.</p>
-        <div class="pill-row">
-          <span class="pill">${needsSupport} need support</span>
-          <span class="pill">${data.engagementRows.filter(row => row.status === "Active").length} active</span>
-          <span class="pill">${data.studentCompareRows.length} profiles compared</span>
-        </div>
-      </article>
+      <div class="timeline-item">
+        <strong>No modules in the current filter</strong>
+        <p>Change the module focus filter to Active, Cumulative, or a specific module to see learning profile columns.</p>
+      </div>
     `;
     return;
   }
 
-  const compare = data.studentCompareRows.find(row => row.studentId === data.selectedStudent.id);
-  const engagement = data.engagementRows.find(row => row.studentId === data.selectedStudent.id);
-  const details = compare?.details || [];
   container.innerHTML = `
-    <article class="module-card student-learning-card spotlight">
-      <div class="section-title">
-        <div>
-          <h3>${escapeHtml(getStudentDisplayName(data.selectedStudent))}</h3>
-          <p>${escapeHtml(compare?.meta || engagement?.detail || "Student profile")}</p>
-        </div>
-        <p>${escapeHtml(compare?.status || engagement?.status || "Profile")}</p>
-      </div>
-      <p>${escapeHtml(compare?.summary || "This student has a profile but needs more module evidence before deeper diagnostics appear.")}</p>
-      <div class="pill-row">
-        ${(compare?.pills || []).map(pill => `<span class="pill">${escapeHtml(pill)}</span>`).join("")}
-      </div>
-      <div class="list student-learning-detail-list">
-        ${details.map(detail => `
-          <div class="timeline-item">
-            <strong>${escapeHtml(detail.title)}</strong>
-            <p>${escapeHtml(detail.detail)}</p>
-          </div>
-        `).join("")}
-      </div>
-    </article>
+    <div class="teacher-matrix-scroll learning-profile-matrix-scroll" role="region" aria-label="Student learning profile matrix" tabindex="0">
+      <table class="teacher-matrix learning-profile-matrix">
+        <thead>
+          <tr>
+            <th scope="col" class="teacher-matrix-student-col">Student</th>
+            ${moduleColumns.map(module => `
+              <th scope="col">
+                <span>${escapeHtml(module.title)}</span>
+                <small>time, stats, attempts, responses</small>
+              </th>
+            `).join("")}
+          </tr>
+        </thead>
+        <tbody>
+          ${students.map(student => {
+            const compare = data.studentCompareRows?.find(row => row.studentId === student.id);
+            const engagement = data.engagementRows?.find(row => row.studentId === student.id);
+            const status = compare?.status || engagement?.status || "Profile";
+            return `
+              <tr>
+                <th scope="row" class="teacher-matrix-student-col">
+                  <strong>${escapeHtml(getStudentDisplayName(student))}</strong>
+                  <small>${escapeHtml(compare?.meta || engagement?.detail || (student.last_login_at ? `Last login ${formatDateTime(student.last_login_at)}` : "No login recorded"))}</small>
+                  <span class="teacher-matrix-code ${status === "On track" || status === "Active" ? "teacher-matrix-code--high" : status === "Not started" || status === "No interaction" ? "teacher-matrix-code--nys" : "teacher-matrix-code--mid"}">${escapeHtml(status)}</span>
+                </th>
+                ${moduleColumns.map(module => `<td>${buildLearningProfileModuleCell(student, module, data)}</td>`).join("")}
+              </tr>
+            `;
+          }).join("")}
+        </tbody>
+      </table>
+    </div>
   `;
 }
 
@@ -3215,6 +3376,49 @@ function renderTeacherCapabilityBoardEntry(entry) {
   `;
 }
 
+function studentMatchesCapabilityEntry(student, entry) {
+  return entry.studentId
+    ? entry.studentId === student.id
+    : entry.studentName === getStudentDisplayName(student);
+}
+
+function renderCapabilityPortfolioCell(entries = [], category) {
+  const categoryEntries = entries.filter(entry => entry.capabilityIds.includes(category.id));
+  if (!categoryEntries.length) {
+    return `
+      <div class="portfolio-evidence-cell portfolio-evidence-cell--empty">
+        <strong>No entries yet</strong>
+        <span>No STAR reflections tagged to this capability yet.</span>
+      </div>
+    `;
+  }
+
+  return `
+    <div class="portfolio-evidence-cell">
+      <div class="portfolio-evidence-cell-summary">
+        <strong>${categoryEntries.length} entr${categoryEntries.length === 1 ? "y" : "ies"}</strong>
+        <span>${escapeHtml(getCapabilityProgressionLabel(categoryEntries))}</span>
+      </div>
+      <div class="portfolio-evidence-entry-list">
+        ${categoryEntries.map(entry => `
+          <article class="portfolio-evidence-entry">
+            <div>
+              <strong>${escapeHtml(entry.taskLabel || "Journal evidence")}</strong>
+              <small>${escapeHtml(entry.moduleLabel)} - ${escapeHtml(formatExperienceDate(entry.experienceDate || entry.createdAt))}${typeof entry.score === "number" ? ` - ${entry.score}%` : ""}</small>
+            </div>
+            <p>${escapeHtml(entry.response)}</p>
+            <div class="portfolio-evidence-tags">
+              <span>${entry.wordCount} words</span>
+              <span>quality ${entry.quality}/12</span>
+              ${(entry.markerLabels || []).slice(0, 2).map(label => `<span>${escapeHtml(label)}</span>`).join("")}
+            </div>
+          </article>
+        `).join("")}
+      </div>
+    </div>
+  `;
+}
+
 function renderTeacherCapabilityPortfolio({ skillCategories = [], parsedEvidenceRows = [], reviewRows = [], students = [], selectedStudent = null, evidenceEntries = null }) {
   const container = document.getElementById("teacher-capability-portfolio");
   if (!container) return;
@@ -3222,175 +3426,58 @@ function renderTeacherCapabilityPortfolio({ skillCategories = [], parsedEvidence
   const portfolioEvidenceEntries = Array.isArray(evidenceEntries)
     ? evidenceEntries
     : buildCapabilityEvidenceEntries(parsedEvidenceRows, reviewRows, skillCategories);
-  const boardStudentIds = new Set((students || []).map(student => student.id).filter(Boolean));
-  const boardEntries = portfolioEvidenceEntries.filter(entry => !boardStudentIds.size || boardStudentIds.has(entry.studentId));
   const studentScope = selectedStudent ? [selectedStudent] : students;
   const scopedStudentIds = new Set(studentScope.map(student => student.id).filter(Boolean));
   const scopedEntries = selectedStudent
     ? portfolioEvidenceEntries.filter(entry => entry.studentId === selectedStudent.id)
     : portfolioEvidenceEntries.filter(entry => !scopedStudentIds.size || scopedStudentIds.has(entry.studentId));
 
-  if (!scopedEntries.length) {
+  if (!studentScope.length) {
     container.innerHTML = `
-      <section class="capability-board-panel">
-        <div class="section-title">
-          <h3>All Students x Capabilities</h3>
-          <p>Six capability columns will fill as STAR reflections are submitted.</p>
-        </div>
-        <div class="capability-board-scroll">
-          <div class="capability-board-track">
-            ${skillCategories.map(category => `
-              <article class="capability-board-column is-empty">
-                <div class="capability-board-column-header">
-                  ${category.logoPath ? `<img src="${escapeHtml(category.logoPath)}" alt="">` : ""}
-                  <div>
-                    <strong>${escapeHtml(category.title)}</strong>
-                    <span>No entries yet</span>
-                  </div>
-                </div>
-                <p class="capability-board-empty">No STAR reflections tagged to this capability yet.</p>
-              </article>
-            `).join("")}
-          </div>
-        </div>
-      </section>
       <div class="timeline-item">
-        <strong>No capability journal evidence in this focus yet</strong>
-        <p>When students submit EST Prep responses or employability journals, this view will show what they said, which capability it evidences, and how their articulation is progressing.</p>
+        <strong>No students in this focus yet</strong>
+        <p>Change the class or student status filters to choose which students appear in this portfolio matrix.</p>
       </div>
     `;
     return;
   }
 
-  const capabilityCards = skillCategories.map(category => {
-    const entries = scopedEntries.filter(entry => entry.capabilityIds.includes(category.id));
-    const studentCount = new Set(entries.map(entry => entry.studentId || entry.studentName)).size;
-    const latest = entries[0];
-    const markerCounts = CAPABILITY_LANGUAGE_MARKERS.map(marker => ({
-      label: marker.label,
-      count: entries.filter(entry => entry.markerLabels.includes(marker.label)).length
-    })).filter(row => row.count);
-    return {
-      category,
-      entries,
-      studentCount,
-      latest,
-      markerCounts,
-      progression: getCapabilityProgressionLabel(entries)
-    };
-  }).sort((a, b) => b.entries.length - a.entries.length);
-  const capabilityBoardColumns = skillCategories.map(category => {
-    const entries = boardEntries
-      .filter(entry => entry.capabilityIds.includes(category.id))
-      .sort((a, b) => parseTime(b.createdAt) - parseTime(a.createdAt));
-    return {
-      category,
-      entries,
-      studentCount: new Set(entries.map(entry => entry.studentId || entry.studentName)).size
-    };
-  });
-
-  const portfolioStudents = (selectedStudent ? [selectedStudent] : studentScope)
-    .map(student => {
-      const entries = scopedEntries.filter(entry => entry.studentId === student.id || entry.studentName === getStudentDisplayName(student));
-      const capabilityCounts = skillCategories.map(category => ({
-        category,
-        count: entries.filter(entry => entry.capabilityIds.includes(category.id)).length
-      })).filter(row => row.count).sort((a, b) => b.count - a.count);
-      return {
-        student,
-        entries,
-        capabilityCounts,
-        progression: getCapabilityProgressionLabel(entries),
-        latest: entries[0]
-      };
-    })
-    .filter(row => row.entries.length)
-    .sort((a, b) => b.entries.length - a.entries.length)
-    .slice(0, selectedStudent ? 1 : 8);
+  const portfolioStudents = studentScope.map(student => ({
+    student,
+    entries: scopedEntries.filter(entry => studentMatchesCapabilityEntry(student, entry))
+  }));
 
   container.innerHTML = `
-    <section class="capability-board-panel">
+    <section class="capability-breakdown-panel capability-matrix-panel">
       <div class="section-title">
-        <h3>All Students x Capabilities</h3>
-        <p>Scroll left to right across the six capabilities. Scroll down inside a capability to review every student reflection tagged there.</p>
+        <h3>Students x Capabilities</h3>
+        <p>${scopedEntries.length} STAR reflection${scopedEntries.length === 1 ? "" : "s"} in this focus. Scroll inside a cell to review every entry for that student and capability.</p>
       </div>
-      <div class="capability-board-scroll" aria-label="All students by employability capability">
-        <div class="capability-board-track">
-          ${capabilityBoardColumns.map(column => `
-            <article class="capability-board-column ${column.entries.length ? "" : "is-empty"}">
-              <div class="capability-board-column-header">
-                ${column.category.logoPath ? `<img src="${escapeHtml(column.category.logoPath)}" alt="">` : ""}
-                <div>
-                  <strong>${escapeHtml(column.category.title)}</strong>
-                  <span>${column.entries.length} reflection${column.entries.length === 1 ? "" : "s"} • ${column.studentCount} student${column.studentCount === 1 ? "" : "s"}</span>
-                </div>
-              </div>
-              <div class="capability-board-entry-list">
-                ${column.entries.length
-                  ? column.entries.map(renderTeacherCapabilityBoardEntry).join("")
-                  : '<p class="capability-board-empty">No STAR reflections tagged to this capability yet.</p>'}
-              </div>
-            </article>
-          `).join("")}
-        </div>
-      </div>
-    </section>
-    <section class="capability-breakdown-panel">
-      <div class="section-title">
-        <h3>By Capability Type</h3>
-        <p>Class contribution count and journal language patterns</p>
-      </div>
-      <div class="capability-card-list">
-        ${capabilityCards.map(card => `
-          <article class="capability-evidence-card ${card.entries.length ? "" : "is-empty"}">
-            <div class="capability-evidence-header">
-              ${card.category.logoPath ? `<img src="${escapeHtml(card.category.logoPath)}" alt="">` : ""}
-              <div>
-                <h4>${escapeHtml(card.category.title)}</h4>
-                <p>${card.entries.length} journal item${card.entries.length === 1 ? "" : "s"} • ${card.studentCount} student${card.studentCount === 1 ? "" : "s"}</p>
-              </div>
-            </div>
-            <div class="capability-evidence-meter" style="--capability-width: ${Math.min(100, card.entries.length * 14)}%"></div>
-            <p class="capability-progression">${escapeHtml(card.progression)}</p>
-            ${card.markerCounts.length ? `<div class="pill-row">${card.markerCounts.slice(0, 3).map(row => `<span class="pill">${escapeHtml(row.label)}: ${row.count}</span>`).join("")}</div>` : ""}
-            ${card.latest ? `
-              <blockquote>
-                ${escapeHtml(makeSnippet(card.latest.response))}
-              </blockquote>
-              <small>${escapeHtml(card.latest.studentName)} • ${escapeHtml(card.latest.moduleLabel)} • ${escapeHtml(formatDateTime(card.latest.createdAt))}</small>
-            ` : `<p class="footer-note">No evidence for this capability in the selected focus.</p>`}
-          </article>
-        `).join("")}
-      </div>
-    </section>
-    <section class="capability-breakdown-panel">
-      <div class="section-title">
-        <h3>Student Portfolio View</h3>
-        <p>What each student is saying and how clearly they say it</p>
-      </div>
-      <div class="portfolio-card-list">
-        ${portfolioStudents.map(row => `
-          <article class="student-portfolio-card">
-            <div class="student-portfolio-header">
-              <div>
-                <h4>${escapeHtml(getStudentDisplayName(row.student))}</h4>
-                <p>${row.entries.length} journal item${row.entries.length === 1 ? "" : "s"} • ${escapeHtml(row.progression)}</p>
-              </div>
-              <strong>${row.capabilityCounts[0] ? escapeHtml(row.capabilityCounts[0].category.title) : "No pattern yet"}</strong>
-            </div>
-            <div class="pill-row">
-              ${row.capabilityCounts.slice(0, 4).map(item => `<span class="pill">${escapeHtml(item.category.title)}: ${item.count}</span>`).join("")}
-            </div>
-            ${row.latest ? `
-              <div class="portfolio-latest-entry">
-                <span>${escapeHtml(row.latest.taskLabel)} • ${escapeHtml(row.latest.moduleLabel)}</span>
-                <p>${escapeHtml(makeSnippet(row.latest.response))}</p>
-                <small>${escapeHtml(row.latest.markerLabels.join(" • ") || "Needs clearer reasoning markers")}</small>
-              </div>
-            ` : ""}
-          </article>
-        `).join("")}
+      <div class="teacher-matrix-scroll capability-matrix-scroll" role="region" aria-label="Capability portfolio matrix" tabindex="0">
+        <table class="teacher-matrix capability-evidence-matrix">
+          <thead>
+            <tr>
+              <th scope="col" class="teacher-matrix-student-col">Student</th>
+              ${skillCategories.map(category => `
+                <th scope="col">
+                  <span>${category.logoPath ? `<img class="capability-matrix-logo" src="${escapeHtml(category.logoPath)}" alt="">` : ""}${escapeHtml(category.title)}</span>
+                  <small>scroll evidence entries</small>
+                </th>
+              `).join("")}
+            </tr>
+          </thead>
+          <tbody>
+            ${portfolioStudents.map(row => `
+              <tr>
+                <th scope="row" class="teacher-matrix-student-col">
+                  <strong>${escapeHtml(getStudentDisplayName(row.student))}</strong>
+                  <small>${row.entries.length} STAR reflection${row.entries.length === 1 ? "" : "s"}${row.student.last_login_at ? ` - last login ${escapeHtml(formatDateTime(row.student.last_login_at))}` : ""}</small>
+                </th>
+                ${skillCategories.map(category => `<td>${renderCapabilityPortfolioCell(row.entries, category)}</td>`).join("")}
+              </tr>
+            `).join("")}
+          </tbody>
+        </table>
       </div>
     </section>
   `;
@@ -6293,10 +6380,14 @@ function renderTeacherLiveData(players, skillsData, teacherData = null) {
   renderTeacherTaskTimeList(taskTimingRows);
   renderTeacherStudentCompareList(studentCompareRows, visibleModuleIds);
   renderTeacherStudentProfile({
-    students: allStudents,
+    students,
     selectedStudent,
     engagementRows,
-    studentCompareRows
+    studentCompareRows,
+    moduleProgressRows,
+    parsedEvidenceRows,
+    reviewRows,
+    visibleModuleIds
   });
   renderTeacherClassCharts({
     engagementRows,
