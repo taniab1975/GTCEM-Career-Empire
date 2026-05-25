@@ -319,16 +319,18 @@ function renderCoreBriefingAnimation(groups) {
     }
   ];
   const gameplaySlides = gameplaySteps.map((step, index) => `
-    <figure class="core-gameplay-slide ${index === 0 ? "is-active" : ""}" data-core-gameplay-step="${index}" aria-hidden="${index === 0 ? "false" : "true"}">
+    <figure
+      class="core-gameplay-slide ${index === 0 ? "is-active" : ""}"
+      data-core-gameplay-step="${index}"
+      data-core-gameplay-label="Step ${escapeHtml(String(index + 1).padStart(2, "0"))} of 06"
+      data-core-gameplay-title="${escapeHtml(step.label)}"
+      data-core-gameplay-detail="${escapeHtml(step.detail)}"
+      aria-hidden="${index === 0 ? "false" : "true"}"
+    >
       ${step.type === "video"
         ? `<video src="${step.src}" muted loop playsinline preload="metadata" aria-label="${escapeHtml(step.alt)}"></video>`
         : `<img src="${step.src}" alt="${escapeHtml(step.alt)}">`
       }
-      <figcaption>
-        <small>Step ${escapeHtml(String(index + 1).padStart(2, "0"))} of 06</small>
-        <strong>${escapeHtml(step.label)}</strong>
-        <span>${escapeHtml(step.detail)}</span>
-      </figcaption>
     </figure>
   `).join("");
   const gameplayPips = gameplaySteps.map((step, index) => `
@@ -404,12 +406,19 @@ function renderCoreBriefingAnimation(groups) {
           <div class="core-gameplay-layout">
             <div class="core-gameplay-carousel" data-core-gameplay-carousel>
               <div class="core-gameplay-carousel-track">${gameplaySlides}</div>
-              <div class="core-gameplay-footer">
-                <div class="core-gameplay-pips" aria-label="Jump to a gameplay instruction step">${gameplayPips}</div>
-                <div class="core-gameplay-controls" aria-label="Gameplay instruction controls">
-                  <button type="button" class="core-gameplay-control" data-core-gameplay-prev onclick="window.ESTPrep.moveCoreGameplayStep(this, -1)" disabled>Previous step</button>
-                  <span><span data-core-gameplay-current>1</span>/06</span>
-                  <button type="button" class="core-gameplay-control" data-core-gameplay-next onclick="window.ESTPrep.moveCoreGameplayStep(this, 1)">Next step</button>
+              <div class="core-gameplay-step-panel">
+                <div class="core-gameplay-step-copy">
+                  <small data-core-gameplay-step-label>Step 01 of 06</small>
+                  <strong data-core-gameplay-step-title>${escapeHtml(gameplaySteps[0]?.label || "")}</strong>
+                  <span data-core-gameplay-step-detail>${escapeHtml(gameplaySteps[0]?.detail || "")}</span>
+                </div>
+                <div class="core-gameplay-step-actions">
+                  <div class="core-gameplay-pips" aria-label="Jump to a gameplay instruction step">${gameplayPips}</div>
+                  <div class="core-gameplay-controls" aria-label="Gameplay instruction controls">
+                    <button type="button" class="core-gameplay-control" data-core-gameplay-prev onclick="window.ESTPrep.moveCoreGameplayStep(this, -1)" disabled>Previous step</button>
+                    <span><span data-core-gameplay-current>1</span>/06</span>
+                    <button type="button" class="core-gameplay-control" data-core-gameplay-next onclick="window.ESTPrep.moveCoreGameplayStep(this, 1)">Next step</button>
+                  </div>
                 </div>
               </div>
             </div>
@@ -502,9 +511,15 @@ function setCoreGameplayStep(target, index = 0) {
   });
 
   const current = carousel.querySelector("[data-core-gameplay-current]");
+  const label = carousel.querySelector("[data-core-gameplay-step-label]");
+  const title = carousel.querySelector("[data-core-gameplay-step-title]");
+  const detail = carousel.querySelector("[data-core-gameplay-step-detail]");
   const previous = carousel.querySelector("[data-core-gameplay-prev]");
   const next = carousel.querySelector("[data-core-gameplay-next]");
   if (current) current.textContent = String(nextIndex + 1);
+  if (label) label.textContent = steps[nextIndex].dataset.coreGameplayLabel || `Step ${String(nextIndex + 1).padStart(2, "0")} of ${String(steps.length).padStart(2, "0")}`;
+  if (title) title.textContent = steps[nextIndex].dataset.coreGameplayTitle || "";
+  if (detail) detail.textContent = steps[nextIndex].dataset.coreGameplayDetail || "";
   if (previous) previous.disabled = nextIndex === 0;
   if (next) next.textContent = nextIndex >= steps.length - 1 ? "Restart steps" : "Next step";
   syncCoreBriefingMedia(briefing);

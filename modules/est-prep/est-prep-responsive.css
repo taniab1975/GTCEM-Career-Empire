@@ -347,24 +347,19 @@
 
   .core-video-sample,
   .core-gameplay-carousel {
-    min-height: 380px;
+    min-height: 420px;
   }
 
   .core-gameplay-carousel-track,
   .core-gameplay-slide {
-    height: 380px;
-    min-height: 380px;
+    min-height: 260px;
   }
 
-  .core-gameplay-slide figcaption {
-    bottom: 118px;
-    max-width: none;
+  .core-gameplay-step-panel {
+    grid-template-columns: 1fr;
   }
 
-  .core-gameplay-footer {
-    align-items: flex-start;
-  }
-
+  .core-gameplay-step-actions,
   .core-gameplay-pips,
   .core-gameplay-controls {
     width: 100%;
