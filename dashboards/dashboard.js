@@ -3675,6 +3675,14 @@ function toggleStarBuilderSubskill(key) {
   starBuilderState.error = "";
 }
 
+function openSkillStarResubmission(entryId, entries = getSkillStarEvidenceEntries(), options = {}) {
+  const entry = (Array.isArray(entries) ? entries : []).find(item => item.id === entryId);
+  if (!entry) return false;
+  if (options.closePortfolio) closeStudentPortfolio();
+  openSkillStarBuilder(entry.skillId, entry.skillTitle, entry.contextId, entry);
+  return true;
+}
+
 function renderSkills(skillsData, targetId, progressMap, skillEvidenceMap = {}) {
   const container = document.getElementById(targetId);
   if (!container) return;
@@ -3796,9 +3804,7 @@ function renderSkills(skillsData, targetId, progressMap, skillEvidenceMap = {}) 
 
   container.querySelectorAll("[data-star-resubmit-entry-id]").forEach(button => {
     button.addEventListener("click", () => {
-      const entries = getSkillStarEvidenceEntries();
-      const entry = entries.find(item => item.id === button.dataset.starResubmitEntryId);
-      if (entry) openSkillStarBuilder(entry.skillId, entry.skillTitle, entry.contextId, entry);
+      openSkillStarResubmission(button.dataset.starResubmitEntryId);
     });
   });
 }
@@ -4134,6 +4140,11 @@ function renderStudentPortfolio() {
       if (!entry) return;
       closeStudentPortfolio();
       openSkillStarBuilder(entry.skillId, entry.skillTitle, entry.contextId, entry);
+    });
+  });
+  modal.querySelectorAll("[data-star-resubmit-entry-id]").forEach(button => {
+    button.addEventListener("click", () => {
+      openSkillStarResubmission(button.dataset.starResubmitEntryId, entries, { closePortfolio: true });
     });
   });
 }
