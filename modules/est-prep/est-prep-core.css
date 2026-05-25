@@ -472,27 +472,29 @@ body.est-lab-mode {
   align-items: center;
   gap: 18px;
   opacity: 0;
+  pointer-events: none;
   transform: translateY(16px) scale(0.985);
-  animation: core-briefing-scene 72s infinite;
+  transition: opacity 0.24s ease, transform 0.24s ease;
+}
+
+.core-briefing-scene.is-active {
+  opacity: 1;
+  pointer-events: auto;
+  transform: translateY(0) scale(1);
 }
 
 .core-briefing-scene--sources {
   grid-template-columns: minmax(560px, 1.52fr) minmax(280px, 0.48fr);
-  animation-delay: 18s;
-}
-
-.core-briefing-scene--topics {
-  animation-delay: 36s;
 }
 
 .core-briefing-scene--gameplay {
   grid-template-columns: minmax(360px, 1.15fr) minmax(0, 0.85fr);
-  animation-delay: 54s;
 }
 
-.core-briefing-animation.is-paused .core-briefing-scene,
-.core-briefing-animation.is-paused .core-gameplay-carousel-track {
-  animation-play-state: paused;
+.core-briefing-animation.is-paused .core-briefing-stage *,
+.core-briefing-animation.is-paused .core-briefing-stage *::before,
+.core-briefing-animation.is-paused .core-briefing-stage *::after {
+  animation-play-state: paused !important;
 }
 
 .core-briefing-copy {
@@ -856,26 +858,36 @@ body.est-lab-mode {
 }
 
 .core-gameplay-carousel-track {
-  display: flex;
-  width: 600%;
+  position: relative;
+  display: block;
+  width: 100%;
   height: 100%;
   min-height: 340px;
-  animation: core-gameplay-carousel 18s infinite;
 }
 
 .core-gameplay-slide {
-  position: relative;
-  flex: 0 0 calc(100% / 6);
+  position: absolute;
+  inset: 0;
   min-height: 340px;
   margin: 0;
   overflow: hidden;
+  opacity: 0;
+  pointer-events: none;
+  transform: translateX(12px) scale(0.99);
+  transition: opacity 0.22s ease, transform 0.22s ease;
+}
+
+.core-gameplay-slide.is-active {
+  opacity: 1;
+  pointer-events: auto;
+  transform: translateX(0) scale(1);
 }
 
 .core-gameplay-slide figcaption {
   position: absolute;
   left: 14px;
   right: 14px;
-  bottom: 14px;
+  bottom: 68px;
   display: grid;
   gap: 5px;
   max-width: 420px;
@@ -910,26 +922,95 @@ body.est-lab-mode {
 }
 
 .core-gameplay-pips {
-  position: absolute;
-  right: 14px;
-  bottom: 14px;
   display: flex;
+  flex-wrap: wrap;
   gap: 6px;
-  padding: 8px;
-  border-radius: 999px;
-  background: rgba(5, 12, 29, 0.66);
 }
 
-.core-gameplay-pips span {
+.core-gameplay-pips button {
   display: grid;
   width: 24px;
   height: 24px;
   place-items: center;
   border: 1px solid rgba(97, 240, 255, 0.22);
   border-radius: 999px;
+  background: rgba(5, 12, 29, 0.66);
   color: #bfe9ff;
   font-size: 0.7rem;
   font-weight: 900;
+  cursor: pointer;
+}
+
+.core-gameplay-pips button:hover,
+.core-gameplay-pips button:focus-visible,
+.core-gameplay-pips button.is-active {
+  border-color: rgba(97, 240, 255, 0.7);
+  background: rgba(97, 240, 255, 0.18);
+  color: #ffffff;
+  outline: none;
+}
+
+.core-gameplay-footer {
+  position: absolute;
+  right: 14px;
+  bottom: 14px;
+  left: 14px;
+  z-index: 3;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  pointer-events: none;
+}
+
+.core-gameplay-footer > * {
+  pointer-events: auto;
+}
+
+.core-gameplay-controls {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 7px;
+  border: 1px solid rgba(97, 240, 255, 0.2);
+  border-radius: 999px;
+  background: rgba(5, 12, 29, 0.72);
+}
+
+.core-gameplay-controls span {
+  min-width: 42px;
+  color: #dff8ff;
+  font-size: 0.76rem;
+  font-weight: 900;
+  text-align: center;
+}
+
+.core-gameplay-control {
+  min-height: 28px;
+  padding: 5px 9px;
+  border: 1px solid rgba(97, 240, 255, 0.26);
+  border-radius: 999px;
+  background: rgba(97, 240, 255, 0.12);
+  color: #e8fbff;
+  font: inherit;
+  font-size: 0.66rem;
+  font-weight: 900;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  cursor: pointer;
+}
+
+.core-gameplay-control:hover,
+.core-gameplay-control:focus-visible {
+  border-color: rgba(97, 240, 255, 0.7);
+  background: rgba(97, 240, 255, 0.2);
+  outline: none;
+}
+
+.core-gameplay-control:disabled {
+  cursor: not-allowed;
+  opacity: 0.42;
 }
 
 .core-briefing-guide {
@@ -948,11 +1029,27 @@ body.est-lab-mode {
 .core-briefing-controls {
   display: flex;
   flex-wrap: wrap;
+  align-items: center;
   gap: 10px;
   justify-content: flex-end;
 }
 
-.core-briefing-pause,
+.core-briefing-pips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.core-briefing-status {
+  min-width: 52px;
+  color: #dff8ff;
+  font-size: 0.88rem;
+  font-weight: 900;
+  text-align: center;
+}
+
+.core-briefing-control,
+.core-briefing-pips button,
 .core-briefing-max {
   min-height: 42px;
   padding: 10px 16px;
@@ -969,8 +1066,10 @@ body.est-lab-mode {
   box-shadow: 0 14px 30px rgba(0, 0, 0, 0.18);
 }
 
-.core-briefing-pause:hover,
-.core-briefing-pause:focus-visible,
+.core-briefing-control:hover,
+.core-briefing-control:focus-visible,
+.core-briefing-pips button:hover,
+.core-briefing-pips button:focus-visible,
 .core-briefing-max:hover,
 .core-briefing-max:focus-visible {
   border-color: rgba(97, 240, 255, 0.7);
@@ -978,7 +1077,19 @@ body.est-lab-mode {
   outline: none;
 }
 
-.core-briefing-pause[aria-pressed="true"],
+.core-briefing-pips button.is-active,
+.core-briefing-pips button[aria-selected="true"] {
+  border-color: rgba(97, 240, 255, 0.7);
+  background: rgba(97, 240, 255, 0.2);
+  color: #ffffff;
+}
+
+.core-briefing-control:disabled {
+  cursor: not-allowed;
+  opacity: 0.42;
+}
+
+.core-briefing-control[aria-pressed="true"],
 .core-briefing-max[aria-expanded="true"] {
   border-color: rgba(255, 138, 202, 0.62);
   background: rgba(255, 138, 202, 0.14);

@@ -319,9 +319,9 @@ function renderCoreBriefingAnimation(groups) {
     }
   ];
   const gameplaySlides = gameplaySteps.map((step, index) => `
-    <figure class="core-gameplay-slide">
+    <figure class="core-gameplay-slide ${index === 0 ? "is-active" : ""}" data-core-gameplay-step="${index}" aria-hidden="${index === 0 ? "false" : "true"}">
       ${step.type === "video"
-        ? `<video src="${step.src}" autoplay muted loop playsinline aria-label="${escapeHtml(step.alt)}"></video>`
+        ? `<video src="${step.src}" muted loop playsinline preload="metadata" aria-label="${escapeHtml(step.alt)}"></video>`
         : `<img src="${step.src}" alt="${escapeHtml(step.alt)}">`
       }
       <figcaption>
@@ -332,7 +332,16 @@ function renderCoreBriefingAnimation(groups) {
     </figure>
   `).join("");
   const gameplayPips = gameplaySteps.map((step, index) => `
-    <span style="--pip-index: ${index}">${escapeHtml(String(index + 1))}</span>
+    <button type="button" class="${index === 0 ? "is-active" : ""}" data-core-gameplay-jump="${index}" onclick="window.ESTPrep.setCoreGameplayStep(this, ${index})" aria-label="Show gameplay instruction step ${index + 1}" aria-current="${index === 0 ? "step" : "false"}">${escapeHtml(String(index + 1))}</button>
+  `).join("");
+  const briefingScenes = [
+    { id: "overview", label: "Overview" },
+    { id: "sources", label: "Sources" },
+    { id: "topics", label: "Topics" },
+    { id: "gameplay", label: "Practice Loop" }
+  ];
+  const briefingPips = briefingScenes.map((scene, index) => `
+    <button type="button" role="tab" class="${index === 0 ? "is-active" : ""}" data-core-briefing-jump="${index}" onclick="window.ESTPrep.setCoreBriefingScene(this, ${index})" aria-selected="${index === 0 ? "true" : "false"}">${escapeHtml(scene.label)}</button>
   `).join("");
   const guideCharacter = EST_GUIDE_CHARACTERS?.romero?.pointing || "../../Assets/EST Preparation/guide-character/guide-pointing.png";
   const stageRail = STAGES.map(stage => `
@@ -343,14 +352,14 @@ function renderCoreBriefingAnimation(groups) {
   `).join("");
 
   return `
-    <div class="core-briefing-animation" aria-label="Animated CORE module briefing">
+    <div class="core-briefing-animation" data-core-briefing data-current-scene="0" data-current-step="0" aria-label="Student-controlled CORE module briefing">
       <div class="core-briefing-stage">
         <div class="core-briefing-topline">
           <span>CORE module briefing</span>
           <strong>What to say</strong>
         </div>
 
-        <section class="core-briefing-scene core-briefing-scene--overview" aria-hidden="true">
+        <section class="core-briefing-scene core-briefing-scene--overview is-active" data-core-briefing-scene="0" aria-hidden="false">
           <div class="core-briefing-copy">
             <span class="core-briefing-kicker">Overall picture</span>
             <h3>Four EST systems. CORE unlocks the content first.</h3>
@@ -362,10 +371,10 @@ function renderCoreBriefingAnimation(groups) {
           </div>
         </section>
 
-        <section class="core-briefing-scene core-briefing-scene--sources" aria-hidden="true">
+        <section class="core-briefing-scene core-briefing-scene--sources" data-core-briefing-scene="1" aria-hidden="true">
           <div class="core-source-board">
             <div class="core-authority-video-card">
-              <video src="${curriculumScrollVideo}" autoplay muted loop playsinline preload="metadata" aria-label="Scrollable curriculum authority document showing assessed EST topics"></video>
+              <video src="${curriculumScrollVideo}" muted loop playsinline preload="metadata" aria-label="Scrollable curriculum authority document showing assessed EST topics"></video>
               <span>Curriculum authority document</span>
             </div>
             <div class="core-book-cover" aria-label="Careers and Employability General 12 Coursebook by Michael Carolan">
@@ -382,7 +391,7 @@ function renderCoreBriefingAnimation(groups) {
           </div>
         </section>
 
-        <section class="core-briefing-scene core-briefing-scene--topics" aria-hidden="true">
+        <section class="core-briefing-scene core-briefing-scene--topics" data-core-briefing-scene="2" aria-hidden="true">
           <div class="core-briefing-copy">
             <span class="core-briefing-kicker">CORE breakdown</span>
             <h3>Six assessed topic reactors</h3>
@@ -391,11 +400,18 @@ function renderCoreBriefingAnimation(groups) {
           <div class="core-topic-cloud">${topicChips}</div>
         </section>
 
-        <section class="core-briefing-scene core-briefing-scene--gameplay" aria-hidden="true">
+        <section class="core-briefing-scene core-briefing-scene--gameplay" data-core-briefing-scene="3" aria-hidden="true">
           <div class="core-gameplay-layout">
-            <div class="core-gameplay-carousel">
+            <div class="core-gameplay-carousel" data-core-gameplay-carousel>
               <div class="core-gameplay-carousel-track">${gameplaySlides}</div>
-              <div class="core-gameplay-pips" aria-hidden="true">${gameplayPips}</div>
+              <div class="core-gameplay-footer">
+                <div class="core-gameplay-pips" aria-label="Jump to a gameplay instruction step">${gameplayPips}</div>
+                <div class="core-gameplay-controls" aria-label="Gameplay instruction controls">
+                  <button type="button" class="core-gameplay-control" data-core-gameplay-prev onclick="window.ESTPrep.moveCoreGameplayStep(this, -1)" disabled>Previous step</button>
+                  <span><span data-core-gameplay-current>1</span>/06</span>
+                  <button type="button" class="core-gameplay-control" data-core-gameplay-next onclick="window.ESTPrep.moveCoreGameplayStep(this, 1)">Next step</button>
+                </div>
+              </div>
             </div>
           </div>
           <div class="core-briefing-copy">
@@ -407,16 +423,34 @@ function renderCoreBriefingAnimation(groups) {
 
         <img class="core-briefing-guide" src="${escapeHtml(guideCharacter)}" alt="">
       </div>
-      <div class="core-briefing-controls">
+      <div class="core-briefing-pips" role="tablist" aria-label="Jump to a CORE briefing screen">
+        ${briefingPips}
+      </div>
+      <div class="core-briefing-controls" aria-label="CORE briefing controls">
         <button
           type="button"
-          class="core-briefing-pause"
+          class="core-briefing-control"
+          data-core-briefing-prev
+          onclick="window.ESTPrep.moveCoreBriefingScene(this, -1)"
+          disabled
+        >Previous</button>
+        <button
+          type="button"
+          class="core-briefing-control core-briefing-pause"
+          data-core-briefing-play
           aria-pressed="false"
           onclick="window.ESTPrep.toggleCoreBriefingPause(this)"
-        >Pause briefing</button>
+        >Pause screen</button>
+        <span class="core-briefing-status"><span data-core-briefing-current>1</span>/<span data-core-briefing-total>4</span></span>
         <button
           type="button"
-          class="core-briefing-max"
+          class="core-briefing-control"
+          data-core-briefing-next
+          onclick="window.ESTPrep.moveCoreBriefingScene(this, 1)"
+        >Next screen</button>
+        <button
+          type="button"
+          class="core-briefing-control core-briefing-max"
           aria-expanded="false"
           onclick="window.ESTPrep.toggleCoreBriefingMax(this)"
         >Max screen</button>
@@ -425,16 +459,139 @@ function renderCoreBriefingAnimation(groups) {
   `;
 }
 
+function getCoreBriefingDeck(target) {
+  if (target?.matches?.("[data-core-briefing]")) return target;
+  return target?.closest?.("[data-core-briefing]") || document.querySelector("[data-core-briefing]");
+}
+
+function syncCoreBriefingMedia(briefing) {
+  if (!briefing) return;
+  const isPaused = briefing.classList.contains("is-paused");
+  briefing.querySelectorAll("video").forEach(video => {
+    const activeScene = video.closest("[data-core-briefing-scene]")?.classList.contains("is-active");
+    const gameplaySlide = video.closest("[data-core-gameplay-step]");
+    const activeGameplayStep = !gameplaySlide || gameplaySlide.classList.contains("is-active");
+    if (activeScene && activeGameplayStep && !isPaused) {
+      const playback = video.play?.();
+      if (playback && typeof playback.catch === "function") playback.catch(() => {});
+    } else {
+      video.pause?.();
+    }
+  });
+}
+
+function setCoreGameplayStep(target, index = 0) {
+  const briefing = getCoreBriefingDeck(target);
+  const carousel = target?.closest?.("[data-core-gameplay-carousel]") || briefing?.querySelector("[data-core-gameplay-carousel]");
+  if (!briefing || !carousel) return;
+  const steps = Array.from(carousel.querySelectorAll("[data-core-gameplay-step]"));
+  if (!steps.length) return;
+
+  const nextIndex = Math.max(0, Math.min(steps.length - 1, Number(index) || 0));
+  briefing.dataset.currentStep = String(nextIndex);
+  steps.forEach((step, stepIndex) => {
+    const isActive = stepIndex === nextIndex;
+    step.classList.toggle("is-active", isActive);
+    step.setAttribute("aria-hidden", String(!isActive));
+  });
+
+  carousel.querySelectorAll("[data-core-gameplay-jump]").forEach(button => {
+    const isActive = Number(button.dataset.coreGameplayJump) === nextIndex;
+    button.classList.toggle("is-active", isActive);
+    button.setAttribute("aria-current", isActive ? "step" : "false");
+  });
+
+  const current = carousel.querySelector("[data-core-gameplay-current]");
+  const previous = carousel.querySelector("[data-core-gameplay-prev]");
+  const next = carousel.querySelector("[data-core-gameplay-next]");
+  if (current) current.textContent = String(nextIndex + 1);
+  if (previous) previous.disabled = nextIndex === 0;
+  if (next) next.textContent = nextIndex >= steps.length - 1 ? "Restart steps" : "Next step";
+  syncCoreBriefingMedia(briefing);
+}
+
+function moveCoreGameplayStep(target, delta = 1) {
+  const briefing = getCoreBriefingDeck(target);
+  const currentIndex = Number(briefing?.dataset.currentStep || 0);
+  const steps = briefing ? briefing.querySelectorAll("[data-core-gameplay-step]") : [];
+  const nextIndex = currentIndex >= steps.length - 1 && Number(delta) > 0 ? 0 : currentIndex + Number(delta || 0);
+  setCoreGameplayStep(target, nextIndex);
+}
+
+function setCoreBriefingScene(target, index = 0) {
+  const briefing = typeof target === "number" ? getCoreBriefingDeck() : getCoreBriefingDeck(target);
+  const rawIndex = typeof target === "number" ? target : index;
+  if (!briefing) return;
+  const scenes = Array.from(briefing.querySelectorAll("[data-core-briefing-scene]"));
+  if (!scenes.length) return;
+
+  const nextIndex = Math.max(0, Math.min(scenes.length - 1, Number(rawIndex) || 0));
+  briefing.dataset.currentScene = String(nextIndex);
+  scenes.forEach((scene, sceneIndex) => {
+    const isActive = sceneIndex === nextIndex;
+    scene.classList.toggle("is-active", isActive);
+    scene.setAttribute("aria-hidden", String(!isActive));
+  });
+
+  briefing.querySelectorAll("[data-core-briefing-jump]").forEach(button => {
+    const isActive = Number(button.dataset.coreBriefingJump) === nextIndex;
+    button.classList.toggle("is-active", isActive);
+    button.setAttribute("aria-selected", String(isActive));
+    button.tabIndex = isActive ? 0 : -1;
+  });
+
+  const current = briefing.querySelector("[data-core-briefing-current]");
+  const total = briefing.querySelector("[data-core-briefing-total]");
+  const previous = briefing.querySelector("[data-core-briefing-prev]");
+  const next = briefing.querySelector("[data-core-briefing-next]");
+  if (current) current.textContent = String(nextIndex + 1);
+  if (total) total.textContent = String(scenes.length);
+  if (previous) previous.disabled = nextIndex === 0;
+  if (next) next.textContent = nextIndex >= scenes.length - 1 ? "Restart" : "Next screen";
+  syncCoreBriefingMedia(briefing);
+}
+
+function moveCoreBriefingScene(target, delta = 1) {
+  const briefing = getCoreBriefingDeck(target);
+  const currentIndex = Number(briefing?.dataset.currentScene || 0);
+  const scenes = briefing ? briefing.querySelectorAll("[data-core-briefing-scene]") : [];
+  const nextIndex = currentIndex >= scenes.length - 1 && Number(delta) > 0 ? 0 : currentIndex + Number(delta || 0);
+  setCoreBriefingScene(target, nextIndex);
+}
+
+function initialiseCoreBriefingControls(root = document) {
+  const briefings = root?.matches?.("[data-core-briefing]")
+    ? [root]
+    : Array.from(root?.querySelectorAll?.("[data-core-briefing]") || []);
+  briefings.forEach(briefing => {
+    if (briefing.dataset.bound === "true") return;
+    briefing.dataset.bound = "true";
+    briefing.addEventListener("keydown", event => {
+      if (event.key === "ArrowRight") {
+        event.preventDefault();
+        moveCoreBriefingScene(briefing, 1);
+      }
+      if (event.key === "ArrowLeft") {
+        event.preventDefault();
+        moveCoreBriefingScene(briefing, -1);
+      }
+    });
+    setCoreGameplayStep(briefing, Number(briefing.dataset.currentStep || 0));
+    setCoreBriefingScene(briefing, Number(briefing.dataset.currentScene || 0));
+  });
+}
+
 function toggleCoreBriefingPause(button) {
-  const briefing = button?.closest(".core-briefing-animation");
+  const briefing = getCoreBriefingDeck(button);
   if (!briefing) return;
   const isPaused = briefing.classList.toggle("is-paused");
   button.setAttribute("aria-pressed", String(isPaused));
-  button.textContent = isPaused ? "Resume briefing" : "Pause briefing";
+  button.textContent = isPaused ? "Play screen" : "Pause screen";
+  syncCoreBriefingMedia(briefing);
 }
 
 function toggleCoreBriefingMax(button) {
-  const briefing = button?.closest(".core-briefing-animation");
+  const briefing = getCoreBriefingDeck(button);
   if (!briefing) return;
   const isMaximized = briefing.classList.toggle("is-maximized");
   document.body.classList.toggle("core-briefing-max-active", isMaximized);

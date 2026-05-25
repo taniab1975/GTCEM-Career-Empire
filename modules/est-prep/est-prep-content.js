@@ -1725,6 +1725,7 @@ function renderContentStage() {
         <p class="small-copy">Select one CORE curriculum area from the topic menu above to open that focused content module.</p>
       </div>
     `);
+    initialiseCoreBriefingControls();
     return;
   }
   if (state.contentView === "intro") {

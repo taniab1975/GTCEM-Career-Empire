@@ -347,13 +347,33 @@
 
   .core-video-sample,
   .core-gameplay-carousel {
-    min-height: 250px;
+    min-height: 380px;
   }
 
   .core-gameplay-carousel-track,
   .core-gameplay-slide {
-    height: 290px;
-    min-height: 290px;
+    height: 380px;
+    min-height: 380px;
+  }
+
+  .core-gameplay-slide figcaption {
+    bottom: 118px;
+    max-width: none;
+  }
+
+  .core-gameplay-footer {
+    align-items: flex-start;
+  }
+
+  .core-gameplay-pips,
+  .core-gameplay-controls {
+    width: 100%;
+    justify-content: center;
+  }
+
+  .core-briefing-pips,
+  .core-briefing-controls {
+    justify-content: center;
   }
 
   .core-briefing-guide {
