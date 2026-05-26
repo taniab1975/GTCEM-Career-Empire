@@ -947,6 +947,7 @@ const STAR_EVIDENCE_SKILL_POINTS = 15;
 const STAR_EVIDENCE_SALARY_REWARD = 500;
 const EMPLOYABILITY_PORTFOLIO_MODULE_ID = "employability-skills";
 const LEGACY_STAR_MODULE_ID = "lifelong-learning";
+const STAR_REVIEW_QUEUE_MODULE_ID = LEGACY_STAR_MODULE_ID;
 
 let employabilitySkillCategoriesCache = [];
 let studentPortfolioState = {
@@ -1097,6 +1098,24 @@ function getStarEntrySubskillTags(entry = {}) {
   return normaliseStarSubskillTags(entry.subskillTags || []);
 }
 
+function getStarReviewFamilyKey(studentId = "", skillId = "", contextId = "") {
+  return [studentId, skillId, contextId].map(value => String(value || "").trim()).join("::");
+}
+
+function getStarReviewFamilyKeyForEntry(entry = {}, studentId = "") {
+  return getStarReviewFamilyKey(studentId, getStarEntrySkillIds(entry)[0] || entry.skillId, entry.contextId);
+}
+
+function getStarReviewFamilyKeyForRow(row = {}) {
+  if (row.evidence_type !== "employability-star") return "";
+  const taskKey = String(row.task_key || "");
+  const colonMatch = taskKey.match(/^employability-star:([^:]+):([^:]+):/);
+  if (colonMatch) return getStarReviewFamilyKey(row.student_id, colonMatch[1], colonMatch[2]);
+  const legacyMatch = taskKey.match(/^employability-star-(.+)-(school|workplace|community|gameplay)-star-/);
+  if (legacyMatch) return getStarReviewFamilyKey(row.student_id, legacyMatch[1], legacyMatch[2]);
+  return "";
+}
+
 function getTodayDateInputValue() {
   const date = new Date();
   const month = String(date.getMonth() + 1).padStart(2, "0");
@@ -1153,6 +1172,10 @@ function saveSkillStarEvidence(entry) {
 function replaceSkillStarEvidence(previousEntryId, nextEntry) {
   const entries = getSkillStarEvidenceEntries();
   localStorage.setItem(STAR_EVIDENCE_STORAGE_KEY, JSON.stringify([nextEntry, ...entries.filter(entry => entry.id !== previousEntryId)]));
+}
+
+function saveSkillStarEvidenceEntries(entries = []) {
+  localStorage.setItem(STAR_EVIDENCE_STORAGE_KEY, JSON.stringify(Array.isArray(entries) ? entries : []));
 }
 
 function isSkillStarEvidenceActive(entry) {
@@ -1254,7 +1277,7 @@ async function queueSkillStarEvidenceForReview(entry) {
     studentId: context.studentId,
     classId: context.classId,
     schoolId: context.schoolId,
-    moduleId: EMPLOYABILITY_PORTFOLIO_MODULE_ID,
+    moduleId: STAR_REVIEW_QUEUE_MODULE_ID,
     evidenceType: "employability-star",
     taskKey: `employability-star:${entry.skillId}:${entry.contextId}:${entry.id}`,
     taskLabel: `${getStarEntrySkillTitles(entry).join(" + ") || entry.skillTitle || "Employability"} STAR evidence`,
@@ -1262,6 +1285,75 @@ async function queueSkillStarEvidenceForReview(entry) {
     responseText: entry.reviewText || createStarEvidenceReviewText(entry),
     student: context.student
   });
+}
+
+async function retireSkillStarReviewForResubmission(previousEntryId, previousReviewId = "", replacementReviewId = "") {
+  const supabase = await getSupabaseClientOrNull();
+  const context = getStarEvidenceReviewContext();
+  if (!supabase || !context.studentId || (!previousEntryId && !previousReviewId)) return;
+
+  const replacementText = replacementReviewId ? ` Replacement review: ${replacementReviewId}` : "";
+  const payload = {
+    reviewer_note: buildQuietRejectionNote(`Superseded by a resubmitted STAR reflection.${replacementText}`),
+    updated_at: new Date().toISOString()
+  };
+  let query = supabase
+    .from("student_response_reviews")
+    .update(payload)
+    .eq("student_id", context.studentId)
+    .eq("evidence_type", "employability-star");
+
+  if (previousReviewId) {
+    query = query.eq("id", previousReviewId);
+  } else {
+    query = query.ilike("task_key", `%${previousEntryId}%`);
+  }
+
+  const { error } = await query;
+  if (error) console.warn("Previous STAR review could not be retired:", error.message || error);
+}
+
+async function retireSupersededStarReviewRows(entry, reviewRows = [], replacementReviewId = "") {
+  const context = getStarEvidenceReviewContext();
+  if (!context.studentId) return;
+  const familyKey = getStarReviewFamilyKeyForEntry(entry, context.studentId);
+  const rejectedRows = (Array.isArray(reviewRows) ? reviewRows : [])
+    .filter(row => row.status === "rejected")
+    .filter(row => !isQuietReviewRejection(row))
+    .filter(row => getStarReviewFamilyKeyForRow(row) === familyKey);
+
+  await Promise.all(rejectedRows.map(row => retireSkillStarReviewForResubmission("", row.id, replacementReviewId)));
+}
+
+async function ensurePendingSkillStarEvidenceReviews(entries = [], reviewRows = []) {
+  const context = getStarEvidenceReviewContext();
+  if (!context.studentId) return { entries, changed: false };
+  let changed = false;
+  const nextEntries = [];
+
+  for (const entry of Array.isArray(entries) ? entries : []) {
+    if (entry?.reviewId || String(entry?.reviewStatus || "pending_review") !== "pending_review") {
+      nextEntries.push(entry);
+      continue;
+    }
+
+    const review = await queueSkillStarEvidenceForReview(entry).catch(error => {
+      console.warn("Pending STAR evidence review could not be queued:", error.message || error);
+      return null;
+    });
+
+    if (review?.id) {
+      const queuedEntry = { ...entry, reviewId: review.id };
+      await retireSupersededStarReviewRows(queuedEntry, reviewRows, review.id);
+      nextEntries.push(queuedEntry);
+      changed = true;
+    } else {
+      nextEntries.push(entry);
+    }
+  }
+
+  if (changed) saveSkillStarEvidenceEntries(nextEntries);
+  return { entries: nextEntries, changed };
 }
 
 async function getCurrentStudentResponseReviews() {
@@ -1321,7 +1413,9 @@ async function getCurrentStudentApprovedPeerResponses() {
 function findReviewForStarEntry(entry, reviewRows = []) {
   return reviewRows.find(row => row.id === entry.reviewId)
     || reviewRows.find(row => row.evidence_type === "employability-star" && String(row.task_key || "").includes(entry.id))
-    || reviewRows.find(row => row.evidence_type === "employability-star" && normaliseWhitespace(row.raw_response_text) === normaliseWhitespace(entry.reviewText || createStarEvidenceReviewText(entry)));
+    || reviewRows.find(row => row.evidence_type === "employability-star"
+      && row.status !== "rejected"
+      && normaliseWhitespace(row.raw_response_text) === normaliseWhitespace(entry.reviewText || createStarEvidenceReviewText(entry)));
 }
 
 function syncSkillStarEvidenceWithReviews(entries = [], reviewRows = []) {
@@ -2454,7 +2548,7 @@ function renderTeacherResponseReviewInbox(rows = []) {
       <article class="response-review-card" data-response-review-id="${row.id}" data-response-review-type="${escapeHtml(row.evidence_type || "")}">
         <div class="response-review-header">
           <div>
-            <span class="eyebrow">${escapeHtml(getModuleLabel(row.module_id))} • ${escapeHtml(classLabel)}</span>
+            <span class="eyebrow">${escapeHtml(getModuleLabel(getReviewModuleId(row)))} • ${escapeHtml(classLabel)}</span>
             <h3>${escapeHtml(row.task_label || "Written response")}</h3>
             <p>${escapeHtml(studentName)} • ${escapeHtml(formatDateTime(row.created_at))}</p>
           </div>
@@ -2944,9 +3038,10 @@ function getEvidenceWrittenResponse(entry) {
 }
 
 function getReviewModuleId(row) {
+  if (row?.evidence_type === "employability-star") return EMPLOYABILITY_PORTFOLIO_MODULE_ID;
   return row?.module_id
     || row?.module_slug
-    || (row?.evidence_type === "employability-star" ? EMPLOYABILITY_PORTFOLIO_MODULE_ID : "lifelong-learning");
+    || "lifelong-learning";
 }
 
 function buildLearningProfileModuleCell(student, module, data) {
@@ -3840,6 +3935,7 @@ function openSkillStarBuilder(skillId, skillTitle, contextId, existingEntry = nu
       nextSteps: existingEntry?.responses?.nextSteps || ""
     },
     resubmittingEntryId: existingEntry?.id || null,
+    resubmittingReviewId: existingEntry?.reviewId || null,
     error: "",
     status: "",
     isSaving: false
@@ -3999,7 +4095,9 @@ function renderSkillStarBuilder() {
       reviewText: createStarEvidenceReviewText(starBuilderState),
       reviewStatus: "pending_review",
       salaryReward: STAR_EVIDENCE_SALARY_REWARD,
-      createdAt
+      createdAt,
+      supersedesEntryId: starBuilderState.resubmittingEntryId || null,
+      supersedesReviewId: starBuilderState.resubmittingReviewId || null
     };
     starBuilderState.error = "";
     starBuilderState.status = starBuilderState.resubmittingEntryId
@@ -4007,13 +4105,26 @@ function renderSkillStarBuilder() {
       : "Saving final entry for teacher review...";
     starBuilderState.isSaving = true;
     renderSkillStarBuilder();
+    const previousEntryId = starBuilderState.resubmittingEntryId;
+    const previousReviewId = starBuilderState.resubmittingReviewId;
     const review = await queueSkillStarEvidenceForReview(entry).catch(error => {
       console.warn("STAR evidence review could not be queued:", error.message || error);
       return null;
     });
+    const reviewContext = getStarEvidenceReviewContext();
+    if (reviewContext.studentId && !review?.id) {
+      starBuilderState.error = "Could not send this STAR evidence for teacher approval. Please try again.";
+      starBuilderState.status = "";
+      starBuilderState.isSaving = false;
+      renderSkillStarBuilder();
+      return;
+    }
     if (review?.id) entry.reviewId = review.id;
-    if (starBuilderState.resubmittingEntryId) {
-      replaceSkillStarEvidence(starBuilderState.resubmittingEntryId, entry);
+    if (previousEntryId) {
+      if (review?.id) {
+        await retireSkillStarReviewForResubmission(previousEntryId, previousReviewId, review.id);
+      }
+      replaceSkillStarEvidence(previousEntryId, entry);
     } else {
       saveSkillStarEvidence(entry);
       bankStarEvidenceSalary(entry);
@@ -5468,8 +5579,13 @@ async function renderStudentLiveData(players, skillsData) {
   const hasESTProgress = hasMeaningfulModuleProgress(estProgressRow) || hasLocalESTProgress(session);
   const hasAnySavedProgress = hasPlayerProgress || hasLifelongProgress || hasESTProgress;
   const progressRecord = hasPlayerProgress ? record : null;
-  const reviewRows = await getCurrentStudentResponseReviews();
-  const skillEvidenceEntries = syncSkillStarEvidenceWithReviews(getSkillStarEvidenceEntries(), reviewRows);
+  let reviewRows = await getCurrentStudentResponseReviews();
+  let skillEvidenceEntries = syncSkillStarEvidenceWithReviews(getSkillStarEvidenceEntries(), reviewRows);
+  const pendingReviewSync = await ensurePendingSkillStarEvidenceReviews(skillEvidenceEntries, reviewRows);
+  if (pendingReviewSync.changed) {
+    reviewRows = await getCurrentStudentResponseReviews();
+    skillEvidenceEntries = syncSkillStarEvidenceWithReviews(pendingReviewSync.entries, reviewRows);
+  }
   const skillEvidenceMap = getSkillStarEvidenceMap(skillEvidenceEntries);
   setupStudentPortfolioButton(skillsData, skillEvidenceEntries, moduleStatuses[EMPLOYABILITY_PORTFOLIO_MODULE_ID]);
   const progressMap = applySkillEvidenceProgress(deriveEmployabilityProgress(progressRecord), skillEvidenceMap);
@@ -5773,8 +5889,7 @@ function renderTeacherLiveData(players, skillsData, teacherData = null) {
   const allReviewRows = safeTeacherData?.reviewRows || [];
   let reviewRows = dedupeTeacherReviewRows(allReviewRows
     .filter(row => {
-      const reviewModuleId = row.module_id || row.module_slug || (row.evidence_type === "employability-star" ? EMPLOYABILITY_PORTFOLIO_MODULE_ID : "lifelong-learning");
-      return visibleModuleIdSet.has(reviewModuleId);
+      return visibleModuleIdSet.has(getReviewModuleId(row));
     })
     .filter(isTeacherReviewableStudentResponse));
   const megatrendsProgressRows = moduleProgressRows.filter(row => (row.module_id || row.module_slug) === "megatrends");
