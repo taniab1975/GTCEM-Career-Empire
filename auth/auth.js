@@ -47,6 +47,39 @@ function writeState(patch) {
   return next;
 }
 
+function readPlayerSession() {
+  try {
+    return JSON.parse(localStorage.getItem(PLAYER_SESSION_KEY) || "{}");
+  } catch (_) {
+    return {};
+  }
+}
+
+function writePlayerSession(patch) {
+  const next = { ...readPlayerSession(), ...patch };
+  localStorage.setItem(PLAYER_SESSION_KEY, JSON.stringify(next));
+  return next;
+}
+
+function getOwnedAssetListFromSession(session = {}, ownerKey = "") {
+  const groupedAssets = ownerKey && session.ownedAssetsByStudent && typeof session.ownedAssetsByStudent === "object"
+    ? session.ownedAssetsByStudent[ownerKey]
+    : null;
+  if (Array.isArray(groupedAssets)) return groupedAssets;
+  return Array.isArray(session.ownedAssets) ? session.ownedAssets : [];
+}
+
+function normalisePlayerAsset(row = {}) {
+  return {
+    id: row.id || row.asset_code || row.code || `asset-${Date.now()}`,
+    asset_code: row.asset_code || row.code || "",
+    asset_name: row.asset_name || row.name || "Shop item",
+    asset_category: row.asset_category || row.category || "other",
+    purchase_cost: Number(row.purchase_cost || row.cost || 0),
+    purchased_at: row.purchased_at || new Date().toISOString()
+  };
+}
+
 function getClassroomDisplayName(classroom = null, fallback = "No class created yet") {
   if (!classroom) return fallback;
   // Accept legacy/local Supabase shapes, but keep app state on className.
@@ -111,6 +144,13 @@ function buildTeacherNavMarkup(activeKey) {
 }
 
 function seedDemoStudentSession() {
+  const existing = readPlayerSession();
+  const ownedAssets = getOwnedAssetListFromSession(existing, DEMO_STUDENT_PROFILE.username);
+  const ownedAssetsByStudent = {
+    ...(existing.ownedAssetsByStudent && typeof existing.ownedAssetsByStudent === "object" ? existing.ownedAssetsByStudent : {}),
+    [DEMO_STUDENT_PROFILE.username]: ownedAssets
+  };
+
   writeState({
     studentLogin: {
       ...DEMO_STUDENT_PROFILE,
@@ -123,7 +163,7 @@ function seedDemoStudentSession() {
     }
   });
 
-  localStorage.setItem(PLAYER_SESSION_KEY, JSON.stringify({
+  writePlayerSession({
     studentId: null,
     username: DEMO_STUDENT_PROFILE.username,
     playerName: DEMO_STUDENT_PROFILE.displayName,
@@ -131,30 +171,32 @@ function seedDemoStudentSession() {
     classId: DEMO_STUDENT_PROFILE.classId,
     classCode: DEMO_STUDENT_PROFILE.classCode,
     className: DEMO_STUDENT_PROFILE.className,
-    careerTitle: "Demo Explorer",
-    annualSalary: 32000,
-    cumulativeNetWorth: 12000,
-    savings: 3200,
-    taxPaid: 0,
-    yearsPlayed: 0,
-    careerLevel: 1,
-    jobSecurity: 68,
-    workLifeBalance: 72,
-    wellbeing: 72,
-    socialStatus: 48,
-    resilience: 61,
-    techMastery: 12,
-    climateMastery: 8,
-    demoMastery: 10,
-    economicMastery: 9,
+    careerTitle: existing.careerTitle || "Demo Explorer",
+    annualSalary: Number(existing.annualSalary ?? existing.salary ?? 32000),
+    salary: Number(existing.salary ?? existing.annualSalary ?? 32000),
+    cumulativeNetWorth: Number(existing.cumulativeNetWorth ?? 12000),
+    savings: Number(existing.savings ?? 3200),
+    taxPaid: Number(existing.taxPaid ?? 0),
+    yearsPlayed: Number(existing.yearsPlayed ?? 0),
+    careerLevel: Number(existing.careerLevel ?? 1),
+    jobSecurity: Number(existing.jobSecurity ?? 68),
+    workLifeBalance: Number(existing.workLifeBalance ?? 72),
+    wellbeing: Number(existing.wellbeing ?? 72),
+    socialStatus: Number(existing.socialStatus ?? 48),
+    resilience: Number(existing.resilience ?? 61),
+    techMastery: Number(existing.techMastery ?? 12),
+    climateMastery: Number(existing.climateMastery ?? 8),
+    demoMastery: Number(existing.demoMastery ?? 10),
+    economicMastery: Number(existing.economicMastery ?? 9),
     communityVote: "none",
     lastCommunityVote: "none",
-    ownedAssets: [],
-    economyLog: [],
+    ownedAssets,
+    ownedAssetsByStudent,
+    economyLog: Array.isArray(existing.economyLog) ? existing.economyLog : [],
     checkpoint: "demo-student-preview",
     demoMode: true,
     updatedAt: new Date().toISOString()
-  }));
+  });
 }
 
 function launchDemoStudentPreview(targetPath = "../dashboards/student.html") {
@@ -180,15 +222,14 @@ function launchTeacherTestStudentPreview() {
 
   writeState({ studentLogin });
 
-  let existing = {};
-  try {
-    existing = JSON.parse(localStorage.getItem(PLAYER_SESSION_KEY) || "{}");
-  } catch (_) {
-    existing = {};
-  }
+  const existing = readPlayerSession();
+  const previewAssets = getOwnedAssetListFromSession(existing, studentLogin.username);
+  const ownedAssetsByStudent = {
+    ...(existing.ownedAssetsByStudent && typeof existing.ownedAssetsByStudent === "object" ? existing.ownedAssetsByStudent : {}),
+    [studentLogin.username]: previewAssets
+  };
 
-  localStorage.setItem(PLAYER_SESSION_KEY, JSON.stringify({
-    ...existing,
+  writePlayerSession({
     studentId: null,
     username: studentLogin.username,
     playerName: studentLogin.displayName,
@@ -202,9 +243,12 @@ function launchTeacherTestStudentPreview() {
     cumulativeNetWorth: Number(existing.cumulativeNetWorth || 0),
     jobSecurity: Number(existing.jobSecurity || 70),
     workLifeBalance: Number(existing.workLifeBalance || 68),
+    ownedAssets: previewAssets,
+    ownedAssetsByStudent,
     checkpoint: "teacher-test-student-preview",
+    demoMode: true,
     updatedAt: new Date().toISOString()
-  }));
+  });
 
   window.location.href = "../dashboards/student.html";
 }
@@ -229,16 +273,17 @@ function applyTeacherNavigation() {
   });
 }
 
-function syncStudentPlayerSession(student) {
+function syncStudentPlayerSession(student, profile = null, assets = null) {
   if (!student?.id) return;
-  let existing = {};
-  try {
-    existing = JSON.parse(localStorage.getItem(PLAYER_SESSION_KEY) || "{}");
-  } catch (_) {
-    existing = {};
-  }
+  const existing = readPlayerSession();
   const sameStudent = existing.studentId === student.id;
-  const next = sameStudent ? { ...existing } : {};
+  const next = sameStudent
+    ? { ...existing }
+    : {
+      ownedAssetsByStudent: existing.ownedAssetsByStudent && typeof existing.ownedAssetsByStudent === "object"
+        ? existing.ownedAssetsByStudent
+        : {}
+    };
   next.studentId = student.id;
   next.username = student.username || "";
   next.playerName = student.display_name || student.username || "Student";
@@ -247,6 +292,35 @@ function syncStudentPlayerSession(student) {
   next.classId = student.class_id || null;
   next.classCode = student.classes?.class_code || "";
   next.className = student.classes?.name || "";
+  next.demoMode = false;
+  if (profile) {
+    next.careerTitle = profile.career_title || next.careerTitle || "Intern";
+    next.annualSalary = Number(profile.annual_salary ?? next.annualSalary ?? 25000);
+    next.salary = Number(profile.annual_salary ?? next.salary ?? next.annualSalary ?? 25000);
+    next.cumulativeNetWorth = Number(profile.cumulative_net_worth ?? next.cumulativeNetWorth ?? 0);
+    next.savings = Number(profile.savings ?? next.savings ?? 0);
+    next.taxPaid = Number(profile.tax_paid ?? next.taxPaid ?? 0);
+    next.careerLevel = Number(profile.career_level ?? next.careerLevel ?? 1);
+    next.jobSecurity = Number(profile.job_security ?? next.jobSecurity ?? 75);
+    next.workLifeBalance = Number(profile.work_life_balance ?? next.workLifeBalance ?? 60);
+    next.wellbeing = Number(profile.wellbeing ?? next.wellbeing ?? 60);
+    next.socialStatus = Number(profile.social_status ?? next.socialStatus ?? 50);
+    next.resilience = Number(profile.resilience ?? next.resilience ?? 50);
+    next.yearsPlayed = Number(profile.years_played ?? next.yearsPlayed ?? 0);
+    next.techMastery = Number(profile.tech_mastery ?? next.techMastery ?? 0);
+    next.climateMastery = Number(profile.climate_mastery ?? next.climateMastery ?? 0);
+    next.demoMastery = Number(profile.demo_mastery ?? next.demoMastery ?? 0);
+    next.economicMastery = Number(profile.economic_mastery ?? next.economicMastery ?? 0);
+  }
+  if (Array.isArray(assets)) {
+    const normalisedAssets = assets.map(normalisePlayerAsset);
+    next.ownedAssets = normalisedAssets;
+    next.ownedAssetsByStudent = {
+      ...(next.ownedAssetsByStudent && typeof next.ownedAssetsByStudent === "object" ? next.ownedAssetsByStudent : {}),
+      [student.id]: normalisedAssets
+    };
+  }
+  next.updatedAt = new Date().toISOString();
   localStorage.setItem(PLAYER_SESSION_KEY, JSON.stringify(next));
 }
 
@@ -652,7 +726,7 @@ async function requireLoggedInTeacher(supabase) {
 async function ensurePlayerProfile(supabase, studentId) {
   const { data: existingProfile, error: existingError } = await supabase
     .from("player_profiles")
-    .select("student_id")
+    .select("*")
     .eq("student_id", studentId)
     .maybeSingle();
 
@@ -676,11 +750,34 @@ async function ensurePlayerProfile(supabase, studentId) {
       social_status: 50,
       resilience: 50
     })
-    .select("student_id")
+    .select("*")
     .single();
 
   if (insertError) throw insertError;
   return insertedProfile;
+}
+
+async function getStudentEconomySession(supabase, studentId) {
+  const [{ data: profile, error: profileError }, { data: assets, error: assetsError }] = await Promise.all([
+    supabase
+      .from("player_profiles")
+      .select("*")
+      .eq("student_id", studentId)
+      .maybeSingle(),
+    supabase
+      .from("player_assets")
+      .select("id, asset_code, asset_name, asset_category, purchase_cost, purchased_at")
+      .eq("student_id", studentId)
+      .order("purchased_at", { ascending: false })
+  ]);
+
+  if (profileError) console.error(profileError);
+  if (assetsError) console.error(assetsError);
+
+  return {
+    profile: profileError ? null : (profile || null),
+    assets: assetsError ? null : (assets || [])
+  };
 }
 
 function initTeacherSignup() {
@@ -1043,7 +1140,13 @@ function initStudentLogin() {
         throw new Error("Incorrect password.");
       }
 
-      await ensurePlayerProfile(supabase, student.id);
+      const ensuredProfile = await ensurePlayerProfile(supabase, student.id);
+      let economySession = { profile: ensuredProfile, assets: null };
+      try {
+        economySession = await getStudentEconomySession(supabase, student.id);
+      } catch (error) {
+        console.error("Student economy session could not be loaded:", error);
+      }
 
       const { error: loginStampError } = await supabase
         .from("students")
@@ -1072,7 +1175,7 @@ function initStudentLogin() {
         } : null
       });
 
-      syncStudentPlayerSession(student);
+      syncStudentPlayerSession(student, economySession.profile || ensuredProfile, economySession.assets);
 
       feedback.className = "feedback good";
       feedback.textContent = `Welcome, ${student.display_name}. Opening your student hub.`;

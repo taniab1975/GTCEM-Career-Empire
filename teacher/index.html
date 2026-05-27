@@ -738,8 +738,24 @@
     const DEMO_AUTH_KEY = "career-empire-auth-demo";
     const DEMO_SESSION_KEY = "career-empire-session";
 
+    function readDemoPlayerSession() {
+      try {
+        return JSON.parse(localStorage.getItem(DEMO_SESSION_KEY) || "{}");
+      } catch (_) {
+        return {};
+      }
+    }
+
     function seedDemoStudentSession() {
       const now = new Date().toISOString();
+      const existing = readDemoPlayerSession();
+      const ownedAssets = Array.isArray(existing.ownedAssets) ? existing.ownedAssets : [];
+      const ownedAssetsByStudent = {
+        ...(existing.ownedAssetsByStudent && typeof existing.ownedAssetsByStudent === "object" ? existing.ownedAssetsByStudent : {}),
+        "demo-student": ownedAssets,
+        "demo.student": ownedAssets
+      };
+
       localStorage.setItem(DEMO_AUTH_KEY, JSON.stringify({
         studentLogin: {
           id: "demo-student",
@@ -758,32 +774,34 @@
       }));
 
       localStorage.setItem(DEMO_SESSION_KEY, JSON.stringify({
+        ...existing,
         studentId: "demo-student",
         username: "demo.student",
         playerName: "Demo Student",
         schoolName: "Emmanuel Catholic College",
         classCode: "DEMO",
-        careerTitle: "Career Builder",
-        annualSalary: 25000,
-        salary: 25000,
-        cumulativeNetWorth: 0,
-        savings: 0,
-        taxPaid: 0,
-        yearsPlayed: 0,
-        careerLevel: 1,
-        jobSecurity: 68,
-        workLifeBalance: 72,
-        wellbeing: 72,
-        socialStatus: 48,
-        resilience: 61,
-        techMastery: 12,
-        climateMastery: 8,
-        demoMastery: 10,
-        economicMastery: 9,
+        careerTitle: existing.careerTitle || "Career Builder",
+        annualSalary: Number(existing.annualSalary ?? existing.salary ?? 25000),
+        salary: Number(existing.salary ?? existing.annualSalary ?? 25000),
+        cumulativeNetWorth: Number(existing.cumulativeNetWorth ?? 0),
+        savings: Number(existing.savings ?? 0),
+        taxPaid: Number(existing.taxPaid ?? 0),
+        yearsPlayed: Number(existing.yearsPlayed ?? 0),
+        careerLevel: Number(existing.careerLevel ?? 1),
+        jobSecurity: Number(existing.jobSecurity ?? 68),
+        workLifeBalance: Number(existing.workLifeBalance ?? 72),
+        wellbeing: Number(existing.wellbeing ?? 72),
+        socialStatus: Number(existing.socialStatus ?? 48),
+        resilience: Number(existing.resilience ?? 61),
+        techMastery: Number(existing.techMastery ?? 12),
+        climateMastery: Number(existing.climateMastery ?? 8),
+        demoMastery: Number(existing.demoMastery ?? 10),
+        economicMastery: Number(existing.economicMastery ?? 9),
         communityVote: "none",
         lastCommunityVote: "none",
-        ownedAssets: [],
-        economyLog: [],
+        ownedAssets,
+        ownedAssetsByStudent,
+        economyLog: Array.isArray(existing.economyLog) ? existing.economyLog : [],
         checkpoint: "teacher-landing-student-preview",
         demoMode: true,
         updatedAt: now
