@@ -95,6 +95,10 @@ function getStudentStorageKey(studentLogin = {}, session = {}) {
   );
 }
 
+function isUntrackedDemoStudent(studentLogin = {}, session = {}) {
+  return Boolean(studentLogin.demo || session.demoMode || (studentLogin.preview && !studentLogin.id));
+}
+
 function sessionBelongsToStudent(studentLogin = {}, session = {}) {
   if (studentLogin.id && session.studentId) return String(studentLogin.id) === String(session.studentId);
   if (studentLogin.username && session.username) return String(studentLogin.username) === String(session.username);
@@ -163,7 +167,7 @@ function persistLocalPurchase(context, nextAssets, nextNetWorth, nextSavings) {
     ownedAssets: nextAssets,
     ownedAssetsByStudent,
     checkpoint: "shop-purchase",
-    demoMode: Boolean(context.isDemo && !context.studentId),
+    demoMode: Boolean(context.isDemo),
     updatedAt: new Date().toISOString()
   });
 }
@@ -319,13 +323,14 @@ function getLocalShopContext() {
   const authState = readState();
   const studentLogin = authState?.studentLogin || {};
   const session = readJsonStorage(PLAYER_SESSION_KEY, {});
+  const isUntrackedDemo = isUntrackedDemoStudent(studentLogin, session);
   const studentName = studentLogin?.displayName || studentLogin?.username || session.playerName || session.studentName || "Demo Student";
   const schoolName = studentLogin?.schoolName || session.schoolName || "Career Empire Demo";
   const classCode = studentLogin?.classCode || session.classCode || "DEMO";
   const assets = getLocalOwnedAssets(studentLogin, session);
 
   return {
-    studentId: studentLogin?.id || null,
+    studentId: isUntrackedDemo ? null : (studentLogin?.id || null),
     isDemo: true,
     studentName,
     schoolName,
@@ -348,7 +353,11 @@ async function loadStudentShopContext() {
   const session = readJsonStorage(PLAYER_SESSION_KEY, {});
   const localContext = getLocalShopContext();
 
-  if (!studentId && (studentLogin?.demo || studentLogin?.preview || session?.demoMode || Object.keys(session).length)) {
+  if (isUntrackedDemoStudent(studentLogin, session)) {
+    return localContext;
+  }
+
+  if (!studentId && Object.keys(session).length) {
     return localContext;
   }
 

@@ -303,6 +303,137 @@ function writePlayerSession(patch) {
   return next;
 }
 
+function getStudentStorageKey(studentLogin = {}, session = {}) {
+  return String(
+    studentLogin.id ||
+    studentLogin.username ||
+    session.studentId ||
+    session.username ||
+    session.playerName ||
+    "demo"
+  );
+}
+
+function getLocalOwnedAssets(studentLogin = {}, session = {}) {
+  const ownerKey = getStudentStorageKey(studentLogin, session);
+  const groupedAssets = session.ownedAssetsByStudent && typeof session.ownedAssetsByStudent === "object"
+    ? session.ownedAssetsByStudent[ownerKey]
+    : null;
+  if (Array.isArray(groupedAssets)) return groupedAssets;
+  return Array.isArray(session.ownedAssets) ? session.ownedAssets : [];
+}
+
+function normaliseCareerAsset(asset = {}) {
+  const code = asset.asset_code || asset.code || "";
+  const catalogAsset = ASSET_CATALOG.find(item => item.code === code) || {};
+  return {
+    id: asset.id || `local-${code || "asset"}-${Date.now()}`,
+    asset_code: code,
+    asset_name: asset.asset_name || asset.name || catalogAsset.name || "Career upgrade",
+    asset_category: asset.asset_category || asset.category || catalogAsset.category || "career",
+    purchase_cost: Number(asset.purchase_cost || asset.cost || catalogAsset.cost || 0),
+    purchased_at: asset.purchased_at || "",
+    benefit: asset.benefit || catalogAsset.benefit || "Saved upgrade",
+    effect: asset.effect || catalogAsset.effect || ""
+  };
+}
+
+function mergeCareerAssets(...assetLists) {
+  const seen = new Set();
+  return assetLists.flat().filter(Boolean).map(normaliseCareerAsset).filter(asset => {
+    const key = `${asset.asset_code}|${asset.purchase_cost}|${asset.purchased_at || asset.id}`;
+    if (seen.has(key)) return false;
+    seen.add(key);
+    return true;
+  });
+}
+
+function buildLifelongProgressSnapshot() {
+  return {
+    resources: state.resources,
+    completed: state.completed,
+    evidenceLog: state.evidenceLog,
+    outcomeLog: state.outcomeLog,
+    lastRoundSummary: state.lastRoundSummary,
+    updatedAt: new Date().toISOString()
+  };
+}
+
+function hasLifelongProgressSnapshotData(snapshot = {}) {
+  return Object.keys(snapshot.completed || {}).length > 0
+    || (snapshot.evidenceLog || []).length > 0
+    || (snapshot.outcomeLog || []).length > 0
+    || (snapshot.resources?.purchasedUpgrades || []).length > 0
+    || Number(snapshot.resources?.salaryPotential || 0) !== Number(INITIAL_RESOURCES.salaryPotential || 0);
+}
+
+function writeSharedCareerAssets(nextAssets) {
+  const authState = getAuthState();
+  const studentLogin = authState.studentLogin || {};
+  const session = getPlayerSession();
+  const ownerKey = getStudentStorageKey(studentLogin, session);
+  const ownedAssetsByStudent = {
+    ...(session.ownedAssetsByStudent && typeof session.ownedAssetsByStudent === "object" ? session.ownedAssetsByStudent : {}),
+    [ownerKey]: nextAssets
+  };
+  return { ownerKey, ownedAssetsByStudent };
+}
+
+function persistLifelongLocalProgress(extraPatch = {}) {
+  const snapshot = buildLifelongProgressSnapshot();
+  const session = getPlayerSession();
+  const authState = getAuthState();
+  const studentLogin = authState.studentLogin || {};
+  const currentAssets = getLocalOwnedAssets(studentLogin, session);
+  const nextAssets = mergeCareerAssets(currentAssets, state.resources.purchasedUpgrades || []);
+  const { ownedAssetsByStudent } = writeSharedCareerAssets(nextAssets);
+  const patch = {
+    annualSalary: state.resources.salaryPotential,
+    salary: state.resources.salaryPotential,
+    workLifeBalance: state.resources.workLifeBalance,
+    jobSecurity: state.resources.jobSecurity,
+    ownedAssets: nextAssets,
+    ownedAssetsByStudent,
+    lifelongLearningProgress: snapshot,
+    updatedAt: snapshot.updatedAt,
+    ...extraPatch
+  };
+
+  if (!hasLifelongProgressSnapshotData(snapshot) && !nextAssets.length && !Object.keys(extraPatch).length) return session;
+  return writePlayerSession(patch);
+}
+
+function hydrateFromLocalSession() {
+  const authState = getAuthState();
+  const studentLogin = authState.studentLogin || {};
+  const session = getPlayerSession();
+  const progress = session.lifelongLearningProgress || {};
+
+  if (progress.resources) {
+    state.resources = {
+      ...state.resources,
+      ...progress.resources,
+      purchasedUpgrades: mergeCareerAssets(progress.resources.purchasedUpgrades || [])
+    };
+  }
+  if (progress.completed) state.completed = progress.completed;
+  if (Array.isArray(progress.evidenceLog)) state.evidenceLog = progress.evidenceLog;
+  if (Array.isArray(progress.outcomeLog)) state.outcomeLog = progress.outcomeLog;
+  if (progress.lastRoundSummary) state.lastRoundSummary = progress.lastRoundSummary;
+
+  const sessionAssets = getLocalOwnedAssets(studentLogin, session);
+  if (sessionAssets.length) {
+    state.resources.purchasedUpgrades = mergeCareerAssets(state.resources.purchasedUpgrades, sessionAssets);
+  }
+  state.resources.salaryPotential = Math.max(
+    Number(state.resources.salaryPotential || 0),
+    Number(session.annualSalary ?? session.salary ?? 0),
+    Number(INITIAL_RESOURCES.salaryPotential || 0)
+  );
+  state.resources.jobSecurity = Math.max(Number(state.resources.jobSecurity || 0), Number(session.jobSecurity || 0));
+  state.resources.workLifeBalance = Math.max(Number(state.resources.workLifeBalance || 0), Number(session.workLifeBalance || 0));
+}
+
 function pushEconomyLog(entry = {}) {
   if (!window.CareerEmpireEconomy?.appendEvent) return [];
   return window.CareerEmpireEconomy.appendEvent({
@@ -338,6 +469,7 @@ async function getLoggedInStudent() {
     schools: (studentLogin?.schoolName || session.schoolName) ? { name: studentLogin?.schoolName || session.schoolName } : null
   };
 
+  if (studentLogin?.demo || session.demoMode || (studentLogin?.preview && !studentLogin?.id)) return fallback;
   if (!supabase || !studentLogin?.id) return fallback;
 
   const { data, error } = await supabase
@@ -720,10 +852,12 @@ async function buyAsset(asset) {
 
   state.resources.money = clamp(state.resources.money - asset.cost, -2000, 25000);
   const storedAsset = {
+    id: `local-${asset.code}-${Date.now()}`,
     asset_code: asset.code,
     asset_name: asset.name,
     asset_category: asset.category,
     purchase_cost: asset.cost,
+    purchased_at: new Date().toISOString(),
     benefit: asset.benefit,
     effect: asset.effect
   };
@@ -739,15 +873,20 @@ async function buyAsset(asset) {
     ]
   };
 
-  writePlayerSession({
-    annualSalary: state.resources.salaryPotential,
-    workLifeBalance: state.resources.workLifeBalance
+  const session = getPlayerSession();
+  const nextNetWorth = Math.max(0, Number(session.cumulativeNetWorth || 0) - asset.cost);
+  const nextSavings = Math.max(0, Number(session.savings || 0) - asset.cost);
+  persistLifelongLocalProgress({
+    cumulativeNetWorth: nextNetWorth,
+    savings: nextSavings,
+    checkpoint: `asset-${asset.code}`
   });
 
   const supabase = await getSupabaseClientOrNull();
   const authState = getAuthState();
   const studentLogin = authState.studentLogin;
-  if (supabase && studentLogin?.id) {
+  const isUntrackedDemo = Boolean(studentLogin?.demo || session.demoMode || (studentLogin?.preview && !studentLogin?.id));
+  if (supabase && studentLogin?.id && !isUntrackedDemo) {
     const { error: assetError } = await supabase
       .from("player_assets")
       .insert({
@@ -1002,10 +1141,9 @@ function applyChoiceConsequences(round, choice, outcome, reflection) {
     ].concat(outcome.modifiers.map(text => buildRewardChip("Bonus", text, "good")))
   };
 
-  writePlayerSession({
+  persistLifelongLocalProgress({
     careerTitle: "Lifelong Learner",
-    annualSalary: state.resources.salaryPotential,
-    workLifeBalance: state.resources.workLifeBalance
+    checkpoint: round.id
   });
 }
 
@@ -1036,11 +1174,70 @@ async function saveRoundProgress(round, choice, outcome, reflection, correct) {
   const studentLogin = authState.studentLogin;
   const classroom = authState.classroom;
   const classId = classroom?.id || studentLogin?.classId || null;
-  if (!supabase || !studentLogin?.id) return;
   const session = getPlayerSession();
+  const isUntrackedDemo = Boolean(studentLogin?.demo || session.demoMode || (studentLogin?.preview && !studentLogin?.id));
   const earnedDelta = Math.max(0, Number(outcome?.rewards?.salaryPotential || 0));
   const taxDelta = Math.max(0, Math.round(earnedDelta * 0.1));
   const savingsDelta = Math.max(0, Math.round(earnedDelta * 0.25));
+  let existingProfile = null;
+
+  if (supabase && studentLogin?.id && !isUntrackedDemo) {
+    const { data, error } = await supabase
+      .from("player_profiles")
+      .select("student_id, annual_salary, cumulative_net_worth, savings, tax_paid, career_success, job_security, work_life_balance, resilience")
+      .eq("student_id", studentLogin.id)
+      .maybeSingle();
+
+    if (error) console.error(error);
+    existingProfile = data || null;
+  }
+
+  const current = existingProfile || {
+    annual_salary: 0,
+    cumulative_net_worth: 0,
+    savings: 0,
+    tax_paid: 0,
+    career_success: 0,
+    job_security: 0,
+    work_life_balance: 0,
+    resilience: 0
+  };
+  const baseNetWorth = Math.max(Number(session.cumulativeNetWorth ?? 0), Number(current.cumulative_net_worth ?? 0), 0);
+  const baseSavings = Math.max(Number(session.savings ?? 0), Number(current.savings ?? 0), 0);
+  const baseTaxPaid = Math.max(Number(session.taxPaid ?? 0), Number(current.tax_paid ?? 0), 0);
+  const nextNetWorth = Math.max(0, baseNetWorth + earnedDelta);
+  const nextSavings = Math.max(0, baseSavings + savingsDelta);
+  const nextTaxPaid = Math.max(0, baseTaxPaid + taxDelta);
+
+  persistLifelongLocalProgress({
+    studentId: studentLogin?.id || session.studentId || null,
+    username: studentLogin?.username || session.username || "",
+    playerName: studentLogin?.displayName || session.playerName || studentLogin?.username || "Student",
+    schoolName: studentLogin?.schoolName || session.schoolName || "",
+    classId,
+    classCode: studentLogin?.classCode || session.classCode || "",
+    className: studentLogin?.className || session.className || "",
+    careerTitle: "Lifelong Learner",
+    cumulativeNetWorth: nextNetWorth,
+    savings: nextSavings,
+    taxPaid: nextTaxPaid,
+    checkpoint: round.id
+  });
+  pushEconomyLog({
+    eventType: "progress-saved",
+    checkpoint: round.id,
+    label: round.title,
+    detail: choice.title,
+    earnedDelta,
+    taxDelta,
+    savingsDelta,
+    annualSalaryAfter: state.resources.salaryPotential,
+    netWorthAfter: nextNetWorth,
+    savingsAfter: nextSavings,
+    taxPaidAfter: nextTaxPaid
+  });
+
+  if (!supabase || !studentLogin?.id || isUntrackedDemo) return;
 
   const roundsCompleted = Object.keys(state.completed).length;
   const completionPercent = Math.round((roundsCompleted / ROUNDS.length) * 100);
@@ -1093,60 +1290,6 @@ async function saveRoundProgress(round, choice, outcome, reflection, correct) {
   if (evidenceError) console.error(evidenceError);
   else await queueLifelongReflectionForReview(supabase, evidenceRow, round, reflection, studentLogin, classId);
 
-  const { data: existingProfile, error: profileReadError } = await supabase
-    .from("player_profiles")
-    .select("student_id, annual_salary, cumulative_net_worth, savings, tax_paid, career_success, job_security, work_life_balance, resilience")
-    .eq("student_id", studentLogin.id)
-    .maybeSingle();
-
-  if (profileReadError) console.error(profileReadError);
-
-  const current = existingProfile || {
-    annual_salary: 0,
-    cumulative_net_worth: 0,
-    savings: 0,
-    tax_paid: 0,
-    career_success: 0,
-    job_security: 0,
-    work_life_balance: 0,
-    resilience: 0
-  };
-
-  const nextNetWorth = Math.max(0, Number(session.cumulativeNetWorth ?? current.cumulative_net_worth ?? 0) + earnedDelta);
-  const nextSavings = Math.max(0, Number(session.savings ?? current.savings ?? 0) + savingsDelta);
-  const nextTaxPaid = Math.max(0, Number(session.taxPaid ?? current.tax_paid ?? 0) + taxDelta);
-
-  writePlayerSession({
-    studentId: studentLogin.id,
-    username: studentLogin.username || session.username || "",
-    playerName: studentLogin.displayName || session.playerName || studentLogin.username || "Student",
-    schoolName: studentLogin.schoolName || session.schoolName || "",
-    classId,
-    classCode: studentLogin.classCode || session.classCode || "",
-    className: studentLogin.className || session.className || "",
-    careerTitle: "Lifelong Learner",
-    annualSalary: state.resources.salaryPotential,
-    cumulativeNetWorth: nextNetWorth,
-    savings: nextSavings,
-    taxPaid: nextTaxPaid,
-    jobSecurity: state.resources.jobSecurity,
-    workLifeBalance: state.resources.workLifeBalance,
-    checkpoint: round.id
-  });
-  pushEconomyLog({
-    eventType: "progress-saved",
-    checkpoint: round.id,
-    label: round.title,
-    detail: choice.title,
-    earnedDelta,
-    taxDelta,
-    savingsDelta,
-    annualSalaryAfter: state.resources.salaryPotential,
-    netWorthAfter: nextNetWorth,
-    savingsAfter: nextSavings,
-    taxPaidAfter: nextTaxPaid
-  });
-
   const updatePayload = {
     student_id: studentLogin.id,
     updated_at: new Date().toISOString(),
@@ -1171,7 +1314,8 @@ async function hydrateFromSupabase() {
   const supabase = await getSupabaseClientOrNull();
   const authState = getAuthState();
   const studentLogin = authState.studentLogin;
-  if (!supabase || !studentLogin?.id) return;
+  const session = getPlayerSession();
+  if (!supabase || !studentLogin?.id || studentLogin.demo || session.demoMode || (studentLogin.preview && !studentLogin.id)) return;
 
   const { data: progressRows, error: progressError } = await supabase
     .from("assessment_evidence")
@@ -1228,16 +1372,21 @@ async function hydrateFromSupabase() {
     .order("purchased_at", { ascending: true });
 
   if (!assetError && Array.isArray(assetRows)) {
-    state.resources.purchasedUpgrades = assetRows.map(row => ({
-      ...row,
-      benefit: ASSET_CATALOG.find(asset => asset.code === row.asset_code)?.benefit || "Saved upgrade"
-    }));
+    state.resources.purchasedUpgrades = mergeCareerAssets(
+      state.resources.purchasedUpgrades,
+      assetRows.map(row => ({
+        ...row,
+        benefit: ASSET_CATALOG.find(asset => asset.code === row.asset_code)?.benefit || "Saved upgrade"
+      }))
+    );
   }
 }
 
 async function init() {
   state.student = await getLoggedInStudent();
+  hydrateFromLocalSession();
   await hydrateFromSupabase();
+  persistLifelongLocalProgress();
   registerLeaveWarning();
   renderHero();
   renderMetrics();

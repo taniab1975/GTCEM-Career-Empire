@@ -289,7 +289,7 @@
     if (!hasStudent) return null;
 
     const isDemo = Boolean(login.demo || session?.demoMode);
-    const isPreview = Boolean(login.preview && !isDemo);
+    const isPreview = Boolean(login.preview && !login.id && !isDemo);
     return {
       role: "student",
       stamp: isDemo
@@ -543,7 +543,7 @@
     delete state.teacherLogin;
     delete state.teacher;
     delete state.classroom;
-    if (state.studentLogin?.preview) {
+    if (state.studentLogin?.preview && !state.studentLogin?.id) {
       delete state.studentLogin;
       localStorage.removeItem(PLAYER_SESSION_KEY);
     }

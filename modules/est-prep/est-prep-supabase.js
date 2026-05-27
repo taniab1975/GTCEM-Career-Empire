@@ -48,14 +48,52 @@ async function queueEvidenceForTeacherReview(supabase, evidenceRow, options = {}
 async function saveProgress(checkpoint, evidenceType = "artifact", evidenceText = "", autoScore = null, meta = {}) {
   const student = state.student;
   const session = getPlayerSession();
+  const authState = getAuthState();
+  const studentLogin = authState.studentLogin || {};
+  const isUntrackedDemo = Boolean(studentLogin.demo || session.demoMode || (studentLogin.preview && !studentLogin.id));
+  const supabase = student?.id && !isUntrackedDemo ? await getSupabaseClientOrNull() : null;
+  let existingProfile = null;
+  if (supabase && student?.id) {
+    const { data, error } = await supabase
+      .from("player_profiles")
+      .select("student_id, annual_salary, cumulative_net_worth, savings, tax_paid")
+      .eq("student_id", student.id)
+      .maybeSingle();
+    if (error) {
+      console.error("EST profile baseline could not be loaded:", error);
+    } else {
+      existingProfile = data || null;
+    }
+  }
+
   const earnedDelta = Math.max(0, Number(state.salaryBoost || 0) - Number(state.creditedSalaryBoost || 0));
   const taxDelta = Math.max(0, Number(state.taxContribution || 0) - Number(state.creditedTaxContribution || 0));
-  const nextSalary = Number(session.annualSalary || 25000) + earnedDelta;
-  const nextNetWorth = Number(session.cumulativeNetWorth || 0) + earnedDelta;
+  const baseSalary = Math.max(
+    Number(session.annualSalary ?? session.salary ?? 0),
+    Number(existingProfile?.annual_salary ?? 0),
+    25000
+  );
+  const baseNetWorth = Math.max(
+    Number(session.cumulativeNetWorth ?? 0),
+    Number(existingProfile?.cumulative_net_worth ?? 0),
+    0
+  );
+  const baseSavings = Math.max(
+    Number(session.savings ?? 0),
+    Number(existingProfile?.savings ?? 0),
+    0
+  );
+  const baseTaxPaid = Math.max(
+    Number(session.taxPaid ?? 0),
+    Number(existingProfile?.tax_paid ?? 0),
+    0
+  );
+  const nextSalary = baseSalary + earnedDelta;
+  const nextNetWorth = baseNetWorth + earnedDelta;
   const nextWorkLife = Math.max(45, Math.min(100, Number(session.workLifeBalance || 60) + (state.streak > 1 ? 3 : 0)));
   const nextSecurity = Math.max(45, Math.min(100, Number(session.jobSecurity || 75) + Math.round(state.readiness / 20)));
-  const nextSavings = Math.max(0, Number(session.savings || 0) + Math.max(0, Math.round(earnedDelta * 0.25)));
-  const nextTaxPaid = Math.max(0, Number(session.taxPaid || 0) + taxDelta);
+  const nextSavings = Math.max(0, baseSavings + Math.max(0, Math.round(earnedDelta * 0.25)));
+  const nextTaxPaid = Math.max(0, baseTaxPaid + taxDelta);
 
   writePlayerSession({
     studentId: student?.id || session.studentId || null,
@@ -91,9 +129,8 @@ async function saveProgress(checkpoint, evidenceType = "artifact", evidenceText 
     });
   }
 
-  if (!student?.id) return;
+  if (!student?.id || isUntrackedDemo) return;
 
-  const supabase = await getSupabaseClientOrNull();
   if (!supabase) return;
 
   const completionPercent = getModuleCompletionPercent();
@@ -204,19 +241,13 @@ async function saveProgress(checkpoint, evidenceType = "artifact", evidenceText 
     }
   }
 
-  const { data: existingProfile } = await supabase
-    .from("player_profiles")
-    .select("student_id, savings, tax_paid")
-    .eq("student_id", student.id)
-    .maybeSingle();
-
   await supabase.from("player_profiles").upsert({
     student_id: student.id,
     career_title: session.careerTitle || "Exam Strategist",
     annual_salary: nextSalary,
     cumulative_net_worth: nextNetWorth,
-    savings: Math.max(0, Number(existingProfile?.savings || session.savings || 0) + Math.max(0, Math.round(earnedDelta * 0.25))),
-    tax_paid: Math.max(0, Number(existingProfile?.tax_paid || session.taxPaid || 0) + taxDelta),
+    savings: nextSavings,
+    tax_paid: nextTaxPaid,
     career_level: Number(session.careerLevel || 1),
     job_security: nextSecurity,
     work_life_balance: nextWorkLife,
@@ -352,6 +383,10 @@ function restoreGlossaryReplayBoard() {
 async function hydrateFromSupabase() {
   const student = state.student;
   if (!student?.id) return;
+  const authState = getAuthState();
+  const studentLogin = authState.studentLogin || {};
+  const session = getPlayerSession();
+  if (studentLogin.demo || session.demoMode || (studentLogin.preview && !studentLogin.id)) return;
 
   const supabase = await getSupabaseClientOrNull();
   if (!supabase) return;
@@ -395,5 +430,26 @@ async function hydrateFromSupabase() {
     if (latestGlossaryPayload) {
       hydrateGlossarySummaryFromPayload(latestGlossaryPayload);
     }
+  }
+
+  const { data: profile, error: profileError } = await supabase
+    .from("player_profiles")
+    .select("annual_salary, cumulative_net_worth, savings, tax_paid, job_security, work_life_balance")
+    .eq("student_id", student.id)
+    .maybeSingle();
+
+  if (profileError) {
+    console.error("EST profile hydration could not be loaded:", profileError);
+  } else if (profile) {
+    const session = getPlayerSession();
+    writePlayerSession({
+      annualSalary: Math.max(Number(session.annualSalary ?? session.salary ?? 0), Number(profile.annual_salary || 0)),
+      salary: Math.max(Number(session.salary ?? session.annualSalary ?? 0), Number(profile.annual_salary || 0)),
+      cumulativeNetWorth: Math.max(Number(session.cumulativeNetWorth ?? 0), Number(profile.cumulative_net_worth || 0)),
+      savings: Math.max(Number(session.savings ?? 0), Number(profile.savings || 0)),
+      taxPaid: Math.max(Number(session.taxPaid ?? 0), Number(profile.tax_paid || 0)),
+      jobSecurity: Math.max(Number(session.jobSecurity ?? 0), Number(profile.job_security || 0)),
+      workLifeBalance: Math.max(Number(session.workLifeBalance ?? 0), Number(profile.work_life_balance || 0))
+    });
   }
 }
