@@ -50,6 +50,24 @@ npm run check
 
 Runs the lightweight project check. It validates JavaScript syntax, JSON syntax, EST Prep script/style links, CSS imports, and EST Prep asset references.
 
+```bash
+npm test
+```
+
+Runs Vitest unit tests.
+
+```bash
+npm run test:e2e
+```
+
+Runs Playwright browser smoke/end-to-end tests.
+
+```bash
+npm run ci
+```
+
+Runs the full local CI sequence: project check, unit tests, and browser tests.
+
 Use `npm run check` after code or reference changes. For visual/frontend changes, also test the affected page in a browser.
 
 Useful local URLs:
@@ -62,6 +80,29 @@ Useful local URLs:
 - `http://localhost:8000/modules/est-prep/`
 - `http://localhost:8000/modules/lifelong-learning/`
 - `http://localhost:8000/modules/year10-megatrends/`
+
+## Testing Policy
+
+Testing is part of the definition of done for code changes.
+
+- Run `npm run check` before finishing any code, data, asset-reference, or HTML/CSS/JS change.
+- Run `npm test` when changing shared logic, state/economy/evidence code, scoring, moderation, data transforms, or other behavior that can be unit tested.
+- Run `npm run test:e2e` when changing navigation, page load behavior, student/teacher flows, EST Prep UI, dashboards, auth screens, or browser interactions.
+- Run `npm run ci` before committing or opening a PR when the change affects user-facing behavior or more than one area.
+
+New features must include relevant tests in the same change:
+
+- Add Vitest unit tests for pure logic and reusable services.
+- Add Playwright tests for critical browser flows, page loading, navigation, and high-risk UI interactions.
+- Prefer small, stable tests around observable behavior rather than brittle implementation details.
+
+Legacy feature areas should gain coverage as they are touched:
+
+- When modifying an older untested area, add at least one focused regression test for the behavior being changed.
+- If a bug is fixed, add a test that would have failed before the fix where practical.
+- If the code is too tightly coupled to test directly, extract the smallest useful pure helper or add a Playwright smoke/regression test around the user-visible behavior.
+
+Do not skip tests silently. If tests are not added or not run, state why in the final response and describe the remaining risk.
 
 ## Editing Guidelines
 
