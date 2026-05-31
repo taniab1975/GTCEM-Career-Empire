@@ -1,31 +1,8 @@
-import fs from "node:fs";
-import path from "node:path";
-import vm from "node:vm";
 import { describe, expect, test } from "vitest";
-
-function createLocalStorage() {
-  const store = new Map();
-  return {
-    getItem(key) {
-      return store.has(key) ? store.get(key) : null;
-    },
-    setItem(key, value) {
-      store.set(key, String(value));
-    }
-  };
-}
+import { loadBrowserScript } from "./browser-script-loader.mjs";
 
 function loadEconomyLedger() {
-  const windowObj = { localStorage: createLocalStorage() };
-  const source = fs.readFileSync(path.join(process.cwd(), "src/services/economy-ledger.js"), "utf8");
-  vm.runInNewContext(source, {
-    window: windowObj,
-    Date,
-    Math,
-    JSON,
-    Number,
-    String
-  });
+  const windowObj = loadBrowserScript("src/services/economy-ledger.js");
   return windowObj.CareerEmpireEconomy;
 }
 

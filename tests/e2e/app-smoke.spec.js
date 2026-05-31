@@ -9,7 +9,7 @@ const pages = [
 
 for (const pageSpec of pages) {
   test(`${pageSpec.path} loads its primary screen`, async ({ page }) => {
-    await page.goto(pageSpec.path);
+    await page.goto(pageSpec.path, { waitUntil: "domcontentloaded" });
 
     await expect(page).toHaveTitle(pageSpec.title);
     await expect(page.getByRole("heading", { name: pageSpec.heading }).first()).toBeVisible();
