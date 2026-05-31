@@ -130,8 +130,8 @@ const GLOSSARY_STORY_ASSETS = {
   romeroPointing: "../../Assets/Images and Animations/Emmanuel Student Characters/Romero/Romero Pointing.png",
   romeroThinking: "../../Assets/Images and Animations/Emmanuel Student Characters/Romero/Romero Thinking.png",
   mackillopThinking: "../../Assets/Images and Animations/Emmanuel Student Characters/MacKillop/MacKillop Thinking.png",
-  mackillopEncouraging: "../../Assets/Images and Animations/Emmanuel Student Characters/MacKillop/MacKillop encouraging.png",
-  mackillopCelebrating: "../../Assets/Images and Animations/Emmanuel Student Characters/MacKillop/Mackillop Celebrating.png",
+  mackillopEncouraging: "../../Assets/Images and Animations/Emmanuel Student Characters/MacKillop/MacKillop Encouraging.png",
+  mackillopCelebrating: "../../Assets/Images and Animations/Emmanuel Student Characters/MacKillop/MacKillop Celebrating.png",
   francis: "../../Assets/Images and Animations/Emmanuel Student Characters/Francis.png",
   lisieux: "../../Assets/Images and Animations/Emmanuel Student Characters/Lisieux.png"
 };
