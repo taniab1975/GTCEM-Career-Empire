@@ -1,6 +1,8 @@
 .DS_Store
 node_modules/
 remotion-est-scenes/out/
+playwright-report/
+test-results/
 Assets/New Game 2/node_modules/
 Assets/New Game 2/~$tro Script.docx
 Assets/New Game 2/
