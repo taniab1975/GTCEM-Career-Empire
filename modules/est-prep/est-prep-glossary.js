@@ -1149,6 +1149,15 @@ function getGlossaryBridgeCharacterFrames(motionKind, isLevelClear) {
   ];
 }
 
+function getGlossaryBridgeTileFontSize(title) {
+  const length = String(title || "").trim().length;
+  if (length >= 26) return "0.56rem";
+  if (length >= 21) return "0.61rem";
+  if (length >= 16) return "0.68rem";
+  if (length >= 12) return "0.76rem";
+  return "0.86rem";
+}
+
 function buildGlossaryBridgeOptions(item, levelIndex = 0, stepIndex = 0) {
   const source = buildGlossarySource();
   if (!item) return [];
@@ -3506,11 +3515,12 @@ function renderGlossaryVaultBridgeGame(round) {
         : motionMatches && (motionKind === "correct" || motionKind === "clear")
           ? "is-correct"
           : "";
+      const tileFontSize = getGlossaryBridgeTileFontSize(option.title);
       return `
         <button
           type="button"
           class="glossary-bridge-tile ${stateClass} ${feedbackClass}"
-          style="--bridge-tile-x:${position.x}%; --bridge-tile-y:${position.y}%;"
+          style="--bridge-tile-x:${position.x}%; --bridge-tile-y:${position.y}%; --bridge-tile-font-size:${tileFontSize};"
           ${isActive ? `onclick="window.ESTPrep.submitGlossaryBridgeChoiceEncoded('${item.id}', '${encodeForInlineHandler(option.value)}', ${optionIndex})"` : "disabled"}
           data-correct="${option.correct ? "true" : "false"}"
           aria-label="${escapeHtml(isActive ? option.title : isLocked ? `Row ${rowIndex + 1} secured` : isDropped ? `Row ${rowIndex + 1} dropped` : `Row ${rowIndex + 1} waiting`)}"

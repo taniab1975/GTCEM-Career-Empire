@@ -3429,12 +3429,14 @@ body.glossary-mission-active .glossary-chamber-progress {
 }
 
 .glossary-bridge-tile strong {
-  max-width: 8rem;
+  max-width: calc(100% - 4px);
   color: #ffffff;
   text-align: center;
-  overflow-wrap: anywhere;
-  font-size: clamp(0.76rem, 0.9vw, 0.9rem);
-  line-height: 1.05;
+  overflow-wrap: normal;
+  word-break: normal;
+  hyphens: none;
+  font-size: var(--bridge-tile-font-size, clamp(0.72rem, 0.84vw, 0.86rem));
+  line-height: 1.02;
   font-weight: 900;
 }
 
@@ -3488,7 +3490,7 @@ body.glossary-mission-active .glossary-chamber-progress {
   position: absolute;
   left: var(--bridge-player-x);
   top: var(--bridge-player-y);
-  z-index: 17;
+  z-index: 6;
   width: clamp(170px, 15vw, 250px);
   display: grid;
   transform: translate(-50%, -100%);
@@ -3521,7 +3523,7 @@ body.glossary-mission-active .glossary-chamber-progress {
 }
 
 .glossary-bridge-player.is-idle {
-  z-index: 17;
+  z-index: 6;
   animation: glossaryBridgeIdle 3.2s ease-in-out infinite;
 }
 
