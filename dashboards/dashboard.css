@@ -2451,6 +2451,21 @@ button.module-link {
   background: linear-gradient(180deg, transparent, rgba(4, 12, 26, 0.42) 18%, rgba(4, 12, 26, 0.72));
 }
 
+.student-dashboard-page .module-card:not(.module-card--image-bg):not(.module-card--portfolio) .module-visual-badge {
+  position: static;
+  width: fit-content;
+  max-width: calc(100% - 32px);
+  margin: 16px 16px 0;
+}
+
+.student-dashboard-page .module-card:not(.module-card--image-bg):not(.module-card--portfolio) .module-card-body {
+  padding-top: 14px;
+}
+
+.student-dashboard-page .module-card:not(.module-card--image-bg):not(.module-card--portfolio) .module-card-body h3 {
+  margin-top: 0;
+}
+
 .student-dashboard-page .module-card--portfolio {
   min-height: 390px;
   display: flex;
@@ -2489,6 +2504,24 @@ button.module-link {
   height: 34px;
   border-radius: 8px;
   padding: 5px;
+}
+
+.student-dashboard-page .module-visual-badge .module-avatar-logo {
+  display: grid;
+  place-items: center;
+  width: 34px;
+  height: 34px;
+  flex: 0 0 34px;
+  border: 1px solid rgba(255, 209, 63, 0.42);
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.08);
+  overflow: hidden;
+}
+
+.student-dashboard-page .module-visual-badge .module-avatar-logo svg {
+  display: block;
+  width: 100%;
+  height: 100%;
 }
 
 .student-dashboard-page .module-header {

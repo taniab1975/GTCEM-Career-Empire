@@ -19,6 +19,22 @@ const TEACHER_STATS_FILTER_KEY = "career-empire-teacher-stats-dashboard-filter";
 const LEGACY_TEACHER_FILTER_KEY = "career-empire-teacher-dashboard-filter";
 const MODULE_AVAILABILITY_STORAGE_KEY = "career-empire-module-availability-v1";
 const AVATAR_PROFILE_STORAGE_KEY = "career-empire-avatar-v1";
+const AVATAR_BADGE_SKIN_COLOURS = {
+  porcelain: { color: "#f4d6c5", shadow: "#d79f82" },
+  sand: { color: "#dba77c", shadow: "#b57952" },
+  warm: { color: "#b8734f", shadow: "#8d4e36" },
+  copper: { color: "#935a3c", shadow: "#6f3d29" },
+  mahogany: { color: "#66402f", shadow: "#43271c" },
+  deep: { color: "#38251f", shadow: "#211514" }
+};
+const AVATAR_BADGE_HAIR_COLOURS = {
+  black: "#161412",
+  brown: "#5a3524",
+  auburn: "#9b3f24",
+  blonde: "#d9b85d",
+  silver: "#c8ced4",
+  teal: "#0f8f8c"
+};
 const TEACHER_REVIEW_FILTER_OPTIONS = [
   { id: "new", label: "New" },
   { id: "actioned", label: "Actioned" },
@@ -1661,6 +1677,37 @@ function getModuleImageStyle(imagePath = "") {
   return imagePath ? ` style="--module-image: url('${escapeHtml(imagePath)}')"` : "";
 }
 
+function renderAvatarModuleLogo(profile = {}) {
+  const skin = AVATAR_BADGE_SKIN_COLOURS[profile?.skinTone] || AVATAR_BADGE_SKIN_COLOURS.sand;
+  const hair = AVATAR_BADGE_HAIR_COLOURS[profile?.hairColour] || AVATAR_BADGE_HAIR_COLOURS.brown;
+  return `
+    <span class="module-avatar-logo" role="img" aria-label="Avatar preview">
+      <svg viewBox="0 0 64 64" aria-hidden="true" focusable="false">
+        <defs>
+          <linearGradient id="avatarBadgeBg" x1="10" y1="8" x2="56" y2="58" gradientUnits="userSpaceOnUse">
+            <stop stop-color="#0f8f8c"/>
+            <stop offset="0.58" stop-color="#123a5d"/>
+            <stop offset="1" stop-color="#ffd13f"/>
+          </linearGradient>
+        </defs>
+        <circle cx="32" cy="32" r="30" fill="url(#avatarBadgeBg)"/>
+        <path d="M16 56 C19 43 26 38 32 38 C38 38 45 43 48 56 Z" fill="#123a5d"/>
+        <path d="M23 43 L32 58 L41 43" fill="#f7fbff"/>
+        <path d="M31 42 L33 42 L36 56 L32 60 L28 56 Z" fill="#0f8f8c"/>
+        <circle cx="32" cy="29" r="17" fill="${skin.color}"/>
+        <path d="M17 30 C18 15 27 10 34 10 C44 10 50 18 49 30 C43 23 34 21 22 24 Z" fill="${hair}"/>
+        <path d="M20 31 C21 22 27 17 35 17 C42 17 46 22 48 29 C41 24 30 23 20 31 Z" fill="${hair}" opacity="0.72"/>
+        <circle cx="26" cy="31" r="4.4" fill="#ffffff"/>
+        <circle cx="38" cy="31" r="4.4" fill="#ffffff"/>
+        <circle cx="26" cy="31" r="2" fill="#0c3f6f"/>
+        <circle cx="38" cy="31" r="2" fill="#0c3f6f"/>
+        <path d="M25 41 C29 44 35 44 39 41" fill="none" stroke="#241915" stroke-width="2.2" stroke-linecap="round"/>
+        <path d="M32 33 C30 37 30 38 34 38" fill="none" stroke="${skin.shadow}" stroke-width="2" stroke-linecap="round" opacity="0.65"/>
+      </svg>
+    </span>
+  `;
+}
+
 function renderStudentModules(modules) {
   const container = document.getElementById("student-module-grid");
   if (!container) return;
@@ -1668,8 +1715,8 @@ function renderStudentModules(modules) {
   container.innerHTML = modules.map(module => `
     <article class="module-card ${module.imagePath ? "module-card--image-bg" : ""} ${module.action === "portfolio" ? "module-card--portfolio" : ""} ${module.spotlight ? "spotlight" : ""} ${module.available === false ? "module-card--unavailable" : ""}"${getModuleImageStyle(module.imagePath)}>
       <div class="module-visual-badge">
-        ${module.logoPath ? `<img class="module-logo" src="${module.logoPath}" alt="${escapeHtml(module.logoLabel || module.title)} logo">` : ""}
-        <span>${module.title}</span>
+        ${module.logoHtml || (module.logoPath ? `<img class="module-logo" src="${module.logoPath}" alt="${escapeHtml(module.logoLabel || module.title)} logo">` : "")}
+        <span>${escapeHtml(module.badgeLabel || module.title)}</span>
       </div>
       <div class="module-card-body">
         <div class="kicker">${module.state}</div>
@@ -5765,8 +5812,8 @@ async function renderStudentLiveData(players, skillsData) {
       mastery: avatarCompletion,
       variant: "green",
       spotlight: moduleStatuses["avatar-studio"] === "active",
-      logoPath: skillsData.categories.find(category => category.id === "communication")?.logoPath,
-      logoLabel: "Communication",
+      logoHtml: renderAvatarModuleLogo(avatarProfile),
+      badgeLabel: hasAvatarProgress ? "Profile saved" : "Future self",
       launchPath: "../modules/avatar/index.html",
       launchLabel: hasAvatarProgress ? "Edit Avatar" : "Create Avatar",
       available: moduleStatuses["avatar-studio"] === "active",
