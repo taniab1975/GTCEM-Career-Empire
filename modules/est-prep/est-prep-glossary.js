@@ -38,7 +38,7 @@ const GLOSSARY_GUIDE_ASSETS = {
   "signal-slice": "../../Assets/EST Preparation/guide-character/guide-thinking-top.png",
   "keyword-cloze": "../../Assets/EST Preparation/guide-character/guide-thinking-top.png",
   "plain-match": "../../Assets/EST Preparation/guide-character/guide-thinking-bottom.png",
-  recall: "../../Assets/Images and Animations/Emmanuel Student Characters/MacKillop/MacKillop Encouraging.png",
+  recall: "../../Assets/Images and Animations/Emmanuel Student Characters/MacKillop/MacKillop encouraging.png",
   study: "../../Assets/EST Preparation/guide-character/guide-thinking-top.png",
   reward: "../../Assets/EST Preparation/guide-character/guide-celebration.png"
 };
@@ -46,9 +46,10 @@ const GLOSSARY_GUIDE_ASSETS = {
 const GLOSSARY_BRIDGE_ASSETS = {
   backdrop: "../../Assets/Images and Animations/Glossary Check/Vault Bridge/vault-bridge-backdrop.png",
   characterReady: "../../Assets/Images and Animations/Emmanuel Student Characters/MacKillop/MacKillop Thinking.png",
+  characterWelcome: "../../Assets/Images and Animations/Emmanuel Student Characters/MacKillop/MacKillop Welcome.png",
   characterAction: "../../Assets/Images and Animations/Emmanuel Student Characters/MacKillop/MacKillop Pointing.png",
-  characterSuccess: "../../Assets/Images and Animations/Emmanuel Student Characters/MacKillop/MacKillop Celebrating.png",
-  characterReset: "../../Assets/Images and Animations/Emmanuel Student Characters/MacKillop/MacKillop Encouraging.png"
+  characterSuccess: "../../Assets/Images and Animations/Emmanuel Student Characters/MacKillop/Mackillop Celebrating.png",
+  characterReset: "../../Assets/Images and Animations/Emmanuel Student Characters/MacKillop/MacKillop encouraging.png"
 };
 
 const GLOSSARY_BRIDGE_LEVEL_NAMES = [
@@ -130,8 +131,8 @@ const GLOSSARY_STORY_ASSETS = {
   romeroPointing: "../../Assets/Images and Animations/Emmanuel Student Characters/Romero/Romero Pointing.png",
   romeroThinking: "../../Assets/Images and Animations/Emmanuel Student Characters/Romero/Romero Thinking.png",
   mackillopThinking: "../../Assets/Images and Animations/Emmanuel Student Characters/MacKillop/MacKillop Thinking.png",
-  mackillopEncouraging: "../../Assets/Images and Animations/Emmanuel Student Characters/MacKillop/MacKillop Encouraging.png",
-  mackillopCelebrating: "../../Assets/Images and Animations/Emmanuel Student Characters/MacKillop/MacKillop Celebrating.png",
+  mackillopEncouraging: "../../Assets/Images and Animations/Emmanuel Student Characters/MacKillop/MacKillop encouraging.png",
+  mackillopCelebrating: "../../Assets/Images and Animations/Emmanuel Student Characters/MacKillop/Mackillop Celebrating.png",
   francis: "../../Assets/Images and Animations/Emmanuel Student Characters/Francis.png",
   lisieux: "../../Assets/Images and Animations/Emmanuel Student Characters/Lisieux.png"
 };
@@ -1073,7 +1074,7 @@ function getGlossaryBridgePlayerLandingPosition(rowIndex, optionIndex) {
   if (!tile) return GLOSSARY_BRIDGE_HOME_POSITION;
   return {
     x: tile.x,
-    y: Math.min(90, tile.y + 24)
+    y: Math.min(90, tile.y + 13)
   };
 }
 
@@ -1107,6 +1108,45 @@ function renderGlossaryBridgePathSegments(bridge) {
       ></span>
     `;
   }).join("");
+}
+
+function getGlossaryBridgeMotionVector(fromX, fromY, toX, toY) {
+  const dx = Number(toX) - Number(fromX);
+  const scaledDy = (Number(toY) - Number(fromY)) * GLOSSARY_BRIDGE_PATH_SCALE_Y;
+  return {
+    angle: Math.atan2(scaledDy, dx) * (180 / Math.PI),
+    length: Math.max(6, Math.sqrt((dx * dx) + (scaledDy * scaledDy)))
+  };
+}
+
+function getGlossaryBridgeCharacterFrames(motionKind, isLevelClear) {
+  if (motionKind === "wrong") {
+    return [
+      GLOSSARY_BRIDGE_ASSETS.characterReady,
+      GLOSSARY_BRIDGE_ASSETS.characterReset,
+      GLOSSARY_BRIDGE_ASSETS.characterReady
+    ];
+  }
+
+  if (isLevelClear || motionKind === "clear" || motionKind === "correct") {
+    return [
+      GLOSSARY_BRIDGE_ASSETS.characterAction,
+      GLOSSARY_BRIDGE_ASSETS.characterSuccess,
+      GLOSSARY_BRIDGE_ASSETS.characterWelcome
+    ];
+  }
+
+  if (motionKind) {
+    return [
+      GLOSSARY_BRIDGE_ASSETS.characterWelcome,
+      GLOSSARY_BRIDGE_ASSETS.characterAction
+    ];
+  }
+
+  return [
+    GLOSSARY_BRIDGE_ASSETS.characterReady,
+    GLOSSARY_BRIDGE_ASSETS.characterWelcome
+  ];
 }
 
 function buildGlossaryBridgeOptions(item, levelIndex = 0, stepIndex = 0) {
@@ -3410,20 +3450,25 @@ function renderGlossaryVaultBridgeGame(round) {
   const playerClass = bridge.levelClear
     ? "is-exiting"
     : motionKind === "wrong"
-      ? "is-resetting"
+      ? "is-resetting is-sad"
       : motionKind === "correct"
-        ? "is-hopping"
-        : "";
-  const characterImage = motionKind === "wrong"
-    ? GLOSSARY_BRIDGE_ASSETS.characterReset
-    : bridge.levelClear || motionKind === "correct"
-      ? GLOSSARY_BRIDGE_ASSETS.characterSuccess
-      : GLOSSARY_BRIDGE_ASSETS.characterReady;
+        ? "is-celebrating"
+        : "is-idle";
+  const motionFromX = Number(motion.fromX ?? playerPosition.x);
+  const motionFromY = Number(motion.fromY ?? playerPosition.y);
+  const emoteKind = motionKind === "wrong" ? "is-sad" : motionKind === "correct" ? "is-celebration" : "";
+  const emoteX = motionKind === "wrong" ? motionFromX : playerPosition.x;
+  const emoteY = motionKind === "wrong" ? motionFromY : playerPosition.y;
+  const motionVector = getGlossaryBridgeMotionVector(motionFromX, motionFromY, playerPosition.x, playerPosition.y);
+  const characterFrames = getGlossaryBridgeCharacterFrames(motionKind, bridge.levelClear);
+  const characterImage = characterFrames[0] || GLOSSARY_BRIDGE_ASSETS.characterReady;
   const playerStyle = [
     `--bridge-player-x:${playerPosition.x}%`,
     `--bridge-player-y:${playerPosition.y}%`,
-    `--bridge-from-x:${Number(motion.fromX ?? playerPosition.x)}%`,
-    `--bridge-from-y:${Number(motion.fromY ?? playerPosition.y)}%`
+    `--bridge-from-x:${motionFromX}%`,
+    `--bridge-from-y:${motionFromY}%`,
+    `--bridge-motion-angle:${motionVector.angle.toFixed(2)}deg`,
+    `--bridge-motion-length:${motionVector.length.toFixed(2)}%`
   ].join(";");
 
   if (!item) {
@@ -3480,6 +3525,43 @@ function renderGlossaryVaultBridgeGame(round) {
     <span class="${index < bridge.step ? "is-secured" : ""}"></span>
   `).join("");
   const finalLevel = bridge.level >= bridge.levels.length - 1;
+  const shotStep = Math.max(1, Math.min(bridge.levelTerms.length + 1, Number(motion.step ?? bridge.step) + 1));
+  const shotLabel = bridge.levelClear
+    ? finalLevel ? "Final scene" : `Scene ${bridge.level + 1}.6`
+    : `Scene ${bridge.level + 1}.${shotStep}`;
+  const shotTitle = bridge.levelClear
+    ? "Salary portal opens"
+    : motionKind === "wrong"
+      ? "Bridge collapses"
+      : motionKind === "correct" || motionKind === "clear"
+        ? "Bridge piece locked"
+        : bridge.step
+          ? "Next row live"
+          : "Bridge loaded";
+  const characterFrameMarkup = characterFrames.map((src, index) => `
+    <img
+      class="glossary-bridge-player-frame glossary-bridge-player-frame--${index + 1}"
+      src="${escapeHtml(src)}"
+      alt=""
+      aria-hidden="true"
+    >
+  `).join("");
+  const characterEmoteMarkup = emoteKind ? `
+    <div
+      class="glossary-bridge-emote ${emoteKind}"
+      style="--bridge-emote-x:${emoteX}%; --bridge-emote-y:${emoteY}%;"
+      aria-hidden="true"
+    >
+      <i></i>
+      <i></i>
+      <i></i>
+      <i></i>
+      <i></i>
+      <i></i>
+      <i></i>
+      <i></i>
+    </div>
+  ` : "";
   const clearTitle = finalLevel ? "Glossary vault mastered" : "Portal clear";
   const clearCopy = finalLevel
     ? `All ${sourceTotal} terms are secure. Bank the salary reward, pay the community tax, and choose what to practise next.`
@@ -3526,8 +3608,13 @@ function renderGlossaryVaultBridgeGame(round) {
       <div class="glossary-bridge-game ${bridge.levelClear ? "is-level-clear" : ""} ${motionKind ? `motion-${escapeHtml(motionKind)}` : ""}" style="${playerStyle}">
         <img class="glossary-bridge-bg" src="${escapeHtml(GLOSSARY_BRIDGE_ASSETS.backdrop)}" alt="">
         <span class="glossary-bridge-vignette" aria-hidden="true"></span>
+        <div class="glossary-bridge-shot-label" aria-live="polite">
+          <span>${escapeHtml(shotLabel)}</span>
+          <strong>${escapeHtml(shotTitle)}</strong>
+        </div>
         <span class="glossary-bridge-runway" aria-hidden="true"></span>
         <div class="glossary-bridge-path" aria-hidden="true">${pathMarkup}</div>
+        <span class="glossary-bridge-motion-ribbon ${motionKind ? "is-active" : ""}" aria-hidden="true"></span>
         <div class="glossary-bridge-pieces" aria-label="Select the bridge piece that matches the definition">
           ${rowMarkup}
         </div>
@@ -3537,7 +3624,11 @@ function renderGlossaryVaultBridgeGame(round) {
           <span class="glossary-bridge-portal-door"></span>
           <span class="glossary-bridge-portal-sparks"></span>
         </div>
-        <img class="glossary-bridge-player ${playerClass}" src="${escapeHtml(characterImage)}" alt="MacKillop student character crossing the bridge">
+        ${motionKind ? `<img class="glossary-bridge-player-ghost" src="${escapeHtml(characterImage)}" alt="" aria-hidden="true">` : ""}
+        <div class="glossary-bridge-player ${playerClass}" role="img" aria-label="MacKillop student character crossing the bridge">
+          ${characterFrameMarkup}
+        </div>
+        ${characterEmoteMarkup}
         <span class="glossary-bridge-burst ${motionKind === "correct" || motionKind === "clear" ? "is-active" : ""}" aria-hidden="true"></span>
         <span class="glossary-bridge-splash ${motionKind === "wrong" ? "is-active" : ""}" aria-hidden="true"></span>
         ${bridge.levelClear ? `

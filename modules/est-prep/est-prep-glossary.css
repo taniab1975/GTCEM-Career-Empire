@@ -3179,6 +3179,47 @@ body.glossary-mission-active .glossary-chamber-progress {
   isolation: isolate;
 }
 
+.glossary-bridge-game::before,
+.glossary-bridge-game::after {
+  content: "";
+  position: absolute;
+  pointer-events: none;
+}
+
+.glossary-bridge-game::before {
+  inset: 0;
+  z-index: 15;
+  background:
+    repeating-linear-gradient(180deg, rgba(255, 255, 255, 0.04) 0 1px, transparent 1px 7px),
+    linear-gradient(90deg, transparent, rgba(97, 240, 255, 0.06), transparent);
+  mix-blend-mode: screen;
+  opacity: 0.22;
+  animation: glossaryBridgeFilmGrain 1.4s steps(2, end) infinite;
+}
+
+.glossary-bridge-game::after {
+  left: 0;
+  right: 0;
+  top: 0;
+  bottom: 0;
+  z-index: 15;
+  box-shadow: inset 0 32px 0 rgba(2, 5, 14, 0.5), inset 0 -32px 0 rgba(2, 5, 14, 0.5);
+  opacity: 0.5;
+}
+
+.glossary-bridge-game.motion-correct .glossary-bridge-bg,
+.glossary-bridge-game.motion-clear .glossary-bridge-bg {
+  animation: glossaryBridgeCameraPush 780ms ease-out;
+}
+
+.glossary-bridge-game.motion-wrong {
+  animation: glossaryBridgeCameraShake 520ms ease-in-out;
+}
+
+.glossary-bridge-game.is-level-clear .glossary-bridge-bg {
+  animation: glossaryBridgePortalPush 1.4s ease-in-out;
+}
+
 .glossary-bridge-prompt-bar {
   display: grid;
   gap: 8px;
@@ -3199,6 +3240,36 @@ body.glossary-mission-active .glossary-chamber-progress {
   font-size: clamp(1rem, 1.42vw, 1.22rem);
   line-height: 1.26;
   font-weight: 900;
+}
+
+.glossary-bridge-shot-label {
+  position: absolute;
+  left: 22px;
+  top: 22px;
+  z-index: 16;
+  display: grid;
+  gap: 4px;
+  width: min(240px, calc(100% - 44px));
+  padding: 9px 12px;
+  border-left: 3px solid #ffd86c;
+  background: linear-gradient(90deg, rgba(5, 12, 30, 0.76), rgba(5, 12, 30, 0));
+  color: #ffffff;
+  text-shadow: 0 2px 14px rgba(0, 0, 0, 0.74);
+  pointer-events: none;
+}
+
+.glossary-bridge-shot-label span {
+  color: #ffd86c;
+  font-size: 0.66rem;
+  font-weight: 900;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.glossary-bridge-shot-label strong {
+  color: #ffffff;
+  font-size: clamp(0.9rem, 1.2vw, 1.08rem);
+  line-height: 1.02;
 }
 
 .glossary-bridge-bg {
@@ -3261,6 +3332,26 @@ body.glossary-mission-active .glossary-chamber-progress {
   transform: translateY(-50%) rotate(var(--path-angle));
   transform-origin: left center;
   animation: glossaryBridgePathCharge 1.6s ease-in-out infinite;
+}
+
+.glossary-bridge-motion-ribbon {
+  position: absolute;
+  left: var(--bridge-from-x);
+  top: var(--bridge-from-y);
+  z-index: 5;
+  width: var(--bridge-motion-length);
+  height: clamp(7px, 0.8vw, 10px);
+  border-radius: 999px;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.88), #61f0ff, #84ffd1, transparent);
+  box-shadow: 0 0 28px rgba(97, 240, 255, 0.48);
+  opacity: 0;
+  transform: rotate(var(--bridge-motion-angle));
+  transform-origin: left center;
+  pointer-events: none;
+}
+
+.glossary-bridge-motion-ribbon.is-active {
+  animation: glossaryBridgeMotionRibbon 760ms ease-out;
 }
 
 .glossary-bridge-path-segment::after {
@@ -3393,28 +3484,192 @@ body.glossary-mission-active .glossary-chamber-progress {
 }
 
 .glossary-bridge-player {
+  --bridge-frame-duration: 2.8s;
   position: absolute;
   left: var(--bridge-player-x);
   top: var(--bridge-player-y);
-  z-index: 6;
-  width: clamp(122px, 11vw, 174px);
+  z-index: 17;
+  width: clamp(170px, 15vw, 250px);
+  display: grid;
   transform: translate(-50%, -100%);
   filter: drop-shadow(0 22px 24px rgba(0, 0, 0, 0.52));
   pointer-events: none;
   will-change: left, top, transform, opacity;
 }
 
+.glossary-bridge-player-frame {
+  grid-area: 1 / 1;
+  width: 100%;
+  height: auto;
+  opacity: 0;
+  animation-duration: var(--bridge-frame-duration);
+  animation-iteration-count: infinite;
+  animation-timing-function: steps(1, end);
+}
+
+.glossary-bridge-player-frame--1 {
+  opacity: 1;
+  animation-name: glossaryBridgeFrameOne;
+}
+
+.glossary-bridge-player-frame--2 {
+  animation-name: glossaryBridgeFrameTwo;
+}
+
+.glossary-bridge-player-frame--3 {
+  animation-name: glossaryBridgeFrameThree;
+}
+
+.glossary-bridge-player.is-idle {
+  z-index: 17;
+  animation: glossaryBridgeIdle 3.2s ease-in-out infinite;
+}
+
 .glossary-bridge-player.is-hopping {
+  z-index: 20;
+  --bridge-frame-duration: 720ms;
   animation: glossaryBridgeTravel 720ms cubic-bezier(0.18, 0.88, 0.24, 1);
 }
 
+.glossary-bridge-player.is-celebrating {
+  z-index: 20;
+  --bridge-frame-duration: 1.18s;
+  animation: glossaryBridgeCelebrateTravel 1.18s ease-in-out;
+}
+
 .glossary-bridge-player.is-resetting {
+  z-index: 20;
+  --bridge-frame-duration: 840ms;
   animation: glossaryBridgeReset 840ms ease-in-out;
 }
 
+.glossary-bridge-player.is-sad {
+  filter: grayscale(0.24) drop-shadow(0 22px 24px rgba(0, 0, 0, 0.52));
+}
+
+.glossary-bridge-player.is-resetting.is-sad {
+  --bridge-frame-duration: 1.32s;
+  animation: glossaryBridgeSadReset 1.32s ease-in-out;
+}
+
 .glossary-bridge-player.is-exiting {
+  z-index: 20;
+  --bridge-frame-duration: 1.25s;
   animation: glossaryBridgePortalExit 1.25s ease-in-out;
 }
+
+.glossary-bridge-player-ghost {
+  position: absolute;
+  left: var(--bridge-from-x);
+  top: var(--bridge-from-y);
+  z-index: 14;
+  width: clamp(170px, 15vw, 250px);
+  transform: translate(-50%, -100%);
+  filter: drop-shadow(0 22px 24px rgba(0, 0, 0, 0.34));
+  opacity: 0.34;
+  pointer-events: none;
+  animation: glossaryBridgeGhostFade 640ms ease-out forwards;
+}
+
+.glossary-bridge-emote {
+  position: absolute;
+  left: var(--bridge-emote-x);
+  top: var(--bridge-emote-y);
+  z-index: 21;
+  width: clamp(180px, 18vw, 290px);
+  aspect-ratio: 1;
+  opacity: 0;
+  transform: translate(-50%, -72%);
+  pointer-events: none;
+}
+
+.glossary-bridge-emote i {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 11px;
+  height: 11px;
+  border-radius: 3px;
+  opacity: 0;
+  transform: translate(-50%, -50%);
+  background: #ffd86c;
+  box-shadow: 0 0 18px rgba(255, 216, 108, 0.5);
+}
+
+.glossary-bridge-emote.is-celebration {
+  opacity: 1;
+  animation: glossaryBridgeEmotePop 1.18s ease-out;
+}
+
+.glossary-bridge-emote.is-celebration::before,
+.glossary-bridge-emote.is-celebration::after {
+  content: "";
+  position: absolute;
+  inset: 16%;
+  border-radius: 999px;
+  border: 2px solid rgba(132, 255, 209, 0.72);
+  opacity: 0;
+  animation: glossaryBridgeCelebrationRing 1.18s ease-out;
+}
+
+.glossary-bridge-emote.is-celebration::after {
+  inset: 28%;
+  border-color: rgba(255, 216, 108, 0.68);
+  animation-delay: 120ms;
+}
+
+.glossary-bridge-emote.is-celebration i {
+  animation: glossaryBridgeConfettiLaunch 1.08s ease-out forwards;
+}
+
+.glossary-bridge-emote.is-sad {
+  opacity: 1;
+  width: clamp(132px, 12vw, 198px);
+  transform: translate(-50%, -78%);
+  animation: glossaryBridgeSadCloud 1.32s ease-in-out;
+}
+
+.glossary-bridge-emote.is-sad::before {
+  content: "";
+  position: absolute;
+  left: 50%;
+  top: 40%;
+  width: 44%;
+  height: 26%;
+  border-radius: 999px;
+  background:
+    radial-gradient(circle at 28% 44%, rgba(185, 200, 223, 0.92) 0 28%, transparent 30%),
+    radial-gradient(circle at 52% 36%, rgba(147, 164, 190, 0.88) 0 34%, transparent 36%),
+    radial-gradient(circle at 72% 48%, rgba(185, 200, 223, 0.78) 0 26%, transparent 28%),
+    linear-gradient(180deg, rgba(147, 164, 190, 0.72), rgba(74, 91, 121, 0.48));
+  box-shadow: 0 14px 28px rgba(0, 0, 0, 0.22);
+  transform: translate(-50%, -50%);
+  opacity: 0;
+  animation: glossaryBridgeSadCloudPuff 1.32s ease-in-out;
+}
+
+.glossary-bridge-emote.is-sad i {
+  width: 7px;
+  height: 16px;
+  border-radius: 999px;
+  background: linear-gradient(180deg, #dffaff, #61f0ff);
+  box-shadow: 0 0 16px rgba(97, 240, 255, 0.42);
+  animation: glossaryBridgeSadDrop 940ms ease-in forwards;
+}
+
+.glossary-bridge-emote i:nth-child(1) { --x: -62px; --y: -78px; --r: -24deg; animation-delay: 0ms; }
+.glossary-bridge-emote i:nth-child(2) { --x: -22px; --y: -98px; --r: 18deg; animation-delay: 70ms; background: #84ffd1; }
+.glossary-bridge-emote i:nth-child(3) { --x: 34px; --y: -92px; --r: 34deg; animation-delay: 120ms; background: #61f0ff; }
+.glossary-bridge-emote i:nth-child(4) { --x: 72px; --y: -64px; --r: -18deg; animation-delay: 40ms; }
+.glossary-bridge-emote i:nth-child(5) { --x: -78px; --y: -26px; --r: 52deg; animation-delay: 160ms; background: #ff8b7b; }
+.glossary-bridge-emote i:nth-child(6) { --x: 88px; --y: -18px; --r: -42deg; animation-delay: 190ms; background: #84ffd1; }
+.glossary-bridge-emote i:nth-child(7) { --x: -38px; --y: 10px; --r: 28deg; animation-delay: 220ms; background: #61f0ff; }
+.glossary-bridge-emote i:nth-child(8) { --x: 44px; --y: 8px; --r: -16deg; animation-delay: 260ms; background: #ff8b7b; }
+
+.glossary-bridge-emote.is-sad i:nth-child(1) { --x: -18px; --y: 52px; animation-delay: 250ms; }
+.glossary-bridge-emote.is-sad i:nth-child(2) { --x: 8px; --y: 58px; animation-delay: 360ms; }
+.glossary-bridge-emote.is-sad i:nth-child(3) { --x: 30px; --y: 46px; animation-delay: 470ms; }
+.glossary-bridge-emote.is-sad i:nth-child(n+4) { display: none; }
 
 .glossary-bridge-portal {
   position: absolute;
@@ -3678,6 +3933,63 @@ body.glossary-mission-active .glossary-chamber-progress {
   line-height: 1;
 }
 
+@keyframes glossaryBridgeFilmGrain {
+  0%, 100% { transform: translate3d(0, 0, 0); }
+  50% { transform: translate3d(0, 4px, 0); }
+}
+
+@keyframes glossaryBridgeCameraPush {
+  0% { transform: scale(1.01) translate3d(0, 0, 0); filter: saturate(1.08) contrast(1.02); }
+  46% { transform: scale(1.055) translate3d(-0.6%, -0.4%, 0); filter: saturate(1.22) contrast(1.08); }
+  100% { transform: scale(1.01) translate3d(0, 0, 0); filter: saturate(1.08) contrast(1.02); }
+}
+
+@keyframes glossaryBridgePortalPush {
+  0% { transform: scale(1.01); filter: saturate(1.08) contrast(1.02); }
+  60% { transform: scale(1.07) translate3d(-1.2%, -0.8%, 0); filter: saturate(1.28) contrast(1.08) brightness(1.08); }
+  100% { transform: scale(1.01); filter: saturate(1.08) contrast(1.02); }
+}
+
+@keyframes glossaryBridgeCameraShake {
+  0%, 100% { transform: translate3d(0, 0, 0); }
+  20% { transform: translate3d(-8px, 3px, 0); }
+  42% { transform: translate3d(7px, -2px, 0); }
+  64% { transform: translate3d(-4px, 2px, 0); }
+  82% { transform: translate3d(3px, 0, 0); }
+}
+
+@keyframes glossaryBridgeIdle {
+  0%, 100% { transform: translate(-50%, -100%) scale(1); }
+  50% { transform: translate(-50%, -104%) scale(1.012); }
+}
+
+@keyframes glossaryBridgeFrameOne {
+  0%, 45%, 96%, 100% { opacity: 1; }
+  46%, 95% { opacity: 0; }
+}
+
+@keyframes glossaryBridgeFrameTwo {
+  0%, 45%, 76%, 100% { opacity: 0; }
+  46%, 75% { opacity: 1; }
+}
+
+@keyframes glossaryBridgeFrameThree {
+  0%, 75%, 100% { opacity: 0; }
+  76%, 95% { opacity: 1; }
+}
+
+@keyframes glossaryBridgeGhostFade {
+  0% { opacity: 0.36; transform: translate(-50%, -100%) scale(1); }
+  100% { opacity: 0; transform: translate(-50%, -111%) scale(0.92); }
+}
+
+@keyframes glossaryBridgeMotionRibbon {
+  0% { opacity: 0; clip-path: inset(0 100% 0 0); }
+  18% { opacity: 0.9; }
+  72% { clip-path: inset(0 0 0 0); }
+  100% { opacity: 0; clip-path: inset(0 0 0 100%); }
+}
+
 @keyframes glossaryBridgeRunway {
   0%, 100% { opacity: 0.24; transform: translateX(-50%) scaleX(0.82); }
   50% { opacity: 0.72; transform: translateX(-50%) scaleX(1.18); }
@@ -3700,9 +4012,27 @@ body.glossary-mission-active .glossary-chamber-progress {
   100% { left: var(--bridge-player-x); top: var(--bridge-player-y); transform: translate(-50%, -100%) scale(1) rotate(0deg); }
 }
 
+@keyframes glossaryBridgeCelebrateTravel {
+  0% { left: var(--bridge-from-x); top: var(--bridge-from-y); transform: translate(-50%, -100%) scale(1) rotate(0deg); }
+  34% { left: var(--bridge-player-x); top: var(--bridge-player-y); transform: translate(-50%, -120%) scale(1.05) rotate(3deg); }
+  48% { left: var(--bridge-player-x); top: var(--bridge-player-y); transform: translate(-52%, -112%) scale(1.06) rotate(-8deg); }
+  62% { left: var(--bridge-player-x); top: var(--bridge-player-y); transform: translate(-48%, -106%) scale(1.03) rotate(7deg); }
+  76% { left: var(--bridge-player-x); top: var(--bridge-player-y); transform: translate(-50%, -121%) scale(1.08) rotate(-4deg); }
+  90% { left: var(--bridge-player-x); top: var(--bridge-player-y); transform: translate(-46%, -112%) scale(1.06) rotate(-5deg); }
+  100% { left: var(--bridge-player-x); top: var(--bridge-player-y); transform: translate(-50%, -100%) scale(1) rotate(0deg); }
+}
+
 @keyframes glossaryBridgeReset {
   0% { left: var(--bridge-from-x); top: var(--bridge-from-y); transform: translate(-50%, -100%) scale(1) rotate(0deg); opacity: 1; }
   42% { transform: translate(-50%, -72%) scale(0.92) rotate(-8deg); opacity: 0.58; }
+  100% { left: var(--bridge-player-x); top: var(--bridge-player-y); transform: translate(-50%, -100%) scale(1) rotate(0deg); opacity: 1; }
+}
+
+@keyframes glossaryBridgeSadReset {
+  0% { left: var(--bridge-from-x); top: var(--bridge-from-y); transform: translate(-50%, -100%) scale(1) rotate(0deg); opacity: 1; }
+  18% { left: var(--bridge-from-x); top: var(--bridge-from-y); transform: translate(-52%, -94%) scale(0.98) rotate(-4deg); opacity: 0.95; }
+  42% { left: var(--bridge-from-x); top: var(--bridge-from-y); transform: translate(-48%, -86%) scale(0.94) rotate(6deg); opacity: 0.82; }
+  64% { left: var(--bridge-from-x); top: var(--bridge-from-y); transform: translate(-51%, -91%) scale(0.96) rotate(-5deg); opacity: 0.88; }
   100% { left: var(--bridge-player-x); top: var(--bridge-player-y); transform: translate(-50%, -100%) scale(1) rotate(0deg); opacity: 1; }
 }
 
@@ -3710,6 +4040,45 @@ body.glossary-mission-active .glossary-chamber-progress {
   0% { left: var(--bridge-from-x); top: var(--bridge-from-y); transform: translate(-50%, -100%) scale(1); opacity: 1; }
   55% { left: var(--bridge-player-x); top: var(--bridge-player-y); transform: translate(-50%, -108%) scale(0.82); opacity: 0.82; }
   100% { left: var(--bridge-player-x); top: var(--bridge-player-y); transform: translate(-50%, -120%) scale(0.38); opacity: 0.22; }
+}
+
+@keyframes glossaryBridgeEmotePop {
+  0% { opacity: 0; transform: translate(-50%, -72%) scale(0.72); }
+  14% { opacity: 1; transform: translate(-50%, -72%) scale(1.06); }
+  72% { opacity: 1; transform: translate(-50%, -72%) scale(1); }
+  100% { opacity: 0; transform: translate(-50%, -72%) scale(0.92); }
+}
+
+@keyframes glossaryBridgeCelebrationRing {
+  0% { opacity: 0; transform: scale(0.34); }
+  18% { opacity: 0.96; }
+  100% { opacity: 0; transform: scale(1.26); }
+}
+
+@keyframes glossaryBridgeConfettiLaunch {
+  0% { opacity: 0; transform: translate(-50%, -50%) scale(0.38) rotate(0deg); }
+  18% { opacity: 1; }
+  100% { opacity: 0; transform: translate(calc(-50% + var(--x)), calc(-50% + var(--y))) scale(0.82) rotate(var(--r)); }
+}
+
+@keyframes glossaryBridgeSadCloud {
+  0% { opacity: 0; transform: translate(-50%, -74%) scale(0.82); }
+  18% { opacity: 1; transform: translate(-50%, -82%) scale(1.02); }
+  72% { opacity: 1; transform: translate(-50%, -78%) scale(1); }
+  100% { opacity: 0; transform: translate(-50%, -88%) scale(0.9); }
+}
+
+@keyframes glossaryBridgeSadCloudPuff {
+  0% { opacity: 0; transform: translate(-50%, -50%) scale(0.72); }
+  18% { opacity: 0.96; transform: translate(-50%, -50%) scale(1); }
+  70% { opacity: 0.9; }
+  100% { opacity: 0; transform: translate(-50%, -54%) scale(0.96); }
+}
+
+@keyframes glossaryBridgeSadDrop {
+  0% { opacity: 0; transform: translate(-50%, -50%) scale(0.42); }
+  24% { opacity: 1; }
+  100% { opacity: 0; transform: translate(calc(-50% + var(--x)), calc(-50% + var(--y))) scale(0.9); }
 }
 
 @keyframes glossaryBridgeCorrectPulse {
@@ -3790,7 +4159,16 @@ body.glossary-mission-active .glossary-chamber-progress {
   }
 
   .glossary-bridge-player {
-    width: clamp(108px, 26vw, 152px);
+    width: clamp(145px, 34vw, 210px);
+  }
+
+  .glossary-bridge-player-ghost {
+    width: clamp(145px, 34vw, 210px);
+  }
+
+  .glossary-bridge-shot-label {
+    left: 16px;
+    top: 16px;
   }
 
   .glossary-bridge-statusbar {
@@ -4522,9 +4900,20 @@ body.glossary-mission-active #stage-section.gameplay-viewport #stage-root {
   .glossary-flight-gate,
   .glossary-flight-player,
   .glossary-flight-thruster,
+  .glossary-bridge-game,
+  .glossary-bridge-game::before,
+  .glossary-bridge-game::after,
+  .glossary-bridge-bg,
   .glossary-bridge-runway,
+  .glossary-bridge-motion-ribbon,
   .glossary-bridge-tile,
   .glossary-bridge-player,
+  .glossary-bridge-player-frame,
+  .glossary-bridge-player-ghost,
+  .glossary-bridge-emote,
+  .glossary-bridge-emote::before,
+  .glossary-bridge-emote::after,
+  .glossary-bridge-emote i,
   .glossary-bridge-burst,
   .glossary-bridge-splash,
   .glossary-bridge-portal-ring,
