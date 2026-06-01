@@ -18,6 +18,7 @@ const STUDENT_STATUS_ICONS = {
 const TEACHER_STATS_FILTER_KEY = "career-empire-teacher-stats-dashboard-filter";
 const LEGACY_TEACHER_FILTER_KEY = "career-empire-teacher-dashboard-filter";
 const MODULE_AVAILABILITY_STORAGE_KEY = "career-empire-module-availability-v1";
+const AVATAR_PROFILE_STORAGE_KEY = "career-empire-avatar-v1";
 const TEACHER_REVIEW_FILTER_OPTIONS = [
   { id: "new", label: "New" },
   { id: "actioned", label: "Actioned" },
@@ -51,6 +52,16 @@ const RESPONSE_REJECTION_REASONS = [
 ];
 
 const DASHBOARD_MODULES = [
+  {
+    id: "avatar-studio",
+    title: "Avatar Studio",
+    shortTitle: "Avatar",
+    defaultStatus: "active",
+    currentLabel: "Future-self identity",
+    inactiveLabel: "Avatar creator unavailable",
+    archivedLabel: "Avatar history",
+    launchPath: "../modules/avatar/index.html"
+  },
   {
     id: "est-prep",
     title: "EST Prep",
@@ -562,6 +573,36 @@ function getStudentRecordScopeLabel(focus = "active", count = 2) {
 
 function getAuthPrototypeState() {
   return readJsonStorage("career-empire-auth-demo", {});
+}
+
+function getStudentIdentityStorageKey(authState = getAuthPrototypeState(), session = getCurrentPlayerSession() || {}) {
+  const studentLogin = authState?.studentLogin || {};
+  return String(
+    studentLogin.id ||
+    studentLogin.username ||
+    session?.studentId ||
+    session?.username ||
+    session?.playerName ||
+    "demo"
+  );
+}
+
+function getCurrentStudentAvatarProfile(authState = getAuthPrototypeState(), session = getCurrentPlayerSession() || {}) {
+  const stored = readJsonStorage(AVATAR_PROFILE_STORAGE_KEY, {});
+  const ownerKey = getStudentIdentityStorageKey(authState, session);
+  if (stored?.profiles && stored.profiles[ownerKey]) return stored.profiles[ownerKey];
+  if (session?.avatar) return session.avatar;
+  return stored?.latest || null;
+}
+
+function calculateAvatarProfileCompletion(profile) {
+  if (!profile) return 0;
+  if (Number.isFinite(Number(profile.completion))) return Math.max(0, Math.min(100, Number(profile.completion)));
+  let score = 45;
+  if (String(profile.occupation || "").trim()) score += 20;
+  if (String(profile.training || "").trim()) score += 20;
+  if (String(profile.strength || "").trim()) score += 15;
+  return Math.min(100, score);
 }
 
 function buildMegatrendsLaunchPath() {
@@ -1665,6 +1706,7 @@ function getCurrentStudentModuleStatuses() {
 
 function syncStudentPrimaryModuleActions(moduleStatuses) {
   const actionMap = {
+    "student-hub-avatar-link": "avatar-studio",
     "student-hub-est-link": "est-prep",
     "student-hub-megatrends-link": "megatrends",
     "student-hub-lifelong-link": "lifelong-learning"
@@ -5566,6 +5608,8 @@ function renderTeacherDashboardFocusStrip(moduleStatuses, activeFocus = "active"
 async function renderStudentLiveData(players, skillsData) {
   const session = getCurrentPlayerSession();
   const authState = getAuthPrototypeState();
+  const avatarProfile = getCurrentStudentAvatarProfile(authState, session);
+  const avatarCompletion = calculateAvatarProfileCompletion(avatarProfile);
   const record = getCurrentPlayerRecord(players, session);
   const history = getPlayerHistory(players, session);
   const latestPlayers = dedupeLatestPlayers(players);
@@ -5577,7 +5621,8 @@ async function renderStudentLiveData(players, skillsData) {
   const hasPlayerProgress = hasMeaningfulPlayerProgress(record);
   const hasLifelongProgress = hasMeaningfulModuleProgress(lifelongProgressRow);
   const hasESTProgress = hasMeaningfulModuleProgress(estProgressRow) || hasLocalESTProgress(session);
-  const hasAnySavedProgress = hasPlayerProgress || hasLifelongProgress || hasESTProgress;
+  const hasAvatarProgress = avatarCompletion > 0;
+  const hasAnySavedProgress = hasPlayerProgress || hasLifelongProgress || hasESTProgress || hasAvatarProgress;
   const progressRecord = hasPlayerProgress ? record : null;
   let reviewRows = await getCurrentStudentResponseReviews();
   let skillEvidenceEntries = syncSkillStarEvidenceWithReviews(getSkillStarEvidenceEntries(), reviewRows);
@@ -5611,6 +5656,7 @@ async function renderStudentLiveData(players, skillsData) {
   const employabilityPortfolioProgress = calculateStarReflectionCompletion(skillEvidenceEntries);
   const employabilityPortfolioMastery = employabilityScore;
   const moduleCompletionMap = {
+    "avatar-studio": avatarCompletion,
     "megatrends": moduleCompletion,
     "lifelong-learning": lifelongProgress,
     "est-prep": estProgress,
@@ -5660,6 +5706,7 @@ async function renderStudentLiveData(players, skillsData) {
 
   setText("student-current-mission-title", hasAnySavedProgress ? "Continue your next move" : "Start your first move");
   setText("student-hub-est-link", hasESTProgress ? "Continue EST Prep" : "Open EST Prep");
+  setText("student-hub-avatar-link", hasAvatarProgress ? "Edit Avatar" : "Create Avatar");
   setText("student-focus-text", moduleStatuses["est-prep"] === "active"
     ? "EST Prep is the current active module. Use it to train command verbs, glossary terms, and short-answer structure before the assessment."
     : progressRecord && weakestSkill
@@ -5707,6 +5754,25 @@ async function renderStudentLiveData(players, skillsData) {
   renderSkills(skillsData, "student-skill-grid", progressMap, skillEvidenceMap);
   renderStudentResponseReviewNotices(reviewRows);
   renderStudentModules([
+    {
+      id: "avatar-studio",
+      title: "Avatar Studio",
+      state: hasAvatarProgress ? `${getModuleStatusLabel(moduleStatuses["avatar-studio"])} profile saved` : getModuleStatusLabel(moduleStatuses["avatar-studio"]),
+      summary: hasAvatarProgress
+        ? `Your future-self avatar is ${avatarCompletion}% complete${avatarProfile?.occupation ? ` with ${avatarProfile.occupation} in mind` : ""}.`
+        : "Create a future-self avatar that can carry shop unlocks, interview looks, career gear, and profile evidence across Career Empire.",
+      progress: avatarCompletion,
+      mastery: avatarCompletion,
+      variant: "green",
+      spotlight: moduleStatuses["avatar-studio"] === "active",
+      logoPath: skillsData.categories.find(category => category.id === "communication")?.logoPath,
+      logoLabel: "Communication",
+      launchPath: "../modules/avatar/index.html",
+      launchLabel: hasAvatarProgress ? "Edit Avatar" : "Create Avatar",
+      available: moduleStatuses["avatar-studio"] === "active",
+      unavailableLabel: moduleStatuses["avatar-studio"] === "archived" ? "Archived" : "Not assigned",
+      tags: [getModuleStatusLabel(moduleStatuses["avatar-studio"]), "Future self", "Shop unlocks"]
+    },
     {
       id: "megatrends",
       title: "Megatrends",
