@@ -1,6 +1,7 @@
 // EST Prep est-prep bundle. Loaded as a classic browser script.
 function openStage(stageId) {
   const previousStageId = state.selectedStageId;
+  const openingFromTrack = !document.body.classList.contains("est-lab-mode");
   setLabMode(true);
   setGameplayViewportMode(false);
   setStagePulseVisible(stageId !== "content");
@@ -37,6 +38,13 @@ function openStage(stageId) {
       initialiseGlossaryBoard();
     } else if (!state.glossaryRoundCelebration) {
       startGlossaryRoundTimer();
+    }
+    if (openingFromTrack && !state.glossaryRoundCelebration) {
+      state.glossaryRoundIndex = 0;
+      state.glossaryPulse = typeof GLOSSARY_ROUND_CONFIGS !== "undefined"
+        ? GLOSSARY_ROUND_CONFIGS[0]?.cue || state.glossaryPulse
+        : state.glossaryPulse;
+      state.glossaryPulseType = "neutral";
     }
   }
   renderMap();
