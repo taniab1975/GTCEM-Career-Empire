@@ -131,7 +131,10 @@
       "../Assets/ECC Branding/ECC_priority_style_reference_sheet.jpg",
       "../Assets/Images and Animations/Student Hub/student-hub-guide.gif",
       "../Assets/Images and Animations/Emmanuel Student Characters/MacKillop/MacKillop Welcome.png",
-      "../Assets/Images and Animations/Emmanuel Student Characters/Romero/Romero Welcoming.png"
+      "../Assets/Images and Animations/Emmanuel Student Characters/Romero/Romero Welcoming.png",
+      "../Assets/Images and Animations/Avatar Studio/model-sheets/ecc-avatar-model-sheet-v1.png",
+      "../Assets/Images and Animations/Avatar Studio/model-sheets/ecc-avatar-model-sheet-v2-female.png",
+      "../docs/avatar-production-plan.md"
     ],
     "traits": [
       "soft 3D guide-character rendering",

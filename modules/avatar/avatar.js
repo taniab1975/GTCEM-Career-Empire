@@ -118,6 +118,19 @@
     strength: ""
   };
 
+  const avatarParts = window.CareerEmpireAvatarParts || {};
+  if (avatarParts.schemaVersion) {
+    skinTones.splice(0, skinTones.length, ...(avatarParts.skinTones || []));
+    faceStyles.splice(0, faceStyles.length, ...(avatarParts.faceStyles || []));
+    hairStyles.splice(0, hairStyles.length, ...(avatarParts.hairStyles || []));
+    hairColours.splice(0, hairColours.length, ...(avatarParts.hairColours || []));
+    outfits.splice(0, outfits.length, ...(avatarParts.outfits || []));
+    accessories.splice(0, accessories.length, ...(avatarParts.accessories || []));
+    characterBases.splice(0, characterBases.length, ...(avatarParts.characterBases || []));
+    unlocks.splice(0, unlocks.length, ...(avatarParts.unlocks || []));
+    Object.assign(defaults, avatarParts.defaults || {});
+  }
+
   let state = { ...defaults };
 
   function readJsonStorage(key, fallback) {
@@ -201,6 +214,18 @@
 
   function findById(items, id, fallback = items[0]) {
     return items.find(item => item.id === id) || fallback;
+  }
+
+  function getSelectableItems(items) {
+    return items.filter(item => !item.internalOnly);
+  }
+
+  function normaliseState(nextState) {
+    const characterBase = findById(characterBases, nextState.characterBase);
+    if (characterBase?.internalOnly) {
+      return { ...nextState, characterBase: defaults.characterBase };
+    }
+    return nextState;
   }
 
   function getCompletion(profile = state) {
@@ -393,8 +418,239 @@
     `;
   }
 
+  function renderLayeredBody(outfit, skin) {
+    const lower = outfit.lower || "trousers";
+    const fill = outfit.fill || "#123a5d";
+    const lowerFill = outfit.lowerFill || fill;
+    const accent = outfit.accent || "#f6b73c";
+    const shirt = outfit.shirt || "#f4f7fb";
+    const tie = outfit.tie || accent;
+    const skinFill = "url(#avatarSkin)";
+    const shoes = lower === "sports-shorts" ? "#0b162a" : "#17202a";
+    const sock = lower === "dress" || lower === "shorts" || lower === "sports-shorts" ? "#ffffff" : "#1a2436";
+
+    const arms = `
+      <g data-avatar-slot="arms">
+        <path d="M86 243 C66 265 55 306 53 354" fill="none" stroke="url(#avatarUniform)" stroke-width="28" stroke-linecap="round"/>
+        <path d="M194 243 C216 266 226 306 227 354" fill="none" stroke="url(#avatarUniform)" stroke-width="28" stroke-linecap="round"/>
+        <ellipse cx="52" cy="365" rx="13" ry="16" fill="${skinFill}"/>
+        <ellipse cx="228" cy="365" rx="13" ry="16" fill="${skinFill}"/>
+      </g>
+    `;
+
+    const crest = `
+      <g transform="translate(161 278)" data-avatar-slot="crest">
+        <path d="M0 0 L28 0 L28 32 C18 37 10 37 0 32 Z" fill="#123a5d" stroke="${accent}" stroke-width="3"/>
+        <path d="M14 5 L14 26 M5 15 L23 15" stroke="${accent}" stroke-width="3" stroke-linecap="round"/>
+      </g>
+    `;
+
+    const legs = (legTop = 370) => `
+      <g data-avatar-slot="legs">
+        <path d="M104 ${legTop} C101 410 101 447 106 486" fill="none" stroke="${skinFill}" stroke-width="24" stroke-linecap="round"/>
+        <path d="M176 ${legTop} C179 410 179 447 174 486" fill="none" stroke="${skinFill}" stroke-width="24" stroke-linecap="round"/>
+        <path d="M98 430 L122 430" stroke="${sock}" stroke-width="15" stroke-linecap="round"/>
+        <path d="M158 430 L182 430" stroke="${sock}" stroke-width="15" stroke-linecap="round"/>
+        <path d="M89 496 C101 484 120 484 135 497" fill="${shoes}"/>
+        <path d="M145 497 C160 484 179 484 191 496" fill="${shoes}"/>
+      </g>
+    `;
+
+    if (lower === "dress") {
+      return `
+        ${arms}
+        ${legs(386)}
+        <g data-avatar-slot="uniform">
+          <path d="M82 236 C111 222 168 222 198 236 L218 402 C179 427 101 427 62 402 Z" fill="url(#avatarUniform)"/>
+          <path d="M94 246 L140 307 L186 246 L172 236 L140 272 L108 236 Z" fill="${shirt}" opacity="0.94"/>
+          <path d="M101 334 C127 352 153 352 180 334" fill="none" stroke="${accent}" stroke-width="7" stroke-linecap="round" opacity="0.88"/>
+          <path d="M92 273 C116 292 165 292 189 273" fill="none" stroke="#ffffff" stroke-width="4" opacity="0.14"/>
+          ${crest}
+        </g>
+      `;
+    }
+
+    if (lower === "plaid-skirt") {
+      return `
+        ${arms}
+        ${legs(390)}
+        <g data-avatar-slot="uniform">
+          <path d="M80 240 C110 223 170 223 200 240 L190 335 C158 356 122 356 90 335 Z" fill="url(#avatarUniform)"/>
+          <path d="M92 246 L140 309 L188 246 L174 237 L140 273 L106 237 Z" fill="${shirt}"/>
+          <path d="M124 250 L140 316 L156 250 Z" fill="${tie}"/>
+          <path d="M81 338 L199 338 L215 399 C176 420 104 420 65 399 Z" fill="url(#avatarPlaid)"/>
+          <path d="M78 338 C108 354 172 354 202 338" fill="none" stroke="${accent}" stroke-width="7" stroke-linecap="round"/>
+          ${crest}
+        </g>
+      `;
+    }
+
+    if (lower === "shorts" || lower === "sports-shorts") {
+      return `
+        ${arms}
+        ${legs(378)}
+        <g data-avatar-slot="uniform">
+          <path d="M82 239 C111 224 169 224 198 239 L188 338 C156 356 124 356 92 338 Z" fill="url(#avatarUniform)"/>
+          <path d="M95 246 L140 306 L185 246" fill="${shirt}" opacity="0.96"/>
+          <path d="M86 338 L132 338 L124 390 L82 390 Z" fill="${lowerFill}"/>
+          <path d="M148 338 L194 338 L198 390 L156 390 Z" fill="${lowerFill}"/>
+          <path d="M140 340 L140 386" stroke="#071629" stroke-width="4" opacity="0.24"/>
+          <path d="M105 266 L175 266" stroke="${accent}" stroke-width="7" stroke-linecap="round"/>
+          ${crest}
+        </g>
+      `;
+    }
+
+    return `
+      ${arms}
+      <g data-avatar-slot="legs">
+        <path d="M92 330 L134 330 L129 488 L98 488 Z" fill="${lowerFill}"/>
+        <path d="M146 330 L188 330 L182 488 L151 488 Z" fill="${lowerFill}"/>
+        <path d="M140 334 L140 488" stroke="#071629" stroke-width="5" opacity="0.28"/>
+        <path d="M89 497 C103 484 123 484 137 497" fill="${shoes}"/>
+        <path d="M143 497 C157 484 177 484 191 497" fill="${shoes}"/>
+      </g>
+      <g data-avatar-slot="uniform">
+        <path d="M78 240 C110 222 170 222 202 240 L190 342 C158 365 122 365 90 342 Z" fill="url(#avatarUniform)"/>
+        <path d="M91 246 L140 322 L189 246 L174 238 L140 276 L106 238 Z" fill="${shirt}"/>
+        <path d="M124 250 L140 326 L156 250 Z" fill="${tie}"/>
+        <path d="M90 341 C118 358 163 358 190 341" fill="none" stroke="${accent}" stroke-width="7" stroke-linecap="round" opacity="0.86"/>
+        <circle cx="140" cy="296" r="4" fill="${accent}"/>
+        <circle cx="140" cy="318" r="4" fill="${accent}"/>
+        ${crest}
+      </g>
+    `;
+  }
+
+  function renderLayeredAccessory(accessory, outfit) {
+    if (accessory === "backpack") {
+      return `
+        <g data-avatar-slot="accessory">
+          <path d="M58 256 C38 284 36 349 60 391 L83 382 C72 334 76 292 98 254 Z" fill="#17202a" opacity="0.82"/>
+          <path d="M222 256 C242 284 244 349 220 391 L197 382 C208 334 204 292 182 254 Z" fill="#17202a" opacity="0.82"/>
+        </g>
+      `;
+    }
+    if (accessory === "badge") {
+      return `<g data-avatar-slot="accessory"><rect x="165" y="292" width="42" height="22" rx="6" fill="#ffffff" opacity="0.95"/><path d="M174 303 L198 303" stroke="${outfit.accent}" stroke-width="3" stroke-linecap="round"/></g>`;
+    }
+    if (accessory === "scarf") {
+      return `<g data-avatar-slot="accessory"><path d="M103 235 C124 252 156 252 177 235 L189 287 C160 307 120 307 91 287 Z" fill="#e85d4f"/><path d="M140 247 L140 306" stroke="#ffffff" stroke-width="7" opacity="0.28"/></g>`;
+    }
+    return "";
+  }
+
+  function renderLayeredAvatar() {
+    const skin = findById(skinTones, state.skinTone);
+    const face = findById(faceStyles, state.faceStyle);
+    const hairColour = findById(hairColours, state.hairColour).color;
+    const outfit = findById(outfits, state.outfit);
+    const freckles = face.id === "freckled"
+      ? `<g fill="${skin.shadow}" opacity="0.58"><circle cx="107" cy="175" r="2.5"/><circle cx="119" cy="181" r="2"/><circle cx="148" cy="175" r="2.5"/><circle cx="136" cy="181" r="2"/></g>`
+      : "";
+    const smilePath = face.id === "calm" ? "M111 204 C121 211 136 211 146 204" : "M108 201 C119 217 139 217 150 201";
+    const eyeScale = face.id === "bright" ? 1.08 : face.id === "calm" ? 0.92 : 1;
+    const eyeYOffset = face.id === "calm" ? 2 : 0;
+    const browYOffset = face.id === "bright" ? -4 : 0;
+    const faceAccessory = ["glasses", "headphones", "earrings"].includes(state.accessory)
+      ? renderAccessory(state.accessory, outfit)
+      : "";
+
+    return `
+      <svg class="avatar-layered-rig" viewBox="0 0 280 520" role="img" aria-label="Full-body modular avatar preview">
+        <defs>
+          <radialGradient id="avatarSkin" cx="38%" cy="28%" r="76%">
+            <stop offset="0" stop-color="#fff1dc"/>
+            <stop offset="0.2" stop-color="${skin.color}"/>
+            <stop offset="1" stop-color="${skin.shadow}"/>
+          </radialGradient>
+          <linearGradient id="avatarHair" x1="0.18" x2="0.88" y1="0" y2="1">
+            <stop offset="0" stop-color="#ffffff" stop-opacity="0.24"/>
+            <stop offset="0.18" stop-color="${hairColour}"/>
+            <stop offset="1" stop-color="#0f0c0b"/>
+          </linearGradient>
+          <linearGradient id="avatarUniform" x1="0.18" x2="0.86" y1="0" y2="1">
+            <stop offset="0" stop-color="#4d94c3"/>
+            <stop offset="0.42" stop-color="${outfit.fill}"/>
+            <stop offset="1" stop-color="#071629"/>
+          </linearGradient>
+          <pattern id="avatarPlaid" width="22" height="22" patternUnits="userSpaceOnUse">
+            <rect width="22" height="22" fill="${outfit.lowerFill || "#1c426b"}"/>
+            <path d="M0 6 H22 M0 16 H22 M7 0 V22 M16 0 V22" stroke="#e8f6ff" stroke-width="2" opacity="0.72"/>
+            <path d="M0 11 H22 M11 0 V22" stroke="${outfit.accent}" stroke-width="2" opacity="0.78"/>
+          </pattern>
+          <radialGradient id="avatarEye" cx="35%" cy="28%" r="70%">
+            <stop offset="0" stop-color="#ffffff"/>
+            <stop offset="0.42" stop-color="#73d9ff"/>
+            <stop offset="1" stop-color="#123a5d"/>
+          </radialGradient>
+          <filter id="avatarSoftShadow" x="-20%" y="-20%" width="140%" height="150%">
+            <feDropShadow dx="0" dy="12" stdDeviation="9" flood-color="#071629" flood-opacity="0.28"/>
+          </filter>
+        </defs>
+        <g filter="url(#avatarSoftShadow)">
+          <ellipse cx="140" cy="500" rx="88" ry="16" fill="#17202a" opacity="0.16"/>
+          ${renderLayeredAccessory(state.accessory, outfit)}
+          ${renderLayeredBody(outfit, skin)}
+          <g data-avatar-slot="head" transform="translate(12 12)">
+            <path d="M89 238 C101 260 116 272 128 272 C141 272 155 260 167 238 C151 229 104 229 89 238 Z" fill="url(#avatarSkin)"/>
+            ${renderHair(state.hairStyle, hairColour)}
+            <path d="${getFacePath(face.id)}" fill="url(#avatarSkin)"/>
+            ${renderHairFront(state.hairStyle)}
+            <path d="M54 166 C51 151 52 139 58 132" fill="none" stroke="${skin.shadow}" stroke-width="13" stroke-linecap="round" opacity="0.36"/>
+            <path d="M202 166 C205 151 204 139 198 132" fill="none" stroke="${skin.shadow}" stroke-width="13" stroke-linecap="round" opacity="0.36"/>
+            <path d="M88 129 C100 120 113 120 122 128" fill="none" stroke="url(#avatarHair)" stroke-width="6" stroke-linecap="round" transform="translate(0 ${browYOffset})"/>
+            <path d="M134 128 C146 120 160 120 170 130" fill="none" stroke="url(#avatarHair)" stroke-width="6" stroke-linecap="round" transform="translate(0 ${browYOffset})"/>
+            <g transform="translate(0 ${eyeYOffset}) scale(${eyeScale} 1)" transform-origin="128 154">
+              <ellipse cx="103" cy="156" rx="18" ry="21" fill="#ffffff"/>
+              <ellipse cx="153" cy="156" rx="18" ry="21" fill="#ffffff"/>
+              <circle cx="106" cy="157" r="11" fill="url(#avatarEye)"/>
+              <circle cx="150" cy="157" r="11" fill="url(#avatarEye)"/>
+              <circle cx="106" cy="157" r="5.5" fill="#071629"/>
+              <circle cx="150" cy="157" r="5.5" fill="#071629"/>
+              <circle cx="101" cy="151" r="4" fill="#ffffff"/>
+              <circle cx="145" cy="151" r="4" fill="#ffffff"/>
+            </g>
+            <path d="M129 170 C121 184 121 192 134 194" fill="none" stroke="${skin.shadow}" stroke-width="5" stroke-linecap="round" opacity="0.68"/>
+            <ellipse cx="92" cy="181" rx="16" ry="8" fill="#ffffff" opacity="0.13"/>
+            <ellipse cx="166" cy="181" rx="16" ry="8" fill="#ffffff" opacity="0.13"/>
+            ${freckles}
+            <path d="${smilePath}" fill="none" stroke="#3b1d17" stroke-width="5" stroke-linecap="round"/>
+            <path d="M108 202 C119 214 139 214 150 202" fill="none" stroke="#ffffff" stroke-width="2" stroke-linecap="round" opacity="${face.id === "calm" ? "0" : "0.78"}"/>
+            ${faceAccessory}
+          </g>
+        </g>
+      </svg>
+    `;
+  }
+
+  function buildAvatarSpec(profile = state) {
+    const characterBase = findById(characterBases, profile.characterBase);
+    const outfit = findById(outfits, profile.outfit);
+    return {
+      schemaVersion: avatarParts.schemaVersion || 1,
+      rigId: avatarParts.rig?.id || "avatar-svg-prototype-v1",
+      renderMode: characterBase?.partMode === "layered" ? "layered" : "reference-pose",
+      slots: {
+        body: profile.characterBase,
+        skinTone: profile.skinTone,
+        faceStyle: profile.faceStyle,
+        hairStyle: profile.hairStyle,
+        hairColour: profile.hairColour,
+        uniform: profile.outfit,
+        accessory: profile.accessory,
+        animationState: profile.animationState || "idle"
+      },
+      sources: {
+        uniform: outfit?.source || outfit?.family || "prototype",
+        base: characterBase?.imagePath ? "ecc-character-reference" : "layered-svg-prototype"
+      }
+    };
+  }
+
   function renderAvatar() {
     const characterBase = findById(characterBases, state.characterBase);
+    if (characterBase?.partMode === "layered") return renderLayeredAvatar();
     if (!characterBase?.imagePath) return renderPrototypeAvatar();
 
     return `
@@ -452,14 +708,17 @@
   function renderChoiceButtons(containerId, items, key, group) {
     const container = document.getElementById(containerId);
     if (!container) return;
-    container.innerHTML = items.map(item => `
+    container.innerHTML = getSelectableItems(items).map(item => `
       <button class="avatar-option ${state[key] === item.id ? "is-selected" : ""}" type="button" data-option-group="${group}" data-avatar-key="${key}" data-avatar-value="${item.id}">
         <span class="option-token">
           ${item.imagePath
             ? `<img class="option-token-image" src="${escapeHtml(item.imagePath)}" alt="">`
             : escapeHtml(item.token || item.label.slice(0, 1))}
         </span>
-        <span>${escapeHtml(item.label)}</span>
+        <span>
+          ${escapeHtml(item.label)}
+          ${item.note ? `<small>${escapeHtml(item.note)}</small>` : ""}
+        </span>
       </button>
     `).join("");
   }
@@ -526,6 +785,8 @@
     };
     const avatar = {
       ...state,
+      schemaVersion: avatarParts.schemaVersion || 1,
+      avatarSpec: buildAvatarSpec(),
       studentName: getStudentName(),
       completion: getCompletion(),
       savedAt: new Date().toISOString(),
@@ -537,7 +798,8 @@
   }
 
   function randomFrom(items) {
-    return items[Math.floor(Math.random() * items.length)].id;
+    const selectable = getSelectableItems(items);
+    return selectable[Math.floor(Math.random() * selectable.length)].id;
   }
 
   function randomiseAvatar() {
@@ -598,7 +860,7 @@
 
   function init() {
     const saved = readSavedAvatar();
-    if (saved) state = { ...defaults, ...saved };
+    if (saved) state = normaliseState({ ...defaults, ...saved });
     syncInputs();
     setupEvents();
     renderAll();

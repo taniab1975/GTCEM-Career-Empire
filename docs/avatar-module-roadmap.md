@@ -26,6 +26,10 @@ The current code-native SVG avatar should be treated as a wireframe only. It is 
 
 The production direction is ECC-quality character bases first, then modular parts only after the asset pipeline can match that look. The first studio upgrade should use the existing MacKillop and Romero pose PNGs as selectable bases so the visible module feels consistent with the rest of the game while the modular wardrobe is planned properly. Wider scene-style character images should not be used as avatar bases until they have been cropped or exported as character-first assets.
 
+The Emmanuel College uniform lookbook is now part of the avatar reference direction. Use it to model modular school-uniform slots such as summer dress, summer shirt and shorts, winter blazer with trousers, winter jumper with skirt, and sports kit. Treat the lookbook as wardrobe and proportion reference, not as a flattened character output: the long-term avatar system still needs swappable body, hair, expression, uniform, accessory, and animation layers.
+
+The first production plan for the boy and girl avatar model sheets is captured in `docs/avatar-production-plan.md`. It defines the first two base avatars, shared canvas, anchor points, layer slots, expression swaps, uniform swaps, and Remotion prototype target.
+
 Use generated transparent PNG/WebP asset packs later for polish once the slots are stable and style QA can reject anything that does not match the ECC guide quality:
 
 - hair packs: short, waves, curls, long, bun, wraps, protective styles, colour variants

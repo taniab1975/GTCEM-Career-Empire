@@ -30,4 +30,6 @@ test("Avatar Studio saves a future-self profile locally", async ({ page }) => {
   const saved = await page.evaluate(() => JSON.parse(localStorage.getItem("career-empire-avatar-v1")));
   expect(saved.latest.occupation).toBe("Graphic designer");
   expect(saved.latest.completion).toBe(100);
+  expect(saved.latest.avatarSpec.slots.uniform).toBeTruthy();
+  expect(saved.latest.avatarSpec.slots.hairStyle).toBeTruthy();
 });

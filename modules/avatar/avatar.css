@@ -197,7 +197,7 @@ body.avatar-page::before {
   position: relative;
   display: grid;
   place-items: center;
-  min-height: 390px;
+  min-height: 470px;
   padding: 18px 20px 34px;
   background:
     repeating-linear-gradient(90deg, rgba(255, 255, 255, 0.18) 0 1px, transparent 1px 28px),
@@ -222,7 +222,7 @@ body.avatar-page::before {
 
 .avatar-render {
   width: min(360px, 78vw);
-  aspect-ratio: 1;
+  height: min(430px, 64vh);
   display: grid;
   place-items: center;
   z-index: 1;
@@ -241,6 +241,11 @@ body.avatar-page::before {
   object-position: center bottom;
   animation: avatarCharacterIdle 5.5s ease-in-out infinite;
   transform: translateY(-4px);
+}
+
+.avatar-layered-rig {
+  transform-origin: center bottom;
+  animation: avatarLayeredIdle 4.8s ease-in-out infinite;
 }
 
 .avatar-nameplate {
@@ -369,6 +374,19 @@ body.avatar-page::before {
   font-weight: 700;
   text-align: left;
   cursor: pointer;
+}
+
+.avatar-option > span:last-child {
+  display: grid;
+  gap: 2px;
+  min-width: 0;
+}
+
+.avatar-option small {
+  color: var(--avatar-muted);
+  font-size: 0.75rem;
+  font-weight: 800;
+  line-height: 1.1;
 }
 
 .avatar-option:hover,
@@ -561,8 +579,20 @@ body.avatar-page::before {
   }
 }
 
+@keyframes avatarLayeredIdle {
+  0%,
+  100% {
+    transform: translateY(-2px) rotate(-0.4deg);
+  }
+
+  45% {
+    transform: translateY(-10px) rotate(0.5deg);
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
-  .avatar-character-art {
+  .avatar-character-art,
+  .avatar-layered-rig {
     animation: none;
   }
 }
@@ -626,7 +656,11 @@ body.avatar-page::before {
   }
 
   .avatar-stage {
-    min-height: 330px;
+    min-height: 390px;
+  }
+
+  .avatar-render {
+    height: 350px;
   }
 
   .avatar-nameplate {
