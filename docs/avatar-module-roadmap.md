@@ -22,9 +22,11 @@ Visual traits to preserve:
 - dark ECC "future studio" framing around the preview, with lighter picker panels only where students need to compare options
 - friendly guide poses such as welcome, thinking, pointing, encouraging, and celebrating
 
-Start with code-native layered SVG assets. They are fast to build, remixable, licence-safe, and easy to recolour without generating hundreds of images. The MVP SVG should imitate the ECC guide proportions and colour language as a placeholder until generated modular art is stable.
+The current code-native SVG avatar should be treated as a wireframe only. It is useful for testing storage, UI controls, and profile flow, but it is not production art and should not be shown as the quality target beside the ECC characters.
 
-Use generated transparent PNG/WebP asset packs later for polish once the slots are stable:
+The production direction is ECC-quality character bases first, then modular parts only after the asset pipeline can match that look. The first studio upgrade should use the existing MacKillop and Romero pose PNGs as selectable bases so the visible module feels consistent with the rest of the game while the modular wardrobe is planned properly. Wider scene-style character images should not be used as avatar bases until they have been cropped or exported as character-first assets.
+
+Use generated transparent PNG/WebP asset packs later for polish once the slots are stable and style QA can reject anything that does not match the ECC guide quality:
 
 - hair packs: short, waves, curls, long, bun, wraps, protective styles, colour variants
 - face packs: face shapes, eyes, expressions, freckles, glasses
@@ -32,7 +34,7 @@ Use generated transparent PNG/WebP asset packs later for polish once the slots a
 - accessory packs: earrings, headphones, lanyards, name badges, watches, bags
 - shop packs: jewellery, shoes, phones, laptops, cars, rooms, tools, career gear
 
-Generation can happen in Codex using image generation, then final project assets should be copied into `Assets/Images and Animations/Avatar Studio/` with clear slot names. For modular avatars, every generated piece should use the same transparent canvas size, camera angle, lighting, and anchor points.
+Generation can happen in Codex using image generation, but final project assets should only be copied into `Assets/Images and Animations/Avatar Studio/` after visual QA against the ECC references. For modular avatars, every generated piece should use the same transparent canvas size, camera angle, lighting, and anchor points. If a generated part looks flatter, cheaper, or stylistically detached from MacKillop/Romero/Francis/Frassati/Lisieux, discard it rather than lowering the module standard.
 
 Suggested generation prompt base:
 
@@ -45,7 +47,8 @@ Create a friendly soft-3D animated student guide character asset for Career Empi
 - Create `modules/avatar/` as a playable avatar creator.
 - Save selections locally under `career-empire-avatar-v1`.
 - Store the latest avatar on the shared `career-empire-session` object.
-- Include face, skin tone, hair, hair colour, outfit, accessory, and a future-self card.
+- Render existing ECC-quality Emmanuel character bases in the preview and dashboard card.
+- Save face, skin tone, hair, hair colour, outfit, accessory, selected character base, and a future-self card.
 - Add Avatar Studio to the Student Hub and dashboard module controls.
 - Add a smoke test for page load.
 
@@ -55,6 +58,14 @@ Create a friendly soft-3D animated student guide character asset for Career Empi
 - Create teacher-visible evidence for occupation interest, training idea, and employability strength.
 - Show avatar preview on the student dashboard.
 - Add teacher dashboard drill-down fields for future-self profile and avatar completion.
+
+## Animation Upgrade Path
+
+- Reuse existing ECC pose packs for welcome, thinking, pointing, encouraging, and celebrating states.
+- Add subtle idle motion to the studio preview: breathing, hover, glow pulse, and stage-light shimmer.
+- Add module response animations: celebrate on save, think while choosing future pathway, point to career-plan prompts.
+- Move to rigged 2D or sprite-sheet character packs only when the artwork matches the ECC character references.
+- Keep animations purposeful: identity, feedback, achievement, and evidence moments should animate more than decorative idle surfaces.
 
 ## Stage 3: Shop Integration
 

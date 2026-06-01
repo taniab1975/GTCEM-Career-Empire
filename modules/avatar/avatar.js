@@ -57,6 +57,45 @@
     { id: "scarf", label: "Scarf", token: "S" }
   ];
 
+  const characterBases = [
+    {
+      id: "mackillop",
+      label: "MacKillop welcome",
+      token: "M",
+      imagePath: "../../Assets/Images and Animations/Emmanuel Student Characters/MacKillop/MacKillop Welcome.png"
+    },
+    {
+      id: "mackillop-thinking",
+      label: "MacKillop thinking",
+      token: "T",
+      imagePath: "../../Assets/Images and Animations/Emmanuel Student Characters/MacKillop/MacKillop Thinking.png"
+    },
+    {
+      id: "mackillop-pointing",
+      label: "MacKillop pointing",
+      token: "P",
+      imagePath: "../../Assets/Images and Animations/Emmanuel Student Characters/MacKillop/MacKillop Pointing.png"
+    },
+    {
+      id: "romero",
+      label: "Romero welcome",
+      token: "R",
+      imagePath: "../../Assets/Images and Animations/Emmanuel Student Characters/Romero/Romero Welcoming.png"
+    },
+    {
+      id: "romero-thinking",
+      label: "Romero thinking",
+      token: "T",
+      imagePath: "../../Assets/Images and Animations/Emmanuel Student Characters/Romero/Romero Thinking.png"
+    },
+    {
+      id: "romero-celebrating",
+      label: "Romero celebrating",
+      token: "C",
+      imagePath: "../../Assets/Images and Animations/Emmanuel Student Characters/Romero/Romero Celebrating.png"
+    }
+  ];
+
   const unlocks = [
     { name: "Interview outfit", state: "Starter", color: "#17202a", token: "IO" },
     { name: "Work boots", state: "Shop stage 2", color: "#935a3c", token: "WB" },
@@ -67,6 +106,7 @@
   ];
 
   const defaults = {
+    characterBase: "mackillop",
     skinTone: "sand",
     faceStyle: "soft",
     hairStyle: "waves",
@@ -271,7 +311,7 @@
     return "";
   }
 
-  function renderAvatar() {
+  function renderPrototypeAvatar() {
     const skin = findById(skinTones, state.skinTone);
     const face = findById(faceStyles, state.faceStyle);
     const hairColour = findById(hairColours, state.hairColour).color;
@@ -353,6 +393,19 @@
     `;
   }
 
+  function renderAvatar() {
+    const characterBase = findById(characterBases, state.characterBase);
+    if (!characterBase?.imagePath) return renderPrototypeAvatar();
+
+    return `
+      <img
+        class="avatar-character-art"
+        src="${escapeHtml(characterBase.imagePath)}"
+        alt="${escapeHtml(characterBase.label)} avatar preview"
+      >
+    `;
+  }
+
   function setText(id, value) {
     const element = document.getElementById(id);
     if (element) element.textContent = value;
@@ -401,7 +454,11 @@
     if (!container) return;
     container.innerHTML = items.map(item => `
       <button class="avatar-option ${state[key] === item.id ? "is-selected" : ""}" type="button" data-option-group="${group}" data-avatar-key="${key}" data-avatar-value="${item.id}">
-        <span class="option-token">${escapeHtml(item.token || item.label.slice(0, 1))}</span>
+        <span class="option-token">
+          ${item.imagePath
+            ? `<img class="option-token-image" src="${escapeHtml(item.imagePath)}" alt="">`
+            : escapeHtml(item.token || item.label.slice(0, 1))}
+        </span>
         <span>${escapeHtml(item.label)}</span>
       </button>
     `).join("");
@@ -419,6 +476,7 @@
   }
 
   function renderControls() {
+    renderChoiceButtons("character-base-options", characterBases, "characterBase", "character");
     renderSwatches("skin-tone-options", skinTones, "skinTone");
     renderChoiceButtons("face-options", faceStyles, "faceStyle", "face");
     renderChoiceButtons("hair-options", hairStyles, "hairStyle", "hair");
@@ -486,6 +544,7 @@
     state = {
       ...state,
       skinTone: randomFrom(skinTones),
+      characterBase: randomFrom(characterBases),
       faceStyle: randomFrom(faceStyles),
       hairStyle: randomFrom(hairStyles),
       hairColour: randomFrom(hairColours),

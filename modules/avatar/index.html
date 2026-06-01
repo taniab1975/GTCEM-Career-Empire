@@ -9,7 +9,7 @@
   <link rel="icon" href="data:,">
   <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="../../dashboards/dashboard.css">
-  <link rel="stylesheet" href="./avatar.css?v=avatar-studio-mvp-v2">
+  <link rel="stylesheet" href="./avatar.css?v=avatar-studio-ecc-bases-v1">
 </head>
 <body class="avatar-page">
   <main class="avatar-shell">
@@ -75,6 +75,10 @@
         </div>
 
         <div class="avatar-tab-panel is-active" id="avatar-panel-looks" role="tabpanel">
+          <div class="avatar-control-block">
+            <h3>ECC character style</h3>
+            <div id="character-base-options" class="option-grid character-base-grid"></div>
+          </div>
           <div class="avatar-control-block">
             <h3>Skin tone</h3>
             <div id="skin-tone-options" class="swatch-grid"></div>
@@ -144,7 +148,7 @@
 
   <script src="../../config/supabase-config.js"></script>
   <script src="../../src/services/supabase-browser.js"></script>
-  <script src="./avatar.js?v=avatar-studio-mvp-v1"></script>
+  <script src="./avatar.js?v=avatar-studio-ecc-bases-v1"></script>
   <script src="../../src/services/session-banner.js?v=20260507-session-banner"></script>
   <script src="../../src/services/feedback-widget.js?v=20260513-free-text-privacy"></script>
 </body>

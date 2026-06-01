@@ -44,7 +44,7 @@
     {
       "step": 1,
       "label": "Create identity",
-      "description": "The student selects face, colour, hair, clothing, and accessories."
+      "description": "The student selects an ECC-quality character base, profile style choices, clothing, and accessories."
     },
     {
       "step": 2,
@@ -126,6 +126,7 @@
   ],
   "visualLanguage": {
     "styleReference": "ECC animated student guide characters",
+    "artDirectionDecision": "The generated SVG avatar is a wireframe only. Production avatar art should use ECC-quality character bases and generated modular parts only when they match the existing Emmanuel character standard.",
     "referenceAssets": [
       "../Assets/ECC Branding/ECC_priority_style_reference_sheet.jpg",
       "../Assets/Images and Animations/Student Hub/student-hub-guide.gif",

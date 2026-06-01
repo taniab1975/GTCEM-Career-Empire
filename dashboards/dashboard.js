@@ -35,6 +35,32 @@ const AVATAR_BADGE_HAIR_COLOURS = {
   silver: "#c8ced4",
   teal: "#0f8f8c"
 };
+const AVATAR_BADGE_CHARACTER_BASES = {
+  mackillop: {
+    label: "MacKillop welcome",
+    imagePath: "../Assets/Images and Animations/Emmanuel Student Characters/MacKillop/MacKillop Welcome.png"
+  },
+  "mackillop-thinking": {
+    label: "MacKillop thinking",
+    imagePath: "../Assets/Images and Animations/Emmanuel Student Characters/MacKillop/MacKillop Thinking.png"
+  },
+  "mackillop-pointing": {
+    label: "MacKillop pointing",
+    imagePath: "../Assets/Images and Animations/Emmanuel Student Characters/MacKillop/MacKillop Pointing.png"
+  },
+  romero: {
+    label: "Romero welcome",
+    imagePath: "../Assets/Images and Animations/Emmanuel Student Characters/Romero/Romero Welcoming.png"
+  },
+  "romero-thinking": {
+    label: "Romero thinking",
+    imagePath: "../Assets/Images and Animations/Emmanuel Student Characters/Romero/Romero Thinking.png"
+  },
+  "romero-celebrating": {
+    label: "Romero celebrating",
+    imagePath: "../Assets/Images and Animations/Emmanuel Student Characters/Romero/Romero Celebrating.png"
+  }
+};
 const TEACHER_REVIEW_FILTER_OPTIONS = [
   { id: "new", label: "New" },
   { id: "actioned", label: "Actioned" },
@@ -1678,6 +1704,15 @@ function getModuleImageStyle(imagePath = "") {
 }
 
 function renderAvatarModuleLogo(profile = {}) {
+  const characterBase = AVATAR_BADGE_CHARACTER_BASES[profile?.characterBase || "mackillop"] || AVATAR_BADGE_CHARACTER_BASES.mackillop;
+  if (characterBase?.imagePath) {
+    return `
+      <span class="module-avatar-logo" role="img" aria-label="${escapeHtml(characterBase.label)} avatar preview">
+        <img src="${escapeHtml(characterBase.imagePath)}" alt="">
+      </span>
+    `;
+  }
+
   const skin = AVATAR_BADGE_SKIN_COLOURS[profile?.skinTone] || AVATAR_BADGE_SKIN_COLOURS.sand;
   const hair = AVATAR_BADGE_HAIR_COLOURS[profile?.hairColour] || AVATAR_BADGE_HAIR_COLOURS.brown;
   return `
