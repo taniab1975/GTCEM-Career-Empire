@@ -1704,7 +1704,7 @@ function getModuleImageStyle(imagePath = "") {
 }
 
 function renderAvatarModuleLogo(profile = {}) {
-  const characterBase = AVATAR_BADGE_CHARACTER_BASES[profile?.characterBase || "mackillop"] || AVATAR_BADGE_CHARACTER_BASES.mackillop;
+  const characterBase = AVATAR_BADGE_CHARACTER_BASES[profile?.characterBase];
   if (characterBase?.imagePath) {
     return `
       <span class="module-avatar-logo" role="img" aria-label="${escapeHtml(characterBase.label)} avatar preview">

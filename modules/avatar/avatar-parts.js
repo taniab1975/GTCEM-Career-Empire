@@ -264,10 +264,29 @@
     ],
     characterBases: [
       {
+        id: "custom-trousers",
+        label: "Custom trousers",
+        token: "CT",
+        partMode: "layered",
+        defaultOutfit: "ecc-winter-trousers-blazer",
+        defaultHairStyle: "waves",
+        note: "Live controls"
+      },
+      {
+        id: "custom-skirt",
+        label: "Custom skirt",
+        token: "CS",
+        partMode: "layered",
+        defaultOutfit: "ecc-winter-skirt-jumper",
+        defaultHairStyle: "long",
+        note: "Live controls"
+      },
+      {
         id: "mackillop",
         label: "MacKillop welcome",
         token: "M",
         imagePath: "../../Assets/Images and Animations/Emmanuel Student Characters/MacKillop/MacKillop Welcome.png",
+        referenceOnly: true,
         note: "ECC reference"
       },
       {
@@ -275,6 +294,7 @@
         label: "MacKillop thinking",
         token: "T",
         imagePath: "../../Assets/Images and Animations/Emmanuel Student Characters/MacKillop/MacKillop Thinking.png",
+        referenceOnly: true,
         note: "ECC reference"
       },
       {
@@ -282,6 +302,7 @@
         label: "MacKillop pointing",
         token: "P",
         imagePath: "../../Assets/Images and Animations/Emmanuel Student Characters/MacKillop/MacKillop Pointing.png",
+        referenceOnly: true,
         note: "ECC reference"
       },
       {
@@ -289,6 +310,7 @@
         label: "Romero welcome",
         token: "R",
         imagePath: "../../Assets/Images and Animations/Emmanuel Student Characters/Romero/Romero Welcoming.png",
+        referenceOnly: true,
         note: "ECC reference"
       },
       {
@@ -296,6 +318,7 @@
         label: "Romero thinking",
         token: "T",
         imagePath: "../../Assets/Images and Animations/Emmanuel Student Characters/Romero/Romero Thinking.png",
+        referenceOnly: true,
         note: "ECC reference"
       },
       {
@@ -303,6 +326,7 @@
         label: "Romero celebrating",
         token: "C",
         imagePath: "../../Assets/Images and Animations/Emmanuel Student Characters/Romero/Romero Celebrating.png",
+        referenceOnly: true,
         note: "ECC reference"
       },
       {
@@ -311,6 +335,7 @@
         token: "MR",
         partMode: "layered",
         internalOnly: true,
+        migratesTo: "custom-trousers",
         note: "Schema test only"
       }
     ],
@@ -323,7 +348,7 @@
       { name: "Transport fund", state: "Life goal", color: "#e85d4f", token: "TF" }
     ],
     defaults: {
-      characterBase: "mackillop",
+      characterBase: "custom-trousers",
       skinTone: "sand",
       faceStyle: "soft",
       hairStyle: "waves",

@@ -217,13 +217,27 @@
   }
 
   function getSelectableItems(items) {
-    return items.filter(item => !item.internalOnly);
+    return items.filter(item => !item.internalOnly && !item.referenceOnly);
+  }
+
+  function getBaseDefaultState(baseId) {
+    const base = findById(characterBases, baseId, null);
+    if (!base) return {};
+    return {
+      ...(base.defaultHairStyle ? { hairStyle: base.defaultHairStyle } : {}),
+      ...(base.defaultOutfit ? { outfit: base.defaultOutfit } : {})
+    };
   }
 
   function normaliseState(nextState) {
     const characterBase = findById(characterBases, nextState.characterBase);
-    if (characterBase?.internalOnly) {
-      return { ...nextState, characterBase: defaults.characterBase };
+    if (!characterBase || characterBase.internalOnly || characterBase.referenceOnly) {
+      const fallbackBase = characterBase?.migratesTo || defaults.characterBase || getSelectableItems(characterBases)[0]?.id;
+      return {
+        ...nextState,
+        characterBase: fallbackBase,
+        ...getBaseDefaultState(fallbackBase)
+      };
     }
     return nextState;
   }
@@ -832,10 +846,14 @@
     document.addEventListener("click", event => {
       const button = event.target.closest("[data-avatar-key][data-avatar-value]");
       if (!button) return;
-      state = {
+      const nextState = {
         ...state,
         [button.dataset.avatarKey]: button.dataset.avatarValue
       };
+      if (button.dataset.avatarKey === "characterBase") {
+        Object.assign(nextState, getBaseDefaultState(button.dataset.avatarValue));
+      }
+      state = normaliseState(nextState);
       renderAll();
     });
 

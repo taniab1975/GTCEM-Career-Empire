@@ -33,3 +33,26 @@ test("Avatar Studio saves a future-self profile locally", async ({ page }) => {
   expect(saved.latest.avatarSpec.slots.uniform).toBeTruthy();
   expect(saved.latest.avatarSpec.slots.hairStyle).toBeTruthy();
 });
+
+test("Avatar Studio style controls update the visible avatar", async ({ page }) => {
+  await page.goto("/modules/avatar/", { waitUntil: "domcontentloaded" });
+
+  const getPreviewHtml = () => page.locator("#avatar-render").evaluate(element => element.innerHTML);
+  await expect(page.locator("#avatar-render svg")).toBeVisible();
+
+  const initialPreview = await getPreviewHtml();
+  await page.getByRole("button", { name: "Deep" }).click();
+  const deepSkinPreview = await getPreviewHtml();
+  expect(deepSkinPreview).not.toBe(initialPreview);
+  expect(deepSkinPreview).toContain("#38251f");
+
+  await page.getByRole("tab", { name: "Hair" }).click();
+  await page.getByRole("button", { name: "Blonde" }).click();
+  const blondeHairPreview = await getPreviewHtml();
+  expect(blondeHairPreview).toContain("#d9b85d");
+
+  await page.getByRole("tab", { name: "Outfit" }).click();
+  await page.getByRole("button", { name: "Hi-vis gear" }).click();
+  const hiVisPreview = await getPreviewHtml();
+  expect(hiVisPreview).toContain("#f6b73c");
+});
