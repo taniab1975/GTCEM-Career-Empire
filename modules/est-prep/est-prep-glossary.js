@@ -38,7 +38,7 @@ const GLOSSARY_GUIDE_ASSETS = {
   "signal-slice": "../../Assets/EST Preparation/guide-character/guide-thinking-top.png",
   "keyword-cloze": "../../Assets/EST Preparation/guide-character/guide-thinking-top.png",
   "plain-match": "../../Assets/EST Preparation/guide-character/guide-thinking-bottom.png",
-  recall: "../../Assets/Images and Animations/Emmanuel Student Characters/MacKillop/MacKillop encouraging.png",
+  recall: "../../Assets/Images and Animations/Emmanuel Student Characters/MacKillop/MacKillop Encouraging.png",
   study: "../../Assets/EST Preparation/guide-character/guide-thinking-top.png",
   reward: "../../Assets/EST Preparation/guide-character/guide-celebration.png"
 };
@@ -48,8 +48,8 @@ const GLOSSARY_BRIDGE_ASSETS = {
   characterReady: "../../Assets/Images and Animations/Emmanuel Student Characters/MacKillop/MacKillop Thinking.png",
   characterWelcome: "../../Assets/Images and Animations/Emmanuel Student Characters/MacKillop/MacKillop Welcome.png",
   characterAction: "../../Assets/Images and Animations/Emmanuel Student Characters/MacKillop/MacKillop Pointing.png",
-  characterSuccess: "../../Assets/Images and Animations/Emmanuel Student Characters/MacKillop/Mackillop Celebrating.png",
-  characterReset: "../../Assets/Images and Animations/Emmanuel Student Characters/MacKillop/MacKillop encouraging.png"
+  characterSuccess: "../../Assets/Images and Animations/Emmanuel Student Characters/MacKillop/MacKillop Celebrating.png",
+  characterReset: "../../Assets/Images and Animations/Emmanuel Student Characters/MacKillop/MacKillop Encouraging.png"
 };
 
 const GLOSSARY_BRIDGE_LEVEL_NAMES = [
@@ -131,8 +131,8 @@ const GLOSSARY_STORY_ASSETS = {
   romeroPointing: "../../Assets/Images and Animations/Emmanuel Student Characters/Romero/Romero Pointing.png",
   romeroThinking: "../../Assets/Images and Animations/Emmanuel Student Characters/Romero/Romero Thinking.png",
   mackillopThinking: "../../Assets/Images and Animations/Emmanuel Student Characters/MacKillop/MacKillop Thinking.png",
-  mackillopEncouraging: "../../Assets/Images and Animations/Emmanuel Student Characters/MacKillop/MacKillop encouraging.png",
-  mackillopCelebrating: "../../Assets/Images and Animations/Emmanuel Student Characters/MacKillop/Mackillop Celebrating.png",
+  mackillopEncouraging: "../../Assets/Images and Animations/Emmanuel Student Characters/MacKillop/MacKillop Encouraging.png",
+  mackillopCelebrating: "../../Assets/Images and Animations/Emmanuel Student Characters/MacKillop/MacKillop Celebrating.png",
   francis: "../../Assets/Images and Animations/Emmanuel Student Characters/Francis.png",
   lisieux: "../../Assets/Images and Animations/Emmanuel Student Characters/Lisieux.png"
 };
