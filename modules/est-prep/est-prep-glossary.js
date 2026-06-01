@@ -11,6 +11,8 @@ let glossaryCommunityAssetTimeout = null;
 
 let glossaryMemoryResetTimeout = null;
 
+let glossaryBridgeMotionTimeout = null;
+
 const GLOSSARY_TERMS_PER_ROUND = 6;
 const GLOSSARY_BRIDGE_TERMS_PER_LEVEL = 5;
 const GLOSSARY_MASTERY_TARGET = FULL_GLOSSARY_TERMS.length;
@@ -72,6 +74,7 @@ const GLOSSARY_BRIDGE_ROWS = [
 const GLOSSARY_BRIDGE_HOME_POSITION = { x: 50, y: 91 };
 const GLOSSARY_BRIDGE_PORTAL_POSITION = { x: 83, y: 42 };
 const GLOSSARY_BRIDGE_PATH_SCALE_Y = 0.5625;
+const GLOSSARY_BRIDGE_RESULT_MOTION_MS = 1350;
 
 const GLOSSARY_MEMORY_THEMES = {
   aqua: {
@@ -1078,6 +1081,32 @@ function getGlossaryBridgePlayerLandingPosition(rowIndex, optionIndex) {
   };
 }
 
+function getGlossaryBridgeMotionAge(motion) {
+  const startedAt = Number(motion?.at || 0);
+  return startedAt > 0 ? Date.now() - startedAt : Number.POSITIVE_INFINITY;
+}
+
+function isGlossaryBridgeMotionFresh(motion) {
+  return Boolean(motion?.kind) && getGlossaryBridgeMotionAge(motion) <= GLOSSARY_BRIDGE_RESULT_MOTION_MS + 180;
+}
+
+function clearGlossaryBridgeMotionTimer() {
+  if (!glossaryBridgeMotionTimeout) return;
+  clearTimeout(glossaryBridgeMotionTimeout);
+  glossaryBridgeMotionTimeout = null;
+}
+
+function queueGlossaryBridgeMotionClear() {
+  clearGlossaryBridgeMotionTimer();
+  glossaryBridgeMotionTimeout = setTimeout(() => {
+    glossaryBridgeMotionTimeout = null;
+    if (!state.answers?.glossaryBridgeMotion) return;
+    delete state.answers.glossaryBridgeMotion;
+    persistESTProgressSnapshot();
+    renderGlossaryStage();
+  }, GLOSSARY_BRIDGE_RESULT_MOTION_MS);
+}
+
 function getGlossaryBridgePathPoints(bridge = getGlossaryBridgeState()) {
   const points = [{ x: GLOSSARY_BRIDGE_HOME_POSITION.x, y: 87 }];
   const lockedCount = Math.min(bridge.step, bridge.levelTerms.length);
@@ -1198,6 +1227,7 @@ function buildGlossaryBridgeOptions(item, levelIndex = 0, stepIndex = 0) {
 
 function resetGlossaryBridgeLevel() {
   const bridge = getGlossaryBridgeState();
+  clearGlossaryBridgeMotionTimer();
   const locks = { ...bridge.locks, [String(bridge.level)]: [] };
   state.answers.glossaryBridgeLocks = locks;
   state.answers.glossaryBridgeStep = 0;
@@ -1281,6 +1311,7 @@ function submitGlossaryBridgeChoiceEncoded(targetId, encodedValue, optionIndexRa
   renderRewardPulse();
   persistESTProgressSnapshot();
   renderGlossaryStage();
+  queueGlossaryBridgeMotionClear();
 }
 
 function continueGlossaryBridgeLevel() {
@@ -1296,6 +1327,7 @@ function continueGlossaryBridgeLevel() {
   }
 
   const nextLevel = bridge.level + 1;
+  clearGlossaryBridgeMotionTimer();
   state.answers.glossaryBridgeLevel = nextLevel;
   state.answers.glossaryBridgeStep = 0;
   state.answers.glossaryBridgeLevelClear = false;
@@ -1308,6 +1340,7 @@ function continueGlossaryBridgeLevel() {
 }
 
 function clearGlossaryBridgeState() {
+  clearGlossaryBridgeMotionTimer();
   delete state.answers.glossaryBridgeLevel;
   delete state.answers.glossaryBridgeStep;
   delete state.answers.glossaryBridgeLocks;
@@ -3453,9 +3486,15 @@ function renderGlossaryVaultBridgeGame(round) {
   const levelPercent = bridge.levelTerms.length ? Math.round((Math.min(bridge.step, bridge.levelTerms.length) / bridge.levelTerms.length) * 100) : 0;
   const levelName = getGlossaryBridgeLevelName(bridge.level);
   const bridgeSalary = 2400 + (totalSecured * 350);
-  const motion = state.answers.glossaryBridgeMotion || {};
+  const storedMotion = state.answers.glossaryBridgeMotion || {};
+  const motionIsFresh = isGlossaryBridgeMotionFresh(storedMotion);
+  if (storedMotion.kind && !motionIsFresh && !bridge.levelClear) {
+    delete state.answers.glossaryBridgeMotion;
+  }
+  const motion = motionIsFresh || bridge.levelClear ? storedMotion : {};
   const playerPosition = getGlossaryBridgeActivePosition(bridge);
   const motionKind = String(motion.kind || "");
+  const isAnsweringMotion = Boolean(motionKind && !bridge.levelClear);
   const playerClass = bridge.levelClear
     ? "is-exiting"
     : motionKind === "wrong"
@@ -3499,8 +3538,8 @@ function renderGlossaryVaultBridgeGame(round) {
       const lockedOption = bridge.levelLocks[rowIndex];
       const isLocked = rowIndex < bridge.step && lockedOption === optionIndex;
       const isDropped = rowIndex < bridge.step && lockedOption !== optionIndex;
-      const isActive = rowIndex === bridge.step && !bridge.levelClear;
-      const isWaiting = rowIndex > bridge.step || bridge.levelClear;
+      const isActive = rowIndex === bridge.step && !bridge.levelClear && !isAnsweringMotion;
+      const isWaiting = rowIndex > bridge.step || bridge.levelClear || (isAnsweringMotion && rowIndex === bridge.step);
       const option = options[optionIndex] || { value: "", title: "", optionIndex };
       const motionMatches = Number(motion.step) === rowIndex && Number(motion.optionIndex) === optionIndex;
       const stateClass = isLocked
@@ -3580,6 +3619,8 @@ function renderGlossaryVaultBridgeGame(round) {
     ? clearTitle
     : motionKind === "wrong"
       ? "Bridge rebuilt"
+      : motionKind === "correct" || motionKind === "clear"
+        ? "Bridge piece locked"
       : bridge.step
         ? "Next row"
         : "Ready";
@@ -3587,6 +3628,8 @@ function renderGlossaryVaultBridgeGame(round) {
     ? clearCopy
     : motionKind === "wrong"
       ? "A wrong tile sends you back to the entrance for this level. Previous cleared levels stay banked."
+      : motionKind === "correct" || motionKind === "clear"
+        ? "MacKillop is crossing to the locked piece. The next row will light up in a moment."
       : bridge.step
         ? "The locked bridge piece stays lit. The new row has fresh options."
         : "Start from the arrow runway and choose the term that matches the definition.";
@@ -3615,7 +3658,7 @@ function renderGlossaryVaultBridgeGame(round) {
         <span class="kicker">${bridge.levelClear ? "Portal target" : "Definition target"}</span>
         <p>${escapeHtml(definitionCopy)}</p>
       </article>
-      <div class="glossary-bridge-game ${bridge.levelClear ? "is-level-clear" : ""} ${motionKind ? `motion-${escapeHtml(motionKind)}` : ""}" style="${playerStyle}">
+      <div class="glossary-bridge-game ${bridge.levelClear ? "is-level-clear" : ""} ${isAnsweringMotion ? "is-answering" : ""} ${motionKind ? `motion-${escapeHtml(motionKind)}` : ""}" style="${playerStyle}">
         <img class="glossary-bridge-bg" src="${escapeHtml(GLOSSARY_BRIDGE_ASSETS.backdrop)}" alt="">
         <span class="glossary-bridge-vignette" aria-hidden="true"></span>
         <div class="glossary-bridge-shot-label" aria-live="polite">
