@@ -94,6 +94,51 @@
         animationStates: ["idle", "blink", "wave", "think", "celebrate"]
       }
     },
+    productionRigs: {
+      manifestPath: "../../Assets/Images and Animations/Avatar Studio/layers/rig-manifest.json",
+      basePath: "../../Assets/Images and Animations/Avatar Studio/layers",
+      canvas: { width: 1024, height: 1536 },
+      note: "First-pass transparent PNG rigs generated from the ECC model sheets.",
+      layerOrder: [
+        "hair/back.png",
+        "legs/left-upper.png",
+        "legs/right-upper.png",
+        "legs/left-lower.png",
+        "legs/right-lower.png",
+        "shoes/left.png",
+        "shoes/right.png",
+        "body/skin-neck.png",
+        "uniform/lower.png",
+        "uniform/shirt.png",
+        "uniform/tie.png",
+        "uniform/jumper.png",
+        "uniform/blazer.png",
+        "arms/left-upper.png",
+        "arms/right-upper.png",
+        "arms/left-forearm-hand.png",
+        "arms/right-forearm-hand.png",
+        "head/base.png",
+        "hair/front.png",
+        "accessories/crest-badge.png",
+      ],
+      expressionPlates: ["neutral", "smile", "thinking", "surprised", "excited", "wink"],
+      rigs: {
+        "ecc-boy-base-neutral": {
+          id: "ecc-boy-base-neutral",
+          label: "ECC boy base neutral",
+          fileRoot: "ecc-boy-base-neutral",
+          previewPath: "../../Assets/Images and Animations/Avatar Studio/layers/ecc-boy-base-neutral/recomposed-preview.png",
+          defaultExpression: "neutral"
+        },
+        "ecc-girl-base-neutral": {
+          id: "ecc-girl-base-neutral",
+          label: "ECC girl base neutral",
+          fileRoot: "ecc-girl-base-neutral",
+          previewPath: "../../Assets/Images and Animations/Avatar Studio/layers/ecc-girl-base-neutral/recomposed-preview.png",
+          defaultExpression: "neutral"
+        }
+      }
+    },
     skinTones: [
       { id: "porcelain", label: "Porcelain", color: "#f4d6c5", shadow: "#d79f82" },
       { id: "sand", label: "Sand", color: "#dba77c", shadow: "#b57952" },
@@ -280,6 +325,28 @@
         defaultOutfit: "ecc-winter-skirt-jumper",
         defaultHairStyle: "long",
         note: "Live controls"
+      },
+      {
+        id: "ecc-boy-rig-source",
+        label: "ECC boy rig",
+        token: "BR",
+        partMode: "production-png-rig",
+        assetRigId: "ecc-boy-base-neutral",
+        imagePath: "../../Assets/Images and Animations/Avatar Studio/layers/ecc-boy-base-neutral/recomposed-preview.png",
+        defaultOutfit: "ecc-winter-trousers-blazer",
+        defaultHairStyle: "waves",
+        note: "PNG source"
+      },
+      {
+        id: "ecc-girl-rig-source",
+        label: "ECC girl rig",
+        token: "GR",
+        partMode: "production-png-rig",
+        assetRigId: "ecc-girl-base-neutral",
+        imagePath: "../../Assets/Images and Animations/Avatar Studio/layers/ecc-girl-base-neutral/recomposed-preview.png",
+        defaultOutfit: "ecc-winter-skirt-jumper",
+        defaultHairStyle: "long",
+        note: "PNG source"
       },
       {
         id: "mackillop",

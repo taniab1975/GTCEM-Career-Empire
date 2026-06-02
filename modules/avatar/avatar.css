@@ -229,7 +229,8 @@ body.avatar-page::before {
 }
 
 .avatar-render svg,
-.avatar-character-art {
+.avatar-character-art,
+.avatar-production-rig {
   display: block;
   width: 100%;
   height: 100%;
@@ -246,6 +247,58 @@ body.avatar-page::before {
 .avatar-layered-rig {
   transform-origin: center bottom;
   animation: avatarLayeredIdle 4.8s ease-in-out infinite;
+}
+
+.avatar-production-rig {
+  position: relative;
+  width: min(286px, 100%);
+  height: auto;
+  aspect-ratio: 2 / 3;
+  align-self: end;
+  justify-self: center;
+  transform-origin: center bottom;
+  animation: avatarProductionRigIdle 4.8s ease-in-out infinite;
+}
+
+.avatar-production-rig-layer {
+  position: absolute;
+  inset: 0;
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  object-position: center bottom;
+  pointer-events: none;
+}
+
+.avatar-production-rig-layer[data-rig-motion="head"] {
+  transform-origin: 50% 34%;
+  animation: avatarRigHeadIdle 4.8s ease-in-out infinite;
+}
+
+.avatar-production-rig-layer[data-rig-motion="hair"] {
+  transform-origin: 50% 22%;
+  animation: avatarRigHairIdle 4.8s ease-in-out infinite;
+}
+
+.avatar-production-rig-layer[data-rig-motion="left-arm"] {
+  transform-origin: 36% 39%;
+  animation: avatarRigLeftArmIdle 4.8s ease-in-out infinite;
+}
+
+.avatar-production-rig-layer[data-rig-motion="right-arm"] {
+  transform-origin: 64% 39%;
+  animation: avatarRigRightArmIdle 4.8s ease-in-out infinite;
+}
+
+.avatar-production-rig-layer[data-rig-motion="left-leg"] {
+  transform-origin: 46% 61%;
+  animation: avatarRigLeftLegIdle 4.8s ease-in-out infinite;
+}
+
+.avatar-production-rig-layer[data-rig-motion="right-leg"] {
+  transform-origin: 54% 61%;
+  animation: avatarRigRightLegIdle 4.8s ease-in-out infinite;
 }
 
 .avatar-nameplate {
@@ -590,9 +643,88 @@ body.avatar-page::before {
   }
 }
 
+@keyframes avatarProductionRigIdle {
+  0%,
+  100% {
+    transform: translateY(-2px) rotate(-0.25deg);
+  }
+
+  45% {
+    transform: translateY(-9px) rotate(0.35deg);
+  }
+}
+
+@keyframes avatarRigHeadIdle {
+  0%,
+  100% {
+    transform: rotate(-0.8deg);
+  }
+
+  45% {
+    transform: rotate(1deg);
+  }
+}
+
+@keyframes avatarRigHairIdle {
+  0%,
+  100% {
+    transform: rotate(-0.45deg) translateY(0);
+  }
+
+  45% {
+    transform: rotate(0.65deg) translateY(-1px);
+  }
+}
+
+@keyframes avatarRigLeftArmIdle {
+  0%,
+  100% {
+    transform: rotate(1.2deg);
+  }
+
+  45% {
+    transform: rotate(-1.8deg);
+  }
+}
+
+@keyframes avatarRigRightArmIdle {
+  0%,
+  100% {
+    transform: rotate(-1deg);
+  }
+
+  45% {
+    transform: rotate(2deg);
+  }
+}
+
+@keyframes avatarRigLeftLegIdle {
+  0%,
+  100% {
+    transform: rotate(-0.35deg);
+  }
+
+  45% {
+    transform: rotate(0.45deg);
+  }
+}
+
+@keyframes avatarRigRightLegIdle {
+  0%,
+  100% {
+    transform: rotate(0.35deg);
+  }
+
+  45% {
+    transform: rotate(-0.45deg);
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
   .avatar-character-art,
-  .avatar-layered-rig {
+  .avatar-layered-rig,
+  .avatar-production-rig,
+  .avatar-production-rig-layer {
     animation: none;
   }
 }

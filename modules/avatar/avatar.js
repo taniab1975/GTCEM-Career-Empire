@@ -638,15 +638,69 @@
     `;
   }
 
+  function getProductionRigConfig() {
+    return avatarParts.productionRigs && typeof avatarParts.productionRigs === "object"
+      ? avatarParts.productionRigs
+      : null;
+  }
+
+  function getProductionRigForBase(characterBase) {
+    const config = getProductionRigConfig();
+    if (!config || !characterBase?.assetRigId) return null;
+    return config.rigs?.[characterBase.assetRigId] || null;
+  }
+
+  function getRigLayerMotion(layerPath) {
+    if (layerPath === "head/base.png") return "head";
+    if (layerPath.startsWith("hair/")) return "hair";
+    if (layerPath.startsWith("arms/left")) return "left-arm";
+    if (layerPath.startsWith("arms/right")) return "right-arm";
+    if (layerPath.startsWith("legs/left")) return "left-leg";
+    if (layerPath.startsWith("legs/right")) return "right-leg";
+    return "body";
+  }
+
+  function renderProductionRigAvatar(characterBase) {
+    const config = getProductionRigConfig();
+    const rig = getProductionRigForBase(characterBase);
+    if (!config || !rig) return renderLayeredAvatar();
+
+    const layerOrder = Array.isArray(config.layerOrder) ? config.layerOrder : [];
+    const basePath = `${config.basePath}/${rig.fileRoot}`;
+    const animationState = state.animationState || "idle";
+
+    return `
+      <div
+        class="avatar-production-rig is-${escapeHtml(animationState)}"
+        role="img"
+        aria-label="${escapeHtml(rig.label || characterBase.label)} avatar preview"
+      >
+        ${layerOrder.map(layerPath => `
+          <img
+            class="avatar-production-rig-layer"
+            src="${escapeHtml(`${basePath}/${layerPath}`)}"
+            alt=""
+            aria-hidden="true"
+            decoding="async"
+            data-rig-motion="${escapeHtml(getRigLayerMotion(layerPath))}"
+            data-rig-layer="${escapeHtml(layerPath)}"
+          >
+        `).join("")}
+      </div>
+    `;
+  }
+
   function buildAvatarSpec(profile = state) {
     const characterBase = findById(characterBases, profile.characterBase);
     const outfit = findById(outfits, profile.outfit);
+    const productionRig = getProductionRigForBase(characterBase);
     return {
       schemaVersion: avatarParts.schemaVersion || 1,
       rigId: avatarParts.rig?.id || "avatar-svg-prototype-v1",
-      renderMode: characterBase?.partMode === "layered" ? "layered" : "reference-pose",
+      renderMode: productionRig ? "production-png-rig" : characterBase?.partMode === "layered" ? "layered" : "reference-pose",
       slots: {
         body: profile.characterBase,
+        assetRig: productionRig?.id || null,
         skinTone: profile.skinTone,
         faceStyle: profile.faceStyle,
         hairStyle: profile.hairStyle,
@@ -657,13 +711,16 @@
       },
       sources: {
         uniform: outfit?.source || outfit?.family || "prototype",
-        base: characterBase?.imagePath ? "ecc-character-reference" : "layered-svg-prototype"
+        base: productionRig ? "avatar-builder-png-rig" : characterBase?.imagePath ? "ecc-character-reference" : "layered-svg-prototype",
+        manifest: productionRig ? avatarParts.productionRigs?.manifestPath : null,
+        layerRoot: productionRig ? `${avatarParts.productionRigs?.basePath}/${productionRig.fileRoot}` : null
       }
     };
   }
 
   function renderAvatar() {
     const characterBase = findById(characterBases, state.characterBase);
+    if (characterBase?.partMode === "production-png-rig") return renderProductionRigAvatar(characterBase);
     if (characterBase?.partMode === "layered") return renderLayeredAvatar();
     if (!characterBase?.imagePath) return renderPrototypeAvatar();
 
