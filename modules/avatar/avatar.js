@@ -650,9 +650,75 @@
     return config.rigs?.[characterBase.assetRigId] || null;
   }
 
+  function getRigLayerTint(layerPath, skin, hairColour, outfit) {
+    const isDefaultUniform = ["ecc-winter-trousers-blazer", "ecc-winter-skirt-jumper"].includes(outfit.id);
+    if (layerPath.startsWith("hair/")) {
+      return {
+        kind: "hair",
+        color: hairColour,
+        opacity: hairColour === "#5a3524" ? 0.2 : 0.68,
+        mode: "color"
+      };
+    }
+    if (layerPath === "head/base.png" || layerPath === "body/skin-neck.png") {
+      return {
+        kind: "skin",
+        color: skin.color,
+        opacity: skin.id === "sand" ? 0.14 : 0.46,
+        mode: "color"
+      };
+    }
+    if (layerPath.endsWith("forearm-hand.png")) {
+      return {
+        kind: "skin",
+        color: skin.color,
+        opacity: skin.id === "sand" ? 0.08 : 0.22,
+        mode: "color"
+      };
+    }
+    if (layerPath === "uniform/blazer.png" || layerPath === "uniform/jumper.png") {
+      return {
+        kind: "uniform",
+        color: outfit.fill || "#123a5d",
+        opacity: isDefaultUniform ? 0.08 : 0.55,
+        mode: "color"
+      };
+    }
+    if (layerPath === "uniform/lower.png") {
+      return {
+        kind: "uniform",
+        color: outfit.lowerFill || outfit.fill || "#1a2436",
+        opacity: isDefaultUniform ? 0.08 : 0.52,
+        mode: "color"
+      };
+    }
+    if (layerPath === "uniform/tie.png") {
+      return {
+        kind: "uniform",
+        color: outfit.tie || outfit.accent || "#0f8f8c",
+        opacity: isDefaultUniform ? 0.08 : 0.62,
+        mode: "color"
+      };
+    }
+    if (layerPath === "uniform/shirt.png") {
+      return {
+        kind: "uniform",
+        color: outfit.shirt || "#f4f7fb",
+        opacity: isDefaultUniform ? 0.04 : 0.32,
+        mode: "color"
+      };
+    }
+    return null;
+  }
+
+  function getProductionLayerOrder(config) {
+    return Array.isArray(config.layerOrder) ? [...config.layerOrder] : [];
+  }
+
   function getRigLayerMotion(layerPath) {
     if (layerPath === "head/base.png") return "head";
     if (layerPath.startsWith("hair/")) return "hair";
+    if (layerPath.startsWith("face/")) return "head";
     if (layerPath.startsWith("arms/left")) return "left-arm";
     if (layerPath.startsWith("arms/right")) return "right-arm";
     if (layerPath.startsWith("legs/left")) return "left-leg";
@@ -660,12 +726,147 @@
     return "body";
   }
 
+  function renderProductionRigTint(imagePath, layerPath, tint) {
+    if (!tint) return "";
+    return `
+      <span
+        class="avatar-production-rig-tint"
+        aria-hidden="true"
+        data-rig-motion="${escapeHtml(getRigLayerMotion(layerPath))}"
+        data-rig-layer="${escapeHtml(`${layerPath}:tint`)}"
+        data-rig-tint-kind="${escapeHtml(tint.kind)}"
+        style="--rig-mask: url('${escapeHtml(imagePath)}'); --rig-tint: ${escapeHtml(tint.color)}; --rig-tint-opacity: ${escapeHtml(tint.opacity)}; --rig-tint-mode: ${escapeHtml(tint.mode)};"
+      ></span>
+    `;
+  }
+
+  function renderProductionRigLayer(basePath, layerPath, skin, hairColour, outfit) {
+    const imagePath = `${basePath}/${layerPath}`;
+    const tint = getRigLayerTint(layerPath, skin, hairColour, outfit);
+    return `
+      <img
+        class="avatar-production-rig-layer"
+        src="${escapeHtml(imagePath)}"
+        alt=""
+        aria-hidden="true"
+        decoding="async"
+        data-rig-motion="${escapeHtml(getRigLayerMotion(layerPath))}"
+        data-rig-layer="${escapeHtml(layerPath)}"
+      >
+      ${renderProductionRigTint(imagePath, layerPath, tint)}
+    `;
+  }
+
+  function getProductionFeatureAnchors(rig) {
+    if (rig?.id === "ecc-girl-base-neutral") {
+      return {
+        eyeY: 415,
+        leftEyeX: 454,
+        rightEyeX: 544,
+        browY: 377,
+        cheekY: 470,
+        mouthY: 506,
+        earY: 440,
+        leftEarX: 392,
+        rightEarX: 624,
+        neckY: 548,
+        chestY: 716
+      };
+    }
+    return {
+      eyeY: 436,
+      leftEyeX: 454,
+      rightEyeX: 544,
+      browY: 397,
+      cheekY: 490,
+      mouthY: 526,
+      earY: 458,
+      leftEarX: 390,
+      rightEarX: 626,
+      neckY: 566,
+      chestY: 742
+    };
+  }
+
+  function renderProductionRigFeatureOverlay(rig, skin, outfit) {
+    const anchors = getProductionFeatureAnchors(rig);
+    const freckles = state.faceStyle === "freckled"
+      ? `
+        <g data-rig-feature="freckles" fill="${escapeHtml(skin.shadow)}" opacity="0.68">
+          <circle cx="${anchors.leftEyeX - 34}" cy="${anchors.cheekY}" r="7"/>
+          <circle cx="${anchors.leftEyeX - 8}" cy="${anchors.cheekY + 14}" r="5"/>
+          <circle cx="${anchors.rightEyeX + 34}" cy="${anchors.cheekY}" r="7"/>
+          <circle cx="${anchors.rightEyeX + 8}" cy="${anchors.cheekY + 14}" r="5"/>
+          <circle cx="512" cy="${anchors.cheekY + 18}" r="4.5"/>
+        </g>
+      `
+      : "";
+    const faceAccent = state.faceStyle === "bright"
+      ? `
+        <g data-rig-feature="bright-eyes" fill="#ffffff" opacity="0.82">
+          <circle cx="${anchors.leftEyeX - 14}" cy="${anchors.eyeY - 15}" r="7"/>
+          <circle cx="${anchors.rightEyeX - 14}" cy="${anchors.eyeY - 15}" r="7"/>
+        </g>
+      `
+      : state.faceStyle === "sharp"
+        ? `
+          <g data-rig-feature="focused-brows" fill="none" stroke="#2b1710" stroke-width="9" stroke-linecap="round" opacity="0.88">
+            <path d="M${anchors.leftEyeX - 48} ${anchors.browY} C${anchors.leftEyeX - 18} ${anchors.browY - 16} ${anchors.leftEyeX + 26} ${anchors.browY - 13} ${anchors.leftEyeX + 48} ${anchors.browY}"/>
+            <path d="M${anchors.rightEyeX - 48} ${anchors.browY} C${anchors.rightEyeX - 18} ${anchors.browY - 13} ${anchors.rightEyeX + 26} ${anchors.browY - 16} ${anchors.rightEyeX + 48} ${anchors.browY}"/>
+          </g>
+        `
+        : state.faceStyle === "calm"
+          ? `<path data-rig-feature="calm-smile" d="M472 ${anchors.mouthY} C494 ${anchors.mouthY + 18} 534 ${anchors.mouthY + 18} 556 ${anchors.mouthY}" fill="none" stroke="#3b1d17" stroke-width="8" stroke-linecap="round" opacity="0.82"/>`
+          : "";
+    const glasses = state.accessory === "glasses"
+      ? `
+        <g data-rig-feature="glasses" fill="none" stroke="#17202a" stroke-width="9" opacity="0.86">
+          <ellipse cx="${anchors.leftEyeX}" cy="${anchors.eyeY}" rx="44" ry="39"/>
+          <ellipse cx="${anchors.rightEyeX}" cy="${anchors.eyeY}" rx="44" ry="39"/>
+          <path d="M${anchors.leftEyeX + 44} ${anchors.eyeY} L${anchors.rightEyeX - 44} ${anchors.eyeY}"/>
+        </g>
+      `
+      : "";
+    const earrings = state.accessory === "earrings"
+      ? `<g data-rig-feature="earrings" fill="#f6b73c"><circle cx="${anchors.leftEarX}" cy="${anchors.earY + 38}" r="12"/><circle cx="${anchors.rightEarX}" cy="${anchors.earY + 38}" r="12"/></g>`
+      : "";
+    const badge = state.accessory === "badge"
+      ? `<g data-rig-feature="name-badge"><rect x="616" y="${anchors.chestY}" width="112" height="52" rx="13" fill="#ffffff" opacity="0.94"/><path d="M640 ${anchors.chestY + 27} L704 ${anchors.chestY + 27}" stroke="${escapeHtml(outfit.accent || "#f6b73c")}" stroke-width="8" stroke-linecap="round"/></g>`
+      : "";
+    const scarf = state.accessory === "scarf"
+      ? `<path data-rig-feature="scarf" d="M418 ${anchors.neckY + 8} C464 ${anchors.neckY + 44} 558 ${anchors.neckY + 44} 606 ${anchors.neckY + 8} L640 ${anchors.neckY + 128} C578 ${anchors.neckY + 170} 446 ${anchors.neckY + 170} 384 ${anchors.neckY + 128} Z" fill="#e85d4f" opacity="0.92"/>`
+      : "";
+    const headphones = state.accessory === "headphones"
+      ? `
+        <g data-rig-feature="headphones" fill="none" stroke="#17202a" stroke-linecap="round">
+          <path d="M382 ${anchors.eyeY - 18} C392 ${anchors.eyeY - 150} 444 ${anchors.eyeY - 214} 512 ${anchors.eyeY - 214} C580 ${anchors.eyeY - 214} 632 ${anchors.eyeY - 150} 642 ${anchors.eyeY - 18}" stroke-width="14"/>
+          <rect x="352" y="${anchors.eyeY - 22}" width="46" height="94" rx="20" fill="#17202a" stroke="none"/>
+          <rect x="626" y="${anchors.eyeY - 22}" width="46" height="94" rx="20" fill="#17202a" stroke="none"/>
+        </g>
+      `
+      : "";
+    return `
+      <svg class="avatar-production-rig-overlay" viewBox="0 0 1024 1536" aria-hidden="true">
+        ${scarf}
+        ${freckles}
+        ${faceAccent}
+        ${glasses}
+        ${earrings}
+        ${badge}
+        ${headphones}
+      </svg>
+    `;
+  }
+
   function renderProductionRigAvatar(characterBase) {
     const config = getProductionRigConfig();
     const rig = getProductionRigForBase(characterBase);
     if (!config || !rig) return renderLayeredAvatar();
 
-    const layerOrder = Array.isArray(config.layerOrder) ? config.layerOrder : [];
+    const skin = findById(skinTones, state.skinTone);
+    const hairColour = findById(hairColours, state.hairColour).color;
+    const outfit = findById(outfits, state.outfit);
+    const layerOrder = getProductionLayerOrder(config);
     const basePath = `${config.basePath}/${rig.fileRoot}`;
     const animationState = state.animationState || "idle";
 
@@ -675,17 +876,8 @@
         role="img"
         aria-label="${escapeHtml(rig.label || characterBase.label)} avatar preview"
       >
-        ${layerOrder.map(layerPath => `
-          <img
-            class="avatar-production-rig-layer"
-            src="${escapeHtml(`${basePath}/${layerPath}`)}"
-            alt=""
-            aria-hidden="true"
-            decoding="async"
-            data-rig-motion="${escapeHtml(getRigLayerMotion(layerPath))}"
-            data-rig-layer="${escapeHtml(layerPath)}"
-          >
-        `).join("")}
+        ${layerOrder.map(layerPath => renderProductionRigLayer(basePath, layerPath, skin, hairColour, outfit)).join("")}
+        ${renderProductionRigFeatureOverlay(rig, skin, outfit)}
       </div>
     `;
   }

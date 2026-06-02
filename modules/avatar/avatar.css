@@ -271,7 +271,35 @@ body.avatar-page::before {
   pointer-events: none;
 }
 
+.avatar-production-rig-tint,
+.avatar-production-rig-overlay {
+  position: absolute;
+  inset: 0;
+  display: block;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+}
+
+.avatar-production-rig-tint {
+  background: var(--rig-tint, transparent);
+  opacity: var(--rig-tint-opacity, 0);
+  mix-blend-mode: var(--rig-tint-mode, color);
+  -webkit-mask: var(--rig-mask) center bottom / contain no-repeat;
+  mask: var(--rig-mask) center bottom / contain no-repeat;
+}
+
+.avatar-production-rig-overlay {
+  overflow: visible;
+}
+
 .avatar-production-rig-layer[data-rig-motion="head"] {
+  transform-origin: 50% 34%;
+  animation: avatarRigHeadIdle 4.8s ease-in-out infinite;
+}
+
+.avatar-production-rig-tint[data-rig-motion="head"],
+.avatar-production-rig-overlay {
   transform-origin: 50% 34%;
   animation: avatarRigHeadIdle 4.8s ease-in-out infinite;
 }
@@ -281,7 +309,17 @@ body.avatar-page::before {
   animation: avatarRigHairIdle 4.8s ease-in-out infinite;
 }
 
+.avatar-production-rig-tint[data-rig-motion="hair"] {
+  transform-origin: 50% 22%;
+  animation: avatarRigHairIdle 4.8s ease-in-out infinite;
+}
+
 .avatar-production-rig-layer[data-rig-motion="left-arm"] {
+  transform-origin: 36% 39%;
+  animation: avatarRigLeftArmIdle 4.8s ease-in-out infinite;
+}
+
+.avatar-production-rig-tint[data-rig-motion="left-arm"] {
   transform-origin: 36% 39%;
   animation: avatarRigLeftArmIdle 4.8s ease-in-out infinite;
 }
@@ -291,12 +329,27 @@ body.avatar-page::before {
   animation: avatarRigRightArmIdle 4.8s ease-in-out infinite;
 }
 
+.avatar-production-rig-tint[data-rig-motion="right-arm"] {
+  transform-origin: 64% 39%;
+  animation: avatarRigRightArmIdle 4.8s ease-in-out infinite;
+}
+
 .avatar-production-rig-layer[data-rig-motion="left-leg"] {
   transform-origin: 46% 61%;
   animation: avatarRigLeftLegIdle 4.8s ease-in-out infinite;
 }
 
+.avatar-production-rig-tint[data-rig-motion="left-leg"] {
+  transform-origin: 46% 61%;
+  animation: avatarRigLeftLegIdle 4.8s ease-in-out infinite;
+}
+
 .avatar-production-rig-layer[data-rig-motion="right-leg"] {
+  transform-origin: 54% 61%;
+  animation: avatarRigRightLegIdle 4.8s ease-in-out infinite;
+}
+
+.avatar-production-rig-tint[data-rig-motion="right-leg"] {
   transform-origin: 54% 61%;
   animation: avatarRigRightLegIdle 4.8s ease-in-out infinite;
 }
@@ -724,7 +777,9 @@ body.avatar-page::before {
   .avatar-character-art,
   .avatar-layered-rig,
   .avatar-production-rig,
-  .avatar-production-rig-layer {
+  .avatar-production-rig-layer,
+  .avatar-production-rig-tint,
+  .avatar-production-rig-overlay {
     animation: none;
   }
 }
