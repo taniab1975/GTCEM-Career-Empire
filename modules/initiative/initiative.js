@@ -323,6 +323,7 @@ let state = loadState();
 let lastInteractionAt = Date.now();
 let saveTimer = 0;
 let lastRewardConsoleSignature = "";
+let avatarMomentsArmed = false;
 
 function cloneDefaultState() {
   return JSON.parse(JSON.stringify(DEFAULT_STATE));
@@ -370,6 +371,29 @@ function getAvatarProfile() {
   const username = authState?.studentLogin?.username || session?.username || "local";
   const avatarStore = readJsonStorage("career-empire-avatar-v1", {});
   return avatarStore?.profiles?.[username] || avatarStore?.currentProfile || {};
+}
+
+function showAvatarMoment(momentId, options = {}) {
+  if (!avatarMomentsArmed || !window.CareerEmpireAvatarMoments) return false;
+  return window.CareerEmpireAvatarMoments.show(momentId, {
+    moduleId: MODULE_ID,
+    ...options
+  });
+}
+
+function showOutcomeAvatarMoment(targetSelector) {
+  const outcome = state.lastProgressOutcome || {};
+  if (!outcome.at || outcome.at === "initial" || outcome.type === "neutral") return false;
+  const celebration = outcome.type === "celebration";
+  return showAvatarMoment(celebration ? "reward" : "proof-needs-work", {
+    label: celebration ? "Salary banked" : "Review signal",
+    variant: celebration ? "success" : "warning",
+    reason: `initiative-${outcome.type}-${outcome.icon || "signal"}`,
+    targetSelector,
+    cooldownMs: celebration ? 2800 : 14000,
+    displayMs: celebration ? 4300 : 3600,
+    force: celebration && Number(outcome.earnedDelta || 0) > 0
+  });
 }
 
 function escapeHtml(value) {
@@ -681,6 +705,7 @@ function submitCoreDrill() {
   renderPathways();
   updateProgress();
   updateMetrics();
+  showOutcomeAvatarMoment("#core-result");
   saveState();
   saveTeacherSnapshot("core-check").catch(console.warn);
 }
@@ -761,10 +786,18 @@ function renderPathways() {
 
 function selectPathway(pathwayId) {
   if (!state.corePassed) return;
+  const pathway = getPathway(pathwayId);
   state.selectedPathwayId = pathwayId;
   state.currentPhase = `pathway:${pathwayId}`;
-  addEvidenceLog("pathway-start", `Started pathway: ${getPathway(pathwayId)?.title || pathwayId}`, null);
+  addEvidenceLog("pathway-start", `Started pathway: ${pathway?.title || pathwayId}`, null);
   renderPathways();
+  showAvatarMoment(pathwayId === "song" ? "song-remix" : "mission-start", {
+    label: pathwayId === "song" ? "Remix mode" : `${pathway?.signal || "Mission"} mission`,
+    reason: `initiative-pathway-${pathwayId}`,
+    targetSelector: "#pathway-stage",
+    cooldownMs: 6500,
+    displayMs: 3200
+  });
   updateProgress();
   saveState();
 }
@@ -1053,6 +1086,7 @@ function submitPathway(pathwayId) {
   renderPathways();
   updateProgress();
   updateMetrics();
+  showOutcomeAvatarMoment("#pathway-feedback");
   saveState();
   saveTeacherSnapshot(`pathway-${pathwayId}`).catch(console.warn);
   window.setTimeout(() => {
@@ -1166,6 +1200,7 @@ function submitCommonEvidence() {
   renderCommonEvidenceFeedback();
   updateProgress();
   updateMetrics();
+  showOutcomeAvatarMoment("#evidence-feedback");
   saveState();
   saveTeacherSnapshot("common-evidence").catch(console.warn);
 }
@@ -1239,6 +1274,7 @@ function submitRetention() {
   updateProgress();
   renderRetentionResult(score);
   updateMetrics();
+  showOutcomeAvatarMoment("#retention-result");
   saveState();
   saveTeacherSnapshot("retention-check").catch(console.warn);
 }
@@ -1621,6 +1657,7 @@ function renderRewardConsole() {
       </div>
     </div>
   `;
+
 }
 
 function updateMetrics() {
@@ -1764,7 +1801,9 @@ function wireEvents() {
     localStorage.removeItem(MODULE_STORAGE_KEY);
     state = loadState();
     lastRewardConsoleSignature = "";
+    avatarMomentsArmed = false;
     renderAll();
+    avatarMomentsArmed = true;
     saveState();
   });
   document.querySelectorAll("[data-jump-section]").forEach(button => {
@@ -1796,6 +1835,7 @@ function renderAll() {
 function init() {
   renderAll();
   wireEvents();
+  avatarMomentsArmed = true;
   startTelemetry();
   saveState();
 }

@@ -1,0 +1,113 @@
+.ce-avatar-moment {
+  position: fixed;
+  left: clamp(12px, 2vw, 24px);
+  bottom: clamp(12px, 2vw, 24px);
+  z-index: 80;
+  width: min(190px, calc(100vw - 28px));
+  pointer-events: none;
+  opacity: 0;
+  transform: translateY(18px) scale(0.96);
+  transition:
+    opacity 220ms ease,
+    transform 260ms ease;
+}
+
+.ce-avatar-moment.is-embedded {
+  position: relative;
+  left: auto;
+  bottom: auto;
+  z-index: 1;
+  width: min(168px, 100%);
+  margin-top: 10px;
+  transform: translateY(8px) scale(0.98);
+}
+
+.ce-avatar-moment.is-visible {
+  opacity: 1;
+  transform: translateY(0) scale(1);
+}
+
+.ce-avatar-moment__shell {
+  position: relative;
+  overflow: hidden;
+  border: 1px solid rgba(255, 255, 255, 0.26);
+  border-radius: 8px;
+  background:
+    linear-gradient(180deg, rgba(9, 18, 28, 0.72), rgba(9, 18, 28, 0.9));
+  box-shadow: 0 18px 44px rgba(0, 0, 0, 0.34);
+  backdrop-filter: blur(12px);
+}
+
+.ce-avatar-moment.is-embedded .ce-avatar-moment__shell {
+  border-color: rgba(88, 213, 201, 0.3);
+  background:
+    linear-gradient(180deg, rgba(8, 18, 28, 0.9), rgba(8, 18, 28, 0.96));
+  box-shadow: 0 12px 28px rgba(0, 0, 0, 0.24);
+}
+
+.ce-avatar-moment__shell::after {
+  content: "";
+  position: absolute;
+  inset: 0 0 auto;
+  aspect-ratio: 16 / 9;
+  pointer-events: none;
+  background:
+    radial-gradient(circle at 50% 55%, transparent 34%, rgba(6, 12, 20, 0.36) 100%),
+    linear-gradient(180deg, rgba(88, 213, 201, 0.1), rgba(8, 14, 22, 0.28));
+}
+
+.ce-avatar-moment__video {
+  display: block;
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  background:
+    linear-gradient(180deg, #425463, #162431);
+  filter: brightness(0.68) saturate(0.78) contrast(0.96) sepia(0.08);
+  object-fit: cover;
+}
+
+.ce-avatar-moment__caption {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  min-height: 30px;
+  padding: 7px 9px;
+  color: #f7fafc;
+  font: 800 0.72rem/1.15 "Outfit", "Avenir Next", "Segoe UI", sans-serif;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+}
+
+.ce-avatar-moment__caption::after {
+  content: "";
+  width: 7px;
+  height: 7px;
+  flex: 0 0 7px;
+  border-radius: 999px;
+  background: #58d5c9;
+  box-shadow: 0 0 16px rgba(88, 213, 201, 0.84);
+}
+
+.ce-avatar-moment.is-success .ce-avatar-moment__caption::after {
+  background: #9be36d;
+  box-shadow: 0 0 16px rgba(155, 227, 109, 0.86);
+}
+
+.ce-avatar-moment.is-warning .ce-avatar-moment__caption::after {
+  background: #f3c969;
+  box-shadow: 0 0 16px rgba(243, 201, 105, 0.82);
+}
+
+@media (max-width: 640px) {
+  .ce-avatar-moment {
+    width: min(168px, calc(100vw - 24px));
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ce-avatar-moment {
+    transition: none;
+    transform: none;
+  }
+}
