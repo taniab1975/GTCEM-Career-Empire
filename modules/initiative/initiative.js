@@ -683,8 +683,27 @@ function renderPathwayStage() {
       <p>${escapeHtml(pathway.mode)}</p>
     </div>
     ${renderers[pathway.id]?.() || ""}
+    ${renderPathwayFeedback(pathway.id)}
   `);
   wirePathwaySubmit(pathway.id);
+}
+
+function renderPathwayFeedback(pathwayId) {
+  const result = state.pathwayScores?.[pathwayId];
+  if (!result) return "";
+  const passed = Number(result.score || 0) >= 70;
+  const feedback = Array.isArray(result.feedback) && result.feedback.length
+    ? result.feedback
+    : [result.detail || "Proof submitted."];
+  return `
+    <div id="pathway-feedback" class="result-panel pathway-feedback is-visible ${passed ? "success" : "warning"}">
+      <strong>${passed ? "Mission proof accepted" : "Mission proof needs one more pass"}: ${Number(result.score || 0)}%</strong>
+      <p>${escapeHtml(passed ? "You have enough proof to unlock the Proof Drop." : "The button worked, but the proof is not strong enough yet. Use the notes below, fix the task, and submit again.")}</p>
+      <ul>
+        ${feedback.map(item => `<li>${escapeHtml(item)}</li>`).join("")}
+      </ul>
+    </div>
+  `;
 }
 
 function getPathwayEvidence(pathwayId = state.selectedPathwayId) {
@@ -907,6 +926,7 @@ function submitPathway(pathwayId) {
   state.pathwayScores[pathwayId] = {
     score: score.percent,
     detail: score.detail,
+    feedback: score.feedback || [],
     submittedAt: new Date().toISOString()
   };
   if (score.percent >= 70) state.currentPhase = "evidence";
@@ -916,6 +936,9 @@ function submitPathway(pathwayId) {
   updateMetrics();
   saveState();
   saveTeacherSnapshot(`pathway-${pathwayId}`).catch(console.warn);
+  window.setTimeout(() => {
+    document.getElementById("pathway-feedback")?.scrollIntoView({ behavior: "smooth", block: "nearest" });
+  }, 0);
 }
 
 function scorePathway(pathwayId) {
@@ -925,30 +948,75 @@ function scorePathway(pathwayId) {
     const correct = SCENARIO_ITEMS.filter(item => answers[item.id] === item.correct).length;
     const explanation = wordCount(evidence.explanation) >= 12 ? 1 : 0;
     const total = SCENARIO_ITEMS.length + 1;
-    return { percent: Math.round(((correct + explanation) / total) * 100), detail: `${correct}/${SCENARIO_ITEMS.length} classifications plus explanation` };
+    const feedback = SCENARIO_ITEMS.map(item => {
+      const expected = BEHAVIOURS.find(behaviour => behaviour.id === item.correct);
+      const selected = BEHAVIOURS.find(behaviour => behaviour.id === answers[item.id]);
+      if (answers[item.id] === item.correct) {
+        return `Correct: ${item.prompt} maps to ${expected?.hook || item.correct}.`;
+      }
+      return `Check this one: ${item.prompt} should map to ${expected?.hook || item.correct}${selected ? `, not ${selected.hook}` : ""}.`;
+    });
+    feedback.push(explanation
+      ? "Explanation length is strong enough."
+      : "Add a fuller explanation: name the behaviour and explain the workplace effect in at least 12 words.");
+    return {
+      percent: Math.round(((correct + explanation) / total) * 100),
+      detail: `${correct}/${SCENARIO_ITEMS.length} classifications plus explanation`,
+      feedback
+    };
   }
   if (pathwayId === "song") {
     const lines = evidence.lines || {};
     const strongLines = BEHAVIOURS.filter(item => wordCount(lines[item.id]) >= 5).length;
     const explanation = wordCount(evidence.explanation) >= 15 ? 1 : 0;
-    return { percent: Math.round(((strongLines + explanation) / 6) * 100), detail: `${strongLines}/5 behaviour lyric lines plus explanation` };
+    const feedback = BEHAVIOURS.map(item => wordCount(lines[item.id]) >= 5
+      ? `${item.hook} line is long enough to carry meaning.`
+      : `Build the ${item.hook} line: write at least five words that keep the meaning of ${item.label}.`);
+    feedback.push(explanation
+      ? "Explanation protects the curriculum meaning."
+      : "Add a 15+ word explanation of how the remix still teaches initiative accurately.");
+    return { percent: Math.round(((strongLines + explanation) / 6) * 100), detail: `${strongLines}/5 behaviour lyric lines plus explanation`, feedback };
   }
   if (pathwayId === "interview") {
     const fields = ["person", "behaviour", "situation", "action", "impact"];
     const complete = fields.filter(field => field === "behaviour" ? evidence[field] : wordCount(evidence[field]) >= 5).length;
-    return { percent: Math.round((complete / fields.length) * 100), detail: `${complete}/${fields.length} interview evidence fields` };
+    const labels = {
+      person: "who you interviewed or researched",
+      behaviour: "which initiative behaviour they showed",
+      situation: "what happened",
+      action: "what action showed initiative",
+      impact: "what changed because of it"
+    };
+    const feedback = fields.map(field => {
+      const completeField = field === "behaviour" ? Boolean(evidence[field]) : wordCount(evidence[field]) >= 5;
+      return completeField ? `${labels[field]} is complete.` : `Add more detail for ${labels[field]}.`;
+    });
+    return { percent: Math.round((complete / fields.length) * 100), detail: `${complete}/${fields.length} interview evidence fields`, feedback };
   }
   if (pathwayId === "journal") {
     const entries = evidence.entries || {};
     const complete = BEHAVIOURS.filter(item => wordCount(entries[item.id]) >= 6).length;
-    return { percent: Math.round((complete / 5) * 100), detail: `${complete}/5 journal behaviours logged` };
+    const feedback = BEHAVIOURS.map(item => wordCount(entries[item.id]) >= 6
+      ? `${item.hook} has a usable journal example.`
+      : `Add a specific ${item.hook} example with at least six words.`);
+    return { percent: Math.round((complete / 5) * 100), detail: `${complete}/5 journal behaviours logged`, feedback };
   }
   if (pathwayId === "occupation") {
     const fields = ["occupation", "behaviour", "example", "value"];
     const complete = fields.filter(field => field === "occupation" || field === "behaviour" ? evidence[field] : wordCount(evidence[field]) >= 8).length;
-    return { percent: Math.round((complete / fields.length) * 100), detail: `${complete}/${fields.length} occupation transfer fields` };
+    const labels = {
+      occupation: "occupation lens",
+      behaviour: "main initiative behaviour",
+      example: "what initiative looks like in the occupation",
+      value: "why an employer would value it"
+    };
+    const feedback = fields.map(field => {
+      const completeField = field === "occupation" || field === "behaviour" ? Boolean(evidence[field]) : wordCount(evidence[field]) >= 8;
+      return completeField ? `${labels[field]} is complete.` : `Add more detail for ${labels[field]}.`;
+    });
+    return { percent: Math.round((complete / fields.length) * 100), detail: `${complete}/${fields.length} occupation transfer fields`, feedback };
   }
-  return { percent: 0, detail: "No pathway submitted" };
+  return { percent: 0, detail: "No mission submitted", feedback: ["Choose a mission and submit proof."] };
 }
 
 function submitCommonEvidence() {

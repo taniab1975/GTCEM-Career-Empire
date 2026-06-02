@@ -641,6 +641,23 @@ h1 {
   display: block;
 }
 
+.pathway-feedback {
+  border-color: rgba(243, 201, 105, 0.42);
+  background: rgba(243, 201, 105, 0.08);
+}
+
+.pathway-feedback.success {
+  border-color: rgba(155, 227, 109, 0.46);
+  background: rgba(155, 227, 109, 0.08);
+}
+
+.pathway-feedback ul {
+  margin: 10px 0 0;
+  padding-left: 18px;
+  color: var(--muted);
+  line-height: 1.5;
+}
+
 .diagnostic-panel {
   margin-top: 16px;
   padding: 16px;
