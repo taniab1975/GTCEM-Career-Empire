@@ -210,7 +210,7 @@ def motion_state(rig_id: str, motion_id: str, index: int, frame_count: int) -> D
     elif motion_id == "point":
         t = index / max(1, frame_count - 1)
         amount = min(1.0, ease_out_back(min(1.0, t * 3)))
-        add_translation(states, VISIBLE_LAYER_ORDER, ty=-6 * amount)
+        add_translation(states, VISIBLE_LAYER_ORDER, tx=-22 * amount, ty=-6 * amount)
         add_rotation(states, right_arm, 82 * amount, "rightShoulder")
         add_rotation(states, head_layers, 2.5 * amount, "neck")
 
