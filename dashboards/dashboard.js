@@ -115,6 +115,16 @@ const DASHBOARD_MODULES = [
     launchPath: "../modules/est-prep/index.html"
   },
   {
+    id: "initiative",
+    title: "Initiative",
+    shortTitle: "Initiative",
+    defaultStatus: "active",
+    currentLabel: "Applied learning focus",
+    inactiveLabel: "Unavailable from student hub",
+    archivedLabel: "Initiative history",
+    launchPath: "../modules/initiative/index.html"
+  },
+  {
     id: "employability-skills",
     title: "Employability Skills Portfolio",
     shortTitle: "Employability",
@@ -415,10 +425,11 @@ async function getCurrentStudentAssetCount() {
 async function getCurrentStudentModuleProgress() {
   const authState = getAuthPrototypeState();
   const studentId = authState?.studentLogin?.id;
-  if (!studentId) return {};
+  const localInitiativeProgress = getLocalInitiativeProgressRow();
+  if (!studentId) return localInitiativeProgress ? { initiative: localInitiativeProgress } : {};
 
   const supabase = await getSupabaseClientOrNull();
-  if (!supabase) return {};
+  if (!supabase) return localInitiativeProgress ? { initiative: localInitiativeProgress } : {};
 
   const { data, error } = await supabase
     .from("student_module_progress")
@@ -430,10 +441,26 @@ async function getCurrentStudentModuleProgress() {
     return {};
   }
 
-  return (data || []).reduce((acc, row) => {
+  const rows = (data || []).reduce((acc, row) => {
     acc[row.module_id] = row;
     return acc;
   }, {});
+  if (localInitiativeProgress && !rows.initiative) rows.initiative = localInitiativeProgress;
+  return rows;
+}
+
+function getLocalInitiativeProgressRow() {
+  const progress = readJsonStorage("career-empire-initiative-progress-v1", null);
+  if (!progress || typeof progress !== "object") return null;
+  if (!Number(progress.completionPercent || progress.masteryPercent || progress.activeSeconds)) return null;
+  return {
+    module_id: "initiative",
+    completion_percent: Number(progress.completionPercent || 0),
+    mastery_percent: Number(progress.masteryPercent || 0),
+    attempts: Number(progress.coreAttempts || 0),
+    completed: Number(progress.completionPercent || 0) >= 100,
+    local_only: true
+  };
 }
 
 function getCurrentPlayerSession() {
@@ -1790,6 +1817,7 @@ function syncStudentPrimaryModuleActions(moduleStatuses) {
   const actionMap = {
     "student-hub-avatar-link": "avatar-studio",
     "student-hub-est-link": "est-prep",
+    "student-hub-initiative-link": "initiative",
     "student-hub-megatrends-link": "megatrends",
     "student-hub-lifelong-link": "lifelong-learning"
   };
@@ -3005,6 +3033,7 @@ function getStudentCompareModuleValue(item, moduleId, metric) {
     "megatrends": { completion: "megatrendsCompletion", mastery: "megatrendsMastery" },
     "lifelong-learning": { completion: "lifelongCompletion", mastery: "lifelongMastery" },
     "est-prep": { completion: "estCompletion", mastery: "estMastery" },
+    "initiative": { completion: "initiativeCompletion", mastery: "initiativeMastery" },
     "employability-skills": { completion: "employabilityCompletion", mastery: "employabilityMastery" }
   };
   return item?.[keyMap[moduleId]?.[metric]] || 0;
@@ -4450,6 +4479,7 @@ function getModuleLabel(moduleId) {
   const labels = {
     "megatrends": "Megatrends",
     "est-prep": "EST Prep",
+    "initiative": "Initiative",
     "lifelong-learning": "Lifelong Learning",
     "employability-skills": "Employability Skills"
   };
@@ -5663,6 +5693,7 @@ function renderTeacherDashboardFocusStrip(moduleStatuses, activeFocus = "active"
   const focusOptions = [
     { id: "active", label: "Active Modules", note: "Default current teaching view" },
     { id: "est-prep", label: "EST Prep", note: "Assessment prep only" },
+    { id: "initiative", label: "Initiative", note: "Unlock Gate plus Proof Drop" },
     { id: "employability-skills", label: "Employability", note: "STAR portfolio only" },
     { id: "archived", label: "Archived", note: "Term 1 and prototype history" },
     { id: "cumulative", label: "Cumulative", note: "All module patterns" }
@@ -5698,13 +5729,15 @@ async function renderStudentLiveData(players, skillsData) {
   const moduleProgressById = await getCurrentStudentModuleProgress();
   const lifelongProgressRow = moduleProgressById["lifelong-learning"];
   const estProgressRow = moduleProgressById["est-prep"];
+  const initiativeProgressRow = moduleProgressById.initiative;
   const moduleStatuses = getCurrentStudentModuleStatuses();
   const activeModuleIds = DASHBOARD_MODULES.filter(module => moduleStatuses[module.id] === "active").map(module => module.id);
   const hasPlayerProgress = hasMeaningfulPlayerProgress(record);
   const hasLifelongProgress = hasMeaningfulModuleProgress(lifelongProgressRow);
   const hasESTProgress = hasMeaningfulModuleProgress(estProgressRow) || hasLocalESTProgress(session);
+  const hasInitiativeProgress = hasMeaningfulModuleProgress(initiativeProgressRow);
   const hasAvatarProgress = avatarCompletion > 0;
-  const hasAnySavedProgress = hasPlayerProgress || hasLifelongProgress || hasESTProgress || hasAvatarProgress;
+  const hasAnySavedProgress = hasPlayerProgress || hasLifelongProgress || hasESTProgress || hasInitiativeProgress || hasAvatarProgress;
   const progressRecord = hasPlayerProgress ? record : null;
   let reviewRows = await getCurrentStudentResponseReviews();
   let skillEvidenceEntries = syncSkillStarEvidenceWithReviews(getSkillStarEvidenceEntries(), reviewRows);
@@ -5735,6 +5768,8 @@ async function renderStudentLiveData(players, skillsData) {
   const lifelongMastery = Number(lifelongProgressRow?.mastery_percent || 0);
   const estProgress = Number(estProgressRow?.completion_percent || 0);
   const estMastery = Number(estProgressRow?.mastery_percent || 0);
+  const initiativeProgress = Number(initiativeProgressRow?.completion_percent || 0);
+  const initiativeMastery = Number(initiativeProgressRow?.mastery_percent || 0);
   const employabilityPortfolioProgress = calculateStarReflectionCompletion(skillEvidenceEntries);
   const employabilityPortfolioMastery = employabilityScore;
   const moduleCompletionMap = {
@@ -5742,6 +5777,7 @@ async function renderStudentLiveData(players, skillsData) {
     "megatrends": moduleCompletion,
     "lifelong-learning": lifelongProgress,
     "est-prep": estProgress,
+    "initiative": initiativeProgress,
     "employability-skills": employabilityPortfolioProgress
   };
   const overallModuleCompletion = Math.round(average((activeModuleIds.length ? activeModuleIds : DASHBOARD_MODULES.map(module => module.id)).map(moduleId => moduleCompletionMap[moduleId] || 0)));
@@ -5789,13 +5825,17 @@ async function renderStudentLiveData(players, skillsData) {
   setText("student-current-mission-title", hasAnySavedProgress ? "Continue your next move" : "Start your first move");
   setText("student-hub-est-link", hasESTProgress ? "Continue EST Prep" : "Open EST Prep");
   setText("student-hub-avatar-link", hasAvatarProgress ? "Edit Avatar" : "Create Avatar");
-  setText("student-focus-text", moduleStatuses["est-prep"] === "active"
+  setText("student-focus-text", moduleStatuses.initiative === "active"
+    ? "Initiative is active. Clear the Unlock Gate, choose an applied mission, and bank proof that shows understanding rather than time spent only."
+    : moduleStatuses["est-prep"] === "active"
     ? "EST Prep is the current active module. Use it to train command verbs, glossary terms, and short-answer structure before the assessment."
     : progressRecord && weakestSkill
       ? `${weakestSkill.title} is your current focus area. The next active module should target this skill more directly.`
       : "Launch an active module to begin skill tracking.");
   if (document.getElementById("student-focus-text") && !hasAnySavedProgress) {
-    setText("student-focus-text", moduleStatuses["est-prep"] === "active"
+    setText("student-focus-text", moduleStatuses.initiative === "active"
+      ? "Initiative is ready next. Use the Unlock Gate and applied mission to create teacher-visible proof."
+      : moduleStatuses["est-prep"] === "active"
       ? "EST Prep is ready next. Use it to train command verbs, glossary terms, and short-answer structure before the assessment."
       : "No active module has been assigned yet. Your previous module history will stay visible here.");
   }
@@ -5890,6 +5930,24 @@ async function renderStudentLiveData(players, skillsData) {
       available: moduleStatuses["lifelong-learning"] === "active",
       unavailableLabel: moduleStatuses["lifelong-learning"] === "archived" ? "Archived" : "Not assigned",
       tags: [getModuleStatusLabel(moduleStatuses["lifelong-learning"]), "Planning", "Reflection"]
+    },
+    {
+      id: "initiative",
+      title: "Initiative",
+      state: hasInitiativeProgress ? `${getModuleStatusLabel(moduleStatuses.initiative)} evidence saved` : getModuleStatusLabel(moduleStatuses.initiative),
+      summary: "Scan the five initiative signals, clear the Unlock Gate, then choose an applied mission with teacher-visible time, progress, proof, and memory evidence.",
+      progress: initiativeProgress,
+      mastery: initiativeMastery,
+      variant: "green",
+      spotlight: moduleStatuses.initiative === "active",
+      logoPath: skillsData.categories.find(category => category.id === "teamwork")?.logoPath || skillsData.categories.find(category => category.id === "communication")?.logoPath,
+      logoLabel: "Teamwork",
+      imagePath: "../Assets/Images and Animations/Initiative Scenes/Initiative topic scene neutral.png",
+      launchPath: "../modules/initiative/index.html",
+      launchLabel: hasInitiativeProgress ? "Continue Initiative" : "Start Initiative",
+      available: moduleStatuses.initiative === "active",
+      unavailableLabel: moduleStatuses.initiative === "archived" ? "Archived" : "Not assigned",
+      tags: [getModuleStatusLabel(moduleStatuses.initiative), "Unlock Gate", "Proof Drop"]
     },
     {
       id: "est-prep",
@@ -6042,6 +6100,7 @@ function renderTeacherLiveData(players, skillsData, teacherData = null) {
     .filter(isTeacherReviewableStudentResponse));
   const megatrendsProgressRows = moduleProgressRows.filter(row => (row.module_id || row.module_slug) === "megatrends");
   const estProgressRows = moduleProgressRows.filter(row => (row.module_id || row.module_slug) === "est-prep");
+  const initiativeProgressRows = moduleProgressRows.filter(row => (row.module_id || row.module_slug) === "initiative");
   const lifelongProgressRows = moduleProgressRows.filter(row => (row.module_id || row.module_slug) === "lifelong-learning");
   const parsedEvidenceRows = evidenceRowsBase.map(row => ({
     row,
@@ -6342,10 +6401,12 @@ function renderTeacherLiveData(players, skillsData, teacherData = null) {
     const megatrendsProgress = studentProgress.find(row => (row.module_id || row.module_slug) === "megatrends") || null;
     const lifelongProgress = studentProgress.find(row => (row.module_id || row.module_slug) === "lifelong-learning") || null;
     const estProgress = studentProgress.find(row => (row.module_id || row.module_slug) === "est-prep") || null;
+    const initiativeProgress = studentProgress.find(row => (row.module_id || row.module_slug) === "initiative") || null;
     const studentEvidence = parsedEvidenceRows.filter(entry => entry.row.student_id === student.id);
     const estEvidence = studentEvidence.filter(entry => (entry.row.module_id || entry.row.module_slug || entry.payload?.module_id) === "est-prep");
     const megatrendsEvidence = studentEvidence.filter(entry => (entry.row.module_id || entry.row.module_slug || entry.payload?.module_id) === "megatrends");
     const lifelongEvidence = studentEvidence.filter(entry => (entry.row.module_id || entry.row.module_slug || entry.payload?.module_id) === "lifelong-learning");
+    const initiativeEvidence = studentEvidence.filter(entry => (entry.row.module_id || entry.row.module_slug || entry.payload?.module_id) === "initiative");
     const studentCapabilityEntries = capabilityEvidenceEntries.filter(entry => entry.studentId === student.id);
     const latestEST = estEvidence[0]?.payload || null;
     const latestMegatrends = megatrendsEvidence[0]?.payload || null;
@@ -6382,10 +6443,12 @@ function renderTeacherLiveData(players, skillsData, teacherData = null) {
     const megatrendsCompletion = Number(megatrendsProgress?.completion_percent || Math.min(100, Number(player?.years_played || 0) * 18 || 0));
     const lifelongCompletion = Number(lifelongProgress?.completion_percent || 0);
     const estCompletion = Number(estProgress?.completion_percent || 0);
+    const initiativeCompletion = Number(initiativeProgress?.completion_percent || 0);
     const employabilityCompletion = calculateSkillEvidenceProgress(studentCapabilityEntries);
     const megatrendsMastery = Number(megatrendsProgress?.mastery_percent || overallMastery || 0);
     const lifelongMastery = Number(lifelongProgress?.mastery_percent || 0);
     const estMastery = Number(estProgress?.mastery_percent || 0);
+    const initiativeMastery = Number(initiativeProgress?.mastery_percent || 0);
     const employabilityMastery = studentCapabilityEntries.length
       ? Math.round(average(studentCapabilityEntries.map(entry => Math.min(100, Number(entry.quality || 0) * 8))))
       : 0;
@@ -6393,6 +6456,7 @@ function renderTeacherLiveData(players, skillsData, teacherData = null) {
       "megatrends": [megatrendsCompletion, megatrendsMastery],
       "lifelong-learning": [lifelongCompletion, lifelongMastery],
       "est-prep": [estCompletion, estMastery],
+      "initiative": [initiativeCompletion, initiativeMastery],
       "employability-skills": [employabilityCompletion, employabilityMastery]
     };
     const progressScore = average(visibleModuleIds.flatMap(moduleId => moduleScoreValues[moduleId] || []));
@@ -6421,6 +6485,7 @@ function renderTeacherLiveData(players, skillsData, teacherData = null) {
         `Megatrends mastery: ${Number(megatrendsProgress?.mastery_percent || overallMastery)}%`,
         `Employability STAR: ${studentCapabilityEntries.length}`,
         `Lifelong mastery: ${Number(lifelongProgress?.mastery_percent || 0)}%`,
+        `Initiative mastery: ${Number(initiativeProgress?.mastery_percent || 0)}%`,
         `EST mastery: ${Number(estProgress?.mastery_percent || 0)}%`,
         `Avg task time: ${averageTaskTime ? formatDurationSeconds(averageTaskTime) : "No timings yet"}`,
         `Strongest skill: ${strongestSkill?.title || "Not clear yet"}`
@@ -6428,10 +6493,12 @@ function renderTeacherLiveData(players, skillsData, teacherData = null) {
       megatrendsCompletion,
       lifelongCompletion,
       estCompletion,
+      initiativeCompletion,
       employabilityCompletion,
       megatrendsMastery,
       lifelongMastery,
       estMastery,
+      initiativeMastery,
       employabilityMastery,
       progressScore,
       averageTaskTimeSeconds: averageTaskTime,
@@ -6452,6 +6519,12 @@ function renderTeacherLiveData(players, skillsData, teacherData = null) {
             : "No Lifelong Learning progress saved yet."
         },
         {
+          title: "Initiative snapshot",
+          detail: initiativeProgress
+            ? `Completion ${Number(initiativeProgress.completion_percent || 0)}% • Mastery ${Number(initiativeProgress.mastery_percent || 0)}% • Attempts ${Number(initiativeProgress.attempts || 0)}${initiativeEvidence[0] ? ` • Latest evidence ${formatDateTime(initiativeEvidence[0].row.created_at)}` : ""}`
+            : "No Initiative progress saved yet."
+        },
+        {
           title: "EST snapshot",
           detail: estProgress
             ? `Completion ${Number(estProgress.completion_percent || 0)}% • Mastery ${Number(estProgress.mastery_percent || 0)}% • Attempts ${Number(estProgress.attempts || 0)}${latestESTTopicRows.length ? ` • ${latestESTTopicRows.join(" | ")}` : ""}`
@@ -6466,8 +6539,8 @@ function renderTeacherLiveData(players, skillsData, teacherData = null) {
       ]
     };
   }).sort((a, b) => {
-    const aScore = Number(a.megatrendsCompletion || 0) + Number(a.lifelongCompletion || 0) + Number(a.estCompletion || 0) + Number(a.employabilityCompletion || 0);
-    const bScore = Number(b.megatrendsCompletion || 0) + Number(b.lifelongCompletion || 0) + Number(b.estCompletion || 0) + Number(b.employabilityCompletion || 0);
+    const aScore = Number(a.megatrendsCompletion || 0) + Number(a.lifelongCompletion || 0) + Number(a.initiativeCompletion || 0) + Number(a.estCompletion || 0) + Number(a.employabilityCompletion || 0);
+    const bScore = Number(b.megatrendsCompletion || 0) + Number(b.lifelongCompletion || 0) + Number(b.initiativeCompletion || 0) + Number(b.estCompletion || 0) + Number(b.employabilityCompletion || 0);
     return bScore - aScore;
   });
 
@@ -6574,6 +6647,24 @@ function renderTeacherLiveData(players, skillsData, teacherData = null) {
       imagePath: "../Assets/Images and Animations/Student Hub/module-est-prep-thumb.png",
       logoPath: getSkillCategoryById(skillsData, "critical-thinking")?.logoPath,
       logoLabel: "Critical Thinking"
+    },
+    {
+      id: "initiative",
+      label: "Initiative",
+      title: "Initiative",
+      status: getModuleStatusLabel(moduleStatuses.initiative),
+      summary: visibleModuleIdSet.has("initiative") && initiativeProgressRows.length
+        ? `Tracking ${initiativeProgressRows.length} Initiative progress row(s) and ${parsedEvidenceRows.filter(entry => getEvidenceModuleId(entry.row, entry.payload) === "initiative").length} evidence snapshot(s), including active time, mission choice, and Memory Vault score.`
+        : visibleModuleIdSet.has("initiative")
+          ? "Once students clear the Unlock Gate and complete an applied mission, this card will show time-on-task, proof, memory, and support signals."
+          : "Initiative is not included in the current dashboard focus.",
+      completion: average(initiativeProgressRows.map(row => Number(row.completion_percent || 0))),
+      mastery: average(initiativeProgressRows.map(row => Number(row.mastery_percent || 0))),
+      variant: "green",
+      spotlight: moduleStatuses.initiative === "active",
+      imagePath: "../Assets/Images and Animations/Initiative Scenes/Initiative topic scene neutral.png",
+      logoPath: getSkillCategoryById(skillsData, "teamwork")?.logoPath || getSkillCategoryById(skillsData, "communication")?.logoPath,
+      logoLabel: "Teamwork"
     },
     {
       id: EMPLOYABILITY_PORTFOLIO_MODULE_ID,
