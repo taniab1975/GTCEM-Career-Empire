@@ -69,7 +69,16 @@
             <span>Mission progress</span>
             <strong id="metric-progress">0%</strong>
           </div>
+          <div>
+            <span>Salary earned</span>
+            <strong id="metric-salary-boost">$0</strong>
+          </div>
+          <div>
+            <span>Class tax</span>
+            <strong id="metric-tax-contribution">$0</strong>
+          </div>
         </div>
+        <div id="reward-console" class="reward-console" aria-live="polite"></div>
         <div id="support-signal" class="support-signal">
           <strong>Support signal pending</strong>
           <p>Clear the Unlock Gate to generate a useful learning signal.</p>
@@ -252,6 +261,7 @@
 
   <script src="../../config/supabase-config.js"></script>
   <script src="../../src/services/supabase-browser.js"></script>
+  <script src="../../src/services/economy-ledger.js"></script>
   <script src="../../src/services/response-moderation.js?v=teacher-written-filter-v5"></script>
   <script src="./initiative.js"></script>
   <script src="../../src/services/session-banner.js?v=20260507-session-banner"></script>

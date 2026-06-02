@@ -56,3 +56,85 @@ test("Avatar Studio style controls update the visible avatar", async ({ page }) 
   const hiVisPreview = await getPreviewHtml();
   expect(hiVisPreview).toContain("#f6b73c");
 });
+
+test("Avatar Studio ECC rig responds to live colour and face overlays", async ({ page }) => {
+  await page.goto("/modules/avatar/", { waitUntil: "domcontentloaded" });
+
+  const getPreviewHtml = () => page.locator("#avatar-render").evaluate(element => element.innerHTML);
+
+  await page.locator('[data-avatar-value="ecc-boy-rig-source"]').click();
+  await expect(page.locator("#avatar-render .avatar-production-rig")).toBeVisible();
+  expect(await getPreviewHtml()).toContain("avatar-production-rig-tint");
+
+  await page.locator('[data-avatar-value="deep"]').click();
+  const deepSkinPreview = await getPreviewHtml();
+  expect(deepSkinPreview).toContain('data-rig-tint-kind="skin"');
+  expect(deepSkinPreview).toContain("#38251f");
+
+  await page.getByRole("tab", { name: "Hair" }).click();
+  await page.locator('[data-avatar-value="blonde"]').click();
+  const blondeHairPreview = await getPreviewHtml();
+  expect(blondeHairPreview).toContain('data-rig-tint-kind="hair"');
+  expect(blondeHairPreview).toContain("#d9b85d");
+
+  await page.getByRole("tab", { name: "Looks" }).click();
+  await page.locator('[data-avatar-value="freckled"]').click();
+  expect(await getPreviewHtml()).toContain('data-rig-feature="freckles"');
+});
+
+test("Initiative rewards salary only when learning progress is proven", async ({ page }) => {
+  await page.goto("/modules/initiative/", { waitUntil: "domcontentloaded" });
+  await page.evaluate(() => {
+    localStorage.removeItem("career-empire-initiative-progress-v1");
+    localStorage.setItem("career-empire-session", JSON.stringify({
+      playerName: "Playwright Learner",
+      annualSalary: 25000,
+      salary: 25000,
+      taxPaid: 0
+    }));
+  });
+  await page.reload({ waitUntil: "domcontentloaded" });
+
+  await page.getByRole("button", { name: "Test the gate" }).click();
+  await expect(page.locator("#reward-console")).toContainText("Gate still locked");
+  await expect(page.locator("#metric-salary-boost")).toHaveText("$0");
+
+  const gateAnswers = {
+    definition: "initiative",
+    "low-stock": "act",
+    "shelf-labels": "improve",
+    "hazard-report": "speak",
+    "busy-rush": "support",
+    "new-register": "step-up"
+  };
+  for (const [id, value] of Object.entries(gateAnswers)) {
+    await page.locator(`[data-core-answer="${id}"]`).selectOption(value);
+  }
+  await page.getByRole("button", { name: "Test the gate" }).click();
+
+  await expect(page.locator("#reward-console")).toContainText("Unlock Gate salary banked");
+  await expect(page.locator("#metric-salary-boost")).toHaveText("$500");
+  await expect(page.locator("#metric-tax-contribution")).toHaveText("$50");
+
+  const afterGate = await page.evaluate(() => ({
+    moduleState: JSON.parse(localStorage.getItem("career-empire-initiative-progress-v1")),
+    session: JSON.parse(localStorage.getItem("career-empire-session"))
+  }));
+  expect(afterGate.moduleState.salaryBoost).toBe(500);
+  expect(afterGate.moduleState.taxContribution).toBe(50);
+  expect(afterGate.moduleState.rewardedMilestones["unlock-gate"].earnedDelta).toBe(500);
+  expect(afterGate.session.annualSalary).toBe(25500);
+  expect(afterGate.session.taxPaid).toBe(50);
+  expect(afterGate.session.economyLog[0].moduleId).toBe("initiative");
+  expect(afterGate.session.economyLog[0].earnedDelta).toBe(500);
+
+  await page.locator('[data-pathway="scenario"]').click();
+  await page.getByRole("button", { name: "Submit scenario proof" }).click();
+  await expect(page.locator("#reward-console")).toContainText("Mission proof not banked yet");
+  await expect(page.locator("#pathway-feedback")).toContainText("Mission proof needs one more pass");
+  await expect(page.locator("#metric-salary-boost")).toHaveText("$500");
+
+  const afterScenario = await page.evaluate(() => JSON.parse(localStorage.getItem("career-empire-initiative-progress-v1")));
+  expect(afterScenario.salaryBoost).toBe(500);
+  expect(afterScenario.taxContribution).toBe(50);
+});

@@ -256,6 +256,144 @@ h1 {
   font-size: 1.55rem;
 }
 
+.reward-console {
+  position: relative;
+  overflow: hidden;
+  display: grid;
+  grid-template-columns: 82px minmax(0, 1fr);
+  gap: 12px;
+  align-items: center;
+  margin-bottom: 12px;
+  padding: 12px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.045);
+}
+
+.reward-console.is-celebration {
+  border-color: rgba(155, 227, 109, 0.58);
+  background:
+    radial-gradient(circle at 18% 20%, rgba(155, 227, 109, 0.22), transparent 34%),
+    rgba(155, 227, 109, 0.08);
+  animation: rewardPop 620ms ease-out;
+}
+
+.reward-console.is-commiseration {
+  border-color: rgba(243, 201, 105, 0.52);
+  background:
+    radial-gradient(circle at 18% 20%, rgba(243, 201, 105, 0.18), transparent 32%),
+    rgba(243, 201, 105, 0.07);
+  animation: commiserationPulse 760ms ease-out;
+}
+
+.reward-visual {
+  position: relative;
+  min-height: 76px;
+}
+
+.reward-guide {
+  position: absolute;
+  left: 0;
+  bottom: -10px;
+  width: 62px;
+  height: 76px;
+  object-fit: contain;
+  filter: drop-shadow(0 12px 20px rgba(0, 0, 0, 0.36));
+}
+
+.reward-icon {
+  position: absolute;
+  right: 4px;
+  top: 2px;
+  width: 34px;
+  height: 34px;
+  object-fit: contain;
+  filter: drop-shadow(0 8px 16px rgba(0, 0, 0, 0.34));
+}
+
+.reward-console.is-celebration .reward-icon {
+  animation: rewardIconFloat 900ms ease-out;
+}
+
+.reward-copy strong {
+  display: block;
+  margin-bottom: 4px;
+}
+
+.reward-copy p {
+  margin-bottom: 8px;
+  color: var(--muted);
+  font-size: 0.86rem;
+  line-height: 1.42;
+}
+
+.reward-chip-row,
+.reward-totals {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.reward-chip-row span,
+.reward-totals span {
+  display: inline-flex;
+  align-items: center;
+  min-height: 26px;
+  padding: 5px 8px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  color: var(--text);
+  background: rgba(8, 12, 16, 0.48);
+  font-size: 0.72rem;
+  font-weight: 800;
+}
+
+.reward-totals {
+  margin-top: 6px;
+}
+
+.reward-totals span {
+  color: var(--muted);
+}
+
+.reward-spark {
+  position: absolute;
+  width: 8px;
+  height: 8px;
+  border-radius: 999px;
+  background: var(--amber);
+  opacity: 0;
+}
+
+.reward-spark--one {
+  left: 12px;
+  top: 8px;
+}
+
+.reward-spark--two {
+  left: 48px;
+  top: 18px;
+  background: var(--teal);
+}
+
+.reward-spark--three {
+  left: 34px;
+  top: 48px;
+  background: var(--green);
+}
+
+.reward-console.is-celebration .reward-spark {
+  animation: rewardSpark 760ms ease-out forwards;
+}
+
+.reward-console.is-celebration .reward-spark--two {
+  animation-delay: 80ms;
+}
+
+.reward-console.is-celebration .reward-spark--three {
+  animation-delay: 140ms;
+}
+
 .support-signal {
   padding: 14px;
   background: rgba(88, 213, 201, 0.07);
@@ -823,6 +961,82 @@ h1 {
   opacity: 0.58;
 }
 
+@keyframes rewardPop {
+  0% {
+    transform: scale(0.96);
+    box-shadow: 0 0 0 rgba(155, 227, 109, 0);
+  }
+
+  48% {
+    transform: scale(1.02);
+    box-shadow: 0 0 34px rgba(155, 227, 109, 0.26);
+  }
+
+  100% {
+    transform: scale(1);
+    box-shadow: none;
+  }
+}
+
+@keyframes rewardIconFloat {
+  0% {
+    transform: translateY(10px) rotate(-8deg) scale(0.82);
+    opacity: 0;
+  }
+
+  55% {
+    transform: translateY(-8px) rotate(5deg) scale(1.12);
+    opacity: 1;
+  }
+
+  100% {
+    transform: translateY(0) rotate(0deg) scale(1);
+    opacity: 1;
+  }
+}
+
+@keyframes rewardSpark {
+  0% {
+    transform: translate(0, 0) scale(0.4);
+    opacity: 0;
+  }
+
+  45% {
+    opacity: 1;
+  }
+
+  100% {
+    transform: translate(18px, -22px) scale(1.1);
+    opacity: 0;
+  }
+}
+
+@keyframes commiserationPulse {
+  0% {
+    transform: translateY(0);
+  }
+
+  36% {
+    transform: translateY(-3px);
+  }
+
+  72% {
+    transform: translateY(1px);
+  }
+
+  100% {
+    transform: translateY(0);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .reward-console,
+  .reward-console.is-celebration .reward-icon,
+  .reward-console.is-celebration .reward-spark {
+    animation: none;
+  }
+}
+
 @media (max-width: 1080px) {
   .mission-board,
   .module-grid-layout,
@@ -876,6 +1090,7 @@ h1 {
   }
 
   .console-metrics,
+  .reward-console,
   .behaviour-grid,
   .pathway-grid,
   .diagnostic-options,

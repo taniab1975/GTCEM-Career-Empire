@@ -3,6 +3,50 @@ const PLAYER_SESSION_KEY = "career-empire-session";
 const MODULE_ID = "initiative";
 const MODULE_STORAGE_KEY = "career-empire-initiative-progress-v1";
 const ACTIVE_IDLE_LIMIT_MS = 45_000;
+const COMMUNITY_TAX_RATE = 0.1;
+
+const REWARD_ASSETS = {
+  celebration: "../../Assets/EST Preparation/guide-character/guide-celebration.png",
+  commiseration: "../../Assets/EST Preparation/guide-character/guide-thinking-top.png",
+  salary: "../../Assets/Images and Animations/Celebration Reward Icons/Salary Banked.png",
+  tax: "../../Assets/Images and Animations/Celebration Reward Icons/Tax contributed.png",
+  signal: "../../Assets/Images and Animations/Celebration Reward Icons/Signal restored.png",
+  complete: "../../Assets/Images and Animations/Celebration Reward Icons/Topic Complete.png"
+};
+
+const REWARD_MILESTONES = {
+  "unlock-gate": {
+    title: "Unlock Gate salary banked",
+    detail: "Core initiative knowledge is secure enough to open mission choice.",
+    earnedDelta: 500,
+    icon: "signal"
+  },
+  "mission-proof": {
+    title: "Mission proof salary banked",
+    detail: "Your chosen activity produced accurate initiative evidence.",
+    earnedDelta: 700,
+    icon: "salary"
+  },
+  "proof-drop": {
+    title: "Proof Drop salary banked",
+    detail: "You proved the common curriculum evidence, not just the activity.",
+    earnedDelta: 900,
+    icon: "tax"
+  },
+  "memory-vault": {
+    title: "Memory Vault salary banked",
+    detail: "The initiative learning held after the applied task.",
+    earnedDelta: 1200,
+    icon: "complete"
+  }
+};
+
+const IMPROVEMENT_REWARDS = {
+  core: { label: "Unlock Gate best score improved", salaryPerPoint: 4 },
+  pathway: { label: "Mission proof best score improved", salaryPerPoint: 5 },
+  evidence: { label: "Proof Drop best score improved", salaryPerPoint: 6 },
+  retention: { label: "Memory Vault best score improved", salaryPerPoint: 6 }
+};
 
 const BEHAVIOURS = [
   {
@@ -268,12 +312,17 @@ const DEFAULT_STATE = {
   activeSecondsByPhase: {},
   activeSecondsByPathway: {},
   evidenceLog: [],
-  savedSnapshots: 0
+  savedSnapshots: 0,
+  salaryBoost: 0,
+  taxContribution: 0,
+  rewardedMilestones: {},
+  lastProgressOutcome: null
 };
 
 let state = loadState();
 let lastInteractionAt = Date.now();
 let saveTimer = 0;
+let lastRewardConsoleSignature = "";
 
 function cloneDefaultState() {
   return JSON.parse(JSON.stringify(DEFAULT_STATE));
@@ -281,11 +330,17 @@ function cloneDefaultState() {
 
 function loadState() {
   const saved = readJsonStorage(MODULE_STORAGE_KEY, null);
-  return {
+  const next = {
     ...cloneDefaultState(),
     ...(saved || {}),
     startedAt: saved?.startedAt || new Date().toISOString()
   };
+  next.salaryBoost = Number(next.salaryBoost || 0);
+  next.taxContribution = Number(next.taxContribution || 0);
+  next.rewardedMilestones = next.rewardedMilestones && typeof next.rewardedMilestones === "object"
+    ? next.rewardedMilestones
+    : {};
+  return next;
 }
 
 function saveState() {
@@ -344,6 +399,44 @@ function formatDuration(seconds) {
   const minutes = Math.floor(safe / 60);
   const remainder = safe % 60;
   return remainder ? `${minutes}m ${remainder}s` : `${minutes}m`;
+}
+
+function formatCurrency(value) {
+  return `$${Number(value || 0).toLocaleString()}`;
+}
+
+function getTaxDelta(earnedDelta) {
+  return Math.round(Number(earnedDelta || 0) * COMMUNITY_TAX_RATE);
+}
+
+function pushEconomyLog(entry = {}) {
+  if (!window.CareerEmpireEconomy?.appendEvent) return [];
+  return window.CareerEmpireEconomy.appendEvent({
+    moduleId: MODULE_ID,
+    ...entry
+  });
+}
+
+function applySessionReward(earnedDelta, taxDelta) {
+  const session = getSession();
+  const baseSalary = Math.max(25000, Number(session.annualSalary ?? session.salary ?? 25000));
+  const baseTaxPaid = Math.max(0, Number(session.taxPaid || 0));
+  const nextSalary = baseSalary + Number(earnedDelta || 0);
+  const nextTaxPaid = baseTaxPaid + Number(taxDelta || 0);
+  const patch = {
+    annualSalary: nextSalary,
+    salary: nextSalary,
+    taxPaid: nextTaxPaid
+  };
+  if (window.CareerEmpireEconomy?.writeSession) {
+    window.CareerEmpireEconomy.writeSession(patch);
+  } else {
+    localStorage.setItem(PLAYER_SESSION_KEY, JSON.stringify({ ...session, ...patch }));
+  }
+  return {
+    annualSalaryAfter: nextSalary,
+    taxPaidAfter: nextTaxPaid
+  };
 }
 
 function behaviourOptionsHtml(includePlaceholder = true) {
@@ -566,11 +659,24 @@ function scoreQuestions(questions, answers) {
 
 function submitCoreDrill() {
   state.coreAttempts += 1;
+  const previousBest = Number(state.coreBestScore || 0);
   const score = scoreQuestions(CORE_QUESTIONS, state.coreAnswers);
   state.coreBestScore = Math.max(Number(state.coreBestScore || 0), score.percent);
   state.corePassed = state.coreBestScore >= 80;
   state.currentPhase = state.corePassed ? "pathway" : "core-check";
   addEvidenceLog("core-check", `Unlock Gate ${score.correct}/${score.total}`, score.percent);
+  handleRewardCheck({
+    surface: "core",
+    milestoneKey: "unlock-gate",
+    previousBest,
+    nextBest: state.coreBestScore,
+    latestScore: score.percent,
+    passed: score.percent >= 80,
+    nudgeTitle: score.percent >= 80 ? "Gate saved, salary already banked" : "Gate still locked",
+    nudgeDetail: score.percent >= 80
+      ? "Your gate pass is saved. No extra salary was added because this milestone was already banked."
+      : "Use the feedback below and retry. Salary banks when your best result improves or the gate clears."
+  });
   renderCoreResult(score);
   renderPathways();
   updateProgress();
@@ -922,6 +1028,7 @@ function renderOccupationHints() {
 }
 
 function submitPathway(pathwayId) {
+  const previousBest = getBestPathwayScore();
   const score = scorePathway(pathwayId);
   state.pathwayScores[pathwayId] = {
     score: score.percent,
@@ -931,6 +1038,18 @@ function submitPathway(pathwayId) {
   };
   if (score.percent >= 70) state.currentPhase = "evidence";
   addEvidenceLog("pathway-evidence", `${getPathway(pathwayId)?.title || "Mission"} proof submitted`, score.percent);
+  handleRewardCheck({
+    surface: "pathway",
+    milestoneKey: "mission-proof",
+    previousBest,
+    nextBest: getBestPathwayScore(),
+    latestScore: score.percent,
+    passed: score.percent >= 70,
+    nudgeTitle: score.percent >= 70 ? "Mission proof saved, salary already banked" : "Mission proof not banked yet",
+    nudgeDetail: score.percent >= 70
+      ? "Your mission proof is strong enough. No extra salary was added because the mission milestone was already banked."
+      : "The button worked, but salary needs stronger evidence. Fix the notes below, then resubmit for an improvement pulse."
+  });
   renderPathways();
   updateProgress();
   updateMetrics();
@@ -1020,6 +1139,7 @@ function scorePathway(pathwayId) {
 }
 
 function submitCommonEvidence() {
+  const previousBest = Number(state.commonEvidenceScore || 0);
   const evidence = {
     definition: document.getElementById("evidence-definition")?.value || "",
     behaviour: document.getElementById("evidence-behaviour")?.value || "",
@@ -1031,6 +1151,18 @@ function submitCommonEvidence() {
   state.commonEvidenceScore = scoreCommonEvidence(evidence);
   if (state.commonEvidenceScore >= 80) state.currentPhase = "retention";
   addEvidenceLog("common-evidence", "Initiative proof drop submitted", state.commonEvidenceScore);
+  handleRewardCheck({
+    surface: "evidence",
+    milestoneKey: "proof-drop",
+    previousBest,
+    nextBest: state.commonEvidenceScore,
+    latestScore: state.commonEvidenceScore,
+    passed: state.commonEvidenceScore >= 80,
+    nudgeTitle: state.commonEvidenceScore >= 80 ? "Proof Drop saved, salary already banked" : "Proof Drop needs more evidence",
+    nudgeDetail: state.commonEvidenceScore >= 80
+      ? "Your common evidence is strong. No extra salary was added because the Proof Drop milestone was already banked."
+      : "Add more curriculum language and workplace impact. Salary banks when this proof improves or reaches 80%."
+  });
   renderCommonEvidenceFeedback();
   updateProgress();
   updateMetrics();
@@ -1088,9 +1220,22 @@ function renderRetentionDrill() {
 }
 
 function submitRetention() {
+  const previousBest = Number(state.retentionBestScore || 0);
   const score = scoreQuestions(RETENTION_QUESTIONS, state.retentionAnswers);
   state.retentionBestScore = Math.max(Number(state.retentionBestScore || 0), score.percent);
   addEvidenceLog("retention-check", `Retention check ${score.correct}/${score.total}`, score.percent);
+  handleRewardCheck({
+    surface: "retention",
+    milestoneKey: "memory-vault",
+    previousBest,
+    nextBest: state.retentionBestScore,
+    latestScore: score.percent,
+    passed: score.percent >= 80,
+    nudgeTitle: score.percent >= 80 ? "Memory saved, salary already banked" : "Memory Vault not sealed yet",
+    nudgeDetail: score.percent >= 80
+      ? "Your retention score is strong. No extra salary was added because the Memory Vault milestone was already banked."
+      : "Review the five hook words, then retry. Salary banks when recall improves or reaches the vault threshold."
+  });
   updateProgress();
   renderRetentionResult(score);
   updateMetrics();
@@ -1123,6 +1268,119 @@ function addEvidenceLog(type, label, score) {
   state.evidenceLog = state.evidenceLog.slice(0, 20);
 }
 
+function setProgressOutcome(outcome = {}) {
+  state.lastProgressOutcome = {
+    type: outcome.type || "commiseration",
+    title: outcome.title || "Learning signal recorded",
+    detail: outcome.detail || "Your work was saved. Improve the evidence to bank the next salary reward.",
+    earnedDelta: Number(outcome.earnedDelta || 0),
+    taxDelta: Number(outcome.taxDelta || 0),
+    scoreLabel: outcome.scoreLabel || "",
+    icon: outcome.icon || "signal",
+    at: new Date().toISOString()
+  };
+  lastRewardConsoleSignature = "";
+}
+
+function awardMilestone(milestoneKey, scorePercent) {
+  const milestone = REWARD_MILESTONES[milestoneKey];
+  if (!milestone || state.rewardedMilestones?.[milestoneKey]) return false;
+  const earnedDelta = Number(milestone.earnedDelta || 0);
+  const taxDelta = getTaxDelta(earnedDelta);
+  state.rewardedMilestones[milestoneKey] = {
+    at: new Date().toISOString(),
+    earnedDelta,
+    taxDelta,
+    scorePercent: Number(scorePercent || 0)
+  };
+  state.salaryBoost = Number(state.salaryBoost || 0) + earnedDelta;
+  state.taxContribution = Number(state.taxContribution || 0) + taxDelta;
+  const sessionReward = applySessionReward(earnedDelta, taxDelta);
+  addEvidenceLog("salary-reward", `${milestone.title}: ${formatCurrency(earnedDelta)}`, scorePercent);
+  setProgressOutcome({
+    type: "celebration",
+    title: milestone.title,
+    detail: `${milestone.detail} ${formatCurrency(earnedDelta)} salary and ${formatCurrency(taxDelta)} class tax were banked.`,
+    earnedDelta,
+    taxDelta,
+    scoreLabel: `${Math.round(Number(scorePercent || 0))}%`,
+    icon: milestone.icon || "salary"
+  });
+  pushEconomyLog({
+    eventType: "reward-awarded",
+    checkpoint: milestoneKey,
+    label: milestone.title,
+    detail: milestone.detail,
+    earnedDelta,
+    taxDelta,
+    ...sessionReward,
+    salaryBoostTotal: Number(state.salaryBoost || 0),
+    taxContributionTotal: Number(state.taxContribution || 0)
+  });
+  return true;
+}
+
+function awardScoreImprovement(surface, previousPercent, nextPercent) {
+  const rule = IMPROVEMENT_REWARDS[surface];
+  const previous = Math.max(0, Number(previousPercent || 0));
+  const next = Math.max(previous, Number(nextPercent || 0));
+  const delta = next - previous;
+  if (!rule || delta <= 0) return false;
+  const earnedDelta = Math.max(0, Math.round(delta * rule.salaryPerPoint));
+  if (!earnedDelta) return false;
+  const taxDelta = getTaxDelta(earnedDelta);
+  state.salaryBoost = Number(state.salaryBoost || 0) + earnedDelta;
+  state.taxContribution = Number(state.taxContribution || 0) + taxDelta;
+  const sessionReward = applySessionReward(earnedDelta, taxDelta);
+  addEvidenceLog("salary-improvement", `${rule.label}: ${previous}% to ${next}%`, next);
+  setProgressOutcome({
+    type: "celebration",
+    title: rule.label,
+    detail: `Best result lifted from ${previous}% to ${next}%. ${formatCurrency(earnedDelta)} salary and ${formatCurrency(taxDelta)} class tax were banked for real progress.`,
+    earnedDelta,
+    taxDelta,
+    scoreLabel: `${previous}% -> ${next}%`,
+    icon: "salary"
+  });
+  pushEconomyLog({
+    eventType: "reward-awarded",
+    checkpoint: `${surface}-improvement`,
+    label: rule.label,
+    detail: `Best score improved from ${previous}% to ${next}%`,
+    earnedDelta,
+    taxDelta,
+    ...sessionReward,
+    salaryBoostTotal: Number(state.salaryBoost || 0),
+    taxContributionTotal: Number(state.taxContribution || 0)
+  });
+  return true;
+}
+
+function setProgressNudge(title, detail, scorePercent) {
+  setProgressOutcome({
+    type: "commiseration",
+    title,
+    detail,
+    earnedDelta: 0,
+    taxDelta: 0,
+    scoreLabel: `${Math.round(Number(scorePercent || 0))}%`,
+    icon: "signal"
+  });
+}
+
+function handleRewardCheck(options = {}) {
+  const latestScore = Math.round(Number(options.latestScore || 0));
+  const nextBest = Math.round(Number(options.nextBest || latestScore || 0));
+  const previousBest = Math.round(Number(options.previousBest || 0));
+  if (options.passed && awardMilestone(options.milestoneKey, latestScore)) return;
+  if (awardScoreImprovement(options.surface, previousBest, nextBest)) return;
+  setProgressNudge(
+    options.nudgeTitle || "Saved, but no new salary yet",
+    options.nudgeDetail || "Your attempt was saved. To bank salary, improve the evidence or clear the next learning threshold.",
+    latestScore
+  );
+}
+
 function getDiagnostic() {
   return DIAGNOSTICS.find(item => item.id === state.diagnostic) || null;
 }
@@ -1130,6 +1388,10 @@ function getDiagnostic() {
 function getPathwayScore() {
   const selected = state.selectedPathwayId;
   return selected ? Number(state.pathwayScores[selected]?.score || 0) : 0;
+}
+
+function getBestPathwayScore() {
+  return Math.max(0, ...Object.values(state.pathwayScores || {}).map(result => Number(result?.score || 0)));
 }
 
 function updateProgress() {
@@ -1302,12 +1564,73 @@ function renderInterventionPlan() {
   `;
 }
 
+function renderRewardConsole() {
+  const panel = document.getElementById("reward-console");
+  if (!panel) return;
+  const outcome = state.lastProgressOutcome || {
+    type: "neutral",
+    title: "Salary bank waiting",
+    detail: "Bank salary and class tax by proving learning progress, not just spending time on the page.",
+    earnedDelta: 0,
+    taxDelta: 0,
+    scoreLabel: "No attempt yet",
+    icon: "signal",
+    at: "initial"
+  };
+  const signature = [
+    outcome.at,
+    outcome.type,
+    outcome.title,
+    outcome.detail,
+    state.salaryBoost,
+    state.taxContribution
+  ].join("|");
+  if (signature === lastRewardConsoleSignature) return;
+  lastRewardConsoleSignature = signature;
+
+  const type = outcome.type || "neutral";
+  const guideSrc = type === "celebration" ? REWARD_ASSETS.celebration : REWARD_ASSETS.commiseration;
+  const iconSrc = REWARD_ASSETS[outcome.icon] || REWARD_ASSETS.signal;
+  const earnedText = Number(outcome.earnedDelta || 0) > 0
+    ? `+${formatCurrency(outcome.earnedDelta)} salary`
+    : "No new salary";
+  const taxText = Number(outcome.taxDelta || 0) > 0
+    ? `+${formatCurrency(outcome.taxDelta)} tax`
+    : "No new tax";
+
+  panel.className = `reward-console is-${type}`;
+  panel.innerHTML = `
+    <div class="reward-visual" aria-hidden="true">
+      <img class="reward-guide" src="${escapeHtml(guideSrc)}" alt="">
+      <img class="reward-icon" src="${escapeHtml(iconSrc)}" alt="">
+      <span class="reward-spark reward-spark--one"></span>
+      <span class="reward-spark reward-spark--two"></span>
+      <span class="reward-spark reward-spark--three"></span>
+    </div>
+    <div class="reward-copy">
+      <strong>${escapeHtml(outcome.title)}</strong>
+      <p>${escapeHtml(outcome.detail)}</p>
+      <div class="reward-chip-row">
+        <span>${escapeHtml(outcome.scoreLabel || "Signal recorded")}</span>
+        <span>${escapeHtml(earnedText)}</span>
+        <span>${escapeHtml(taxText)}</span>
+      </div>
+      <div class="reward-totals">
+        <span>Total salary ${escapeHtml(formatCurrency(state.salaryBoost))}</span>
+        <span>Class tax ${escapeHtml(formatCurrency(state.taxContribution))}</span>
+      </div>
+    </div>
+  `;
+}
+
 function updateMetrics() {
   updateProgress();
   setText("metric-active-time", formatDuration(state.activeSeconds));
   setText("metric-core-score", `${state.coreBestScore || 0}%`);
   setText("metric-retention-score", `${state.retentionBestScore || 0}%`);
   setText("metric-progress", `${state.completionPercent || 0}%`);
+  setText("metric-salary-boost", formatCurrency(state.salaryBoost));
+  setText("metric-tax-contribution", formatCurrency(state.taxContribution));
   setText("evidence-state", state.completionPercent >= 100 ? "Complete" : state.corePassed ? "Mission active" : "Gate pending");
 
   const signal = getSupportSignal();
@@ -1318,6 +1641,7 @@ function updateMetrics() {
   }
 
   renderInterventionPlan();
+  renderRewardConsole();
   updateStageFlow();
 }
 
@@ -1338,6 +1662,10 @@ function buildSnapshot(taskName = "snapshot") {
     pathway_id: state.selectedPathwayId,
     pathway_title: pathway?.title || "",
     pathway_score_percent: getPathwayScore(),
+    salary_boost: Number(state.salaryBoost || 0),
+    tax_contribution: Number(state.taxContribution || 0),
+    rewarded_milestones: state.rewardedMilestones,
+    last_progress_outcome: state.lastProgressOutcome,
     support_signal: signal.title,
     support_signal_detail: signal.copy,
     diagnostic: state.diagnostic,
@@ -1435,6 +1763,7 @@ function wireEvents() {
   document.getElementById("reset-module")?.addEventListener("click", () => {
     localStorage.removeItem(MODULE_STORAGE_KEY);
     state = loadState();
+    lastRewardConsoleSignature = "";
     renderAll();
     saveState();
   });
