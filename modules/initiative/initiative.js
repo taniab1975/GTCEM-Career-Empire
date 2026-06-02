@@ -323,7 +323,6 @@ let state = loadState();
 let lastInteractionAt = Date.now();
 let saveTimer = 0;
 let lastRewardConsoleSignature = "";
-let avatarMomentsArmed = false;
 
 function cloneDefaultState() {
   return JSON.parse(JSON.stringify(DEFAULT_STATE));
@@ -371,47 +370,6 @@ function getAvatarProfile() {
   const username = authState?.studentLogin?.username || session?.username || "local";
   const avatarStore = readJsonStorage("career-empire-avatar-v1", {});
   return avatarStore?.profiles?.[username] || avatarStore?.currentProfile || {};
-}
-
-function showAvatarMoment(momentId, options = {}) {
-  if (!avatarMomentsArmed || !window.CareerEmpireAvatarMoments) return false;
-  return window.CareerEmpireAvatarMoments.show(momentId, {
-    moduleId: MODULE_ID,
-    ...options
-  });
-}
-
-function showOutcomeAvatarMoment(targetSelector) {
-  const outcome = state.lastProgressOutcome || {};
-  if (!outcome.at || outcome.at === "initial" || outcome.type === "neutral") return false;
-  const celebration = outcome.type === "celebration";
-  return showAvatarMoment(celebration ? "reward" : "proof-needs-work", {
-    label: celebration ? "Salary banked" : "Review signal",
-    variant: celebration ? "success" : "warning",
-    reason: `initiative-${outcome.type}-${outcome.icon || "signal"}`,
-    targetSelector,
-    cooldownMs: celebration ? 2800 : 14000,
-    displayMs: celebration ? 4300 : 3600,
-    force: celebration && Number(outcome.earnedDelta || 0) > 0
-  });
-}
-
-function getRewardAvatarMoment(type) {
-  if (type === "celebration") return { id: "reward", label: "Salary banked" };
-  if (type === "commiseration") return { id: "proof-needs-work", label: "Review signal" };
-  return { id: "mission-start", label: "Avatar ready" };
-}
-
-function getRewardAvatarVideoMarkup(type) {
-  const avatarMoments = window.CareerEmpireAvatarMoments;
-  const moment = getRewardAvatarMoment(type);
-  const clip = avatarMoments?.resolveClip?.(moment.id);
-  const clipUrl = clip && avatarMoments?.getClipUrl?.(clip);
-  if (!clipUrl) return "";
-  return `
-    <video class="reward-avatar-video" src="${escapeHtml(clipUrl)}" muted playsinline loop autoplay preload="metadata"></video>
-    <span class="reward-avatar-caption">${escapeHtml(moment.label)}</span>
-  `;
 }
 
 function escapeHtml(value) {
@@ -723,7 +681,6 @@ function submitCoreDrill() {
   renderPathways();
   updateProgress();
   updateMetrics();
-  showOutcomeAvatarMoment("#core-result");
   saveState();
   saveTeacherSnapshot("core-check").catch(console.warn);
 }
@@ -809,13 +766,6 @@ function selectPathway(pathwayId) {
   state.currentPhase = `pathway:${pathwayId}`;
   addEvidenceLog("pathway-start", `Started pathway: ${pathway?.title || pathwayId}`, null);
   renderPathways();
-  showAvatarMoment(pathwayId === "song" ? "song-remix" : "mission-start", {
-    label: pathwayId === "song" ? "Remix mode" : `${pathway?.signal || "Mission"} mission`,
-    reason: `initiative-pathway-${pathwayId}`,
-    targetSelector: "#pathway-stage",
-    cooldownMs: 6500,
-    displayMs: 3200
-  });
   updateProgress();
   saveState();
 }
@@ -1104,7 +1054,6 @@ function submitPathway(pathwayId) {
   renderPathways();
   updateProgress();
   updateMetrics();
-  showOutcomeAvatarMoment("#pathway-feedback");
   saveState();
   saveTeacherSnapshot(`pathway-${pathwayId}`).catch(console.warn);
   window.setTimeout(() => {
@@ -1218,7 +1167,6 @@ function submitCommonEvidence() {
   renderCommonEvidenceFeedback();
   updateProgress();
   updateMetrics();
-  showOutcomeAvatarMoment("#evidence-feedback");
   saveState();
   saveTeacherSnapshot("common-evidence").catch(console.warn);
 }
@@ -1292,7 +1240,6 @@ function submitRetention() {
   updateProgress();
   renderRetentionResult(score);
   updateMetrics();
-  showOutcomeAvatarMoment("#retention-result");
   saveState();
   saveTeacherSnapshot("retention-check").catch(console.warn);
 }
@@ -1645,7 +1592,6 @@ function renderRewardConsole() {
   const type = outcome.type || "neutral";
   const guideSrc = type === "celebration" ? REWARD_ASSETS.celebration : REWARD_ASSETS.commiseration;
   const iconSrc = REWARD_ASSETS[outcome.icon] || REWARD_ASSETS.signal;
-  const rewardAvatarMarkup = getRewardAvatarVideoMarkup(type);
   const earnedText = Number(outcome.earnedDelta || 0) > 0
     ? `+${formatCurrency(outcome.earnedDelta)} salary`
     : "No new salary";
@@ -1655,8 +1601,8 @@ function renderRewardConsole() {
 
   panel.className = `reward-console is-${type}`;
   panel.innerHTML = `
-    <div class="reward-visual ${rewardAvatarMarkup ? "has-avatar-video" : ""}" aria-hidden="true">
-      ${rewardAvatarMarkup || `<img class="reward-guide" src="${escapeHtml(guideSrc)}" alt="">`}
+    <div class="reward-visual" aria-hidden="true">
+      <img class="reward-guide" src="${escapeHtml(guideSrc)}" alt="">
       <img class="reward-icon" src="${escapeHtml(iconSrc)}" alt="">
       <span class="reward-spark reward-spark--one"></span>
       <span class="reward-spark reward-spark--two"></span>
@@ -1676,12 +1622,6 @@ function renderRewardConsole() {
       </div>
     </div>
   `;
-  const rewardAvatarVideo = panel.querySelector(".reward-avatar-video");
-  if (rewardAvatarVideo) {
-    rewardAvatarVideo.muted = true;
-    rewardAvatarVideo.playsInline = true;
-    rewardAvatarVideo.play().catch(() => {});
-  }
 
 }
 
@@ -1826,9 +1766,7 @@ function wireEvents() {
     localStorage.removeItem(MODULE_STORAGE_KEY);
     state = loadState();
     lastRewardConsoleSignature = "";
-    avatarMomentsArmed = false;
     renderAll();
-    avatarMomentsArmed = true;
     saveState();
   });
   document.querySelectorAll("[data-jump-section]").forEach(button => {
@@ -1860,7 +1798,6 @@ function renderAll() {
 function init() {
   renderAll();
   wireEvents();
-  avatarMomentsArmed = true;
   startTelemetry();
   saveState();
 }
