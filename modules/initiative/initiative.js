@@ -396,6 +396,24 @@ function showOutcomeAvatarMoment(targetSelector) {
   });
 }
 
+function getRewardAvatarMoment(type) {
+  if (type === "celebration") return { id: "reward", label: "Salary banked" };
+  if (type === "commiseration") return { id: "proof-needs-work", label: "Review signal" };
+  return { id: "mission-start", label: "Avatar ready" };
+}
+
+function getRewardAvatarVideoMarkup(type) {
+  const avatarMoments = window.CareerEmpireAvatarMoments;
+  const moment = getRewardAvatarMoment(type);
+  const clip = avatarMoments?.resolveClip?.(moment.id);
+  const clipUrl = clip && avatarMoments?.getClipUrl?.(clip);
+  if (!clipUrl) return "";
+  return `
+    <video class="reward-avatar-video" src="${escapeHtml(clipUrl)}" muted playsinline loop autoplay preload="metadata"></video>
+    <span class="reward-avatar-caption">${escapeHtml(moment.label)}</span>
+  `;
+}
+
 function escapeHtml(value) {
   return String(value || "")
     .replaceAll("&", "&amp;")
@@ -1627,6 +1645,7 @@ function renderRewardConsole() {
   const type = outcome.type || "neutral";
   const guideSrc = type === "celebration" ? REWARD_ASSETS.celebration : REWARD_ASSETS.commiseration;
   const iconSrc = REWARD_ASSETS[outcome.icon] || REWARD_ASSETS.signal;
+  const rewardAvatarMarkup = getRewardAvatarVideoMarkup(type);
   const earnedText = Number(outcome.earnedDelta || 0) > 0
     ? `+${formatCurrency(outcome.earnedDelta)} salary`
     : "No new salary";
@@ -1636,8 +1655,8 @@ function renderRewardConsole() {
 
   panel.className = `reward-console is-${type}`;
   panel.innerHTML = `
-    <div class="reward-visual" aria-hidden="true">
-      <img class="reward-guide" src="${escapeHtml(guideSrc)}" alt="">
+    <div class="reward-visual ${rewardAvatarMarkup ? "has-avatar-video" : ""}" aria-hidden="true">
+      ${rewardAvatarMarkup || `<img class="reward-guide" src="${escapeHtml(guideSrc)}" alt="">`}
       <img class="reward-icon" src="${escapeHtml(iconSrc)}" alt="">
       <span class="reward-spark reward-spark--one"></span>
       <span class="reward-spark reward-spark--two"></span>
@@ -1657,6 +1676,12 @@ function renderRewardConsole() {
       </div>
     </div>
   `;
+  const rewardAvatarVideo = panel.querySelector(".reward-avatar-video");
+  if (rewardAvatarVideo) {
+    rewardAvatarVideo.muted = true;
+    rewardAvatarVideo.playsInline = true;
+    rewardAvatarVideo.play().catch(() => {});
+  }
 
 }
 

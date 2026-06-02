@@ -165,6 +165,7 @@
   window.CareerEmpireAvatarMoments = {
     clips: CLIPS,
     aliases: ALIASES,
+    getClipUrl,
     show,
     hide,
     preload,

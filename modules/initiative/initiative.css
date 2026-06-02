@@ -260,7 +260,7 @@ h1 {
   position: relative;
   overflow: hidden;
   display: grid;
-  grid-template-columns: 82px minmax(0, 1fr);
+  grid-template-columns: minmax(112px, 0.9fr) minmax(0, 1fr);
   gap: 12px;
   align-items: center;
   margin-bottom: 12px;
@@ -291,6 +291,32 @@ h1 {
   min-height: 76px;
 }
 
+.reward-visual.has-avatar-video {
+  min-height: 106px;
+}
+
+.reward-avatar-video {
+  display: block;
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  border: 1px solid rgba(88, 213, 201, 0.34);
+  border-radius: 8px;
+  background: linear-gradient(180deg, #425463, #162431);
+  filter: brightness(0.72) saturate(0.82) contrast(0.98) sepia(0.06);
+  object-fit: cover;
+  box-shadow: 0 12px 24px rgba(0, 0, 0, 0.28);
+}
+
+.reward-avatar-caption {
+  display: block;
+  margin-top: 6px;
+  color: var(--text);
+  font-size: 0.68rem;
+  font-weight: 900;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
 .reward-guide {
   position: absolute;
   left: 0;
@@ -303,8 +329,8 @@ h1 {
 
 .reward-icon {
   position: absolute;
-  right: 4px;
-  top: 2px;
+  right: 6px;
+  top: 6px;
   width: 34px;
   height: 34px;
   object-fit: contain;
@@ -1099,6 +1125,10 @@ h1 {
   .evidence-form,
   .mini-score-row {
     grid-template-columns: 1fr;
+  }
+
+  .reward-visual.has-avatar-video {
+    min-height: 0;
   }
 
   h1 {

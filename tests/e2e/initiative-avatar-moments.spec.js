@@ -14,12 +14,15 @@ test("Initiative uses avatar moments for nudges and rewards", async ({ page }) =
   await page.reload({ waitUntil: "domcontentloaded" });
 
   await expect(page.locator(".ce-avatar-moment")).toHaveCount(0);
+  await expect(page.locator(".reward-avatar-video")).toBeVisible();
+  await expect(page.locator(".reward-avatar-video")).toHaveAttribute("src", /ecc-boy-wave\.mp4/);
 
   await page.getByRole("button", { name: "Test the gate" }).click();
   const moment = page.locator(".ce-avatar-moment");
   await expect(moment).toBeVisible();
   await expect(moment.locator(".ce-avatar-moment__caption")).toHaveText("Review signal");
   await expect(moment.locator("video")).toHaveAttribute("src", /ecc-boy-think\.mp4/);
+  await expect(page.locator(".reward-avatar-video")).toHaveAttribute("src", /ecc-boy-think\.mp4/);
 
   const gateAnswers = {
     definition: "initiative",
@@ -36,6 +39,7 @@ test("Initiative uses avatar moments for nudges and rewards", async ({ page }) =
 
   await expect(moment.locator(".ce-avatar-moment__caption")).toHaveText("Salary banked");
   await expect(moment.locator("video")).toHaveAttribute("src", /ecc-boy-celebrate\.mp4/);
+  await expect(page.locator(".reward-avatar-video")).toHaveAttribute("src", /ecc-boy-celebrate\.mp4/);
 
   await page.locator('[data-pathway="scenario"]').click();
   await expect(moment.locator(".ce-avatar-moment__caption")).toHaveText("Decode mission");
