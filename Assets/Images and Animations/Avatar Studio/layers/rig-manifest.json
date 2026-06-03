@@ -1,10 +1,111 @@
 {
-  "schemaVersion": 1,
-  "purpose": "Production first-pass avatar-builder layer rigs.",
+  "schemaVersion": 2,
+  "purpose": "Anchor-registered avatar-builder layer rigs. Every swappable asset must use the full transparent canvas and align to these named points.",
   "canvas": {
     "width": 1024,
     "height": 1536
   },
+  "starterPack": {
+    "id": "ecc-standard-starter-v1",
+    "status": "starter-stack-active",
+    "rule": "Use one perfect boy rig and one perfect girl rig before expanding optional face/body variants.",
+    "warning": "Some first-pass PNGs in the rig folders are reference extractions, not accepted isolated layers. Validate each file before using stacked rendering.",
+    "acceptedLayers": [
+      "hair/back.png",
+      "legs/left-upper.png",
+      "legs/right-upper.png",
+      "legs/left-lower.png",
+      "legs/right-lower.png",
+      "shoes/left.png",
+      "shoes/right.png",
+      "body/skin-neck.png",
+      "uniform/lower.png",
+      "uniform/shirt.png",
+      "uniform/tie.png",
+      "uniform/jumper.png",
+      "uniform/blazer.png",
+      "arms/left-upper.png",
+      "arms/right-upper.png",
+      "arms/left-forearm-hand.png",
+      "arms/right-forearm-hand.png",
+      "head/base.png",
+      "hair/front.png",
+      "accessories/crest-badge.png",
+      "skin/mask.png",
+      "accessories/small-earrings.png",
+      "face/eye-colour-brown.png",
+      "face/eye-colour-amber.png",
+      "face/eye-colour-green.png",
+      "face/eye-colour-blue.png",
+      "face/eye-colour-grey.png"
+    ]
+  },
+  "eyeColourLayers": {
+    "brown": "face/eye-colour-brown.png",
+    "amber": "face/eye-colour-amber.png",
+    "green": "face/eye-colour-green.png",
+    "blue": "face/eye-colour-blue.png",
+    "grey": "face/eye-colour-grey.png"
+  },
+  "layerOrder": [
+    "hair/back.png",
+    "legs/left-upper.png",
+    "legs/right-upper.png",
+    "legs/left-lower.png",
+    "legs/right-lower.png",
+    "shoes/left.png",
+    "shoes/right.png",
+    "body/skin-neck.png",
+    "uniform/lower.png",
+    "uniform/shirt.png",
+    "uniform/tie.png",
+    "uniform/jumper.png",
+    "uniform/blazer.png",
+    "arms/left-upper.png",
+    "arms/right-upper.png",
+    "arms/left-forearm-hand.png",
+    "arms/right-forearm-hand.png",
+    "head/base.png",
+    "hair/front.png",
+    "accessories/crest-badge.png"
+  ],
+  "layerContracts": [
+    {
+      "slot": "hair/back",
+      "order": 10,
+      "anchor": "headCenter",
+      "canvas": "1024x1536 transparent",
+      "overlap": "May tuck behind neck and shoulders."
+    },
+    {
+      "slot": "uniform/shirt",
+      "order": 60,
+      "anchor": "neckOpening",
+      "canvas": "1024x1536 transparent",
+      "overlap": "Must include 5-15 hidden pixels under blazer, jumper, cuffs, and waist."
+    },
+    {
+      "slot": "uniform/blazer",
+      "order": 90,
+      "anchor": "shoulderLine",
+      "canvas": "1024x1536 transparent",
+      "overlap": "Must match leftShoulder and rightShoulder and cover shirt/jumper edges."
+    },
+    {
+      "slot": "uniform/lower",
+      "order": 50,
+      "anchor": "waistLine",
+      "canvas": "1024x1536 transparent",
+      "overlap": "Must tuck under shirt/jumper by 5-15 pixels."
+    },
+    {
+      "slot": "accessories/face",
+      "order": 140,
+      "anchor": "leftEye/rightEye/noseBridge",
+      "canvas": "1024x1536 transparent",
+      "overlap": "Glasses and face accessories align by landmarks, not by bounding box."
+    }
+  ],
   "rigs": {
     "ecc-boy-base-neutral": {
       "id": "ecc-boy-base-neutral",
@@ -51,6 +152,78 @@
           "nx": 0.5,
           "ny": 0.2122
         },
+        "leftEye": {
+          "x": 454,
+          "y": 309,
+          "nx": 0.4434,
+          "ny": 0.2012
+        },
+        "rightEye": {
+          "x": 544,
+          "y": 309,
+          "nx": 0.5313,
+          "ny": 0.2012
+        },
+        "browLine": {
+          "x": 512,
+          "y": 280,
+          "nx": 0.5,
+          "ny": 0.1823
+        },
+        "noseBridge": {
+          "x": 512,
+          "y": 336,
+          "nx": 0.5,
+          "ny": 0.2188
+        },
+        "mouthCenter": {
+          "x": 512,
+          "y": 378,
+          "nx": 0.5,
+          "ny": 0.2461
+        },
+        "leftCheek": {
+          "x": 420,
+          "y": 354,
+          "nx": 0.4102,
+          "ny": 0.2305
+        },
+        "rightCheek": {
+          "x": 584,
+          "y": 354,
+          "nx": 0.5703,
+          "ny": 0.2305
+        },
+        "leftEar": {
+          "x": 390,
+          "y": 458,
+          "nx": 0.3809,
+          "ny": 0.2982
+        },
+        "rightEar": {
+          "x": 626,
+          "y": 458,
+          "nx": 0.6113,
+          "ny": 0.2982
+        },
+        "neckOpening": {
+          "x": 512,
+          "y": 566,
+          "nx": 0.5,
+          "ny": 0.3685
+        },
+        "chest": {
+          "x": 512,
+          "y": 742,
+          "nx": 0.5,
+          "ny": 0.4831
+        },
+        "waistLine": {
+          "x": 512,
+          "y": 826,
+          "nx": 0.5,
+          "ny": 0.5378
+        },
         "leftShoulder": {
           "x": 370,
           "y": 596,
@@ -86,6 +259,18 @@
           "y": 1005,
           "nx": 0.666,
           "ny": 0.6543
+        },
+        "leftFoot": {
+          "x": 438,
+          "y": 1470,
+          "nx": 0.4277,
+          "ny": 0.957
+        },
+        "rightFoot": {
+          "x": 588,
+          "y": 1470,
+          "nx": 0.5742,
+          "ny": 0.957
         }
       },
       "layers": [
@@ -321,6 +506,78 @@
           "nx": 0.5,
           "ny": 0.1921
         },
+        "leftEye": {
+          "x": 454,
+          "y": 282,
+          "nx": 0.4434,
+          "ny": 0.1836
+        },
+        "rightEye": {
+          "x": 544,
+          "y": 282,
+          "nx": 0.5313,
+          "ny": 0.1836
+        },
+        "browLine": {
+          "x": 512,
+          "y": 254,
+          "nx": 0.5,
+          "ny": 0.1654
+        },
+        "noseBridge": {
+          "x": 512,
+          "y": 310,
+          "nx": 0.5,
+          "ny": 0.2018
+        },
+        "mouthCenter": {
+          "x": 512,
+          "y": 350,
+          "nx": 0.5,
+          "ny": 0.2279
+        },
+        "leftCheek": {
+          "x": 420,
+          "y": 326,
+          "nx": 0.4102,
+          "ny": 0.2122
+        },
+        "rightCheek": {
+          "x": 584,
+          "y": 326,
+          "nx": 0.5703,
+          "ny": 0.2122
+        },
+        "leftEar": {
+          "x": 392,
+          "y": 440,
+          "nx": 0.3828,
+          "ny": 0.2865
+        },
+        "rightEar": {
+          "x": 624,
+          "y": 440,
+          "nx": 0.6094,
+          "ny": 0.2865
+        },
+        "neckOpening": {
+          "x": 512,
+          "y": 548,
+          "nx": 0.5,
+          "ny": 0.3568
+        },
+        "chest": {
+          "x": 512,
+          "y": 716,
+          "nx": 0.5,
+          "ny": 0.4661
+        },
+        "waistLine": {
+          "x": 512,
+          "y": 790,
+          "nx": 0.5,
+          "ny": 0.5143
+        },
         "leftShoulder": {
           "x": 372,
           "y": 560,
@@ -356,6 +613,18 @@
           "y": 936,
           "nx": 0.6719,
           "ny": 0.6094
+        },
+        "leftFoot": {
+          "x": 430,
+          "y": 1470,
+          "nx": 0.4199,
+          "ny": 0.957
+        },
+        "rightFoot": {
+          "x": 594,
+          "y": 1470,
+          "nx": 0.5801,
+          "ny": 0.957
         }
       },
       "layers": [

@@ -769,6 +769,11 @@
     return config.accessoryLayers?.[state.accessory] || null;
   }
 
+  function getProductionEyeColourLayerPath(config) {
+    if (!state.eyeColour) return null;
+    return config.eyeColourLayers?.[state.eyeColour] || null;
+  }
+
   function getRigLayerMotion(layerPath) {
     if (layerPath === "head/base.png") return "head";
     if (layerPath.startsWith("hair/")) return "hair";
@@ -860,53 +865,111 @@
     `;
   }
 
-  function getProductionFeatureAnchors(rig) {
-    if (rig?.id === "ecc-girl-base-neutral") {
-      return {
-        eyeY: 282,
-        leftEyeX: 454,
-        rightEyeX: 544,
-        browY: 254,
-        cheekY: 326,
-        mouthY: 350,
-        earY: 440,
-        leftEarX: 392,
-        rightEarX: 624,
-        neckY: 548,
-        chestY: 716,
-        faceY: 410,
-        faceRx: 102,
-        faceRy: 128,
-        leftHandX: 356,
-        rightHandX: 666,
-        handY: 944
-      };
-    }
+  function renderProductionRigEyeColourLayer(basePath, config) {
+    const layerPath = getProductionEyeColourLayerPath(config);
+    if (!layerPath) return "";
+    return `
+      <img
+        class="avatar-production-rig-layer avatar-production-rig-layer--eye-colour"
+        src="${escapeHtml(`${basePath}/${layerPath}`)}"
+        alt=""
+        aria-hidden="true"
+        decoding="async"
+        data-rig-motion="${escapeHtml(getRigLayerMotion(layerPath))}"
+        data-rig-layer="${escapeHtml(layerPath)}"
+        data-rig-feature="eye-colour"
+        data-eye-colour="${escapeHtml(state.eyeColour)}"
+      >
+    `;
+  }
+
+  function getRigPoint(rig, key, fallback) {
+    const point = rig?.anchors?.[key];
     return {
-      eyeY: 309,
-      leftEyeX: 454,
-      rightEyeX: 544,
-      browY: 280,
-      cheekY: 354,
-      mouthY: 378,
-      earY: 458,
-      leftEarX: 390,
-      rightEarX: 626,
-      neckY: 566,
-      chestY: 742,
-      faceY: 435,
-      faceRx: 104,
-      faceRy: 132,
-      leftHandX: 360,
-      rightHandX: 678,
-      handY: 1030
+      x: Number.isFinite(point?.x) ? point.x : fallback.x,
+      y: Number.isFinite(point?.y) ? point.y : fallback.y
     };
   }
 
-  function renderProductionRigFeatureOverlay(rig, skin, outfit, hasAssetAccessory) {
+  function getProductionFeatureFallbacks(rig) {
+    if (rig?.id === "ecc-girl-base-neutral") {
+      return {
+        leftEye: { x: 454, y: 282 },
+        rightEye: { x: 544, y: 282 },
+        browLine: { x: 512, y: 254 },
+        leftCheek: { x: 420, y: 326 },
+        rightCheek: { x: 584, y: 326 },
+        mouthCenter: { x: 512, y: 350 },
+        leftEar: { x: 392, y: 440 },
+        rightEar: { x: 624, y: 440 },
+        neckOpening: { x: 512, y: 548 },
+        chest: { x: 512, y: 716 },
+        faceCenter: { x: 512, y: 410 },
+        leftHandRest: { x: 356, y: 944 },
+        rightHandRest: { x: 666, y: 944 },
+        faceRx: 102,
+        faceRy: 128
+      };
+    }
+    return {
+      leftEye: { x: 454, y: 309 },
+      rightEye: { x: 544, y: 309 },
+      browLine: { x: 512, y: 280 },
+      leftCheek: { x: 420, y: 354 },
+      rightCheek: { x: 584, y: 354 },
+      mouthCenter: { x: 512, y: 378 },
+      leftEar: { x: 390, y: 458 },
+      rightEar: { x: 626, y: 458 },
+      neckOpening: { x: 512, y: 566 },
+      chest: { x: 512, y: 742 },
+      faceCenter: { x: 512, y: 435 },
+      leftHandRest: { x: 360, y: 1030 },
+      rightHandRest: { x: 678, y: 1030 },
+      faceRx: 104,
+      faceRy: 132
+    };
+  }
+
+  function getProductionFeatureAnchors(rig) {
+    const fallback = getProductionFeatureFallbacks(rig);
+    const leftEye = getRigPoint(rig, "leftEye", fallback.leftEye);
+    const rightEye = getRigPoint(rig, "rightEye", fallback.rightEye);
+    const browLine = getRigPoint(rig, "browLine", fallback.browLine);
+    const leftCheek = getRigPoint(rig, "leftCheek", fallback.leftCheek);
+    const rightCheek = getRigPoint(rig, "rightCheek", fallback.rightCheek);
+    const mouthCenter = getRigPoint(rig, "mouthCenter", fallback.mouthCenter);
+    const leftEar = getRigPoint(rig, "leftEar", fallback.leftEar);
+    const rightEar = getRigPoint(rig, "rightEar", fallback.rightEar);
+    const neckOpening = getRigPoint(rig, "neckOpening", fallback.neckOpening);
+    const chest = getRigPoint(rig, "chest", fallback.chest);
+    const faceCenter = getRigPoint(rig, "faceCenter", fallback.faceCenter);
+    const leftHandRest = getRigPoint(rig, "leftHandRest", fallback.leftHandRest);
+    const rightHandRest = getRigPoint(rig, "rightHandRest", fallback.rightHandRest);
+    return {
+      eyeY: Math.round((leftEye.y + rightEye.y) / 2),
+      leftEyeX: leftEye.x,
+      rightEyeX: rightEye.x,
+      browY: browLine.y,
+      cheekY: Math.round((leftCheek.y + rightCheek.y) / 2),
+      mouthY: mouthCenter.y,
+      earY: Math.round((leftEar.y + rightEar.y) / 2),
+      leftEarX: leftEar.x,
+      rightEarX: rightEar.x,
+      neckY: neckOpening.y,
+      chestY: chest.y,
+      faceY: faceCenter.y,
+      faceRx: fallback.faceRx,
+      faceRy: fallback.faceRy,
+      leftHandX: leftHandRest.x,
+      rightHandX: rightHandRest.x,
+      handY: Math.round((leftHandRest.y + rightHandRest.y) / 2)
+    };
+  }
+
+  function renderProductionRigFeatureOverlay(rig, skin, outfit, hasAssetAccessory, hasEyeColourAsset) {
     const anchors = getProductionFeatureAnchors(rig);
     const eyeColour = findById(eyeColours, state.eyeColour);
-    const eyeColourOverlay = `
+    const eyeColourOverlay = hasEyeColourAsset ? "" : `
       <g
         data-rig-feature="eye-colour"
         data-eye-colour="${escapeHtml(eyeColour.id)}"
@@ -1003,6 +1066,7 @@
     const basePath = `${config.basePath}/${rig.fileRoot}`;
     const animationState = state.animationState || "idle";
     const hasAssetAccessory = Boolean(getProductionAccessoryLayerPath(config));
+    const hasEyeColourAsset = Boolean(getProductionEyeColourLayerPath(config));
     let skinMaskInserted = false;
     const layers = config.usePreviewBase
       ? renderProductionRigBaseLayer(basePath, config, rig)
@@ -1022,8 +1086,9 @@
         ${layers}
         ${config.usePreviewBase || !skinMaskInserted ? renderProductionRigSkinMask(basePath, config, skin) : ""}
         ${config.usePreviewBase ? renderProductionRigHairMask(basePath, config, hairColour) : ""}
+        ${renderProductionRigEyeColourLayer(basePath, config)}
         ${renderProductionRigAccessoryLayer(basePath, config)}
-        ${renderProductionRigFeatureOverlay(rig, skin, outfit, hasAssetAccessory)}
+        ${renderProductionRigFeatureOverlay(rig, skin, outfit, hasAssetAccessory, hasEyeColourAsset)}
       </div>
     `;
   }
@@ -1052,7 +1117,23 @@
         uniform: outfit?.source || outfit?.family || "prototype",
         base: productionRig ? "avatar-builder-png-rig" : characterBase?.imagePath ? "ecc-character-reference" : "layered-svg-prototype",
         manifest: productionRig ? avatarParts.productionRigs?.manifestPath : null,
-        layerRoot: productionRig ? `${avatarParts.productionRigs?.basePath}/${productionRig.fileRoot}` : null
+        layerRoot: productionRig ? `${avatarParts.productionRigs?.basePath}/${productionRig.fileRoot}` : null,
+        eyeColourLayer: productionRig && avatarParts.productionRigs?.eyeColourLayers?.[profile.eyeColour]
+          ? `${avatarParts.productionRigs.basePath}/${productionRig.fileRoot}/${avatarParts.productionRigs.eyeColourLayers[profile.eyeColour]}`
+          : null
+      },
+      technicalSpec: productionRig ? {
+        starterPackId: avatarParts.productionRigs?.starterPackId || null,
+        canvas: avatarParts.productionRigs?.canvas || null,
+        compatibleBodyRig: productionRig.compatibleBodyRig || null,
+        compatibleFaceRig: productionRig.compatibleFaceRig || null,
+        anchors: productionRig.anchors || {},
+        layerOrder: getProductionLayerOrder(avatarParts.productionRigs || {}),
+        layerContracts: avatarParts.productionRigs?.layerContracts || []
+      } : null,
+      assetReadiness: {
+        activeOnly: true,
+        plannedOptionsAreDisabled: true
       }
     };
   }

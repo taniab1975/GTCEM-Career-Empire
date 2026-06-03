@@ -33,6 +33,8 @@ test("Avatar Studio saves a future-self profile locally", async ({ page }) => {
   expect(saved.latest.avatarSpec.slots.uniform).toBeTruthy();
   expect(saved.latest.avatarSpec.slots.hairStyle).toBeTruthy();
   expect(saved.latest.avatarSpec.slots.eyeColour).toBeTruthy();
+  expect(saved.latest.avatarSpec.technicalSpec.compatibleBodyRig).toMatch(/^ecc-(boy|girl)-standard$/);
+  expect(saved.latest.avatarSpec.technicalSpec.anchors.leftEye).toBeTruthy();
 });
 
 test("Avatar Studio defaults to the ECC rig bases", async ({ page }) => {
@@ -52,7 +54,13 @@ test("Avatar Studio ECC rig uses starter modular art layers", async ({ page }) =
 
   await page.locator('[data-avatar-value="ecc-boy-rig-source"]').click();
   await expect(page.locator("#avatar-render .avatar-production-rig")).toBeVisible();
-  expect(await getPreviewHtml()).toContain('data-rig-layer="sheet-base.png"');
+  const starterPreview = await getPreviewHtml();
+  expect(starterPreview).toContain('data-rig-layer="head/base.png"');
+  expect(starterPreview).toContain('data-rig-layer="uniform/shirt.png"');
+  expect(starterPreview).toContain('data-rig-layer="uniform/tie.png"');
+  expect(starterPreview).toContain('data-rig-layer="uniform/jumper.png"');
+  expect(starterPreview).toContain('data-rig-layer="uniform/blazer.png"');
+  expect(starterPreview).not.toContain('data-rig-layer="face/expression-neutral.png"');
 
   await page.locator('[data-avatar-value="deep"]').click();
   const deepSkinPreview = await getPreviewHtml();
@@ -64,7 +72,7 @@ test("Avatar Studio ECC rig uses starter modular art layers", async ({ page }) =
   const greenEyesPreview = await getPreviewHtml();
   expect(greenEyesPreview).toContain('data-rig-feature="eye-colour"');
   expect(greenEyesPreview).toContain('data-eye-colour="green"');
-  expect(greenEyesPreview).toContain("#5f7d32");
+  expect(greenEyesPreview).toContain('data-rig-layer="face/eye-colour-green.png"');
 
   await page.getByRole("tab", { name: "Hair" }).click();
   await expect(page.locator('[data-avatar-value="crop"]')).toBeDisabled();
