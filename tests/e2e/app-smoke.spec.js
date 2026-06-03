@@ -32,50 +32,54 @@ test("Avatar Studio saves a future-self profile locally", async ({ page }) => {
   expect(saved.latest.completion).toBe(100);
   expect(saved.latest.avatarSpec.slots.uniform).toBeTruthy();
   expect(saved.latest.avatarSpec.slots.hairStyle).toBeTruthy();
+  expect(saved.latest.avatarSpec.slots.eyeColour).toBeTruthy();
 });
 
-test("Avatar Studio style controls update the visible avatar", async ({ page }) => {
+test("Avatar Studio defaults to the ECC rig bases", async ({ page }) => {
   await page.goto("/modules/avatar/", { waitUntil: "domcontentloaded" });
 
-  const getPreviewHtml = () => page.locator("#avatar-render").evaluate(element => element.innerHTML);
-  await expect(page.locator("#avatar-render svg")).toBeVisible();
-
-  const initialPreview = await getPreviewHtml();
-  await page.getByRole("button", { name: "Deep" }).click();
-  const deepSkinPreview = await getPreviewHtml();
-  expect(deepSkinPreview).not.toBe(initialPreview);
-  expect(deepSkinPreview).toContain("#38251f");
-
-  await page.getByRole("tab", { name: "Hair" }).click();
-  await page.getByRole("button", { name: "Blonde" }).click();
-  const blondeHairPreview = await getPreviewHtml();
-  expect(blondeHairPreview).toContain("#d9b85d");
-
-  await page.getByRole("tab", { name: "Outfit" }).click();
-  await page.getByRole("button", { name: "Hi-vis gear" }).click();
-  const hiVisPreview = await getPreviewHtml();
-  expect(hiVisPreview).toContain("#f6b73c");
+  await expect(page.locator("#avatar-render .avatar-production-rig")).toBeVisible();
+  await expect(page.locator('[data-avatar-value="custom-trousers"]')).toHaveCount(0);
+  await expect(page.locator('[data-avatar-value="custom-skirt"]')).toHaveCount(0);
+  await expect(page.locator('[data-avatar-value="ecc-boy-rig-source"]')).toBeVisible();
+  await expect(page.locator('[data-avatar-value="ecc-girl-rig-source"]')).toBeVisible();
 });
 
-test("Avatar Studio ECC rig responds to live colour and face overlays", async ({ page }) => {
+test("Avatar Studio ECC rig uses starter modular art layers", async ({ page }) => {
   await page.goto("/modules/avatar/", { waitUntil: "domcontentloaded" });
 
   const getPreviewHtml = () => page.locator("#avatar-render").evaluate(element => element.innerHTML);
 
   await page.locator('[data-avatar-value="ecc-boy-rig-source"]').click();
   await expect(page.locator("#avatar-render .avatar-production-rig")).toBeVisible();
-  expect(await getPreviewHtml()).toContain("avatar-production-rig-tint");
+  expect(await getPreviewHtml()).toContain('data-rig-layer="sheet-base.png"');
 
   await page.locator('[data-avatar-value="deep"]').click();
   const deepSkinPreview = await getPreviewHtml();
+  expect(deepSkinPreview).toContain('data-rig-layer="skin/mask.png:tint"');
   expect(deepSkinPreview).toContain('data-rig-tint-kind="skin"');
   expect(deepSkinPreview).toContain("#38251f");
 
+  await page.locator('[data-avatar-key="eyeColour"][data-avatar-value="green"]').click();
+  const greenEyesPreview = await getPreviewHtml();
+  expect(greenEyesPreview).toContain('data-rig-feature="eye-colour"');
+  expect(greenEyesPreview).toContain('data-eye-colour="green"');
+  expect(greenEyesPreview).toContain("#5f7d32");
+
   await page.getByRole("tab", { name: "Hair" }).click();
-  await page.locator('[data-avatar-value="blonde"]').click();
-  const blondeHairPreview = await getPreviewHtml();
-  expect(blondeHairPreview).toContain('data-rig-tint-kind="hair"');
-  expect(blondeHairPreview).toContain("#d9b85d");
+  await expect(page.locator('[data-avatar-value="crop"]')).toBeDisabled();
+  await expect(page.locator('[data-avatar-value="curls"]')).toBeDisabled();
+  await expect(page.locator('[data-avatar-key="hairColour"][data-avatar-value="brown"]')).toBeVisible();
+  await expect(page.locator('[data-avatar-key="hairColour"][data-avatar-value="blonde"]')).toBeDisabled();
+
+  await page.getByRole("tab", { name: "Outfit" }).click();
+  await expect(page.locator('[data-avatar-value="ecc-current-uniform"]')).toBeVisible();
+  await expect(page.locator('[data-avatar-value="ecc-sports"]')).toBeDisabled();
+  await page.locator('[data-avatar-value="earrings"]').click();
+  const earringsPreview = await getPreviewHtml();
+  expect(earringsPreview).toContain('data-rig-layer="accessories/small-earrings.png"');
+  await expect(page.locator('[data-avatar-value="badge"]')).toBeDisabled();
+  await expect(page.locator('[data-avatar-value="glasses"]')).toBeDisabled();
 
   await page.getByRole("tab", { name: "Looks" }).click();
   await page.locator('[data-avatar-value="freckled"]').click();

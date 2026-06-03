@@ -21,6 +21,14 @@
     { id: "calm", label: "Calm", token: "C" }
   ];
 
+  const eyeColours = [
+    { id: "brown", label: "Brown", color: "#6f3f1f", highlight: "#c9823c" },
+    { id: "amber", label: "Amber", color: "#9a7622", highlight: "#dfb453" },
+    { id: "green", label: "Green", color: "#5f7d32", highlight: "#9fc45c" },
+    { id: "blue", label: "Blue", color: "#2f789c", highlight: "#8bd8ff" },
+    { id: "grey", label: "Grey", color: "#5d6871", highlight: "#b8c5ce" }
+  ];
+
   const hairStyles = [
     { id: "crop", label: "Crop", token: "C" },
     { id: "waves", label: "Waves", token: "W" },
@@ -109,6 +117,7 @@
     characterBase: "mackillop",
     skinTone: "sand",
     faceStyle: "soft",
+    eyeColour: "brown",
     hairStyle: "waves",
     hairColour: "brown",
     outfit: "blazer",
@@ -122,6 +131,7 @@
   if (avatarParts.schemaVersion) {
     skinTones.splice(0, skinTones.length, ...(avatarParts.skinTones || []));
     faceStyles.splice(0, faceStyles.length, ...(avatarParts.faceStyles || []));
+    eyeColours.splice(0, eyeColours.length, ...(avatarParts.eyeColours || []));
     hairStyles.splice(0, hairStyles.length, ...(avatarParts.hairStyles || []));
     hairColours.splice(0, hairColours.length, ...(avatarParts.hairColours || []));
     outfits.splice(0, outfits.length, ...(avatarParts.outfits || []));
@@ -216,8 +226,26 @@
     return items.find(item => item.id === id) || fallback;
   }
 
+  function isSelectableItem(item) {
+    return Boolean(item && !item.internalOnly && !item.referenceOnly && !item.plannedOnly);
+  }
+
+  function isVisibleItem(item) {
+    return Boolean(item && !item.internalOnly && !item.referenceOnly);
+  }
+
   function getSelectableItems(items) {
-    return items.filter(item => !item.internalOnly && !item.referenceOnly);
+    return items.filter(isSelectableItem);
+  }
+
+  function getVisibleItems(items) {
+    return items.filter(isVisibleItem);
+  }
+
+  function normaliseChoice(items, id) {
+    const item = findById(items, id, null);
+    if (isSelectableItem(item)) return id;
+    return getSelectableItems(items)[0]?.id || id;
   }
 
   function getBaseDefaultState(baseId) {
@@ -239,7 +267,15 @@
         ...getBaseDefaultState(fallbackBase)
       };
     }
-    return nextState;
+    return {
+      ...nextState,
+      faceStyle: normaliseChoice(faceStyles, nextState.faceStyle),
+      eyeColour: normaliseChoice(eyeColours, nextState.eyeColour),
+      hairStyle: normaliseChoice(hairStyles, nextState.hairStyle),
+      hairColour: normaliseChoice(hairColours, nextState.hairColour),
+      outfit: normaliseChoice(outfits, nextState.outfit),
+      accessory: normaliseChoice(accessories, nextState.accessory)
+    };
   }
 
   function getCompletion(profile = state) {
@@ -353,6 +389,7 @@
   function renderPrototypeAvatar() {
     const skin = findById(skinTones, state.skinTone);
     const face = findById(faceStyles, state.faceStyle);
+    const eyeColour = findById(eyeColours, state.eyeColour);
     const hairColour = findById(hairColours, state.hairColour).color;
     const outfit = findById(outfits, state.outfit);
     const freckles = face.id === "freckled"
@@ -383,8 +420,8 @@
           </linearGradient>
           <radialGradient id="avatarEye" cx="35%" cy="28%" r="70%">
             <stop offset="0" stop-color="#ffffff"/>
-            <stop offset="0.42" stop-color="#73d9ff"/>
-            <stop offset="1" stop-color="#123a5d"/>
+            <stop offset="0.42" stop-color="${eyeColour.highlight || eyeColour.color}"/>
+            <stop offset="1" stop-color="${eyeColour.color}"/>
           </radialGradient>
           <filter id="avatarSoftShadow" x="-20%" y="-20%" width="140%" height="150%">
             <feDropShadow dx="0" dy="10" stdDeviation="8" flood-color="#071629" flood-opacity="0.25"/>
@@ -557,6 +594,7 @@
   function renderLayeredAvatar() {
     const skin = findById(skinTones, state.skinTone);
     const face = findById(faceStyles, state.faceStyle);
+    const eyeColour = findById(eyeColours, state.eyeColour);
     const hairColour = findById(hairColours, state.hairColour).color;
     const outfit = findById(outfits, state.outfit);
     const freckles = face.id === "freckled"
@@ -595,8 +633,8 @@
           </pattern>
           <radialGradient id="avatarEye" cx="35%" cy="28%" r="70%">
             <stop offset="0" stop-color="#ffffff"/>
-            <stop offset="0.42" stop-color="#73d9ff"/>
-            <stop offset="1" stop-color="#123a5d"/>
+            <stop offset="0.42" stop-color="${eyeColour.highlight || eyeColour.color}"/>
+            <stop offset="1" stop-color="${eyeColour.color}"/>
           </radialGradient>
           <filter id="avatarSoftShadow" x="-20%" y="-20%" width="140%" height="150%">
             <feDropShadow dx="0" dy="12" stdDeviation="9" flood-color="#071629" flood-opacity="0.28"/>
@@ -656,23 +694,7 @@
       return {
         kind: "hair",
         color: hairColour,
-        opacity: hairColour === "#5a3524" ? 0.2 : 0.68,
-        mode: "color"
-      };
-    }
-    if (layerPath === "head/base.png" || layerPath === "body/skin-neck.png") {
-      return {
-        kind: "skin",
-        color: skin.color,
-        opacity: skin.id === "sand" ? 0.14 : 0.46,
-        mode: "color"
-      };
-    }
-    if (layerPath.endsWith("forearm-hand.png")) {
-      return {
-        kind: "skin",
-        color: skin.color,
-        opacity: skin.id === "sand" ? 0.08 : 0.22,
+        opacity: hairColour === "#5a3524" ? 0.18 : 0.86,
         mode: "color"
       };
     }
@@ -711,14 +733,47 @@
     return null;
   }
 
+  function getSkinMaskTint(skin) {
+    if (!skin || skin.id === "sand") return null;
+    return {
+      kind: "skin",
+      color: skin.color,
+      opacity: ["porcelain"].includes(skin.id) ? 0.72 : 0.58,
+      mode: ["porcelain", "warm"].includes(skin.id) ? "color" : "multiply"
+    };
+  }
+
+  function getHairMaskTint(hairColour) {
+    if (!hairColour || hairColour === "#5a3524") return null;
+    return {
+      kind: "hair",
+      color: hairColour,
+      opacity: 0.34,
+      mode: "color"
+    };
+  }
+
   function getProductionLayerOrder(config) {
     return Array.isArray(config.layerOrder) ? [...config.layerOrder] : [];
+  }
+
+  function resolveProductionLayerPath(config, layerPath) {
+    const hairLayers = config.hairStyleLayerSets?.[state.hairStyle] || config.hairStyleLayerSets?.waves;
+    if (hairLayers && layerPath === "hair/back.png") return Object.prototype.hasOwnProperty.call(hairLayers, "back") ? hairLayers.back : layerPath;
+    if (hairLayers && layerPath === "hair/front.png") return Object.prototype.hasOwnProperty.call(hairLayers, "front") ? hairLayers.front : layerPath;
+    return layerPath;
+  }
+
+  function getProductionAccessoryLayerPath(config) {
+    if (!state.accessory || state.accessory === "none") return null;
+    return config.accessoryLayers?.[state.accessory] || null;
   }
 
   function getRigLayerMotion(layerPath) {
     if (layerPath === "head/base.png") return "head";
     if (layerPath.startsWith("hair/")) return "hair";
     if (layerPath.startsWith("face/")) return "head";
+    if (layerPath === "accessories/glasses.png" || layerPath === "accessories/small-earrings.png") return "head";
     if (layerPath.startsWith("arms/left")) return "left-arm";
     if (layerPath.startsWith("arms/right")) return "right-arm";
     if (layerPath.startsWith("legs/left")) return "left-leg";
@@ -740,9 +795,11 @@
     `;
   }
 
-  function renderProductionRigLayer(basePath, layerPath, skin, hairColour, outfit) {
-    const imagePath = `${basePath}/${layerPath}`;
-    const tint = getRigLayerTint(layerPath, skin, hairColour, outfit);
+  function renderProductionRigLayer(basePath, config, layerPath, skin, hairColour, outfit) {
+    const resolvedLayerPath = resolveProductionLayerPath(config, layerPath);
+    if (!resolvedLayerPath) return "";
+    const imagePath = `${basePath}/${resolvedLayerPath}`;
+    const tint = getRigLayerTint(resolvedLayerPath, skin, hairColour, outfit);
     return `
       <img
         class="avatar-production-rig-layer"
@@ -750,54 +807,129 @@
         alt=""
         aria-hidden="true"
         decoding="async"
+        data-rig-motion="${escapeHtml(getRigLayerMotion(resolvedLayerPath))}"
+        data-rig-layer="${escapeHtml(resolvedLayerPath)}"
+        data-rig-source-layer="${escapeHtml(layerPath)}"
+      >
+      ${renderProductionRigTint(imagePath, resolvedLayerPath, tint)}
+    `;
+  }
+
+  function renderProductionRigBaseLayer(basePath, config, rig) {
+    const layerPath = config.baseImage || "recomposed-preview.png";
+    return `
+      <img
+        class="avatar-production-rig-layer avatar-production-rig-layer--base"
+        src="${escapeHtml(`${basePath}/${layerPath}`)}"
+        alt=""
+        aria-hidden="true"
+        decoding="async"
+        data-rig-motion="body"
+        data-rig-layer="${escapeHtml(layerPath)}"
+        data-rig-base="${escapeHtml(rig.id)}"
+      >
+    `;
+  }
+
+  function renderProductionRigSkinMask(basePath, config, skin) {
+    const tint = getSkinMaskTint(skin);
+    if (!tint || !config.skinMask) return "";
+    return renderProductionRigTint(`${basePath}/${config.skinMask}`, config.skinMask, tint);
+  }
+
+  function renderProductionRigHairMask(basePath, config, hairColour) {
+    const tint = getHairMaskTint(hairColour);
+    if (!tint || !config.hairMask) return "";
+    return renderProductionRigTint(`${basePath}/${config.hairMask}`, config.hairMask, tint);
+  }
+
+  function renderProductionRigAccessoryLayer(basePath, config) {
+    const layerPath = getProductionAccessoryLayerPath(config);
+    if (!layerPath) return "";
+    return `
+      <img
+        class="avatar-production-rig-layer avatar-production-rig-layer--accessory"
+        src="${escapeHtml(`${basePath}/${layerPath}`)}"
+        alt=""
+        aria-hidden="true"
+        decoding="async"
         data-rig-motion="${escapeHtml(getRigLayerMotion(layerPath))}"
         data-rig-layer="${escapeHtml(layerPath)}"
+        data-rig-accessory="${escapeHtml(state.accessory)}"
       >
-      ${renderProductionRigTint(imagePath, layerPath, tint)}
     `;
   }
 
   function getProductionFeatureAnchors(rig) {
     if (rig?.id === "ecc-girl-base-neutral") {
       return {
-        eyeY: 415,
+        eyeY: 282,
         leftEyeX: 454,
         rightEyeX: 544,
-        browY: 377,
-        cheekY: 470,
-        mouthY: 506,
+        browY: 254,
+        cheekY: 326,
+        mouthY: 350,
         earY: 440,
         leftEarX: 392,
         rightEarX: 624,
         neckY: 548,
-        chestY: 716
+        chestY: 716,
+        faceY: 410,
+        faceRx: 102,
+        faceRy: 128,
+        leftHandX: 356,
+        rightHandX: 666,
+        handY: 944
       };
     }
     return {
-      eyeY: 436,
+      eyeY: 309,
       leftEyeX: 454,
       rightEyeX: 544,
-      browY: 397,
-      cheekY: 490,
-      mouthY: 526,
+      browY: 280,
+      cheekY: 354,
+      mouthY: 378,
       earY: 458,
       leftEarX: 390,
       rightEarX: 626,
       neckY: 566,
-      chestY: 742
+      chestY: 742,
+      faceY: 435,
+      faceRx: 104,
+      faceRy: 132,
+      leftHandX: 360,
+      rightHandX: 678,
+      handY: 1030
     };
   }
 
-  function renderProductionRigFeatureOverlay(rig, skin, outfit) {
+  function renderProductionRigFeatureOverlay(rig, skin, outfit, hasAssetAccessory) {
     const anchors = getProductionFeatureAnchors(rig);
+    const eyeColour = findById(eyeColours, state.eyeColour);
+    const eyeColourOverlay = `
+      <g
+        data-rig-feature="eye-colour"
+        data-eye-colour="${escapeHtml(eyeColour.id)}"
+        opacity="0.92"
+      >
+        <ellipse cx="${anchors.leftEyeX}" cy="${anchors.eyeY}" rx="10" ry="12" fill="${escapeHtml(eyeColour.color)}"/>
+        <ellipse cx="${anchors.rightEyeX}" cy="${anchors.eyeY}" rx="10" ry="12" fill="${escapeHtml(eyeColour.color)}"/>
+        <circle cx="${anchors.leftEyeX}" cy="${anchors.eyeY + 1}" r="4.5" fill="#111318" opacity="0.86"/>
+        <circle cx="${anchors.rightEyeX}" cy="${anchors.eyeY + 1}" r="4.5" fill="#111318" opacity="0.86"/>
+        <circle cx="${anchors.leftEyeX - 4}" cy="${anchors.eyeY - 5}" r="2.5" fill="${escapeHtml(eyeColour.highlight || "#ffffff")}" opacity="0.9"/>
+        <circle cx="${anchors.rightEyeX - 4}" cy="${anchors.eyeY - 5}" r="2.5" fill="${escapeHtml(eyeColour.highlight || "#ffffff")}" opacity="0.9"/>
+        <circle cx="${anchors.leftEyeX - 1}" cy="${anchors.eyeY - 8}" r="1.6" fill="#ffffff" opacity="0.82"/>
+        <circle cx="${anchors.rightEyeX - 1}" cy="${anchors.eyeY - 8}" r="1.6" fill="#ffffff" opacity="0.82"/>
+      </g>
+    `;
     const freckles = state.faceStyle === "freckled"
       ? `
         <g data-rig-feature="freckles" fill="${escapeHtml(skin.shadow)}" opacity="0.68">
-          <circle cx="${anchors.leftEyeX - 34}" cy="${anchors.cheekY}" r="7"/>
-          <circle cx="${anchors.leftEyeX - 8}" cy="${anchors.cheekY + 14}" r="5"/>
-          <circle cx="${anchors.rightEyeX + 34}" cy="${anchors.cheekY}" r="7"/>
-          <circle cx="${anchors.rightEyeX + 8}" cy="${anchors.cheekY + 14}" r="5"/>
-          <circle cx="512" cy="${anchors.cheekY + 18}" r="4.5"/>
+          <circle cx="${anchors.leftEyeX - 34}" cy="${anchors.cheekY}" r="9"/>
+          <circle cx="${anchors.leftEyeX - 8}" cy="${anchors.cheekY + 14}" r="7"/>
+          <circle cx="${anchors.rightEyeX + 34}" cy="${anchors.cheekY}" r="9"/>
+          <circle cx="${anchors.rightEyeX + 8}" cy="${anchors.cheekY + 14}" r="7"/>
+          <circle cx="512" cy="${anchors.cheekY + 18}" r="6"/>
         </g>
       `
       : "";
@@ -818,7 +950,7 @@
         : state.faceStyle === "calm"
           ? `<path data-rig-feature="calm-smile" d="M472 ${anchors.mouthY} C494 ${anchors.mouthY + 18} 534 ${anchors.mouthY + 18} 556 ${anchors.mouthY}" fill="none" stroke="#3b1d17" stroke-width="8" stroke-linecap="round" opacity="0.82"/>`
           : "";
-    const glasses = state.accessory === "glasses"
+    const glasses = !hasAssetAccessory && state.accessory === "glasses"
       ? `
         <g data-rig-feature="glasses" fill="none" stroke="#17202a" stroke-width="9" opacity="0.86">
           <ellipse cx="${anchors.leftEyeX}" cy="${anchors.eyeY}" rx="44" ry="39"/>
@@ -827,10 +959,10 @@
         </g>
       `
       : "";
-    const earrings = state.accessory === "earrings"
+    const earrings = !hasAssetAccessory && state.accessory === "earrings"
       ? `<g data-rig-feature="earrings" fill="#f6b73c"><circle cx="${anchors.leftEarX}" cy="${anchors.earY + 38}" r="12"/><circle cx="${anchors.rightEarX}" cy="${anchors.earY + 38}" r="12"/></g>`
       : "";
-    const badge = state.accessory === "badge"
+    const badge = !hasAssetAccessory && state.accessory === "badge"
       ? `<g data-rig-feature="name-badge"><rect x="616" y="${anchors.chestY}" width="112" height="52" rx="13" fill="#ffffff" opacity="0.94"/><path d="M640 ${anchors.chestY + 27} L704 ${anchors.chestY + 27}" stroke="${escapeHtml(outfit.accent || "#f6b73c")}" stroke-width="8" stroke-linecap="round"/></g>`
       : "";
     const scarf = state.accessory === "scarf"
@@ -848,6 +980,7 @@
     return `
       <svg class="avatar-production-rig-overlay" viewBox="0 0 1024 1536" aria-hidden="true">
         ${scarf}
+        ${eyeColourOverlay}
         ${freckles}
         ${faceAccent}
         ${glasses}
@@ -869,6 +1002,16 @@
     const layerOrder = getProductionLayerOrder(config);
     const basePath = `${config.basePath}/${rig.fileRoot}`;
     const animationState = state.animationState || "idle";
+    const hasAssetAccessory = Boolean(getProductionAccessoryLayerPath(config));
+    let skinMaskInserted = false;
+    const layers = config.usePreviewBase
+      ? renderProductionRigBaseLayer(basePath, config, rig)
+      : layerOrder.map(layerPath => {
+      const layerHtml = renderProductionRigLayer(basePath, config, layerPath, skin, hairColour, outfit);
+      if (resolveProductionLayerPath(config, layerPath) !== "head/base.png") return layerHtml;
+      skinMaskInserted = true;
+      return `${layerHtml}${renderProductionRigSkinMask(basePath, config, skin)}`;
+    }).join("");
 
     return `
       <div
@@ -876,8 +1019,11 @@
         role="img"
         aria-label="${escapeHtml(rig.label || characterBase.label)} avatar preview"
       >
-        ${layerOrder.map(layerPath => renderProductionRigLayer(basePath, layerPath, skin, hairColour, outfit)).join("")}
-        ${renderProductionRigFeatureOverlay(rig, skin, outfit)}
+        ${layers}
+        ${config.usePreviewBase || !skinMaskInserted ? renderProductionRigSkinMask(basePath, config, skin) : ""}
+        ${config.usePreviewBase ? renderProductionRigHairMask(basePath, config, hairColour) : ""}
+        ${renderProductionRigAccessoryLayer(basePath, config)}
+        ${renderProductionRigFeatureOverlay(rig, skin, outfit, hasAssetAccessory)}
       </div>
     `;
   }
@@ -895,6 +1041,7 @@
         assetRig: productionRig?.id || null,
         skinTone: profile.skinTone,
         faceStyle: profile.faceStyle,
+        eyeColour: profile.eyeColour,
         hairStyle: profile.hairStyle,
         hairColour: profile.hairColour,
         uniform: profile.outfit,
@@ -971,8 +1118,18 @@
   function renderChoiceButtons(containerId, items, key, group) {
     const container = document.getElementById(containerId);
     if (!container) return;
-    container.innerHTML = getSelectableItems(items).map(item => `
-      <button class="avatar-option ${state[key] === item.id ? "is-selected" : ""}" type="button" data-option-group="${group}" data-avatar-key="${key}" data-avatar-value="${item.id}">
+    container.innerHTML = getVisibleItems(items).map(item => {
+      const planned = !isSelectableItem(item);
+      return `
+      <button
+        class="avatar-option ${state[key] === item.id ? "is-selected" : ""} ${planned ? "is-planned" : ""}"
+        type="button"
+        data-option-group="${group}"
+        data-avatar-key="${key}"
+        data-avatar-value="${item.id}"
+        data-option-state="${planned ? "planned" : "active"}"
+        ${planned ? `disabled aria-disabled="true" title="${escapeHtml(item.note || "Planned upgrade")}"` : ""}
+      >
         <span class="option-token">
           ${item.imagePath
             ? `<img class="option-token-image" src="${escapeHtml(item.imagePath)}" alt="">`
@@ -980,27 +1137,42 @@
         </span>
         <span>
           ${escapeHtml(item.label)}
-          ${item.note ? `<small>${escapeHtml(item.note)}</small>` : ""}
+          <small>${escapeHtml(planned ? item.note || "Planned upgrade" : item.note || "Active now")}</small>
         </span>
       </button>
-    `).join("");
+    `;
+    }).join("");
   }
 
   function renderSwatches(containerId, items, key) {
     const container = document.getElementById(containerId);
     if (!container) return;
-    container.innerHTML = items.map(item => `
-      <button class="avatar-swatch ${state[key] === item.id ? "is-selected" : ""}" type="button" data-avatar-key="${key}" data-avatar-value="${item.id}">
+    container.innerHTML = getVisibleItems(items).map(item => {
+      const planned = !isSelectableItem(item);
+      return `
+      <button
+        class="avatar-swatch ${state[key] === item.id ? "is-selected" : ""} ${planned ? "is-planned" : ""}"
+        type="button"
+        data-avatar-key="${key}"
+        data-avatar-value="${item.id}"
+        data-option-state="${planned ? "planned" : "active"}"
+        ${planned ? `disabled aria-disabled="true" title="${escapeHtml(item.note || "Planned upgrade")}"` : ""}
+      >
         <span style="background: ${escapeHtml(item.color)}"></span>
-        <span>${escapeHtml(item.label)}</span>
+        <span>
+          ${escapeHtml(item.label)}
+          ${planned ? `<small>${escapeHtml(item.note || "Planned upgrade")}</small>` : ""}
+        </span>
       </button>
-    `).join("");
+    `;
+    }).join("");
   }
 
   function renderControls() {
     renderChoiceButtons("character-base-options", characterBases, "characterBase", "character");
     renderSwatches("skin-tone-options", skinTones, "skinTone");
     renderChoiceButtons("face-options", faceStyles, "faceStyle", "face");
+    renderSwatches("eye-color-options", eyeColours, "eyeColour");
     renderChoiceButtons("hair-options", hairStyles, "hairStyle", "hair");
     renderSwatches("hair-color-options", hairColours, "hairColour");
     renderChoiceButtons("outfit-options", outfits, "outfit", "outfit");
@@ -1071,6 +1243,7 @@
       skinTone: randomFrom(skinTones),
       characterBase: randomFrom(characterBases),
       faceStyle: randomFrom(faceStyles),
+      eyeColour: randomFrom(eyeColours),
       hairStyle: randomFrom(hairStyles),
       hairColour: randomFrom(hairColours),
       outfit: randomFrom(outfits),
@@ -1095,6 +1268,7 @@
     document.addEventListener("click", event => {
       const button = event.target.closest("[data-avatar-key][data-avatar-value]");
       if (!button) return;
+      if (button.disabled || button.dataset.optionState === "planned") return;
       const nextState = {
         ...state,
         [button.dataset.avatarKey]: button.dataset.avatarValue

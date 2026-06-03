@@ -99,6 +99,23 @@
       basePath: "../../Assets/Images and Animations/Avatar Studio/layers",
       canvas: { width: 1024, height: 1536 },
       note: "First-pass transparent PNG rigs generated from the ECC model sheets.",
+      usePreviewBase: true,
+      baseImage: "sheet-base.png",
+      skinMask: "skin/mask.png",
+      hairMask: "hair/mask-current.png",
+      hairStyleLayerSets: {
+        waves: {
+          back: "hair/back.png",
+          front: "hair/front.png"
+        },
+        crop: {
+          back: null,
+          front: "hair/crop-front.png"
+        }
+      },
+      accessoryLayers: {
+        earrings: "accessories/small-earrings.png"
+      },
       layerOrder: [
         "hair/back.png",
         "legs/left-upper.png",
@@ -155,29 +172,52 @@
       { id: "bright", label: "Bright", token: "B" },
       { id: "calm", label: "Calm", token: "C" }
     ],
+    eyeColours: [
+      { id: "brown", label: "Brown", color: "#6f3f1f", highlight: "#c9823c", source: "contact-sheet" },
+      { id: "amber", label: "Amber", color: "#9a7622", highlight: "#dfb453", source: "contact-sheet" },
+      { id: "green", label: "Green", color: "#5f7d32", highlight: "#9fc45c", source: "contact-sheet" },
+      { id: "blue", label: "Blue", color: "#2f789c", highlight: "#8bd8ff", source: "contact-sheet" },
+      { id: "grey", label: "Grey", color: "#5d6871", highlight: "#b8c5ce", source: "contact-sheet" }
+    ],
     hairStyles: [
-      { id: "crop", label: "Crop", token: "C", slot: "hair/front-short" },
-      { id: "waves", label: "Waves", token: "W", slot: "hair/front-waves" },
-      { id: "curls", label: "Curls", token: "R", slot: "hair/curly" },
-      { id: "long", label: "Long", token: "L", slot: "hair/long-back" },
-      { id: "bun", label: "Bun", token: "B", slot: "hair/bun" },
-      { id: "wrap", label: "Wrap", token: "H", slot: "hair/head-wrap" }
+      { id: "waves", label: "Original waves", token: "W", slot: "hair/front-waves" },
+      { id: "crop", label: "Crop", token: "C", slot: "hair/crop", plannedOnly: true, note: "Needs clean art" },
+      { id: "curls", label: "Curls", token: "R", slot: "hair/curly", plannedOnly: true, note: "Needs art" },
+      { id: "long", label: "Long", token: "L", slot: "hair/long-back", plannedOnly: true, note: "Needs art" },
+      { id: "bun", label: "Bun", token: "B", slot: "hair/bun", plannedOnly: true, note: "Needs art" },
+      { id: "wrap", label: "Wrap", token: "H", slot: "hair/head-wrap", plannedOnly: true, note: "Needs art" }
     ],
     hairColours: [
-      { id: "black", label: "Black", color: "#161412" },
       { id: "brown", label: "Brown", color: "#5a3524" },
-      { id: "auburn", label: "Auburn", color: "#9b3f24" },
-      { id: "blonde", label: "Blonde", color: "#d9b85d" },
-      { id: "silver", label: "Silver", color: "#c8ced4" },
-      { id: "teal", label: "Teal", color: "#0f8f8c" }
+      { id: "black", label: "Black", color: "#161412", plannedOnly: true, note: "Needs clean hair mask" },
+      { id: "auburn", label: "Auburn", color: "#9b3f24", plannedOnly: true, note: "Needs clean hair mask" },
+      { id: "blonde", label: "Blonde", color: "#d9b85d", plannedOnly: true, note: "Needs clean hair mask" },
+      { id: "silver", label: "Silver", color: "#c8ced4", plannedOnly: true, note: "Needs clean hair mask" },
+      { id: "teal", label: "Teal", color: "#0f8f8c", plannedOnly: true, note: "Needs clean hair mask" }
     ],
     outfits: [
+      {
+        id: "ecc-current-uniform",
+        label: "Current ECC uniform",
+        token: "ECC",
+        family: "ecc-uniform",
+        source: "sheet-base",
+        lower: "baked-base",
+        fill: "#123a5d",
+        lowerFill: "#1a2436",
+        accent: "#f6b73c",
+        shirt: "#f4f7fb",
+        tie: "#0f8f8c",
+        note: "Active art"
+      },
       {
         id: "ecc-winter-trousers-blazer",
         label: "Winter blazer",
         token: "WB",
         family: "ecc-uniform",
         source: "uniform-lookbook",
+        plannedOnly: true,
+        note: "Needs wardrobe layer",
         lower: "trousers",
         fill: "#123a5d",
         lowerFill: "#1a2436",
@@ -191,6 +231,8 @@
         token: "WS",
         family: "ecc-uniform",
         source: "uniform-lookbook",
+        plannedOnly: true,
+        note: "Needs wardrobe layer",
         lower: "plaid-skirt",
         fill: "#0f8f8c",
         lowerFill: "#1c426b",
@@ -204,6 +246,8 @@
         token: "SD",
         family: "ecc-uniform",
         source: "uniform-lookbook",
+        plannedOnly: true,
+        note: "Needs wardrobe layer",
         lower: "dress",
         fill: "#0f8f8c",
         lowerFill: "#0f8f8c",
@@ -217,6 +261,8 @@
         token: "SS",
         family: "ecc-uniform",
         source: "uniform-lookbook",
+        plannedOnly: true,
+        note: "Needs wardrobe layer",
         lower: "shorts",
         fill: "#f7fbff",
         lowerFill: "#16243c",
@@ -230,6 +276,8 @@
         token: "SP",
         family: "ecc-uniform",
         source: "uniform-lookbook",
+        plannedOnly: true,
+        note: "Needs wardrobe layer",
         lower: "sports-shorts",
         fill: "#0f63b6",
         lowerFill: "#16243c",
@@ -242,6 +290,8 @@
         label: "ECC blazer",
         token: "EB",
         family: "legacy",
+        plannedOnly: true,
+        note: "Replaced by current uniform",
         lower: "trousers",
         fill: "#123a5d",
         lowerFill: "#1a2436",
@@ -254,6 +304,8 @@
         label: "Interview blazer",
         token: "I",
         family: "career",
+        plannedOnly: true,
+        note: "Needs wardrobe layer",
         lower: "trousers",
         fill: "#17202a",
         lowerFill: "#17202a",
@@ -266,6 +318,8 @@
         label: "Health scrubs",
         token: "S",
         family: "career",
+        plannedOnly: true,
+        note: "Needs wardrobe layer",
         lower: "trousers",
         fill: "#0f8f8c",
         lowerFill: "#0d7775",
@@ -278,6 +332,8 @@
         label: "Hi-vis gear",
         token: "V",
         family: "career",
+        plannedOnly: true,
+        note: "Needs wardrobe layer",
         lower: "trousers",
         fill: "#f6b73c",
         lowerFill: "#17202a",
@@ -290,6 +346,8 @@
         label: "Creative apron",
         token: "A",
         family: "career",
+        plannedOnly: true,
+        note: "Needs wardrobe layer",
         lower: "trousers",
         fill: "#6c4bd2",
         lowerFill: "#17202a",
@@ -300,12 +358,12 @@
     ],
     accessories: [
       { id: "none", label: "None", token: "-" },
-      { id: "glasses", label: "Glasses", token: "G" },
-      { id: "headphones", label: "Headphones", token: "O" },
-      { id: "badge", label: "Name badge", token: "N" },
       { id: "earrings", label: "Small earrings", token: "E" },
-      { id: "scarf", label: "Scarf", token: "S" },
-      { id: "backpack", label: "Backpack", token: "B" }
+      { id: "badge", label: "Name badge", token: "N", plannedOnly: true, note: "Needs name-badge art" },
+      { id: "glasses", label: "Glasses", token: "G", plannedOnly: true, note: "Needs better art" },
+      { id: "headphones", label: "Headphones", token: "O", plannedOnly: true, note: "Needs art" },
+      { id: "scarf", label: "Scarf", token: "S", plannedOnly: true, note: "Needs art" },
+      { id: "backpack", label: "Backpack", token: "B", plannedOnly: true, note: "Needs art" }
     ],
     characterBases: [
       {
@@ -313,18 +371,22 @@
         label: "Custom trousers",
         token: "CT",
         partMode: "layered",
+        internalOnly: true,
+        migratesTo: "ecc-boy-rig-source",
         defaultOutfit: "ecc-winter-trousers-blazer",
         defaultHairStyle: "waves",
-        note: "Live controls"
+        note: "Legacy SVG fallback"
       },
       {
         id: "custom-skirt",
         label: "Custom skirt",
         token: "CS",
         partMode: "layered",
+        internalOnly: true,
+        migratesTo: "ecc-girl-rig-source",
         defaultOutfit: "ecc-winter-skirt-jumper",
         defaultHairStyle: "long",
-        note: "Live controls"
+        note: "Legacy SVG fallback"
       },
       {
         id: "ecc-boy-rig-source",
@@ -333,7 +395,7 @@
         partMode: "production-png-rig",
         assetRigId: "ecc-boy-base-neutral",
         imagePath: "../../Assets/Images and Animations/Avatar Studio/layers/ecc-boy-base-neutral/recomposed-preview.png",
-        defaultOutfit: "ecc-winter-trousers-blazer",
+        defaultOutfit: "ecc-current-uniform",
         defaultHairStyle: "waves",
         note: "PNG source"
       },
@@ -344,8 +406,8 @@
         partMode: "production-png-rig",
         assetRigId: "ecc-girl-base-neutral",
         imagePath: "../../Assets/Images and Animations/Avatar Studio/layers/ecc-girl-base-neutral/recomposed-preview.png",
-        defaultOutfit: "ecc-winter-skirt-jumper",
-        defaultHairStyle: "long",
+        defaultOutfit: "ecc-current-uniform",
+        defaultHairStyle: "waves",
         note: "PNG source"
       },
       {
@@ -415,12 +477,13 @@
       { name: "Transport fund", state: "Life goal", color: "#e85d4f", token: "TF" }
     ],
     defaults: {
-      characterBase: "custom-trousers",
+      characterBase: "ecc-boy-rig-source",
       skinTone: "sand",
       faceStyle: "soft",
+      eyeColour: "brown",
       hairStyle: "waves",
       hairColour: "brown",
-      outfit: "ecc-winter-trousers-blazer",
+      outfit: "ecc-current-uniform",
       accessory: "none",
       animationState: "idle",
       occupation: "",

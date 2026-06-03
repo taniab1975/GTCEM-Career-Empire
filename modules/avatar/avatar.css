@@ -285,8 +285,14 @@ body.avatar-page::before {
   background: var(--rig-tint, transparent);
   opacity: var(--rig-tint-opacity, 0);
   mix-blend-mode: var(--rig-tint-mode, color);
-  -webkit-mask: var(--rig-mask) center bottom / contain no-repeat;
-  mask: var(--rig-mask) center bottom / contain no-repeat;
+  -webkit-mask-image: var(--rig-mask);
+  -webkit-mask-position: center bottom;
+  -webkit-mask-repeat: no-repeat;
+  -webkit-mask-size: contain;
+  mask-image: var(--rig-mask);
+  mask-position: center bottom;
+  mask-repeat: no-repeat;
+  mask-size: contain;
 }
 
 .avatar-production-rig-overlay {
@@ -482,25 +488,58 @@ body.avatar-page::before {
   cursor: pointer;
 }
 
+.avatar-option:disabled,
+.avatar-swatch:disabled {
+  cursor: not-allowed;
+}
+
 .avatar-option > span:last-child {
   display: grid;
   gap: 2px;
   min-width: 0;
 }
 
-.avatar-option small {
+.avatar-swatch > span:last-child {
+  display: grid;
+  gap: 2px;
+  min-width: 0;
+}
+
+.avatar-option small,
+.avatar-swatch small {
   color: var(--avatar-muted);
   font-size: 0.75rem;
   font-weight: 800;
   line-height: 1.1;
 }
 
-.avatar-option:hover,
-.avatar-swatch:hover,
+.avatar-option:not(:disabled):hover,
+.avatar-swatch:not(:disabled):hover,
 .avatar-option.is-selected,
 .avatar-swatch.is-selected {
   border-color: rgba(15, 143, 140, 0.72);
   box-shadow: 0 0 0 3px rgba(15, 143, 140, 0.12);
+}
+
+.avatar-option.is-planned,
+.avatar-swatch.is-planned {
+  border-color: rgba(127, 140, 150, 0.28);
+  color: rgba(23, 32, 42, 0.48);
+  background: rgba(240, 244, 248, 0.58);
+  filter: saturate(0.35);
+  opacity: 0.72;
+  box-shadow: none;
+}
+
+.avatar-option.is-planned .option-token,
+.avatar-swatch.is-planned span:first-child {
+  background: #8b99a6;
+  box-shadow: none;
+}
+
+.avatar-option.is-planned small,
+.avatar-swatch.is-planned small {
+  color: rgba(23, 32, 42, 0.58);
 }
 
 .avatar-swatch span:first-child {
@@ -545,6 +584,10 @@ body.avatar-page::before {
 
 .avatar-option[data-option-group="accessory"] .option-token {
   background: var(--avatar-coral);
+}
+
+.avatar-option.is-planned[data-option-group] .option-token {
+  background: #8b99a6;
 }
 
 .future-form-grid {
