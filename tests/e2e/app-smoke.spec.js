@@ -31,6 +31,10 @@ test("Avatar Studio saves a future-self profile locally", async ({ page }) => {
   expect(saved.latest.occupation).toBe("Graphic designer");
   expect(saved.latest.completion).toBe(100);
   expect(saved.latest.avatarSpec.slots.uniform).toBeTruthy();
+  expect(saved.latest.avatarSpec.slots.shirt).toBeTruthy();
+  expect(saved.latest.avatarSpec.slots.pants).toBeTruthy();
+  expect(saved.latest.avatarSpec.slots.shoes).toBeTruthy();
+  expect(saved.latest.avatarSpec.slots.blazer).toBeTruthy();
   expect(saved.latest.avatarSpec.slots.hairStyle).toBeTruthy();
   expect(saved.latest.avatarSpec.slots.eyeColour).toBeTruthy();
   expect(saved.latest.avatarSpec.technicalSpec.compatibleBodyRig).toMatch(/^ecc-(boy|girl)-standard$/);
@@ -85,16 +89,34 @@ test("Avatar Studio ECC rig uses the approved Take 2 layer stack", async ({ page
   await expect(page.locator('[data-avatar-key="hairColour"][data-avatar-value="blonde"]')).toBeDisabled();
 
   await page.getByRole("tab", { name: "Outfit" }).click();
-  await expect(page.locator('[data-avatar-value="ecc-current-uniform"]')).toHaveClass(/is-selected/);
-  await page.locator('[data-avatar-value="neutral-base"]').click();
+  await expect(page.locator('[data-avatar-key="shirt"][data-avatar-value="ecc-shirt-tie"]')).toHaveClass(/is-selected/);
+  await expect(page.locator('[data-avatar-key="pants"][data-avatar-value="ecc-navy-pants"]')).toHaveClass(/is-selected/);
+  await expect(page.locator('[data-avatar-key="shoes"][data-avatar-value="black-school-shoes"]')).toHaveClass(/is-selected/);
+  await expect(page.locator('[data-avatar-key="blazer"][data-avatar-value="ecc-navy-blazer"]')).toHaveClass(/is-selected/);
+  await page.locator('[data-avatar-key="shoes"][data-avatar-value="brown-school-shoes"]').click();
+  const brownShoesPreview = await getPreviewHtml();
+  expect(brownShoesPreview).toContain('data-rig-layer="Brown Shoes.png"');
+  expect(brownShoesPreview).not.toContain('data-rig-layer="Shoes Corrected.png"');
+  await page.locator('[data-avatar-key="shoes"][data-avatar-value="black-school-shoes"]').click();
+  expect(await getPreviewHtml()).toContain('data-rig-layer="Shoes Corrected.png"');
+  await page.locator('[data-avatar-key="shirt"][data-avatar-value="none"]').click();
+  await page.locator('[data-avatar-key="pants"][data-avatar-value="none"]').click();
+  await page.locator('[data-avatar-key="shoes"][data-avatar-value="none"]').click();
+  await page.locator('[data-avatar-key="blazer"][data-avatar-value="none"]').click();
   const neutralPreview = await getPreviewHtml();
   expect(neutralPreview).toContain('data-rig-layer="Neutral Boy Transparent background.png"');
   expect(neutralPreview).toContain('data-rig-layer="Boy Hair.png"');
+  expect(neutralPreview).not.toContain('data-rig-layer="Boy Pants.png"');
+  expect(neutralPreview).not.toContain('data-rig-layer="Boy Shirt and tie.png"');
+  expect(neutralPreview).not.toContain('data-rig-layer="Shoes Corrected.png"');
+  expect(neutralPreview).not.toContain('data-rig-layer="Brown Shoes.png"');
   expect(neutralPreview).not.toContain('data-rig-layer="Boy Blazer.png"');
-  await page.locator('[data-avatar-value="ecc-current-uniform"]').click();
-  expect(await getPreviewHtml()).toContain('data-rig-layer="Boy Blazer.png"');
-  await expect(page.locator('[data-avatar-value="ecc-boy-photoshop-blazer-poc"]')).toBeDisabled();
-  await expect(page.locator('[data-avatar-value="ecc-sports"]')).toBeDisabled();
+  await page.locator('[data-avatar-key="shirt"][data-avatar-value="ecc-shirt-tie"]').click();
+  await page.locator('[data-avatar-key="pants"][data-avatar-value="ecc-navy-pants"]').click();
+  await page.locator('[data-avatar-key="shoes"][data-avatar-value="black-school-shoes"]').click();
+  await page.locator('[data-avatar-key="blazer"][data-avatar-value="ecc-navy-blazer"]').click();
+  await expect(page.locator('[data-avatar-value="ecc-boy-photoshop-blazer-poc"]')).toHaveCount(0);
+  await expect(page.locator('[data-avatar-value="ecc-sports"]')).toHaveCount(0);
   await expect(page.locator('[data-avatar-value="earrings"]')).toBeDisabled();
   await expect(page.locator('[data-avatar-value="badge"]')).toBeDisabled();
   await expect(page.locator('[data-avatar-value="glasses"]')).toBeDisabled();
@@ -114,6 +136,10 @@ test("Avatar Studio cleans up previously saved unapproved avatar choices", async
         hairStyle: "crop",
         hairColour: "blonde",
         outfit: "ecc-sports",
+        shirt: "custom-shirt",
+        pants: "custom-pants",
+        shoes: "custom-shoes",
+        blazer: "custom-blazer",
         accessory: "earrings",
         occupation: "",
         training: "",
@@ -125,6 +151,9 @@ test("Avatar Studio cleans up previously saved unapproved avatar choices", async
 
   const previewHtml = await page.locator("#avatar-render").evaluate(element => element.innerHTML);
   expect(previewHtml).toContain('data-rig-layer="Neutral Boy Transparent background.png"');
+  expect(previewHtml).toContain('data-rig-layer="Boy Pants.png"');
+  expect(previewHtml).toContain('data-rig-layer="Boy Shirt and tie.png"');
+  expect(previewHtml).toContain('data-rig-layer="Shoes Corrected.png"');
   expect(previewHtml).toContain('data-rig-layer="Boy Blazer.png"');
   expect(previewHtml).toContain('data-rig-layer="Boy Hair.png"');
   expect(previewHtml).not.toContain('data-rig-feature="eye-colour"');
@@ -133,7 +162,10 @@ test("Avatar Studio cleans up previously saved unapproved avatar choices", async
   await expect(page.locator('[data-avatar-key="skinTone"][data-avatar-value="sand"]')).toHaveClass(/is-selected/);
   await expect(page.locator('[data-avatar-key="eyeColour"][data-avatar-value="blue"]')).toHaveClass(/is-selected/);
   await expect(page.locator('[data-avatar-key="hairStyle"][data-avatar-value="waves"]')).toHaveClass(/is-selected/);
-  await expect(page.locator('[data-avatar-key="outfit"][data-avatar-value="ecc-current-uniform"]')).toHaveClass(/is-selected/);
+  await expect(page.locator('[data-avatar-key="shirt"][data-avatar-value="ecc-shirt-tie"]')).toHaveClass(/is-selected/);
+  await expect(page.locator('[data-avatar-key="pants"][data-avatar-value="ecc-navy-pants"]')).toHaveClass(/is-selected/);
+  await expect(page.locator('[data-avatar-key="shoes"][data-avatar-value="black-school-shoes"]')).toHaveClass(/is-selected/);
+  await expect(page.locator('[data-avatar-key="blazer"][data-avatar-value="ecc-navy-blazer"]')).toHaveClass(/is-selected/);
   await expect(page.locator('[data-avatar-key="accessory"][data-avatar-value="none"]')).toHaveClass(/is-selected/);
 });
 

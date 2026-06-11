@@ -1,6 +1,6 @@
 (function () {
   window.CareerEmpireAvatarParts = {
-    schemaVersion: 4,
+    schemaVersion: 5,
     rig: {
       id: "ecc-student-take-2-layered-rig-v1",
       canvas: { width: 1280, height: 720 },
@@ -11,6 +11,10 @@
         "hairStyle",
         "hairColour",
         "uniform",
+        "shirt",
+        "pants",
+        "shoes",
+        "blazer",
         "accessory",
         "animationState"
       ],
@@ -100,7 +104,7 @@
       basePath: "../../Assets/Images and Animations/Avatar Studio",
       canvas: { width: 1280, height: 720 },
       starterPackId: "ecc-boy-take-2-layered-v1",
-      note: "Take 2 boy starter rig. Runtime keeps the 1280 x 720 transparent canvas intact and scales/crops the preview to the centered character.",
+      note: "Take 2 boy starter rig. Runtime starts with the neutral base and layers the selected clothing, shoes, blazer, and hair on top.",
       usePreviewBase: true,
       useFeatureOverlays: false,
       renderHairStyleLayersWithPreviewBase: true,
@@ -141,7 +145,7 @@
           id: "ecc-boy-take-2-layered",
           label: "ECC boy Take 2 layered",
           fileRoot: "",
-          previewPath: "../../Assets/Images and Animations/Avatar Studio/Layered Dressed Boy svg.svg",
+          previewPath: "../../Assets/Images and Animations/Avatar Studio/Neutral Boy Transparent background.png",
           defaultExpression: "neutral",
           compatibleBodyRig: "ecc-boy-standard",
           compatibleFaceRig: "ecc-boy-take-2-face",
@@ -226,6 +230,23 @@
       { id: "blonde", label: "Blonde", color: "#d9b85d", plannedOnly: true, note: "Needs clean hair mask" },
       { id: "silver", label: "Silver", color: "#c8ced4", plannedOnly: true, note: "Needs clean hair mask" },
       { id: "teal", label: "Teal", color: "#0f8f8c", plannedOnly: true, note: "Needs clean hair mask" }
+    ],
+    shirtOptions: [
+      { id: "none", label: "Neutral base", token: "-", layer: null, note: "No shirt layer" },
+      { id: "ecc-shirt-tie", label: "Shirt and tie", token: "S", layer: "Boy Shirt and tie.png", source: "avatar-take-2-layered-png" }
+    ],
+    pantsOptions: [
+      { id: "none", label: "Neutral base", token: "-", layer: null, note: "No pants layer" },
+      { id: "ecc-navy-pants", label: "Navy pants", token: "P", layer: "Boy Pants.png", source: "avatar-take-2-layered-png" }
+    ],
+    shoeOptions: [
+      { id: "none", label: "Bare feet", color: "#dba77c", layer: null, note: "Neutral base feet" },
+      { id: "black-school-shoes", label: "Black", color: "#151515", layer: "Shoes Corrected.png", source: "avatar-take-2-layered-png" },
+      { id: "brown-school-shoes", label: "Brown", color: "#8b5b10", layer: "Brown Shoes.png", source: "avatar-take-2-layered-png" }
+    ],
+    blazerOptions: [
+      { id: "none", label: "No blazer", token: "-", layer: null, note: "Base and shirt only" },
+      { id: "ecc-navy-blazer", label: "ECC blazer", token: "B", layer: "Boy Blazer.png", source: "avatar-take-2-layered-png" }
     ],
     outfits: [
       {
@@ -466,13 +487,17 @@
         token: "BR",
         partMode: "production-png-rig",
         assetRigId: "ecc-boy-take-2-layered",
-        imagePath: "../../Assets/Images and Animations/Avatar Studio/Layered Dressed Boy svg.svg",
+        imagePath: "../../Assets/Images and Animations/Avatar Studio/Neutral Boy Transparent background.png",
         defaultSkinTone: "sand",
         defaultFaceStyle: "soft",
         defaultEyeColour: "blue",
         defaultOutfit: "ecc-current-uniform",
         defaultHairStyle: "waves",
         defaultHairColour: "brown",
+        defaultShirt: "ecc-shirt-tie",
+        defaultPants: "ecc-navy-pants",
+        defaultShoes: "black-school-shoes",
+        defaultBlazer: "ecc-navy-blazer",
         defaultAccessory: "none",
         note: "Active Take 2 layered art"
       },
@@ -482,7 +507,7 @@
         token: "GR",
         partMode: "production-png-rig",
         assetRigId: "ecc-boy-take-2-layered",
-        imagePath: "../../Assets/Images and Animations/Avatar Studio/Layered Dressed Boy svg.svg",
+        imagePath: "../../Assets/Images and Animations/Avatar Studio/Neutral Boy Transparent background.png",
         defaultOutfit: "ecc-current-uniform",
         defaultHairStyle: "waves",
         defaultAccessory: "none",
@@ -563,6 +588,10 @@
       hairStyle: "waves",
       hairColour: "brown",
       outfit: "ecc-current-uniform",
+      shirt: "ecc-shirt-tie",
+      pants: "ecc-navy-pants",
+      shoes: "black-school-shoes",
+      blazer: "ecc-navy-blazer",
       accessory: "none",
       animationState: "idle",
       occupation: "",

@@ -56,6 +56,27 @@
     { id: "apron", label: "Creative apron", token: "A", fill: "#6c4bd2", accent: "#a3d95b", shirt: "#ffffff", tie: "#6c4bd2" }
   ];
 
+  const shirtOptions = [
+    { id: "none", label: "Neutral base", token: "-", layer: null },
+    { id: "ecc-shirt-tie", label: "Shirt and tie", token: "S", layer: "Boy Shirt and tie.png" }
+  ];
+
+  const pantsOptions = [
+    { id: "none", label: "Neutral base", token: "-", layer: null },
+    { id: "ecc-navy-pants", label: "Navy pants", token: "P", layer: "Boy Pants.png" }
+  ];
+
+  const shoeOptions = [
+    { id: "none", label: "Bare feet", color: "#dba77c", layer: null },
+    { id: "black-school-shoes", label: "Black", color: "#151515", layer: "Shoes Corrected.png" },
+    { id: "brown-school-shoes", label: "Brown", color: "#8b5b10", layer: "Brown Shoes.png" }
+  ];
+
+  const blazerOptions = [
+    { id: "none", label: "No blazer", token: "-", layer: null },
+    { id: "ecc-navy-blazer", label: "ECC blazer", token: "B", layer: "Boy Blazer.png" }
+  ];
+
   const accessories = [
     { id: "none", label: "None", token: "-" },
     { id: "glasses", label: "Glasses", token: "G" },
@@ -121,6 +142,10 @@
     hairStyle: "waves",
     hairColour: "brown",
     outfit: "blazer",
+    shirt: "ecc-shirt-tie",
+    pants: "ecc-navy-pants",
+    shoes: "black-school-shoes",
+    blazer: "ecc-navy-blazer",
     accessory: "none",
     occupation: "",
     training: "",
@@ -135,6 +160,10 @@
     hairStyles.splice(0, hairStyles.length, ...(avatarParts.hairStyles || []));
     hairColours.splice(0, hairColours.length, ...(avatarParts.hairColours || []));
     outfits.splice(0, outfits.length, ...(avatarParts.outfits || []));
+    shirtOptions.splice(0, shirtOptions.length, ...(avatarParts.shirtOptions || []));
+    pantsOptions.splice(0, pantsOptions.length, ...(avatarParts.pantsOptions || []));
+    shoeOptions.splice(0, shoeOptions.length, ...(avatarParts.shoeOptions || []));
+    blazerOptions.splice(0, blazerOptions.length, ...(avatarParts.blazerOptions || []));
     accessories.splice(0, accessories.length, ...(avatarParts.accessories || []));
     characterBases.splice(0, characterBases.length, ...(avatarParts.characterBases || []));
     unlocks.splice(0, unlocks.length, ...(avatarParts.unlocks || []));
@@ -242,9 +271,11 @@
     return items.filter(isVisibleItem);
   }
 
-  function normaliseChoice(items, id) {
+  function normaliseChoice(items, id, fallbackId) {
     const item = findById(items, id, null);
     if (isSelectableItem(item)) return id;
+    const fallbackItem = findById(items, fallbackId, null);
+    if (isSelectableItem(fallbackItem)) return fallbackId;
     return getSelectableItems(items)[0]?.id || id;
   }
 
@@ -258,6 +289,10 @@
       ...(base.defaultHairStyle ? { hairStyle: base.defaultHairStyle } : {}),
       ...(base.defaultHairColour ? { hairColour: base.defaultHairColour } : {}),
       ...(base.defaultOutfit ? { outfit: base.defaultOutfit } : {}),
+      ...(base.defaultShirt ? { shirt: base.defaultShirt } : {}),
+      ...(base.defaultPants ? { pants: base.defaultPants } : {}),
+      ...(base.defaultShoes ? { shoes: base.defaultShoes } : {}),
+      ...(base.defaultBlazer ? { blazer: base.defaultBlazer } : {}),
       ...(base.defaultAccessory ? { accessory: base.defaultAccessory } : {})
     };
   }
@@ -278,13 +313,17 @@
     }
     return {
       ...normalisedBaseState,
-      skinTone: normaliseChoice(skinTones, normalisedBaseState.skinTone),
-      faceStyle: normaliseChoice(faceStyles, normalisedBaseState.faceStyle),
-      eyeColour: normaliseChoice(eyeColours, normalisedBaseState.eyeColour),
-      hairStyle: normaliseChoice(hairStyles, normalisedBaseState.hairStyle),
-      hairColour: normaliseChoice(hairColours, normalisedBaseState.hairColour),
-      outfit: normaliseChoice(outfits, normalisedBaseState.outfit),
-      accessory: normaliseChoice(accessories, normalisedBaseState.accessory)
+      skinTone: normaliseChoice(skinTones, normalisedBaseState.skinTone, defaults.skinTone),
+      faceStyle: normaliseChoice(faceStyles, normalisedBaseState.faceStyle, defaults.faceStyle),
+      eyeColour: normaliseChoice(eyeColours, normalisedBaseState.eyeColour, defaults.eyeColour),
+      hairStyle: normaliseChoice(hairStyles, normalisedBaseState.hairStyle, defaults.hairStyle),
+      hairColour: normaliseChoice(hairColours, normalisedBaseState.hairColour, defaults.hairColour),
+      outfit: normaliseChoice(outfits, normalisedBaseState.outfit, defaults.outfit),
+      shirt: normaliseChoice(shirtOptions, normalisedBaseState.shirt, defaults.shirt),
+      pants: normaliseChoice(pantsOptions, normalisedBaseState.pants, defaults.pants),
+      shoes: normaliseChoice(shoeOptions, normalisedBaseState.shoes, defaults.shoes),
+      blazer: normaliseChoice(blazerOptions, normalisedBaseState.blazer, defaults.blazer),
+      accessory: normaliseChoice(accessories, normalisedBaseState.accessory, defaults.accessory)
     };
   }
 
@@ -825,6 +864,34 @@
     return config.eyeColourLayers?.[state.eyeColour] || null;
   }
 
+  function getWardrobeLayerPaths(item, rig) {
+    if (!item) return [];
+    const rigLayers = item.rigLayers?.[rig?.id];
+    return normaliseProductionLayerPaths(rigLayers || item.layer || item.layers);
+  }
+
+  function getProductionWardrobeLayerEntries(rig, profile = state) {
+    const wardrobeSlots = [
+      { key: "pants", items: pantsOptions },
+      { key: "shirt", items: shirtOptions },
+      { key: "shoes", items: shoeOptions },
+      { key: "blazer", items: blazerOptions }
+    ];
+    return wardrobeSlots.flatMap(slot => {
+      const item = findById(slot.items, profile[slot.key], null);
+      return getWardrobeLayerPaths(item, rig).map(layerPath => ({
+        slot: slot.key,
+        id: item.id,
+        label: item.label,
+        layerPath
+      }));
+    });
+  }
+
+  function hasProductionWardrobeSelectors() {
+    return [pantsOptions, shirtOptions, shoeOptions, blazerOptions].some(items => items.length > 0);
+  }
+
   function getRigLayerMotion(layerPath) {
     const layerName = String(layerPath || "").toLowerCase();
     if (layerName.includes("hair")) return "hair";
@@ -946,18 +1013,28 @@
     return outfit?.rigLayers?.[rig?.id] || null;
   }
 
-  function renderProductionRigOutfitLayer(basePath, rig, outfit) {
-    const layerPaths = normaliseProductionLayerPaths(getProductionOutfitLayerPath(rig, outfit));
-    if (!layerPaths.length) return "";
-    return layerPaths.map((layerPath, index) => renderProductionRigLayer(
+  function renderProductionRigWardrobeLayers(basePath, rig, outfit) {
+    const wardrobeEntries = getProductionWardrobeLayerEntries(rig);
+    const fallbackEntries = wardrobeEntries.length || hasProductionWardrobeSelectors()
+      ? []
+      : normaliseProductionLayerPaths(getProductionOutfitLayerPath(rig, outfit)).map((layerPath, index) => ({
+        slot: "outfit",
+        id: outfit.id,
+        label: outfit.label,
+        layerPath,
+        index
+      }));
+    const layerEntries = wardrobeEntries.length ? wardrobeEntries : fallbackEntries;
+    if (!layerEntries.length) return "";
+    return layerEntries.map((entry, index) => renderProductionRigLayer(
       basePath,
       {},
-      layerPath,
+      entry.layerPath,
       null,
       null,
       outfit,
-      "avatar-production-rig-layer--outfit",
-      `data-rig-feature="outfit-layer" data-outfit="${escapeHtml(outfit.id)}" data-outfit-layer-index="${index}"`
+      "avatar-production-rig-layer--wardrobe",
+      `data-rig-feature="wardrobe-layer" data-wardrobe-slot="${escapeHtml(entry.slot)}" data-wardrobe-choice="${escapeHtml(entry.id)}" data-wardrobe-layer-index="${index}"`
     )).join("");
   }
 
@@ -1181,7 +1258,7 @@
         style="${escapeHtml(rigStyle)}"
       >
         ${layers}
-        ${renderProductionRigOutfitLayer(basePath, rig, outfit)}
+        ${renderProductionRigWardrobeLayers(basePath, rig, outfit)}
         ${config.usePreviewBase && config.renderHairStyleLayersWithPreviewBase ? renderProductionRigHairStyleLayers(basePath, config, skin, hairColour, outfit) : ""}
         ${config.usePreviewBase || !skinMaskInserted ? renderProductionRigSkinMask(basePath, config, skin) : ""}
         ${config.usePreviewBase ? renderProductionRigHairMask(basePath, config, hairColour) : ""}
@@ -1198,6 +1275,7 @@
     const productionRig = getProductionRigForBase(characterBase);
     const productionConfig = avatarParts.productionRigs || {};
     const productionRoot = productionRig ? getProductionRigBasePath(productionConfig, productionRig) : null;
+    const wardrobeEntries = productionRig ? getProductionWardrobeLayerEntries(productionRig, profile) : [];
     return {
       schemaVersion: avatarParts.schemaVersion || 1,
       rigId: avatarParts.rig?.id || "avatar-svg-prototype-v1",
@@ -1211,6 +1289,10 @@
         hairStyle: profile.hairStyle,
         hairColour: profile.hairColour,
         uniform: profile.outfit,
+        shirt: profile.shirt,
+        pants: profile.pants,
+        shoes: profile.shoes,
+        blazer: profile.blazer,
         accessory: profile.accessory,
         animationState: profile.animationState || "idle"
       },
@@ -1220,6 +1302,13 @@
         skinBaseVariant: productionRoot ? `${productionRoot}/${getProductionBaseLayerPath(productionConfig, profile.skinTone)}` : null,
         manifest: productionRig ? productionConfig.manifestPath : null,
         layerRoot: productionRoot,
+        wardrobeLayers: productionRoot
+          ? wardrobeEntries.map(entry => ({
+            slot: entry.slot,
+            choice: entry.id,
+            layer: `${productionRoot}/${entry.layerPath}`
+          }))
+          : [],
         eyeColourLayer: productionRig && productionConfig.eyeColourLayers?.[profile.eyeColour]
           ? `${productionRoot}/${productionConfig.eyeColourLayers[profile.eyeColour]}`
           : null
@@ -1230,7 +1319,11 @@
         compatibleBodyRig: productionRig.compatibleBodyRig || null,
         compatibleFaceRig: productionRig.compatibleFaceRig || null,
         anchors: productionRig.anchors || {},
-        layerOrder: getProductionLayerOrder(productionConfig),
+        layerOrder: [
+          getProductionBaseLayerPath(productionConfig, profile.skinTone),
+          ...wardrobeEntries.map(entry => entry.layerPath),
+          ...getProductionHairLayerPaths(productionConfig)
+        ],
         layerContracts: productionConfig.layerContracts || []
       } : null,
       assetReadiness: {
@@ -1359,6 +1452,10 @@
     renderChoiceButtons("hair-options", hairStyles, "hairStyle", "hair");
     renderSwatches("hair-color-options", hairColours, "hairColour");
     renderChoiceButtons("outfit-options", outfits, "outfit", "outfit");
+    renderChoiceButtons("shirt-options", shirtOptions, "shirt", "shirt");
+    renderChoiceButtons("pants-options", pantsOptions, "pants", "pants");
+    renderSwatches("shoe-options", shoeOptions, "shoes");
+    renderChoiceButtons("blazer-options", blazerOptions, "blazer", "blazer");
     renderChoiceButtons("accessory-options", accessories, "accessory", "accessory");
   }
 
@@ -1430,6 +1527,10 @@
       hairStyle: randomFrom(hairStyles),
       hairColour: randomFrom(hairColours),
       outfit: randomFrom(outfits),
+      shirt: randomFrom(shirtOptions),
+      pants: randomFrom(pantsOptions),
+      shoes: randomFrom(shoeOptions),
+      blazer: randomFrom(blazerOptions),
       accessory: randomFrom(accessories)
     };
     setText("avatar-save-status", "New combination ready.");
