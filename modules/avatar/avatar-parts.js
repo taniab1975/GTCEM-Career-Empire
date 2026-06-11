@@ -118,7 +118,11 @@
       hairStyleLayerSets: {
         waves: {
           back: null,
-          front: "Boy Hair.png"
+          front: "Boy Hair.png",
+          colourVariants: {
+            brown: { front: "Boy Hair.png" },
+            black: { front: "Black hair.png" }
+          }
         }
       },
       accessoryLayers: {},
@@ -217,7 +221,7 @@
     ],
     hairColours: [
       { id: "brown", label: "Brown", color: "#5a3524" },
-      { id: "black", label: "Black", color: "#161412", plannedOnly: true, note: "Needs clean Take 2 hair art" },
+      { id: "black", label: "Black", color: "#050505", source: "avatar-take-2-layered-png", note: "Active Take 2 hair layer" },
       { id: "auburn", label: "Auburn", color: "#9b3f24", plannedOnly: true, note: "Needs clean hair mask" },
       { id: "blonde", label: "Blonde", color: "#d9b85d", plannedOnly: true, note: "Needs clean hair mask" },
       { id: "silver", label: "Silver", color: "#c8ced4", plannedOnly: true, note: "Needs clean hair mask" },

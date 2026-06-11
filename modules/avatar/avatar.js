@@ -789,8 +789,13 @@
     return Array.isArray(config.layerOrder) ? [...config.layerOrder] : [];
   }
 
-  function resolveProductionLayerPath(config, layerPath) {
+  function getProductionHairLayerSet(config) {
     const hairLayers = config.hairStyleLayerSets?.[state.hairStyle] || config.hairStyleLayerSets?.waves;
+    return hairLayers?.colourVariants?.[state.hairColour] || hairLayers;
+  }
+
+  function resolveProductionLayerPath(config, layerPath) {
+    const hairLayers = getProductionHairLayerSet(config);
     if (hairLayers && layerPath === "hair/back.png") return Object.prototype.hasOwnProperty.call(hairLayers, "back") ? hairLayers.back : layerPath;
     if (hairLayers && layerPath === "hair/front.png") return Object.prototype.hasOwnProperty.call(hairLayers, "front") ? hairLayers.front : layerPath;
     return layerPath;
@@ -802,7 +807,7 @@
   }
 
   function getProductionHairLayerPaths(config) {
-    const hairLayers = config.hairStyleLayerSets?.[state.hairStyle] || config.hairStyleLayerSets?.waves;
+    const hairLayers = getProductionHairLayerSet(config);
     if (!hairLayers) return [];
     return [
       ...normaliseProductionLayerPaths(hairLayers.back),

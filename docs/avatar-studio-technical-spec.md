@@ -25,6 +25,7 @@ The Take 2 source stack is:
 - `Shoes Corrected.png`
 - `Boy Blazer.png`
 - `Boy Hair.png`
+- `Black hair.png` (approved alternate hair layer)
 
 The browser-facing part manifest is:
 
@@ -36,7 +37,7 @@ The legacy layer manifest is retained as pipeline material, but the live Avatar 
 
 The active starter preview uses the approved Take 2 boy layer stack on a shared `1280 x 720` transparent canvas. The module scales and crops only the empty side space in the preview; it does not move or resize individual artwork layers.
 
-The old `1024 x 1536` modular stack is retained as pipeline material, but it is not currently trusted for live rendering. Runtime CSS skin tinting and eye-colour overlays are not used for Take 2 because the supplied base already has baked skin and blue eyes. Girl preset, alternate skin tones, alternate hair colours, alternate eye colours, freckles, expressions, accessories, and extra outfits stay disabled until matching `1280 x 720` layers exist.
+The old `1024 x 1536` modular stack is retained as pipeline material, but it is not currently trusted for live rendering. Runtime CSS skin tinting and eye-colour overlays are not used for Take 2 because the supplied base already has baked skin and blue eyes. Brown and black Take 2 hair are active because both have approved full-canvas layers. Girl preset, alternate skin tones, alternate eye colours, freckles, expressions, accessories, and extra outfits stay disabled until matching `1280 x 720` layers exist.
 
 Expression plates are deliberately parked for now. The current `head/base.png` already contains the neutral facial features, so adding `face/expression-neutral.png` creates a duplicate face/head effect. Expressions should only be enabled after we create an expressionless head base or expression plates that contain only the changed mouth/eyes/brows.
 
@@ -77,7 +78,7 @@ Target starter order once layers are accepted:
 3. `Boy Shirt and tie.png`
 4. `Shoes Corrected.png`
 5. `Boy Blazer.png`
-6. `Boy Hair.png`
+6. `Boy Hair.png` or `Black hair.png`
 
 The current Take 2 boy hair is a single front layer. Long hair, braids, curls, and ponytails should use both a back layer and a front layer where possible.
 
@@ -115,9 +116,9 @@ The first clean Take 2 pack contains:
 - shirt and tie
 - shoes
 - blazer with jumper/crest
-- hair
+- hair (`Boy Hair.png` default, `Black hair.png` alternate)
 
-For now, only the boy Take 2 base, Take 2 hair, and current ECC uniform stack are active. Everything else stays planned/disabled in the UI until its layer exists and passes the same full-canvas alignment rules.
+For now, only the boy Take 2 base, brown/black Take 2 hair, and current ECC uniform stack are active. Everything else stays planned/disabled in the UI until its layer exists and passes the same full-canvas alignment rules.
 
 ## Layer Acceptance Test
 
