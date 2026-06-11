@@ -252,29 +252,39 @@
     const base = findById(characterBases, baseId, null);
     if (!base) return {};
     return {
+      ...(base.defaultSkinTone ? { skinTone: base.defaultSkinTone } : {}),
+      ...(base.defaultFaceStyle ? { faceStyle: base.defaultFaceStyle } : {}),
+      ...(base.defaultEyeColour ? { eyeColour: base.defaultEyeColour } : {}),
       ...(base.defaultHairStyle ? { hairStyle: base.defaultHairStyle } : {}),
-      ...(base.defaultOutfit ? { outfit: base.defaultOutfit } : {})
+      ...(base.defaultHairColour ? { hairColour: base.defaultHairColour } : {}),
+      ...(base.defaultOutfit ? { outfit: base.defaultOutfit } : {}),
+      ...(base.defaultAccessory ? { accessory: base.defaultAccessory } : {})
     };
   }
 
   function normaliseState(nextState) {
     const characterBase = findById(characterBases, nextState.characterBase);
-    if (!characterBase || characterBase.internalOnly || characterBase.referenceOnly) {
-      const fallbackBase = characterBase?.migratesTo || defaults.characterBase || getSelectableItems(characterBases)[0]?.id;
-      return {
+    let normalisedBaseState = nextState;
+    if (!isSelectableItem(characterBase)) {
+      const migratedBase = findById(characterBases, characterBase?.migratesTo, null);
+      const fallbackBase = isSelectableItem(migratedBase)
+        ? migratedBase.id
+        : getSelectableItems(characterBases)[0]?.id || defaults.characterBase || nextState.characterBase;
+      normalisedBaseState = {
         ...nextState,
         characterBase: fallbackBase,
         ...getBaseDefaultState(fallbackBase)
       };
     }
     return {
-      ...nextState,
-      faceStyle: normaliseChoice(faceStyles, nextState.faceStyle),
-      eyeColour: normaliseChoice(eyeColours, nextState.eyeColour),
-      hairStyle: normaliseChoice(hairStyles, nextState.hairStyle),
-      hairColour: normaliseChoice(hairColours, nextState.hairColour),
-      outfit: normaliseChoice(outfits, nextState.outfit),
-      accessory: normaliseChoice(accessories, nextState.accessory)
+      ...normalisedBaseState,
+      skinTone: normaliseChoice(skinTones, normalisedBaseState.skinTone),
+      faceStyle: normaliseChoice(faceStyles, normalisedBaseState.faceStyle),
+      eyeColour: normaliseChoice(eyeColours, normalisedBaseState.eyeColour),
+      hairStyle: normaliseChoice(hairStyles, normalisedBaseState.hairStyle),
+      hairColour: normaliseChoice(hairColours, normalisedBaseState.hairColour),
+      outfit: normaliseChoice(outfits, normalisedBaseState.outfit),
+      accessory: normaliseChoice(accessories, normalisedBaseState.accessory)
     };
   }
 
@@ -688,6 +698,28 @@
     return config.rigs?.[characterBase.assetRigId] || null;
   }
 
+  function getProductionRigBasePath(config, rig) {
+    if (!config) return "";
+    if (rig?.basePath) return rig.basePath;
+    if (rig?.fileRoot) return `${config.basePath}/${rig.fileRoot}`;
+    return config.basePath || "";
+  }
+
+  function getProductionRigCanvas(config, rig) {
+    return rig?.canvas || config?.canvas || { width: 1024, height: 1536 };
+  }
+
+  function getProductionRigStyle(config, rig) {
+    const canvas = getProductionRigCanvas(config, rig);
+    const styles = [
+      `--avatar-rig-aspect-ratio: ${canvas.width} / ${canvas.height}`
+    ];
+    if (rig?.previewFit?.width) {
+      styles.push(`--avatar-rig-preview-width: ${rig.previewFit.width}`);
+    }
+    return styles.join("; ");
+  }
+
   function getRigLayerTint(layerPath, skin, hairColour, outfit) {
     const isDefaultUniform = ["ecc-winter-trousers-blazer", "ecc-winter-skirt-jumper"].includes(outfit.id);
     if (layerPath.startsWith("hair/")) {
@@ -764,6 +796,20 @@
     return layerPath;
   }
 
+  function normaliseProductionLayerPaths(layerPaths) {
+    if (Array.isArray(layerPaths)) return layerPaths.filter(Boolean);
+    return layerPaths ? [layerPaths] : [];
+  }
+
+  function getProductionHairLayerPaths(config) {
+    const hairLayers = config.hairStyleLayerSets?.[state.hairStyle] || config.hairStyleLayerSets?.waves;
+    if (!hairLayers) return [];
+    return [
+      ...normaliseProductionLayerPaths(hairLayers.back),
+      ...normaliseProductionLayerPaths(hairLayers.front)
+    ];
+  }
+
   function getProductionAccessoryLayerPath(config) {
     if (!state.accessory || state.accessory === "none") return null;
     return config.accessoryLayers?.[state.accessory] || null;
@@ -775,6 +821,8 @@
   }
 
   function getRigLayerMotion(layerPath) {
+    const layerName = String(layerPath || "").toLowerCase();
+    if (layerName.includes("hair")) return "hair";
     if (layerPath === "head/base.png") return "head";
     if (layerPath.startsWith("hair/")) return "hair";
     if (layerPath.startsWith("face/")) return "head";
@@ -800,14 +848,14 @@
     `;
   }
 
-  function renderProductionRigLayer(basePath, config, layerPath, skin, hairColour, outfit) {
+  function renderProductionRigLayer(basePath, config, layerPath, skin, hairColour, outfit, extraClass = "", extraAttributes = "") {
     const resolvedLayerPath = resolveProductionLayerPath(config, layerPath);
     if (!resolvedLayerPath) return "";
     const imagePath = `${basePath}/${resolvedLayerPath}`;
     const tint = getRigLayerTint(resolvedLayerPath, skin, hairColour, outfit);
     return `
       <img
-        class="avatar-production-rig-layer"
+        class="avatar-production-rig-layer${extraClass ? ` ${extraClass}` : ""}"
         src="${escapeHtml(imagePath)}"
         alt=""
         aria-hidden="true"
@@ -815,13 +863,18 @@
         data-rig-motion="${escapeHtml(getRigLayerMotion(resolvedLayerPath))}"
         data-rig-layer="${escapeHtml(resolvedLayerPath)}"
         data-rig-source-layer="${escapeHtml(layerPath)}"
+        ${extraAttributes}
       >
       ${renderProductionRigTint(imagePath, resolvedLayerPath, tint)}
     `;
   }
 
+  function getProductionBaseLayerPath(config, skinTone = state.skinTone) {
+    return config.skinBaseVariants?.[skinTone] || config.baseImage || "recomposed-preview.png";
+  }
+
   function renderProductionRigBaseLayer(basePath, config, rig) {
-    const layerPath = config.baseImage || "recomposed-preview.png";
+    const layerPath = getProductionBaseLayerPath(config);
     return `
       <img
         class="avatar-production-rig-layer avatar-production-rig-layer--base"
@@ -832,6 +885,7 @@
         data-rig-motion="body"
         data-rig-layer="${escapeHtml(layerPath)}"
         data-rig-base="${escapeHtml(rig.id)}"
+        data-rig-skin-tone="${escapeHtml(state.skinTone)}"
       >
     `;
   }
@@ -881,6 +935,40 @@
         data-eye-colour="${escapeHtml(state.eyeColour)}"
       >
     `;
+  }
+
+  function getProductionOutfitLayerPath(rig, outfit) {
+    return outfit?.rigLayers?.[rig?.id] || null;
+  }
+
+  function renderProductionRigOutfitLayer(basePath, rig, outfit) {
+    const layerPaths = normaliseProductionLayerPaths(getProductionOutfitLayerPath(rig, outfit));
+    if (!layerPaths.length) return "";
+    return layerPaths.map((layerPath, index) => renderProductionRigLayer(
+      basePath,
+      {},
+      layerPath,
+      null,
+      null,
+      outfit,
+      "avatar-production-rig-layer--outfit",
+      `data-rig-feature="outfit-layer" data-outfit="${escapeHtml(outfit.id)}" data-outfit-layer-index="${index}"`
+    )).join("");
+  }
+
+  function renderProductionRigHairStyleLayers(basePath, config, skin, hairColour, outfit) {
+    const layerPaths = getProductionHairLayerPaths(config);
+    if (!layerPaths.length) return "";
+    return layerPaths.map((layerPath, index) => renderProductionRigLayer(
+      basePath,
+      config,
+      layerPath,
+      skin,
+      hairColour,
+      outfit,
+      "avatar-production-rig-layer--hair-style",
+      `data-rig-feature="hair-style" data-hair-style="${escapeHtml(state.hairStyle)}" data-hair-layer-index="${index}"`
+    )).join("");
   }
 
   function getRigPoint(rig, key, fallback) {
@@ -966,7 +1054,8 @@
     };
   }
 
-  function renderProductionRigFeatureOverlay(rig, skin, outfit, hasAssetAccessory, hasEyeColourAsset) {
+  function renderProductionRigFeatureOverlay(rig, skin, outfit, hasAssetAccessory, hasEyeColourAsset, enabled = true) {
+    if (!enabled) return "";
     const anchors = getProductionFeatureAnchors(rig);
     const eyeColour = findById(eyeColours, state.eyeColour);
     const eyeColourOverlay = hasEyeColourAsset ? "" : `
@@ -1063,8 +1152,10 @@
     const hairColour = findById(hairColours, state.hairColour).color;
     const outfit = findById(outfits, state.outfit);
     const layerOrder = getProductionLayerOrder(config);
-    const basePath = `${config.basePath}/${rig.fileRoot}`;
+    const basePath = getProductionRigBasePath(config, rig);
     const animationState = state.animationState || "idle";
+    const rigStyle = getProductionRigStyle(config, rig);
+    const shouldRenderFeatureOverlays = config.useFeatureOverlays !== false;
     const hasAssetAccessory = Boolean(getProductionAccessoryLayerPath(config));
     const hasEyeColourAsset = Boolean(getProductionEyeColourLayerPath(config));
     let skinMaskInserted = false;
@@ -1082,13 +1173,16 @@
         class="avatar-production-rig is-${escapeHtml(animationState)}"
         role="img"
         aria-label="${escapeHtml(rig.label || characterBase.label)} avatar preview"
+        style="${escapeHtml(rigStyle)}"
       >
         ${layers}
+        ${renderProductionRigOutfitLayer(basePath, rig, outfit)}
+        ${config.usePreviewBase && config.renderHairStyleLayersWithPreviewBase ? renderProductionRigHairStyleLayers(basePath, config, skin, hairColour, outfit) : ""}
         ${config.usePreviewBase || !skinMaskInserted ? renderProductionRigSkinMask(basePath, config, skin) : ""}
         ${config.usePreviewBase ? renderProductionRigHairMask(basePath, config, hairColour) : ""}
         ${renderProductionRigEyeColourLayer(basePath, config)}
         ${renderProductionRigAccessoryLayer(basePath, config)}
-        ${renderProductionRigFeatureOverlay(rig, skin, outfit, hasAssetAccessory, hasEyeColourAsset)}
+        ${renderProductionRigFeatureOverlay(rig, skin, outfit, hasAssetAccessory, hasEyeColourAsset, shouldRenderFeatureOverlays)}
       </div>
     `;
   }
@@ -1097,6 +1191,8 @@
     const characterBase = findById(characterBases, profile.characterBase);
     const outfit = findById(outfits, profile.outfit);
     const productionRig = getProductionRigForBase(characterBase);
+    const productionConfig = avatarParts.productionRigs || {};
+    const productionRoot = productionRig ? getProductionRigBasePath(productionConfig, productionRig) : null;
     return {
       schemaVersion: avatarParts.schemaVersion || 1,
       rigId: avatarParts.rig?.id || "avatar-svg-prototype-v1",
@@ -1116,20 +1212,21 @@
       sources: {
         uniform: outfit?.source || outfit?.family || "prototype",
         base: productionRig ? "avatar-builder-png-rig" : characterBase?.imagePath ? "ecc-character-reference" : "layered-svg-prototype",
-        manifest: productionRig ? avatarParts.productionRigs?.manifestPath : null,
-        layerRoot: productionRig ? `${avatarParts.productionRigs?.basePath}/${productionRig.fileRoot}` : null,
-        eyeColourLayer: productionRig && avatarParts.productionRigs?.eyeColourLayers?.[profile.eyeColour]
-          ? `${avatarParts.productionRigs.basePath}/${productionRig.fileRoot}/${avatarParts.productionRigs.eyeColourLayers[profile.eyeColour]}`
+        skinBaseVariant: productionRoot ? `${productionRoot}/${getProductionBaseLayerPath(productionConfig, profile.skinTone)}` : null,
+        manifest: productionRig ? productionConfig.manifestPath : null,
+        layerRoot: productionRoot,
+        eyeColourLayer: productionRig && productionConfig.eyeColourLayers?.[profile.eyeColour]
+          ? `${productionRoot}/${productionConfig.eyeColourLayers[profile.eyeColour]}`
           : null
       },
       technicalSpec: productionRig ? {
-        starterPackId: avatarParts.productionRigs?.starterPackId || null,
-        canvas: avatarParts.productionRigs?.canvas || null,
+        starterPackId: productionConfig.starterPackId || null,
+        canvas: getProductionRigCanvas(productionConfig, productionRig),
         compatibleBodyRig: productionRig.compatibleBodyRig || null,
         compatibleFaceRig: productionRig.compatibleFaceRig || null,
         anchors: productionRig.anchors || {},
-        layerOrder: getProductionLayerOrder(avatarParts.productionRigs || {}),
-        layerContracts: avatarParts.productionRigs?.layerContracts || []
+        layerOrder: getProductionLayerOrder(productionConfig),
+        layerContracts: productionConfig.layerContracts || []
       } : null,
       assetReadiness: {
         activeOnly: true,

@@ -4,7 +4,8 @@ This project is an avatar layering system, not a set of loose character pictures
 
 ## Master Canvas
 
-- Size: `1024 x 1536 px`
+- Active Take 2 size: `1280 x 720 px`
+- Legacy extraction-rig size: `1024 x 1536 px`
 - Format: transparent PNG with alpha
 - Do not crop tightly around the item.
 - Each file stays on the full master canvas, with the part already positioned on the character.
@@ -12,24 +13,30 @@ This project is an avatar layering system, not a set of loose character pictures
 
 ## Starter Rigs
 
-The first production rigs are:
+The active production rig is:
 
-- `ecc-boy-base-neutral`
-- `ecc-girl-base-neutral`
+- `ecc-boy-take-2-layered`
 
-The asset manifest is:
+The Take 2 source stack is:
 
-`Assets/Images and Animations/Avatar Studio/layers/rig-manifest.json`
+- `Neutral Boy Transparent background.png`
+- `Boy Pants.png`
+- `Boy Shirt and tie.png`
+- `Shoes Corrected.png`
+- `Boy Blazer.png`
+- `Boy Hair.png`
 
 The browser-facing part manifest is:
 
 `modules/avatar/avatar-parts.js`
 
-These two files must keep the same rig ids, canvas size, anchor names, and layer order.
+The legacy layer manifest is retained as pipeline material, but the live Avatar Studio preview now follows the Take 2 canvas, anchors, and layer order.
 
 ## Current Status
 
-The active starter preview now uses the modular ECC stack for the standard boy and girl rigs.
+The active starter preview uses the approved Take 2 boy layer stack on a shared `1280 x 720` transparent canvas. The module scales and crops only the empty side space in the preview; it does not move or resize individual artwork layers.
+
+The old `1024 x 1536` modular stack is retained as pipeline material, but it is not currently trusted for live rendering. Runtime CSS skin tinting and eye-colour overlays are not used for Take 2 because the supplied base already has baked skin and blue eyes. Girl preset, alternate skin tones, alternate hair colours, alternate eye colours, freckles, expressions, accessories, and extra outfits stay disabled until matching `1280 x 720` layers exist.
 
 Expression plates are deliberately parked for now. The current `head/base.png` already contains the neutral facial features, so adding `face/expression-neutral.png` creates a duplicate face/head effect. Expressions should only be enabled after we create an expressionless head base or expression plates that contain only the changed mouth/eyes/brows.
 
@@ -63,23 +70,16 @@ Every rig should define these points in pixel coordinates:
 
 ## Layer Order
 
-Current starter order:
+Target starter order once layers are accepted:
 
-1. `hair/back.png`
-2. leg layers
-3. shoe layers
-4. `body/skin-neck.png`
-5. `uniform/lower.png`
-6. `uniform/shirt.png`
-7. `uniform/tie.png`
-8. `uniform/jumper.png`
-9. `uniform/blazer.png`
-10. arm layers
-11. `head/base.png`
-12. `hair/front.png`
-13. accessories such as crest, earrings, glasses, badges
+1. `Neutral Boy Transparent background.png`
+2. `Boy Pants.png`
+3. `Boy Shirt and tie.png`
+4. `Shoes Corrected.png`
+5. `Boy Blazer.png`
+6. `Boy Hair.png`
 
-Back hair and front hair must be separate. Long hair, braids, curls, and ponytails need both a back layer and a front layer where possible.
+The current Take 2 boy hair is a single front layer. Long hair, braids, curls, and ponytails should use both a back layer and a front layer where possible.
 
 ## Overlap Rules
 
@@ -108,29 +108,23 @@ Do not add body types until matching clothing variants are ready. Body variants 
 
 ## Starter Pack Definition
 
-The first clean pack should contain:
+The first clean Take 2 pack contains:
 
-- base body/head
-- back hair
-- front hair
-- white shirt
-- tie
-- teal jumper/vest
-- navy blazer
-- skirt or trousers
+- neutral boy base
+- pants
+- shirt and tie
 - shoes
-- crest
-- earrings
-- eye colour overlays
+- blazer with jumper/crest
+- hair
 
-Everything else stays planned/disabled in the UI until its layer exists and passes the same full-canvas alignment rules.
+For now, only the boy Take 2 base, Take 2 hair, and current ECC uniform stack are active. Everything else stays planned/disabled in the UI until its layer exists and passes the same full-canvas alignment rules.
 
 ## Layer Acceptance Test
 
 Before wiring any asset into the live selector:
 
 - Open the PNG on a dark background.
-- Confirm it is `1024 x 1536`.
+- Confirm it is `1280 x 720` for Take 2 assets.
 - Confirm it contains only the intended part.
 - Confirm it has no duplicate body, collar, face, shoes, or neighbouring items.
 - Stack it with the base rig and check neck, shoulders, cuffs, waist, and feet.
@@ -140,4 +134,4 @@ Before wiring any asset into the live selector:
 
 Use this wording for any future art request:
 
-> Create one transparent PNG avatar layer on a 1024 x 1536 px canvas. Do not crop the item. Keep it aligned to the ECC avatar rig anchors. Remove all sheet background, labels, boxes, shadows, and neighbouring items. The asset must stack correctly with the existing rig, including 5-15 px hidden overlap at any neck, cuff, waist, sleeve, or shoe join. Keep the existing ECC style, lighting, scale, and perspective. Do not redesign the character.
+> Create one transparent PNG avatar layer on a 1280 x 720 px canvas. Do not crop the item. Keep it aligned to the supplied Take 2 ECC boy avatar anchors. Remove all sheet background, labels, boxes, shadows, and neighbouring items. The asset must stack correctly with the existing Take 2 rig, including hidden overlap at any neck, cuff, waist, sleeve, or shoe join. Keep the existing ECC style, lighting, scale, and perspective. Do not redesign the character.

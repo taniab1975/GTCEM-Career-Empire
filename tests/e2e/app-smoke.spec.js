@@ -37,17 +37,17 @@ test("Avatar Studio saves a future-self profile locally", async ({ page }) => {
   expect(saved.latest.avatarSpec.technicalSpec.anchors.leftEye).toBeTruthy();
 });
 
-test("Avatar Studio defaults to the ECC rig bases", async ({ page }) => {
+test("Avatar Studio defaults to the Take 2 ECC rig base", async ({ page }) => {
   await page.goto("/modules/avatar/", { waitUntil: "domcontentloaded" });
 
   await expect(page.locator("#avatar-render .avatar-production-rig")).toBeVisible();
   await expect(page.locator('[data-avatar-value="custom-trousers"]')).toHaveCount(0);
   await expect(page.locator('[data-avatar-value="custom-skirt"]')).toHaveCount(0);
   await expect(page.locator('[data-avatar-value="ecc-boy-rig-source"]')).toBeVisible();
-  await expect(page.locator('[data-avatar-value="ecc-girl-rig-source"]')).toBeVisible();
+  await expect(page.locator('[data-avatar-value="ecc-girl-rig-source"]')).toBeDisabled();
 });
 
-test("Avatar Studio ECC rig uses starter modular art layers", async ({ page }) => {
+test("Avatar Studio ECC rig uses the approved Take 2 layer stack", async ({ page }) => {
   await page.goto("/modules/avatar/", { waitUntil: "domcontentloaded" });
 
   const getPreviewHtml = () => page.locator("#avatar-render").evaluate(element => element.innerHTML);
@@ -55,43 +55,82 @@ test("Avatar Studio ECC rig uses starter modular art layers", async ({ page }) =
   await page.locator('[data-avatar-value="ecc-boy-rig-source"]').click();
   await expect(page.locator("#avatar-render .avatar-production-rig")).toBeVisible();
   const starterPreview = await getPreviewHtml();
-  expect(starterPreview).toContain('data-rig-layer="head/base.png"');
-  expect(starterPreview).toContain('data-rig-layer="uniform/shirt.png"');
-  expect(starterPreview).toContain('data-rig-layer="uniform/tie.png"');
-  expect(starterPreview).toContain('data-rig-layer="uniform/jumper.png"');
-  expect(starterPreview).toContain('data-rig-layer="uniform/blazer.png"');
-  expect(starterPreview).not.toContain('data-rig-layer="face/expression-neutral.png"');
+  expect(starterPreview).toContain('data-rig-layer="Neutral Boy Transparent background.png"');
+  expect(starterPreview).toContain('data-rig-layer="Boy Pants.png"');
+  expect(starterPreview).toContain('data-rig-layer="Boy Shirt and tie.png"');
+  expect(starterPreview).toContain('data-rig-layer="Shoes Corrected.png"');
+  expect(starterPreview).toContain('data-rig-layer="Boy Blazer.png"');
+  expect(starterPreview).toContain('data-rig-layer="Boy Hair.png"');
+  expect(starterPreview).toContain('--avatar-rig-aspect-ratio: 1280 / 720');
+  expect(starterPreview).not.toContain('data-rig-feature="earrings"');
+  expect(starterPreview).not.toContain('data-rig-feature="freckles"');
 
-  await page.locator('[data-avatar-value="deep"]').click();
-  const deepSkinPreview = await getPreviewHtml();
-  expect(deepSkinPreview).toContain('data-rig-layer="skin/mask.png:tint"');
-  expect(deepSkinPreview).toContain('data-rig-tint-kind="skin"');
-  expect(deepSkinPreview).toContain("#38251f");
+  await expect(page.locator('[data-avatar-key="skinTone"][data-avatar-value="deep"]')).toBeDisabled();
 
-  await page.locator('[data-avatar-key="eyeColour"][data-avatar-value="green"]').click();
-  const greenEyesPreview = await getPreviewHtml();
-  expect(greenEyesPreview).toContain('data-rig-feature="eye-colour"');
-  expect(greenEyesPreview).toContain('data-eye-colour="green"');
-  expect(greenEyesPreview).toContain('data-rig-layer="face/eye-colour-green.png"');
+  await expect(page.locator('[data-avatar-key="eyeColour"][data-avatar-value="blue"]')).toHaveClass(/is-selected/);
+  await expect(page.locator('[data-avatar-key="eyeColour"][data-avatar-value="green"]')).toBeDisabled();
+  expect(await getPreviewHtml()).not.toContain('data-rig-feature="eye-colour"');
 
   await page.getByRole("tab", { name: "Hair" }).click();
   await expect(page.locator('[data-avatar-value="crop"]')).toBeDisabled();
   await expect(page.locator('[data-avatar-value="curls"]')).toBeDisabled();
   await expect(page.locator('[data-avatar-key="hairColour"][data-avatar-value="brown"]')).toBeVisible();
+  await expect(page.locator('[data-avatar-key="hairColour"][data-avatar-value="black"]')).toBeDisabled();
+  expect(await getPreviewHtml()).toContain('data-rig-layer="Boy Hair.png"');
+  expect(await getPreviewHtml()).not.toContain('data-rig-layer="Black Hair.png"');
   await expect(page.locator('[data-avatar-key="hairColour"][data-avatar-value="blonde"]')).toBeDisabled();
 
   await page.getByRole("tab", { name: "Outfit" }).click();
-  await expect(page.locator('[data-avatar-value="ecc-current-uniform"]')).toBeVisible();
+  await expect(page.locator('[data-avatar-value="ecc-current-uniform"]')).toHaveClass(/is-selected/);
+  await page.locator('[data-avatar-value="neutral-base"]').click();
+  const neutralPreview = await getPreviewHtml();
+  expect(neutralPreview).toContain('data-rig-layer="Neutral Boy Transparent background.png"');
+  expect(neutralPreview).toContain('data-rig-layer="Boy Hair.png"');
+  expect(neutralPreview).not.toContain('data-rig-layer="Boy Blazer.png"');
+  await page.locator('[data-avatar-value="ecc-current-uniform"]').click();
+  expect(await getPreviewHtml()).toContain('data-rig-layer="Boy Blazer.png"');
+  await expect(page.locator('[data-avatar-value="ecc-boy-photoshop-blazer-poc"]')).toBeDisabled();
   await expect(page.locator('[data-avatar-value="ecc-sports"]')).toBeDisabled();
-  await page.locator('[data-avatar-value="earrings"]').click();
-  const earringsPreview = await getPreviewHtml();
-  expect(earringsPreview).toContain('data-rig-layer="accessories/small-earrings.png"');
+  await expect(page.locator('[data-avatar-value="earrings"]')).toBeDisabled();
   await expect(page.locator('[data-avatar-value="badge"]')).toBeDisabled();
   await expect(page.locator('[data-avatar-value="glasses"]')).toBeDisabled();
 
   await page.getByRole("tab", { name: "Looks" }).click();
-  await page.locator('[data-avatar-value="freckled"]').click();
-  expect(await getPreviewHtml()).toContain('data-rig-feature="freckles"');
+  await expect(page.locator('[data-avatar-value="freckled"]')).toBeDisabled();
+});
+
+test("Avatar Studio cleans up previously saved unapproved avatar choices", async ({ page }) => {
+  await page.addInitScript(() => {
+    localStorage.setItem("career-empire-avatar-v1", JSON.stringify({
+      latest: {
+        characterBase: "ecc-boy-rig-source",
+        skinTone: "deep",
+        faceStyle: "freckled",
+        eyeColour: "green",
+        hairStyle: "crop",
+        hairColour: "blonde",
+        outfit: "ecc-sports",
+        accessory: "earrings",
+        occupation: "",
+        training: "",
+        strength: ""
+      }
+    }));
+  });
+  await page.goto("/modules/avatar/", { waitUntil: "domcontentloaded" });
+
+  const previewHtml = await page.locator("#avatar-render").evaluate(element => element.innerHTML);
+  expect(previewHtml).toContain('data-rig-layer="Neutral Boy Transparent background.png"');
+  expect(previewHtml).toContain('data-rig-layer="Boy Blazer.png"');
+  expect(previewHtml).toContain('data-rig-layer="Boy Hair.png"');
+  expect(previewHtml).not.toContain('data-rig-feature="eye-colour"');
+  expect(previewHtml).not.toContain('data-rig-feature="earrings"');
+  expect(previewHtml).not.toContain('data-rig-feature="freckles"');
+  await expect(page.locator('[data-avatar-key="skinTone"][data-avatar-value="sand"]')).toHaveClass(/is-selected/);
+  await expect(page.locator('[data-avatar-key="eyeColour"][data-avatar-value="blue"]')).toHaveClass(/is-selected/);
+  await expect(page.locator('[data-avatar-key="hairStyle"][data-avatar-value="waves"]')).toHaveClass(/is-selected/);
+  await expect(page.locator('[data-avatar-key="outfit"][data-avatar-value="ecc-current-uniform"]')).toHaveClass(/is-selected/);
+  await expect(page.locator('[data-avatar-key="accessory"][data-avatar-value="none"]')).toHaveClass(/is-selected/);
 });
 
 test("Initiative rewards salary only when learning progress is proven", async ({ page }) => {

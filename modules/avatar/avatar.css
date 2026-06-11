@@ -225,6 +225,7 @@ body.avatar-page::before {
   height: min(430px, 64vh);
   display: grid;
   place-items: center;
+  overflow: hidden;
   z-index: 1;
 }
 
@@ -251,11 +252,12 @@ body.avatar-page::before {
 
 .avatar-production-rig {
   position: relative;
-  width: min(286px, 100%);
+  width: var(--avatar-rig-effective-width, var(--avatar-rig-preview-width, min(286px, 100%)));
   height: auto;
-  aspect-ratio: 2 / 3;
+  aspect-ratio: var(--avatar-rig-aspect-ratio, 2 / 3);
   align-self: end;
-  justify-self: center;
+  justify-self: start;
+  margin-left: calc((100% - var(--avatar-rig-effective-width, var(--avatar-rig-preview-width, min(286px, 100%)))) / 2);
   transform-origin: center bottom;
   animation: avatarProductionRigIdle 4.8s ease-in-out infinite;
 }
@@ -886,14 +888,21 @@ body.avatar-page::before {
   }
 
   .avatar-stage {
-    min-height: 390px;
+    min-height: 500px;
+    align-items: start;
+    padding-bottom: 110px;
   }
 
   .avatar-render {
     height: 350px;
+    align-self: start;
+  }
+
+  .avatar-production-rig {
+    --avatar-rig-effective-width: min(var(--avatar-rig-preview-width, min(286px, 100%)), 622px);
   }
 
   .avatar-nameplate {
-    right: 118px;
+    right: 20px;
   }
 }
