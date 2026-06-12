@@ -59,7 +59,7 @@ test("Avatar Studio ECC rig uses the approved Take 2 layer stack", async ({ page
   await page.locator('[data-avatar-value="ecc-boy-rig-source"]').click();
   await expect(page.locator("#avatar-render .avatar-production-rig")).toBeVisible();
   const starterPreview = await getPreviewHtml();
-  expect(starterPreview).toContain('data-rig-layer="Neutral Boy Transparent background.png"');
+  expect(starterPreview).toContain('data-rig-layer="Neutral Boy Smooth Transparent background.png"');
   expect(starterPreview).toContain('data-rig-layer="Boy Pants.png"');
   expect(starterPreview).toContain('data-rig-layer="Boy Shirt and tie.png"');
   expect(starterPreview).toContain('data-rig-layer="Shoes Corrected.png"');
@@ -104,7 +104,7 @@ test("Avatar Studio ECC rig uses the approved Take 2 layer stack", async ({ page
   await page.locator('[data-avatar-key="shoes"][data-avatar-value="none"]').click();
   await page.locator('[data-avatar-key="blazer"][data-avatar-value="none"]').click();
   const neutralPreview = await getPreviewHtml();
-  expect(neutralPreview).toContain('data-rig-layer="Neutral Boy Transparent background.png"');
+  expect(neutralPreview).toContain('data-rig-layer="Neutral Boy Smooth Transparent background.png"');
   expect(neutralPreview).toContain('data-rig-layer="Boy Hair.png"');
   expect(neutralPreview).not.toContain('data-rig-layer="Boy Pants.png"');
   expect(neutralPreview).not.toContain('data-rig-layer="Boy Shirt and tie.png"');
@@ -150,7 +150,7 @@ test("Avatar Studio cleans up previously saved unapproved avatar choices", async
   await page.goto("/modules/avatar/", { waitUntil: "domcontentloaded" });
 
   const previewHtml = await page.locator("#avatar-render").evaluate(element => element.innerHTML);
-  expect(previewHtml).toContain('data-rig-layer="Neutral Boy Transparent background.png"');
+  expect(previewHtml).toContain('data-rig-layer="Neutral Boy Smooth Transparent background.png"');
   expect(previewHtml).toContain('data-rig-layer="Boy Pants.png"');
   expect(previewHtml).toContain('data-rig-layer="Boy Shirt and tie.png"');
   expect(previewHtml).toContain('data-rig-layer="Shoes Corrected.png"');

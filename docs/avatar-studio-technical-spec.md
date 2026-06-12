@@ -19,7 +19,7 @@ The active production rig is:
 
 The Take 2 source stack is:
 
-- `Neutral Boy Transparent background.png`
+- `Neutral Boy Smooth Transparent background.png`
 - `Boy Pants.png`
 - `Boy Shirt and tie.png`
 - `Shoes Corrected.png`
@@ -36,7 +36,7 @@ The legacy layer manifest is retained as pipeline material, but the live Avatar 
 
 ## Current Status
 
-The active starter preview uses `Neutral Boy Transparent background.png` as the live base rig, then layers selected shirt, pants, shoes, blazer, and hair files on top. The module scales and crops only the empty side space in the preview; it does not move or resize individual artwork layers.
+The active starter preview uses `Neutral Boy Smooth Transparent background.png` as the live base rig, then layers selected shirt, pants, shoes, blazer, and hair files on top. The original `Neutral Boy Transparent background.png` is retained as source material, but the live classroom base removes garment seams, folds, and centre-front shading so it reads as a smooth non-gendered underlayer. The module scales and crops only the empty side space in the preview; it does not move or resize individual artwork layers.
 
 The old `1024 x 1536` modular stack is retained as pipeline material, but it is not currently trusted for live rendering. Runtime CSS skin tinting and eye-colour overlays are not used for Take 2 because the supplied base already has baked skin and blue eyes. Brown and black Take 2 hair are active because both have approved full-canvas layers. Black and brown shoe options are active because both have approved full-canvas layers. Girl preset, alternate skin tones, alternate eye colours, freckles, expressions, accessories, and extra outfits stay disabled until matching `1280 x 720` layers exist.
 
@@ -74,7 +74,7 @@ Every rig should define these points in pixel coordinates:
 
 Target starter order once layers are accepted:
 
-1. `Neutral Boy Transparent background.png`
+1. `Neutral Boy Smooth Transparent background.png`
 2. `Boy Pants.png`
 3. `Boy Shirt and tie.png`
 4. `Shoes Corrected.png` or `Brown Shoes.png`

@@ -108,7 +108,7 @@
       usePreviewBase: true,
       useFeatureOverlays: false,
       renderHairStyleLayersWithPreviewBase: true,
-      baseImage: "Neutral Boy Transparent background.png",
+      baseImage: "Neutral Boy Smooth Transparent background.png",
       skinMask: null,
       hairMask: null,
       layerContracts: [
@@ -132,7 +132,7 @@
       accessoryLayers: {},
       eyeColourLayers: {},
       layerOrder: [
-        "Neutral Boy Transparent background.png",
+        "Neutral Boy Smooth Transparent background.png",
         "Boy Pants.png",
         "Boy Shirt and tie.png",
         "Shoes Corrected.png",
@@ -145,7 +145,7 @@
           id: "ecc-boy-take-2-layered",
           label: "ECC boy Take 2 layered",
           fileRoot: "",
-          previewPath: "../../Assets/Images and Animations/Avatar Studio/Neutral Boy Transparent background.png",
+          previewPath: "../../Assets/Images and Animations/Avatar Studio/Neutral Boy Smooth Transparent background.png",
           defaultExpression: "neutral",
           compatibleBodyRig: "ecc-boy-standard",
           compatibleFaceRig: "ecc-boy-take-2-face",
@@ -182,7 +182,7 @@
             rightHandRest: { x: 713, y: 417 }
           },
           requiredStarterLayers: [
-            "Neutral Boy Transparent background.png",
+            "Neutral Boy Smooth Transparent background.png",
             "Boy Pants.png",
             "Boy Shirt and tie.png",
             "Shoes Corrected.png",
@@ -487,7 +487,7 @@
         token: "BR",
         partMode: "production-png-rig",
         assetRigId: "ecc-boy-take-2-layered",
-        imagePath: "../../Assets/Images and Animations/Avatar Studio/Neutral Boy Transparent background.png",
+        imagePath: "../../Assets/Images and Animations/Avatar Studio/Neutral Boy Smooth Transparent background.png",
         defaultSkinTone: "sand",
         defaultFaceStyle: "soft",
         defaultEyeColour: "blue",
@@ -507,7 +507,7 @@
         token: "GR",
         partMode: "production-png-rig",
         assetRigId: "ecc-boy-take-2-layered",
-        imagePath: "../../Assets/Images and Animations/Avatar Studio/Neutral Boy Transparent background.png",
+        imagePath: "../../Assets/Images and Animations/Avatar Studio/Neutral Boy Smooth Transparent background.png",
         defaultOutfit: "ecc-current-uniform",
         defaultHairStyle: "waves",
         defaultAccessory: "none",
