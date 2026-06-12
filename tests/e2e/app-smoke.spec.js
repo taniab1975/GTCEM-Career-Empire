@@ -76,8 +76,14 @@ test("Avatar Studio ECC rig uses the approved Take 2 layer stack", async ({ page
   expect(await getPreviewHtml()).not.toContain('data-rig-feature="eye-colour"');
 
   await page.getByRole("tab", { name: "Hair" }).click();
+  await expect(page.locator('[data-avatar-key="hairStyle"][data-avatar-value="none"]')).toBeEnabled();
   await expect(page.locator('[data-avatar-value="crop"]')).toBeDisabled();
   await expect(page.locator('[data-avatar-value="curls"]')).toBeDisabled();
+  await page.locator('[data-avatar-key="hairStyle"][data-avatar-value="none"]').click();
+  const noHairPreview = await getPreviewHtml();
+  expect(noHairPreview).not.toContain('data-rig-layer="Boy Hair.png"');
+  expect(noHairPreview).not.toContain('data-rig-layer="Black hair.png"');
+  await page.locator('[data-avatar-key="hairStyle"][data-avatar-value="waves"]').click();
   await expect(page.locator('[data-avatar-key="hairColour"][data-avatar-value="brown"]')).toBeVisible();
   await expect(page.locator('[data-avatar-key="hairColour"][data-avatar-value="black"]')).toBeEnabled();
   await page.locator('[data-avatar-key="hairColour"][data-avatar-value="black"]').click();

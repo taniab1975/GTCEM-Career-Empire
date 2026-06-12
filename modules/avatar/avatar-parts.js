@@ -1,6 +1,6 @@
 (function () {
   window.CareerEmpireAvatarParts = {
-    schemaVersion: 5,
+    schemaVersion: 6,
     rig: {
       id: "ecc-student-take-2-layered-rig-v1",
       canvas: { width: 1280, height: 720 },
@@ -120,6 +120,10 @@
         { id: "hair/front", order: 70, slot: "hair", canvas: "1280x720", anchor: "headCenter", overlap: "hair covers the bald neutral base head" }
       ],
       hairStyleLayerSets: {
+        none: {
+          back: null,
+          front: null
+        },
         waves: {
           back: null,
           front: "Boy Hair.png",
@@ -216,6 +220,7 @@
       { id: "grey", label: "Grey", color: "#788995", highlight: "#d4dde4", source: "planned-take-2-mask", plannedOnly: true, note: "Needs 1280x720 eye variant" }
     ],
     hairStyles: [
+      { id: "none", label: "No hair", token: "-", slot: "hair/none", source: "take-2-baked-base", note: "Uses neutral base head" },
       { id: "waves", label: "Take 2 hair", token: "W", slot: "hair/take-2-front" },
       { id: "crop", label: "Crop", token: "C", slot: "hair/crop", plannedOnly: true, note: "Needs clean art" },
       { id: "curls", label: "Curls", token: "R", slot: "hair/curly", plannedOnly: true, note: "Needs art" },
