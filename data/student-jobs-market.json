@@ -1,0 +1,184 @@
+{
+  "schemaVersion": 1,
+  "updatedAt": "2026-06-17",
+  "marketTitle": "Student Jobs Market",
+  "marketSubtitle": "Real classroom production briefs for students who want to contribute useful work.",
+  "jobs": [
+    {
+      "id": "avatar-studio-art-parts",
+      "title": "Avatar Studio Art Parts Challenge",
+      "status": "Open",
+      "priority": "High",
+      "jobType": "Design and asset production",
+      "subjectArea": "Careers, digital media, design, visual communication",
+      "audience": "Students interested in digital design, illustration, games, media, or production work",
+      "teacher": "Career Empire / Emmanuel College Careers",
+      "dueDateLabel": "Teacher to confirm",
+      "summary": "Create polished avatar spare parts that can plug into the Career Empire Avatar Studio.",
+      "whyItMatters": "Avatar Studio already works, but it needs a wider library of clean, inclusive, matching art layers before students can properly personalise their future-self avatar.",
+      "studentMission": "Choose one focused design pack, use the starter pieces, and submit clean artwork that matches the live avatar style.",
+      "skills": [
+        "Visual design",
+        "Digital illustration",
+        "Attention to detail",
+        "Production handover",
+        "Inclusive design"
+      ],
+      "alreadyHave": [
+        "Working live Avatar Studio page",
+        "Take 2 boy avatar layer stack on a 1280 x 720 px transparent canvas",
+        "Smooth neutral base",
+        "Current ECC pants, shirt and tie, blazer",
+        "Black school shoes and brown shoes",
+        "No-hair, brown hair, and black hair options",
+        "Printable PDF brief and starter pieces ZIP"
+      ],
+      "needed": [
+        "More hair styles and colour packs",
+        "Face details such as freckles, glasses, earrings, name badge, and eye colour overlays",
+        "Uniform and career wardrobe options",
+        "Girl or skirt-presentation starter pack",
+        "Accessories and shop unlocks such as scarf, headphones, backpack, laptop bag, tool belt, watch, lanyard, and career gear"
+      ],
+      "packs": [
+        {
+          "name": "Hair Pack",
+          "need": [
+            "Crop or short hair",
+            "Curls",
+            "Long hair",
+            "Bun",
+            "Head wrap or protective style",
+            "Colour versions: black, brown, auburn, blonde, silver, teal"
+          ],
+          "alreadyHave": [
+            "No-hair option",
+            "Brown Take 2 hair",
+            "Black Take 2 hair",
+            "Starter buttons for planned styles"
+          ]
+        },
+        {
+          "name": "Face Pack",
+          "need": [
+            "Eye colour overlays: brown, amber, green, grey, corrected blue if needed",
+            "Freckles",
+            "Glasses aligned to eyes and nose",
+            "Small earrings",
+            "Name badge"
+          ],
+          "alreadyHave": [
+            "Neutral face baked into the current base",
+            "Blue eyes baked into the current live base",
+            "Planned buttons for extra face and eye options"
+          ]
+        },
+        {
+          "name": "Uniform And Career Wardrobe Pack",
+          "need": [
+            "Summer dress",
+            "Summer shirt and shorts",
+            "Sports kit",
+            "Interview blazer",
+            "Health scrubs",
+            "Hi-vis gear",
+            "Hospitality or creative apron"
+          ],
+          "alreadyHave": [
+            "Neutral smooth base",
+            "Navy pants",
+            "Shirt and tie",
+            "ECC blazer",
+            "Black and brown shoes"
+          ]
+        },
+        {
+          "name": "Girl Or Skirt-Presentation Starter Pack",
+          "need": [
+            "Neutral full-canvas base",
+            "Hair front and, where needed, hair back",
+            "Shirt, tie, jumper, blazer, skirt, tights, shoes",
+            "Matching face, skin, eye, and hair options"
+          ],
+          "alreadyHave": [
+            "Reference model sheets and older rig material",
+            "Live Take 2 boy stack as the quality and alignment target",
+            "Planned but disabled girl preset button"
+          ]
+        },
+        {
+          "name": "Accessories And Shop Unlocks Pack",
+          "need": [
+            "Scarf",
+            "Headphones",
+            "Backpack",
+            "Laptop bag",
+            "Tool belt",
+            "Watch or lanyard",
+            "Career gear connected to jobs or training"
+          ],
+          "alreadyHave": [
+            "Accessory buttons planned in the studio",
+            "No active polished Take 2 accessory layer yet",
+            "Shop unlock ideas ready for future economy use"
+          ]
+        }
+      ],
+      "deliverables": [
+        "Final transparent PNG layers on the full 1280 x 720 px canvas",
+        "One preview composite showing the part stacked on the avatar base",
+        "Editable source file if available",
+        "Asset notes with team name, pack type, file list, known issues, and suggested studio button label"
+      ],
+      "acceptanceCriteria": [
+        "Correct full canvas and transparent background",
+        "Stacks cleanly on the current base",
+        "No stray pixels, labels, background, or unwanted duplicate body parts",
+        "Matches the Career Empire / ECC soft 3D student style",
+        "Clear at full studio size and small dashboard-card size",
+        "Inclusive, school-safe, and suitable for a careers learning game"
+      ],
+      "scopeBoundaries": {
+        "inScope": [
+          "New hair, clothing, accessory, face-detail, or career-gear layers",
+          "Clean recolours or redraws that match the original style",
+          "Button labels, unlock names, and shop category suggestions",
+          "Visual testing against the live non-login Avatar Studio page"
+        ],
+        "outOfScope": [
+          "Changing the code",
+          "Redesigning the whole avatar system",
+          "Flattened full-character drawings when only one part is requested",
+          "Copyrighted characters, celebrity likenesses, brand logos, watermarks, unsafe content, or ranking physical features"
+        ]
+      },
+      "resources": [
+        {
+          "label": "Live Avatar Studio",
+          "url": "../avatar/index.html",
+          "type": "Live page"
+        },
+        {
+          "label": "Starter Pieces ZIP",
+          "url": "../../Assets/Images%20and%20Animations/Avatar%20Studio/student-handoff/avatar-studio-starter-pieces.zip",
+          "type": "Download"
+        },
+        {
+          "label": "PDF Design Brief",
+          "url": "../../output/pdf/avatar-studio-student-scope-of-works.pdf",
+          "type": "PDF"
+        },
+        {
+          "label": "Avatar Job Detail Page",
+          "url": "../avatar/student-call-to-action.html",
+          "type": "Brief"
+        }
+      ],
+      "submission": {
+        "label": "Teacher setup needed",
+        "url": "#teacher-setup-needed",
+        "details": "A class-specific Google Form, Drive folder, Teams assignment, or LMS upload link can be added here."
+      }
+    }
+  ]
+}
