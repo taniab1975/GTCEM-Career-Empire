@@ -33,6 +33,32 @@
         "No-hair, brown hair, and black hair options",
         "Printable PDF brief and starter pieces ZIP"
       ],
+      "existingAssets": [
+        {
+          "label": "Current live stack preview",
+          "url": "../../Assets/Images%20and%20Animations/Avatar%20Studio/student-handoff/current-live-stack-preview.png",
+          "thumbnail": "../../Assets/Images%20and%20Animations/Avatar%20Studio/student-handoff/current-live-stack-preview.png",
+          "note": "Use this to see how the current approved pieces stack together."
+        },
+        {
+          "label": "Neutral base",
+          "url": "../../Assets/Images%20and%20Animations/Avatar%20Studio/Neutral%20Boy%20Smooth%20Transparent%20background.png",
+          "thumbnail": "../../Assets/Images%20and%20Animations/Avatar%20Studio/Neutral%20Boy%20Smooth%20Transparent%20background.png",
+          "note": "Main alignment base for Take 2 1280 x 720 artwork."
+        },
+        {
+          "label": "Blank transparent template",
+          "url": "../../Assets/Images%20and%20Animations/Avatar%20Studio/student-handoff/blank-1280x720-transparent-template.png",
+          "thumbnail": "../../Assets/Images%20and%20Animations/Avatar%20Studio/student-handoff/dark-background-test-1280x720.png",
+          "note": "Start new artwork on this full 1280 x 720 canvas."
+        },
+        {
+          "label": "Dark test background",
+          "url": "../../Assets/Images%20and%20Animations/Avatar%20Studio/student-handoff/dark-background-test-1280x720.png",
+          "thumbnail": "../../Assets/Images%20and%20Animations/Avatar%20Studio/student-handoff/dark-background-test-1280x720.png",
+          "note": "Use this behind transparent layers to spot rough edges and stray pixels."
+        }
+      ],
       "needed": [
         "More hair styles and colour packs",
         "Face details such as freckles, glasses, earrings, name badge, and eye colour overlays",
@@ -56,6 +82,26 @@
             "Brown Take 2 hair",
             "Black Take 2 hair",
             "Starter buttons for planned styles"
+          ],
+          "existingAssets": [
+            {
+              "label": "Brown Take 2 hair",
+              "url": "../../Assets/Images%20and%20Animations/Avatar%20Studio/Boy%20Hair.png",
+              "thumbnail": "../../Assets/Images%20and%20Animations/Avatar%20Studio/Boy%20Hair.png",
+              "note": "Use for placement, lighting, and shape style."
+            },
+            {
+              "label": "Black Take 2 hair",
+              "url": "../../Assets/Images%20and%20Animations/Avatar%20Studio/Black%20hair.png",
+              "thumbnail": "../../Assets/Images%20and%20Animations/Avatar%20Studio/Black%20hair.png",
+              "note": "Use as a simple colour variant reference."
+            },
+            {
+              "label": "Neutral no-hair base",
+              "url": "../../Assets/Images%20and%20Animations/Avatar%20Studio/Neutral%20Boy%20Smooth%20Transparent%20background.png",
+              "thumbnail": "../../Assets/Images%20and%20Animations/Avatar%20Studio/Neutral%20Boy%20Smooth%20Transparent%20background.png",
+              "note": "Use this to test hairline, ears, forehead, and collar overlap."
+            }
           ]
         },
         {
@@ -71,6 +117,20 @@
             "Neutral face baked into the current base",
             "Blue eyes baked into the current live base",
             "Planned buttons for extra face and eye options"
+          ],
+          "existingAssets": [
+            {
+              "label": "Neutral face/base",
+              "url": "../../Assets/Images%20and%20Animations/Avatar%20Studio/Neutral%20Boy%20Smooth%20Transparent%20background.png",
+              "thumbnail": "../../Assets/Images%20and%20Animations/Avatar%20Studio/Neutral%20Boy%20Smooth%20Transparent%20background.png",
+              "note": "Use as the face alignment reference for eyes, glasses, freckles, and earrings."
+            },
+            {
+              "label": "Current stack preview",
+              "url": "../../Assets/Images%20and%20Animations/Avatar%20Studio/student-handoff/current-live-stack-preview.png",
+              "thumbnail": "../../Assets/Images%20and%20Animations/Avatar%20Studio/student-handoff/current-live-stack-preview.png",
+              "note": "Check that face accessories still read at full-character scale."
+            }
           ]
         },
         {
@@ -90,6 +150,38 @@
             "Shirt and tie",
             "ECC blazer",
             "Black and brown shoes"
+          ],
+          "existingAssets": [
+            {
+              "label": "Navy pants",
+              "url": "../../Assets/Images%20and%20Animations/Avatar%20Studio/Boy%20Pants.png",
+              "thumbnail": "../../Assets/Images%20and%20Animations/Avatar%20Studio/Boy%20Pants.png",
+              "note": "Use for waist, hem, and trouser colour reference."
+            },
+            {
+              "label": "Shirt and tie",
+              "url": "../../Assets/Images%20and%20Animations/Avatar%20Studio/Boy%20Shirt%20and%20tie.png",
+              "thumbnail": "../../Assets/Images%20and%20Animations/Avatar%20Studio/Boy%20Shirt%20and%20tie.png",
+              "note": "Use for collar, tie, and neckline overlap reference."
+            },
+            {
+              "label": "ECC blazer",
+              "url": "../../Assets/Images%20and%20Animations/Avatar%20Studio/Boy%20Blazer.png",
+              "thumbnail": "../../Assets/Images%20and%20Animations/Avatar%20Studio/Boy%20Blazer.png",
+              "note": "Use for shoulder, cuff, crest, and blazer lighting style."
+            },
+            {
+              "label": "Black shoes",
+              "url": "../../Assets/Images%20and%20Animations/Avatar%20Studio/Shoes%20Corrected.png",
+              "thumbnail": "../../Assets/Images%20and%20Animations/Avatar%20Studio/Shoes%20Corrected.png",
+              "note": "Use for foot baseline and trouser hem overlap."
+            },
+            {
+              "label": "Brown shoes",
+              "url": "../../Assets/Images%20and%20Animations/Avatar%20Studio/Brown%20Shoes.png",
+              "thumbnail": "../../Assets/Images%20and%20Animations/Avatar%20Studio/Brown%20Shoes.png",
+              "note": "Use for shoe colour and lighting variant reference."
+            }
           ]
         },
         {
@@ -104,6 +196,26 @@
             "Reference model sheets and older rig material",
             "Live Take 2 boy stack as the quality and alignment target",
             "Planned but disabled girl preset button"
+          ],
+          "existingAssets": [
+            {
+              "label": "Boy model sheet",
+              "url": "../../Assets/Images%20and%20Animations/Avatar%20Studio/model-sheets/ecc-avatar-model-sheet-v1.png",
+              "thumbnail": "../../Assets/Images%20and%20Animations/Avatar%20Studio/model-sheets/ecc-avatar-model-sheet-v1.png",
+              "note": "Use as a proportion, expression, and style reference."
+            },
+            {
+              "label": "Girl model sheet",
+              "url": "../../Assets/Images%20and%20Animations/Avatar%20Studio/model-sheets/ecc-avatar-model-sheet-v2-female.png",
+              "thumbnail": "../../Assets/Images%20and%20Animations/Avatar%20Studio/model-sheets/ecc-avatar-model-sheet-v2-female.png",
+              "note": "Use as the girl/skirt-presentation reference source."
+            },
+            {
+              "label": "Current Take 2 stack preview",
+              "url": "../../Assets/Images%20and%20Animations/Avatar%20Studio/student-handoff/current-live-stack-preview.png",
+              "thumbnail": "../../Assets/Images%20and%20Animations/Avatar%20Studio/student-handoff/current-live-stack-preview.png",
+              "note": "Match this quality, scale, and transparent-canvas discipline."
+            }
           ]
         },
         {
@@ -121,6 +233,20 @@
             "Accessory buttons planned in the studio",
             "No active polished Take 2 accessory layer yet",
             "Shop unlock ideas ready for future economy use"
+          ],
+          "existingAssets": [
+            {
+              "label": "Neutral base for alignment",
+              "url": "../../Assets/Images%20and%20Animations/Avatar%20Studio/Neutral%20Boy%20Smooth%20Transparent%20background.png",
+              "thumbnail": "../../Assets/Images%20and%20Animations/Avatar%20Studio/Neutral%20Boy%20Smooth%20Transparent%20background.png",
+              "note": "Use for glasses, earrings, scarf, backpack, and badge placement."
+            },
+            {
+              "label": "Current stack preview",
+              "url": "../../Assets/Images%20and%20Animations/Avatar%20Studio/student-handoff/current-live-stack-preview.png",
+              "thumbnail": "../../Assets/Images%20and%20Animations/Avatar%20Studio/student-handoff/current-live-stack-preview.png",
+              "note": "Check that accessories remain readable on the full character."
+            }
           ]
         }
       ],

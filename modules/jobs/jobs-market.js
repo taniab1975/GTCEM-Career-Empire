@@ -33,6 +33,28 @@
     return `<ul>${items.map(item => `<li>${escapeHtml(item)}</li>`).join("")}</ul>`;
   }
 
+  function renderExistingAssets(assets, title = "Download Existing Pieces") {
+    if (!assets || !assets.length) return "";
+    return `
+      <div class="existing-assets">
+        <h5>${escapeHtml(title)}</h5>
+        <div class="asset-download-grid">
+          ${assets.map(asset => `
+            <a class="asset-download-card" href="${escapeHtml(asset.url || asset.thumbnail || "#")}" download>
+              <span class="asset-thumb">
+                <img src="${escapeHtml(asset.thumbnail || asset.url || "")}" alt="${escapeHtml(asset.label || "Existing asset")}">
+              </span>
+              <span class="asset-copy">
+                <strong>${escapeHtml(asset.label || "Existing asset")}</strong>
+                ${asset.note ? `<small>${escapeHtml(asset.note)}</small>` : ""}
+              </span>
+            </a>
+          `).join("")}
+        </div>
+      </div>
+    `;
+  }
+
   function renderDetailBlock(title, items) {
     return `
       <section class="detail-block">
@@ -55,6 +77,7 @@
         <div>
           <strong>What already exists</strong>
           ${list(pack.alreadyHave)}
+          ${renderExistingAssets(pack.existingAssets, "Download or morph these")}
         </div>
         ${submitUrl ? `<a class="submit-link" href="${escapeHtml(submitUrl)}">${escapeHtml(submitLabel)}</a>` : ""}
       </section>
@@ -147,7 +170,11 @@
         <p>${escapeHtml(job.whyItMatters || "Teacher to confirm.")}</p>
       </section>
       ${skills ? `<section class="detail-block"><h4>Skills</h4><div>${skills}</div></section>` : ""}
-      ${renderDetailBlock("What Already Exists", job.alreadyHave)}
+      <section class="detail-block">
+        <h4>What Already Exists</h4>
+        ${list(job.alreadyHave)}
+        ${renderExistingAssets(job.existingAssets)}
+      </section>
       ${renderDetailBlock("What Still Needs Doing", job.needed)}
       ${packs}
       ${renderDetailBlock("Deliverables", job.deliverables)}

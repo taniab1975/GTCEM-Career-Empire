@@ -8,7 +8,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link rel="icon" href="data:,">
   <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="./jobs.css?v=jobs-market-v1">
+  <link rel="stylesheet" href="./jobs.css?v=jobs-market-v2">
 </head>
 <body class="jobs-market-page">
   <main class="jobs-shell">
@@ -18,14 +18,32 @@
         <a href="#open-jobs">Open Jobs</a>
         <a href="#teacher-setup-needed">Submission Links</a>
       </nav>
-      <div class="hero-copy">
-        <p class="eyebrow">Career Empire</p>
-        <h1>Student Jobs Market</h1>
-        <p>
-          A shopfront of real classroom production briefs. Choose a job, read what is needed,
-          download any starter files, and submit your finished work through the teacher's link.
-        </p>
-      </div>
+      <section class="jobs-hero-grid">
+        <div class="hero-copy">
+          <p class="eyebrow">Career Empire</p>
+          <h1>Student Jobs Market</h1>
+          <p>
+            A shopfront of real classroom production briefs. Choose a job, read what is needed,
+            download starter files, morph existing pieces if useful, and submit finished work
+            through the teacher's link.
+          </p>
+          <div class="hero-actions" aria-label="Primary actions">
+            <a class="primary-button link-button" href="#open-jobs">Browse Open Jobs</a>
+            <a class="secondary-button link-button" href="./teacher-job-submit.html">Teacher Job Builder</a>
+          </div>
+        </div>
+
+        <aside class="market-hero-preview" aria-label="Featured Avatar Studio job preview">
+          <div class="market-preview-stage">
+            <img src="../../Assets/Images%20and%20Animations/Avatar%20Studio/student-handoff/current-live-stack-preview.png" alt="Current Avatar Studio layer stack preview">
+          </div>
+          <div class="featured-job-copy">
+            <span class="status-pill">Featured Job</span>
+            <h2>Avatar Studio Art Parts</h2>
+            <p>Students can download the real pieces that already exist, then recolour, redraw, or build new matching parts.</p>
+          </div>
+        </aside>
+      </section>
     </header>
 
     <section class="market-controls" aria-labelledby="market-title">
@@ -95,6 +113,6 @@
     </article>
   </template>
 
-  <script src="./jobs-market.js?v=jobs-market-v1"></script>
+  <script src="./jobs-market.js?v=jobs-market-v2"></script>
 </body>
 </html>
