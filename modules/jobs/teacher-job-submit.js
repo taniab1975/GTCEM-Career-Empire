@@ -10,7 +10,7 @@
     teacher: "Career Empire / Emmanuel College Careers",
     subjectArea: "Careers, digital media, design, visual communication",
     audience: "Students interested in digital design, illustration, games, media, or production work",
-    dueDateLabel: "Teacher to confirm",
+    dueDateLabel: "Open now",
     studentMission: "Choose one focused design pack, use the starter pieces, and submit clean artwork that matches the live avatar style.",
     whyItMatters: "Avatar Studio already works, but it needs a wider library of clean, inclusive, matching art layers before students can properly personalise their future-self avatar.",
     summary: "Create polished avatar spare parts that can plug into the Career Empire Avatar Studio.",
@@ -74,9 +74,9 @@
     skills: ["Visual design", "Digital illustration", "Attention to detail", "Production handover", "Inclusive design"],
     inScope: ["New hair, clothing, accessory, face-detail, or career-gear layers", "Clean recolours or redraws that match the original style", "Button labels, unlock names, and shop category suggestions", "Visual testing against the live non-login Avatar Studio page"],
     outOfScope: ["Changing the code", "Redesigning the whole avatar system", "Flattened full-character drawings when only one part is requested", "Copyrighted characters, celebrity likenesses, brand logos, watermarks, unsafe content, or ranking physical features"],
-    submissionUrl: "#teacher-setup-needed",
-    submissionLabel: "Teacher setup needed",
-    submissionDetails: "A class-specific Google Form, Drive folder, Teams assignment, or LMS upload link can be added here."
+    submissionUrl: "https://forms.office.com/r/hn9grqUCjg",
+    submissionLabel: "Submit through Microsoft Form",
+    submissionDetails: "Use the Microsoft Form to submit your chosen pack. Name your files clearly and include any source files or share links requested in the form."
   };
 
   function escapeHtml(value) {
@@ -158,6 +158,15 @@
     setField("submissionDetails", avatarExample.submissionDetails);
     [1, 2, 3, 4].forEach(index => setPackFields(index, avatarExample.packs[index - 1]));
     setStatus("Avatar example loaded. Adjust any fields, then save or copy the brief.");
+    updatePreview();
+  }
+
+  function clearBuilder() {
+    form.reset();
+    [1, 2, 3, 4].forEach(index => setPackFields(index));
+    setField("title", "");
+    setField("jobType", "Design and asset production");
+    setStatus("Form cleared. Start a fresh job brief or load the Avatar example.");
     updatePreview();
   }
 
@@ -359,11 +368,12 @@
   }
 
   document.getElementById("load-avatar-example").addEventListener("click", loadExample);
+  document.getElementById("clear-builder").addEventListener("click", clearBuilder);
   document.getElementById("save-draft").addEventListener("click", saveDraft);
   document.getElementById("copy-brief").addEventListener("click", copyBrief);
   document.getElementById("download-json").addEventListener("click", downloadJson);
   document.getElementById("email-brief").addEventListener("click", emailBrief);
   form.addEventListener("input", updatePreview);
 
-  loadExample();
+  clearBuilder();
 })();

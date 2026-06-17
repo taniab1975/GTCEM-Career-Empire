@@ -54,6 +54,10 @@ a {
   padding: 20px 0 54px;
 }
 
+.job-builder-page .jobs-shell {
+  width: min(1320px, calc(100% - 32px));
+}
+
 .jobs-hero,
 .notice-panel,
 .builder-layout,
@@ -110,6 +114,10 @@ a {
 .hero-copy {
   max-width: 820px;
   padding: 34px 30px 52px;
+}
+
+.teacher-builder-hero {
+  max-width: 920px;
 }
 
 .jobs-hero-grid {
@@ -267,8 +275,8 @@ h4 {
 
 .builder-layout {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(320px, 0.38fr);
-  gap: 18px;
+  grid-template-columns: minmax(0, 1fr) minmax(300px, 360px);
+  gap: 22px;
   align-items: start;
 }
 
@@ -285,12 +293,19 @@ h4 {
   margin-bottom: 14px;
 }
 
+.toolbar-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  justify-content: flex-end;
+}
+
 .job-form fieldset {
-  margin: 0 0 14px;
-  padding: 18px;
+  margin: 0 0 16px;
+  padding: 20px;
   border: 1px solid var(--line);
   border-radius: 8px;
-  background: rgba(255, 255, 255, 0.78);
+  background: rgba(255, 255, 255, 0.9);
 }
 
 .job-form legend {
@@ -309,7 +324,7 @@ h4 {
 
 .field-grid.two,
 .work-section-grid {
-  grid-template-columns: repeat(2, minmax(0, 1fr));
+  grid-template-columns: repeat(2, minmax(240px, 1fr));
 }
 
 .full-row {
@@ -407,6 +422,14 @@ textarea:focus {
   border: 1px solid var(--line);
   border-radius: 8px;
   background: rgba(255, 255, 255, 0.84);
+}
+
+.preview-panel h2 {
+  margin-bottom: 14px;
+}
+
+.preview-card {
+  box-shadow: none;
 }
 
 .market-controls {
@@ -735,7 +758,12 @@ textarea:focus {
     justify-content: stretch;
   }
 
+  .toolbar-actions {
+    justify-content: stretch;
+  }
+
   .form-actions > *,
+  .toolbar-actions > *,
   .jobs-nav a,
   .resource-link,
   .submit-link,
