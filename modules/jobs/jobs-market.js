@@ -33,6 +33,10 @@
     return `<ul>${items.map(item => `<li>${escapeHtml(item)}</li>`).join("")}</ul>`;
   }
 
+  function externalLinkAttrs(url) {
+    return /^https?:\/\//i.test(String(url || "")) ? ' target="_blank" rel="noopener"' : "";
+  }
+
   function renderExistingAssets(assets, title = "Download Existing Pieces") {
     if (!assets || !assets.length) return "";
     return `
@@ -66,7 +70,7 @@
 
   function renderPack(pack, job) {
     const submitUrl = pack.submissionUrl || job.submission?.url;
-    const submitLabel = pack.submissionUrl ? `Submit ${pack.name}` : (job.submission?.label || "Submit work");
+    const submitLabel = pack.submissionLabel || (submitUrl ? `Submit ${pack.name || "this section"}` : (job.submission?.label || "Submit work"));
     return `
       <section class="pack-detail">
         <h4>${escapeHtml(pack.name)}</h4>
@@ -79,7 +83,7 @@
           ${list(pack.alreadyHave)}
           ${renderExistingAssets(pack.existingAssets, "Download or morph these")}
         </div>
-        ${submitUrl ? `<a class="submit-link" href="${escapeHtml(submitUrl)}">${escapeHtml(submitLabel)}</a>` : ""}
+        ${submitUrl ? `<a class="submit-link" href="${escapeHtml(submitUrl)}"${externalLinkAttrs(submitUrl)}>${escapeHtml(submitLabel)}</a>` : ""}
       </section>
     `;
   }
@@ -91,7 +95,7 @@
         <h4>Resources</h4>
         <div class="resource-links">
           ${resources.map(item => `
-            <a class="resource-link" href="${escapeHtml(item.url || "#")}">
+            <a class="resource-link" href="${escapeHtml(item.url || "#")}"${externalLinkAttrs(item.url)}>
               ${escapeHtml(item.label || "Resource")}
               ${item.type ? `<span>&nbsp;(${escapeHtml(item.type)})</span>` : ""}
             </a>
@@ -128,7 +132,7 @@
         <h4>Submit Work</h4>
         <p>${escapeHtml(submission.details || "Use the teacher's class submission link when it is available.")}</p>
         <div class="job-actions">
-          <a class="submit-link" href="${escapeHtml(url)}">${escapeHtml(submission.label || "Submit work")}</a>
+          <a class="submit-link" href="${escapeHtml(url)}"${externalLinkAttrs(url)}>${escapeHtml(submission.label || "Submit work")}</a>
         </div>
       </section>
     `;

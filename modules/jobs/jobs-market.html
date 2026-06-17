@@ -8,7 +8,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link rel="icon" href="data:,">
   <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="./jobs.css?v=jobs-market-v2">
+  <link rel="stylesheet" href="./jobs.css?v=jobs-market-v3">
 </head>
 <body class="jobs-market-page">
   <main class="jobs-shell">
@@ -16,7 +16,7 @@
       <nav class="jobs-nav" aria-label="Jobs pages">
         <a href="./teacher-job-submit.html">Teacher Job Builder</a>
         <a href="#open-jobs">Open Jobs</a>
-        <a href="#teacher-setup-needed">Submission Links</a>
+        <a href="#teacher-setup-needed">Submit Work</a>
       </nav>
       <section class="jobs-hero-grid">
         <div class="hero-copy">
@@ -83,15 +83,18 @@
 
     <section class="notice-panel" id="teacher-setup-needed">
       <div>
-        <p class="eyebrow">Submission Links</p>
-        <h2>Some jobs may need a class upload link</h2>
+        <p class="eyebrow">Submit Work</p>
+        <h2>Avatar submissions are connected</h2>
       </div>
       <p>
-        If a job says <strong>Teacher setup needed</strong>, the brief is ready but the upload
-        destination has not been connected yet. The teacher can add a Google Form, Drive folder,
-        Microsoft Form, Teams assignment, LMS upload link, or other class submission link.
+        Students can submit Avatar Studio work through the connected Microsoft Form. For future
+        jobs, teachers can still add a Google Form, Drive folder, Microsoft Form, Teams assignment,
+        LMS upload link, or other class submission link.
       </p>
-      <a class="primary-button link-button" href="./teacher-job-submit.html">Create Or Edit A Job Brief</a>
+      <div class="notice-actions">
+        <a class="primary-button link-button" href="https://forms.office.com/r/hn9grqUCjg" target="_blank" rel="noopener">Open Submission Form</a>
+        <a class="resource-link" href="./teacher-job-submit.html">Create Or Edit A Job Brief</a>
+      </div>
     </section>
   </main>
 
@@ -113,6 +116,6 @@
     </article>
   </template>
 
-  <script src="./jobs-market.js?v=jobs-market-v2"></script>
+  <script src="./jobs-market.js?v=jobs-market-v3"></script>
 </body>
 </html>

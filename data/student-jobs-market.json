@@ -13,7 +13,7 @@
       "subjectArea": "Careers, digital media, design, visual communication",
       "audience": "Students interested in digital design, illustration, games, media, or production work",
       "teacher": "Career Empire / Emmanuel College Careers",
-      "dueDateLabel": "Teacher to confirm",
+      "dueDateLabel": "Open now",
       "summary": "Create polished avatar spare parts that can plug into the Career Empire Avatar Studio.",
       "whyItMatters": "Avatar Studio already works, but it needs a wider library of clean, inclusive, matching art layers before students can properly personalise their future-self avatar.",
       "studentMission": "Choose one focused design pack, use the starter pieces, and submit clean artwork that matches the live avatar style.",
@@ -37,25 +37,25 @@
         {
           "label": "Current live stack preview",
           "url": "../../Assets/Images%20and%20Animations/Avatar%20Studio/student-handoff/current-live-stack-preview.png",
-          "thumbnail": "../../Assets/Images%20and%20Animations/Avatar%20Studio/student-handoff/current-live-stack-preview.png",
+          "thumbnail": "../../Assets/Images%20and%20Animations/Avatar%20Studio/student-handoff/previews/current-live-stack-preview-preview.png",
           "note": "Use this to see how the current approved pieces stack together."
         },
         {
           "label": "Neutral base",
           "url": "../../Assets/Images%20and%20Animations/Avatar%20Studio/Neutral%20Boy%20Smooth%20Transparent%20background.png",
-          "thumbnail": "../../Assets/Images%20and%20Animations/Avatar%20Studio/Neutral%20Boy%20Smooth%20Transparent%20background.png",
+          "thumbnail": "../../Assets/Images%20and%20Animations/Avatar%20Studio/student-handoff/previews/neutral-boy-smooth-transparent-background-preview.png",
           "note": "Main alignment base for Take 2 1280 x 720 artwork."
         },
         {
           "label": "Blank transparent template",
           "url": "../../Assets/Images%20and%20Animations/Avatar%20Studio/student-handoff/blank-1280x720-transparent-template.png",
-          "thumbnail": "../../Assets/Images%20and%20Animations/Avatar%20Studio/student-handoff/dark-background-test-1280x720.png",
+          "thumbnail": "../../Assets/Images%20and%20Animations/Avatar%20Studio/student-handoff/previews/blank-1280x720-transparent-template-preview.png",
           "note": "Start new artwork on this full 1280 x 720 canvas."
         },
         {
           "label": "Dark test background",
           "url": "../../Assets/Images%20and%20Animations/Avatar%20Studio/student-handoff/dark-background-test-1280x720.png",
-          "thumbnail": "../../Assets/Images%20and%20Animations/Avatar%20Studio/student-handoff/dark-background-test-1280x720.png",
+          "thumbnail": "../../Assets/Images%20and%20Animations/Avatar%20Studio/student-handoff/previews/dark-background-test-1280x720-preview.png",
           "note": "Use this behind transparent layers to spot rough edges and stray pixels."
         }
       ],
@@ -87,19 +87,19 @@
             {
               "label": "Brown Take 2 hair",
               "url": "../../Assets/Images%20and%20Animations/Avatar%20Studio/Boy%20Hair.png",
-              "thumbnail": "../../Assets/Images%20and%20Animations/Avatar%20Studio/Boy%20Hair.png",
+              "thumbnail": "../../Assets/Images%20and%20Animations/Avatar%20Studio/student-handoff/previews/boy-hair-preview.png",
               "note": "Use for placement, lighting, and shape style."
             },
             {
               "label": "Black Take 2 hair",
               "url": "../../Assets/Images%20and%20Animations/Avatar%20Studio/Black%20hair.png",
-              "thumbnail": "../../Assets/Images%20and%20Animations/Avatar%20Studio/Black%20hair.png",
+              "thumbnail": "../../Assets/Images%20and%20Animations/Avatar%20Studio/student-handoff/previews/black-hair-preview.png",
               "note": "Use as a simple colour variant reference."
             },
             {
               "label": "Neutral no-hair base",
               "url": "../../Assets/Images%20and%20Animations/Avatar%20Studio/Neutral%20Boy%20Smooth%20Transparent%20background.png",
-              "thumbnail": "../../Assets/Images%20and%20Animations/Avatar%20Studio/Neutral%20Boy%20Smooth%20Transparent%20background.png",
+              "thumbnail": "../../Assets/Images%20and%20Animations/Avatar%20Studio/student-handoff/previews/neutral-boy-smooth-transparent-background-preview.png",
               "note": "Use this to test hairline, ears, forehead, and collar overlap."
             }
           ]
@@ -122,13 +122,13 @@
             {
               "label": "Neutral face/base",
               "url": "../../Assets/Images%20and%20Animations/Avatar%20Studio/Neutral%20Boy%20Smooth%20Transparent%20background.png",
-              "thumbnail": "../../Assets/Images%20and%20Animations/Avatar%20Studio/Neutral%20Boy%20Smooth%20Transparent%20background.png",
+              "thumbnail": "../../Assets/Images%20and%20Animations/Avatar%20Studio/student-handoff/previews/neutral-boy-smooth-transparent-background-preview.png",
               "note": "Use as the face alignment reference for eyes, glasses, freckles, and earrings."
             },
             {
               "label": "Current stack preview",
               "url": "../../Assets/Images%20and%20Animations/Avatar%20Studio/student-handoff/current-live-stack-preview.png",
-              "thumbnail": "../../Assets/Images%20and%20Animations/Avatar%20Studio/student-handoff/current-live-stack-preview.png",
+              "thumbnail": "../../Assets/Images%20and%20Animations/Avatar%20Studio/student-handoff/previews/current-live-stack-preview-preview.png",
               "note": "Check that face accessories still read at full-character scale."
             }
           ]
@@ -155,31 +155,31 @@
             {
               "label": "Navy pants",
               "url": "../../Assets/Images%20and%20Animations/Avatar%20Studio/Boy%20Pants.png",
-              "thumbnail": "../../Assets/Images%20and%20Animations/Avatar%20Studio/Boy%20Pants.png",
+              "thumbnail": "../../Assets/Images%20and%20Animations/Avatar%20Studio/student-handoff/previews/boy-pants-preview.png",
               "note": "Use for waist, hem, and trouser colour reference."
             },
             {
               "label": "Shirt and tie",
               "url": "../../Assets/Images%20and%20Animations/Avatar%20Studio/Boy%20Shirt%20and%20tie.png",
-              "thumbnail": "../../Assets/Images%20and%20Animations/Avatar%20Studio/Boy%20Shirt%20and%20tie.png",
+              "thumbnail": "../../Assets/Images%20and%20Animations/Avatar%20Studio/student-handoff/previews/boy-shirt-and-tie-preview.png",
               "note": "Use for collar, tie, and neckline overlap reference."
             },
             {
               "label": "ECC blazer",
               "url": "../../Assets/Images%20and%20Animations/Avatar%20Studio/Boy%20Blazer.png",
-              "thumbnail": "../../Assets/Images%20and%20Animations/Avatar%20Studio/Boy%20Blazer.png",
+              "thumbnail": "../../Assets/Images%20and%20Animations/Avatar%20Studio/student-handoff/previews/boy-blazer-preview.png",
               "note": "Use for shoulder, cuff, crest, and blazer lighting style."
             },
             {
               "label": "Black shoes",
               "url": "../../Assets/Images%20and%20Animations/Avatar%20Studio/Shoes%20Corrected.png",
-              "thumbnail": "../../Assets/Images%20and%20Animations/Avatar%20Studio/Shoes%20Corrected.png",
+              "thumbnail": "../../Assets/Images%20and%20Animations/Avatar%20Studio/student-handoff/previews/shoes-corrected-preview.png",
               "note": "Use for foot baseline and trouser hem overlap."
             },
             {
               "label": "Brown shoes",
               "url": "../../Assets/Images%20and%20Animations/Avatar%20Studio/Brown%20Shoes.png",
-              "thumbnail": "../../Assets/Images%20and%20Animations/Avatar%20Studio/Brown%20Shoes.png",
+              "thumbnail": "../../Assets/Images%20and%20Animations/Avatar%20Studio/student-handoff/previews/brown-shoes-preview.png",
               "note": "Use for shoe colour and lighting variant reference."
             }
           ]
@@ -201,19 +201,19 @@
             {
               "label": "Boy model sheet",
               "url": "../../Assets/Images%20and%20Animations/Avatar%20Studio/model-sheets/ecc-avatar-model-sheet-v1.png",
-              "thumbnail": "../../Assets/Images%20and%20Animations/Avatar%20Studio/model-sheets/ecc-avatar-model-sheet-v1.png",
+              "thumbnail": "../../Assets/Images%20and%20Animations/Avatar%20Studio/student-handoff/previews/ecc-avatar-model-sheet-v1-preview.png",
               "note": "Use as a proportion, expression, and style reference."
             },
             {
               "label": "Girl model sheet",
               "url": "../../Assets/Images%20and%20Animations/Avatar%20Studio/model-sheets/ecc-avatar-model-sheet-v2-female.png",
-              "thumbnail": "../../Assets/Images%20and%20Animations/Avatar%20Studio/model-sheets/ecc-avatar-model-sheet-v2-female.png",
+              "thumbnail": "../../Assets/Images%20and%20Animations/Avatar%20Studio/student-handoff/previews/ecc-avatar-model-sheet-v2-female-preview.png",
               "note": "Use as the girl/skirt-presentation reference source."
             },
             {
               "label": "Current Take 2 stack preview",
               "url": "../../Assets/Images%20and%20Animations/Avatar%20Studio/student-handoff/current-live-stack-preview.png",
-              "thumbnail": "../../Assets/Images%20and%20Animations/Avatar%20Studio/student-handoff/current-live-stack-preview.png",
+              "thumbnail": "../../Assets/Images%20and%20Animations/Avatar%20Studio/student-handoff/previews/current-live-stack-preview-preview.png",
               "note": "Match this quality, scale, and transparent-canvas discipline."
             }
           ]
@@ -238,13 +238,13 @@
             {
               "label": "Neutral base for alignment",
               "url": "../../Assets/Images%20and%20Animations/Avatar%20Studio/Neutral%20Boy%20Smooth%20Transparent%20background.png",
-              "thumbnail": "../../Assets/Images%20and%20Animations/Avatar%20Studio/Neutral%20Boy%20Smooth%20Transparent%20background.png",
+              "thumbnail": "../../Assets/Images%20and%20Animations/Avatar%20Studio/student-handoff/previews/neutral-boy-smooth-transparent-background-preview.png",
               "note": "Use for glasses, earrings, scarf, backpack, and badge placement."
             },
             {
               "label": "Current stack preview",
               "url": "../../Assets/Images%20and%20Animations/Avatar%20Studio/student-handoff/current-live-stack-preview.png",
-              "thumbnail": "../../Assets/Images%20and%20Animations/Avatar%20Studio/student-handoff/current-live-stack-preview.png",
+              "thumbnail": "../../Assets/Images%20and%20Animations/Avatar%20Studio/student-handoff/previews/current-live-stack-preview-preview.png",
               "note": "Check that accessories remain readable on the full character."
             }
           ]
@@ -301,9 +301,9 @@
         }
       ],
       "submission": {
-        "label": "Teacher setup needed",
-        "url": "#teacher-setup-needed",
-        "details": "A class-specific Google Form, Drive folder, Teams assignment, or LMS upload link can be added here."
+        "label": "Submit through Microsoft Form",
+        "url": "https://forms.office.com/r/hn9grqUCjg",
+        "details": "Use the Microsoft Form to submit your chosen pack. Name your files clearly and include any source files or share links requested in the form."
       }
     }
   ]
