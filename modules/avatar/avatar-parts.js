@@ -1,6 +1,6 @@
 (function () {
   window.CareerEmpireAvatarParts = {
-    schemaVersion: 6,
+    schemaVersion: 7,
     rig: {
       id: "ecc-student-take-2-layered-rig-v1",
       canvas: { width: 1280, height: 720 },
@@ -129,7 +129,9 @@
           front: "Boy Hair.png",
           colourVariants: {
             brown: { front: "Boy Hair.png" },
-            black: { front: "Black hair.png" }
+            black: { front: "Black hair.png" },
+            auburn: { front: "Boy Hair Auburn.png" },
+            blonde: { front: "Boy Hair Blonde.png" }
           }
         }
       },
@@ -231,8 +233,8 @@
     hairColours: [
       { id: "brown", label: "Brown", color: "#5a3524" },
       { id: "black", label: "Black", color: "#050505", source: "avatar-take-2-layered-png", note: "Active Take 2 hair layer" },
-      { id: "auburn", label: "Auburn", color: "#9b3f24", plannedOnly: true, note: "Needs clean hair mask" },
-      { id: "blonde", label: "Blonde", color: "#d9b85d", plannedOnly: true, note: "Needs clean hair mask" },
+      { id: "auburn", label: "Auburn", color: "#9b3f24", source: "avatar-take-2-layered-png", note: "Active Take 2 hair layer" },
+      { id: "blonde", label: "Blonde", color: "#d9b85d", source: "avatar-take-2-layered-png", note: "Active Take 2 hair layer" },
       { id: "silver", label: "Silver", color: "#c8ced4", plannedOnly: true, note: "Needs clean hair mask" },
       { id: "teal", label: "Teal", color: "#0f8f8c", plannedOnly: true, note: "Needs clean hair mask" }
     ],
