@@ -92,7 +92,14 @@ test("Avatar Studio ECC rig uses the approved Take 2 layer stack", async ({ page
   expect(blackHairPreview).not.toContain('data-rig-layer="Boy Hair.png"');
   await page.locator('[data-avatar-key="hairColour"][data-avatar-value="brown"]').click();
   expect(await getPreviewHtml()).toContain('data-rig-layer="Boy Hair.png"');
-  await expect(page.locator('[data-avatar-key="hairColour"][data-avatar-value="blonde"]')).toBeDisabled();
+  await expect(page.locator('[data-avatar-key="hairColour"][data-avatar-value="auburn"]')).toBeEnabled();
+  await page.locator('[data-avatar-key="hairColour"][data-avatar-value="auburn"]').click();
+  expect(await getPreviewHtml()).toContain('data-rig-layer="Boy Hair Auburn.png"');
+  await expect(page.locator('[data-avatar-key="hairColour"][data-avatar-value="blonde"]')).toBeEnabled();
+  await page.locator('[data-avatar-key="hairColour"][data-avatar-value="blonde"]').click();
+  expect(await getPreviewHtml()).toContain('data-rig-layer="Boy Hair Blonde.png"');
+  await expect(page.locator('[data-avatar-key="hairColour"][data-avatar-value="silver"]')).toBeDisabled();
+  await page.locator('[data-avatar-key="hairColour"][data-avatar-value="brown"]').click();
 
   await page.getByRole("tab", { name: "Outfit" }).click();
   await expect(page.locator('[data-avatar-key="shirt"][data-avatar-value="ecc-shirt-tie"]')).toHaveClass(/is-selected/);
@@ -140,7 +147,7 @@ test("Avatar Studio cleans up previously saved unapproved avatar choices", async
         faceStyle: "freckled",
         eyeColour: "green",
         hairStyle: "crop",
-        hairColour: "blonde",
+        hairColour: "silver",
         outfit: "ecc-sports",
         shirt: "custom-shirt",
         pants: "custom-pants",
