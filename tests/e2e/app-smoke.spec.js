@@ -112,6 +112,12 @@ test("Avatar Studio ECC rig uses the approved Take 2 layer stack", async ({ page
   expect(brownShoesPreview).not.toContain('data-rig-layer="Shoes Corrected.png"');
   await page.locator('[data-avatar-key="shoes"][data-avatar-value="black-school-shoes"]').click();
   expect(await getPreviewHtml()).toContain('data-rig-layer="Shoes Corrected.png"');
+  await expect(page.locator('[data-avatar-key="blazer"][data-avatar-value="hivis-vest"]')).toBeEnabled();
+  await page.locator('[data-avatar-key="blazer"][data-avatar-value="hivis-vest"]').click();
+  const hivisPreview = await getPreviewHtml();
+  expect(hivisPreview).toContain('data-rig-layer="Boy Hi Vis Vest.png"');
+  expect(hivisPreview).not.toContain('data-rig-layer="Boy Blazer.png"');
+  await page.locator('[data-avatar-key="blazer"][data-avatar-value="ecc-navy-blazer"]').click();
   await page.locator('[data-avatar-key="shirt"][data-avatar-value="none"]').click();
   await page.locator('[data-avatar-key="pants"][data-avatar-value="none"]').click();
   await page.locator('[data-avatar-key="shoes"][data-avatar-value="none"]').click();

@@ -1,6 +1,6 @@
 (function () {
   window.CareerEmpireAvatarParts = {
-    schemaVersion: 7,
+    schemaVersion: 8,
     rig: {
       id: "ecc-student-take-2-layered-rig-v1",
       canvas: { width: 1280, height: 720 },
@@ -253,7 +253,8 @@
     ],
     blazerOptions: [
       { id: "none", label: "No blazer", token: "-", layer: null, note: "Base and shirt only" },
-      { id: "ecc-navy-blazer", label: "ECC blazer", token: "B", layer: "Boy Blazer.png", source: "avatar-take-2-layered-png" }
+      { id: "ecc-navy-blazer", label: "ECC blazer", token: "B", layer: "Boy Blazer.png", source: "avatar-take-2-layered-png" },
+      { id: "hivis-vest", label: "Hi-vis vest", token: "HV", layer: "Boy Hi Vis Vest.png", source: "avatar-take-2-layered-png" }
     ],
     outfits: [
       {
