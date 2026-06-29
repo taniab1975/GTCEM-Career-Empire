@@ -23,7 +23,7 @@ Current live playtest:
 
 Live URL:
 
-`https://taniab1975.github.io/GTCEM-Career-Empire/modules/est-prep/vault-bridge-playtest.html`
+`https://emmanuel-ict-support.github.io/GTCEM-Career-Empire/modules/est-prep/vault-bridge-playtest.html`
 
 Current backdrop asset:
 

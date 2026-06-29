@@ -14,7 +14,7 @@ Last updated: 2026-06-17
 
 **Target completion date:** [Add date]
 
-**Live preview page:** [Avatar Studio non-login page](https://taniab1975.github.io/GTCEM-Career-Empire/modules/avatar/index.html)
+**Live preview page:** [Avatar Studio non-login page](https://emmanuel-ict-support.github.io/GTCEM-Career-Empire/modules/avatar/index.html)
 
 This project is a student creative contribution to the Career Empire learning game. Students will design avatar "spare parts" that can plug into the Avatar Studio, where players build a future-self profile for use across careers modules, dashboards, shop unlocks, interview practice, and teacher-visible evidence.
 
@@ -31,7 +31,7 @@ The project solves a real production problem: the Avatar Studio framework exists
 Avatar Studio already has:
 
 - A working browser page where students can choose avatar options and save a future-self profile.
-- A live non-login preview page for students to view: [Avatar Studio non-login page](https://taniab1975.github.io/GTCEM-Career-Empire/modules/avatar/index.html).
+- A live non-login preview page for students to view: [Avatar Studio non-login page](https://emmanuel-ict-support.github.io/GTCEM-Career-Empire/modules/avatar/index.html).
 - A working Take 2 boy avatar layer stack on a `1280 x 720 px` transparent canvas.
 - A smooth neutral boy base.
 - Current ECC uniform layers: pants, shirt and tie, blazer.
@@ -255,7 +255,7 @@ Overlap rules:
 
 Suggested handover pack:
 
-- The live preview link: [Avatar Studio non-login page](https://taniab1975.github.io/GTCEM-Career-Empire/modules/avatar/index.html)
+- The live preview link: [Avatar Studio non-login page](https://emmanuel-ict-support.github.io/GTCEM-Career-Empire/modules/avatar/index.html)
 - Current neutral base image
 - Existing approved layer examples: pants, shirt and tie, shoes, blazer, brown hair, black hair
 - A blank `1280 x 720 px` transparent canvas template
@@ -357,6 +357,6 @@ Avatar Studio is nearly ready to become the identity layer of Career Empire, but
 
 Think of yourself as part of a real game production team. The best submission is not the biggest one. The best submission is the one that fits the character perfectly, looks like it belongs in the same world, and gives future students more ways to represent themselves.
 
-Start by opening the live preview: [Avatar Studio non-login page](https://taniab1975.github.io/GTCEM-Career-Empire/modules/avatar/index.html)
+Start by opening the live preview: [Avatar Studio non-login page](https://emmanuel-ict-support.github.io/GTCEM-Career-Empire/modules/avatar/index.html)
 
 Then choose one useful missing piece and make it production-ready.
