@@ -1,0 +1,70 @@
+[
+  {
+    "id": "climate",
+    "title": "Green futures",
+    "kicker": "Climate and sustainability",
+    "shortTitle": "Green Park",
+    "accent": "#80ed99",
+    "x": 110,
+    "y": 230,
+    "width": 260,
+    "height": 196,
+    "stages": [
+      "Coal plant offline",
+      "Cleanup started",
+      "Solar park rising",
+      "Waterfall gardens"
+    ]
+  },
+  {
+    "id": "tech",
+    "title": "Digital access",
+    "kicker": "Tech education and inclusion",
+    "shortTitle": "Digital Hub",
+    "accent": "#68d2ff",
+    "x": 1110,
+    "y": 170,
+    "width": 294,
+    "height": 184,
+    "stages": [
+      "Locked lab",
+      "Devices arriving",
+      "Open tech hub",
+      "Future skills campus"
+    ]
+  },
+  {
+    "id": "diversity",
+    "title": "Fairer starts",
+    "kicker": "Diversity and economic equity",
+    "shortTitle": "Welcome Centre",
+    "accent": "#f472b6",
+    "x": 112,
+    "y": 746,
+    "width": 300,
+    "height": 164,
+    "stages": [
+      "Empty lot",
+      "Support desk",
+      "Mentor centre",
+      "Belonging precinct"
+    ]
+  },
+  {
+    "id": "global",
+    "title": "Wider horizons",
+    "kicker": "Global opportunity access",
+    "shortTitle": "Airport Link",
+    "accent": "#ffd166",
+    "x": 1244,
+    "y": 762,
+    "width": 316,
+    "height": 164,
+    "stages": [
+      "Closed road",
+      "Departure board",
+      "Airport link",
+      "Global exchange hub"
+    ]
+  }
+]
