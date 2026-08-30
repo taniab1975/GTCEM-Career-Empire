@@ -1,0 +1,1371 @@
+{
+  "generatedAt": "2026-08-30T02:01:22.092Z",
+  "assetRoot": "Assets/Images and Animations/Career Empire World",
+  "assets": [
+    {
+      "id": "Career-Empire-Town-Blueprint",
+      "family": "planning",
+      "path": "Assets/Images and Animations/Career Empire World/GamePlan/Career-Empire-Town-Blueprint.png",
+      "width": 1600,
+      "height": 1200,
+      "colorType": 6,
+      "alphaBounds": {
+        "x": 0,
+        "y": 0,
+        "width": 1600,
+        "height": 1200
+      },
+      "occupiedPercent": 100
+    },
+    {
+      "id": "CE-CHAR-B01-reference",
+      "family": "avatars",
+      "path": "Assets/Images and Animations/Career Empire World/avatars/CE-CHAR-B01/reference/CE-CHAR-B01-reference.png",
+      "width": 512,
+      "height": 768,
+      "colorType": 6,
+      "alphaBounds": {
+        "x": 78,
+        "y": 101,
+        "width": 356,
+        "height": 619
+      },
+      "occupiedPercent": 56.04
+    },
+    {
+      "id": "CE-CHAR-B01-contact-sheet",
+      "family": "avatars",
+      "path": "Assets/Images and Animations/Career Empire World/avatars/CE-CHAR-B01/review/CE-CHAR-B01-contact-sheet.png",
+      "width": 1044,
+      "height": 1200,
+      "colorType": 2,
+      "alphaBounds": {
+        "x": 0,
+        "y": 0,
+        "width": 1044,
+        "height": 1200
+      },
+      "occupiedPercent": 100
+    },
+    {
+      "id": "CE-CHAR-B01-celebrate-front-3q",
+      "family": "avatars",
+      "path": "Assets/Images and Animations/Career Empire World/avatars/CE-CHAR-B01/runtime/CE-CHAR-B01-celebrate-front-3q.png",
+      "width": 256,
+      "height": 384,
+      "colorType": 6,
+      "alphaBounds": {
+        "x": 69,
+        "y": 49,
+        "width": 119,
+        "height": 311
+      },
+      "occupiedPercent": 37.65
+    },
+    {
+      "id": "CE-CHAR-B01-idle-back-3q",
+      "family": "avatars",
+      "path": "Assets/Images and Animations/Career Empire World/avatars/CE-CHAR-B01/runtime/CE-CHAR-B01-idle-back-3q.png",
+      "width": 256,
+      "height": 384,
+      "colorType": 6,
+      "alphaBounds": {
+        "x": 76,
+        "y": 50,
+        "width": 104,
+        "height": 310
+      },
+      "occupiedPercent": 32.8
+    },
+    {
+      "id": "CE-CHAR-B01-idle-front-3q",
+      "family": "avatars",
+      "path": "Assets/Images and Animations/Career Empire World/avatars/CE-CHAR-B01/runtime/CE-CHAR-B01-idle-front-3q.png",
+      "width": 256,
+      "height": 384,
+      "colorType": 6,
+      "alphaBounds": {
+        "x": 75,
+        "y": 45,
+        "width": 106,
+        "height": 315
+      },
+      "occupiedPercent": 33.97
+    },
+    {
+      "id": "CE-CHAR-B01-idle-left-3q",
+      "family": "avatars",
+      "path": "Assets/Images and Animations/Career Empire World/avatars/CE-CHAR-B01/runtime/CE-CHAR-B01-idle-left-3q.png",
+      "width": 256,
+      "height": 384,
+      "colorType": 6,
+      "alphaBounds": {
+        "x": 72,
+        "y": 43,
+        "width": 112,
+        "height": 317
+      },
+      "occupiedPercent": 36.12
+    },
+    {
+      "id": "CE-CHAR-B01-idle-right-3q",
+      "family": "avatars",
+      "path": "Assets/Images and Animations/Career Empire World/avatars/CE-CHAR-B01/runtime/CE-CHAR-B01-idle-right-3q.png",
+      "width": 256,
+      "height": 384,
+      "colorType": 6,
+      "alphaBounds": {
+        "x": 72,
+        "y": 45,
+        "width": 112,
+        "height": 316
+      },
+      "occupiedPercent": 36
+    },
+    {
+      "id": "CE-CHAR-B01-jump-back-3q",
+      "family": "avatars",
+      "path": "Assets/Images and Animations/Career Empire World/avatars/CE-CHAR-B01/runtime/CE-CHAR-B01-jump-back-3q.png",
+      "width": 256,
+      "height": 384,
+      "colorType": 6,
+      "alphaBounds": {
+        "x": 52,
+        "y": 88,
+        "width": 153,
+        "height": 272
+      },
+      "occupiedPercent": 42.33
+    },
+    {
+      "id": "CE-CHAR-B01-point-front-3q",
+      "family": "avatars",
+      "path": "Assets/Images and Animations/Career Empire World/avatars/CE-CHAR-B01/runtime/CE-CHAR-B01-point-front-3q.png",
+      "width": 256,
+      "height": 384,
+      "colorType": 6,
+      "alphaBounds": {
+        "x": 54,
+        "y": 45,
+        "width": 148,
+        "height": 315
+      },
+      "occupiedPercent": 47.42
+    },
+    {
+      "id": "CE-CHAR-B01-reference-256x384",
+      "family": "avatars",
+      "path": "Assets/Images and Animations/Career Empire World/avatars/CE-CHAR-B01/runtime/CE-CHAR-B01-reference-256x384.png",
+      "width": 256,
+      "height": 384,
+      "colorType": 6,
+      "alphaBounds": {
+        "x": 39,
+        "y": 50,
+        "width": 178,
+        "height": 310
+      },
+      "occupiedPercent": 56.13
+    },
+    {
+      "id": "CE-CHAR-B01-walk-back-3q-a",
+      "family": "avatars",
+      "path": "Assets/Images and Animations/Career Empire World/avatars/CE-CHAR-B01/runtime/CE-CHAR-B01-walk-back-3q-a.png",
+      "width": 256,
+      "height": 384,
+      "colorType": 6,
+      "alphaBounds": {
+        "x": 58,
+        "y": 53,
+        "width": 140,
+        "height": 307
+      },
+      "occupiedPercent": 43.72
+    },
+    {
+      "id": "CE-CHAR-B01-walk-back-3q-b",
+      "family": "avatars",
+      "path": "Assets/Images and Animations/Career Empire World/avatars/CE-CHAR-B01/runtime/CE-CHAR-B01-walk-back-3q-b.png",
+      "width": 256,
+      "height": 384,
+      "colorType": 6,
+      "alphaBounds": {
+        "x": 56,
+        "y": 52,
+        "width": 144,
+        "height": 308
+      },
+      "occupiedPercent": 45.12
+    },
+    {
+      "id": "CE-CHAR-B01-walk-left-3q-a",
+      "family": "avatars",
+      "path": "Assets/Images and Animations/Career Empire World/avatars/CE-CHAR-B01/runtime/CE-CHAR-B01-walk-left-3q-a.png",
+      "width": 256,
+      "height": 384,
+      "colorType": 6,
+      "alphaBounds": {
+        "x": 48,
+        "y": 52,
+        "width": 160,
+        "height": 308
+      },
+      "occupiedPercent": 50.13
+    },
+    {
+      "id": "CE-CHAR-B01-walk-right-3q-a",
+      "family": "avatars",
+      "path": "Assets/Images and Animations/Career Empire World/avatars/CE-CHAR-B01/runtime/CE-CHAR-B01-walk-right-3q-a.png",
+      "width": 256,
+      "height": 384,
+      "colorType": 6,
+      "alphaBounds": {
+        "x": 43,
+        "y": 49,
+        "width": 170,
+        "height": 311
+      },
+      "occupiedPercent": 53.78
+    },
+    {
+      "id": "CE-CHAR-B01-celebrate-front-3q",
+      "family": "avatars",
+      "path": "Assets/Images and Animations/Career Empire World/avatars/CE-CHAR-B01/source-poses/CE-CHAR-B01-celebrate-front-3q.png",
+      "width": 512,
+      "height": 768,
+      "colorType": 6,
+      "alphaBounds": {
+        "x": 138,
+        "y": 100,
+        "width": 237,
+        "height": 620
+      },
+      "occupiedPercent": 37.37
+    },
+    {
+      "id": "CE-CHAR-B01-idle-back-3q",
+      "family": "avatars",
+      "path": "Assets/Images and Animations/Career Empire World/avatars/CE-CHAR-B01/source-poses/CE-CHAR-B01-idle-back-3q.png",
+      "width": 512,
+      "height": 768,
+      "colorType": 6,
+      "alphaBounds": {
+        "x": 153,
+        "y": 101,
+        "width": 206,
+        "height": 619
+      },
+      "occupiedPercent": 32.43
+    },
+    {
+      "id": "CE-CHAR-B01-idle-front-3q",
+      "family": "avatars",
+      "path": "Assets/Images and Animations/Career Empire World/avatars/CE-CHAR-B01/source-poses/CE-CHAR-B01-idle-front-3q.png",
+      "width": 512,
+      "height": 768,
+      "colorType": 6,
+      "alphaBounds": {
+        "x": 151,
+        "y": 91,
+        "width": 210,
+        "height": 629
+      },
+      "occupiedPercent": 33.59
+    },
+    {
+      "id": "CE-CHAR-B01-idle-left-3q",
+      "family": "avatars",
+      "path": "Assets/Images and Animations/Career Empire World/avatars/CE-CHAR-B01/source-poses/CE-CHAR-B01-idle-left-3q.png",
+      "width": 512,
+      "height": 768,
+      "colorType": 6,
+      "alphaBounds": {
+        "x": 145,
+        "y": 86,
+        "width": 222,
+        "height": 634
+      },
+      "occupiedPercent": 35.79
+    },
+    {
+      "id": "CE-CHAR-B01-idle-right-3q",
+      "family": "avatars",
+      "path": "Assets/Images and Animations/Career Empire World/avatars/CE-CHAR-B01/source-poses/CE-CHAR-B01-idle-right-3q.png",
+      "width": 512,
+      "height": 768,
+      "colorType": 6,
+      "alphaBounds": {
+        "x": 145,
+        "y": 91,
+        "width": 223,
+        "height": 629
+      },
+      "occupiedPercent": 35.67
+    },
+    {
+      "id": "CE-CHAR-B01-jump-back-3q",
+      "family": "avatars",
+      "path": "Assets/Images and Animations/Career Empire World/avatars/CE-CHAR-B01/source-poses/CE-CHAR-B01-jump-back-3q.png",
+      "width": 512,
+      "height": 768,
+      "colorType": 6,
+      "alphaBounds": {
+        "x": 104,
+        "y": 176,
+        "width": 305,
+        "height": 544
+      },
+      "occupiedPercent": 42.2
+    },
+    {
+      "id": "CE-CHAR-B01-point-front-3q",
+      "family": "avatars",
+      "path": "Assets/Images and Animations/Career Empire World/avatars/CE-CHAR-B01/source-poses/CE-CHAR-B01-point-front-3q.png",
+      "width": 512,
+      "height": 768,
+      "colorType": 6,
+      "alphaBounds": {
+        "x": 109,
+        "y": 92,
+        "width": 294,
+        "height": 628
+      },
+      "occupiedPercent": 46.95
+    },
+    {
+      "id": "CE-CHAR-B01-walk-back-3q-a",
+      "family": "avatars",
+      "path": "Assets/Images and Animations/Career Empire World/avatars/CE-CHAR-B01/source-poses/CE-CHAR-B01-walk-back-3q-a.png",
+      "width": 512,
+      "height": 768,
+      "colorType": 6,
+      "alphaBounds": {
+        "x": 117,
+        "y": 107,
+        "width": 278,
+        "height": 613
+      },
+      "occupiedPercent": 43.34
+    },
+    {
+      "id": "CE-CHAR-B01-walk-back-3q-b",
+      "family": "avatars",
+      "path": "Assets/Images and Animations/Career Empire World/avatars/CE-CHAR-B01/source-poses/CE-CHAR-B01-walk-back-3q-b.png",
+      "width": 512,
+      "height": 768,
+      "colorType": 6,
+      "alphaBounds": {
+        "x": 113,
+        "y": 104,
+        "width": 286,
+        "height": 616
+      },
+      "occupiedPercent": 44.8
+    },
+    {
+      "id": "CE-CHAR-B01-walk-left-3q-a",
+      "family": "avatars",
+      "path": "Assets/Images and Animations/Career Empire World/avatars/CE-CHAR-B01/source-poses/CE-CHAR-B01-walk-left-3q-a.png",
+      "width": 512,
+      "height": 768,
+      "colorType": 6,
+      "alphaBounds": {
+        "x": 97,
+        "y": 104,
+        "width": 319,
+        "height": 616
+      },
+      "occupiedPercent": 49.97
+    },
+    {
+      "id": "CE-CHAR-B01-walk-right-3q-a",
+      "family": "avatars",
+      "path": "Assets/Images and Animations/Career Empire World/avatars/CE-CHAR-B01/source-poses/CE-CHAR-B01-walk-right-3q-a.png",
+      "width": 512,
+      "height": 768,
+      "colorType": 6,
+      "alphaBounds": {
+        "x": 86,
+        "y": 100,
+        "width": 340,
+        "height": 620
+      },
+      "occupiedPercent": 53.61
+    },
+    {
+      "id": "CE-AVATAR-B01-walk",
+      "family": "avatars",
+      "path": "Assets/Images and Animations/Career Empire World/avatars/boy/CE-AVATAR-B01-walk.png",
+      "width": 2048,
+      "height": 256,
+      "colorType": 6,
+      "alphaBounds": {
+        "x": 84,
+        "y": 4,
+        "width": 1875,
+        "height": 248
+      },
+      "occupiedPercent": 88.69
+    },
+    {
+      "id": "CE-AVATAR-B02-idle",
+      "family": "avatars",
+      "path": "Assets/Images and Animations/Career Empire World/avatars/boy/CE-AVATAR-B02-idle.png",
+      "width": 1024,
+      "height": 256,
+      "colorType": 6,
+      "alphaBounds": {
+        "x": 89,
+        "y": 12,
+        "width": 843,
+        "height": 236
+      },
+      "occupiedPercent": 75.89
+    },
+    {
+      "id": "CE-AVATAR-B03-point",
+      "family": "avatars",
+      "path": "Assets/Images and Animations/Career Empire World/avatars/boy/CE-AVATAR-B03-point.png",
+      "width": 512,
+      "height": 512,
+      "colorType": 6,
+      "alphaBounds": {
+        "x": 117,
+        "y": 16,
+        "width": 278,
+        "height": 484
+      },
+      "occupiedPercent": 51.33
+    },
+    {
+      "id": "CE-AVATAR-B04-celebrate",
+      "family": "avatars",
+      "path": "Assets/Images and Animations/Career Empire World/avatars/boy/CE-AVATAR-B04-celebrate.png",
+      "width": 512,
+      "height": 512,
+      "colorType": 6,
+      "alphaBounds": {
+        "x": 144,
+        "y": 16,
+        "width": 223,
+        "height": 484
+      },
+      "occupiedPercent": 41.17
+    },
+    {
+      "id": "CE-AVATAR-G01-walk",
+      "family": "avatars",
+      "path": "Assets/Images and Animations/Career Empire World/avatars/girl/CE-AVATAR-G01-walk.png",
+      "width": 2048,
+      "height": 256,
+      "colorType": 6,
+      "alphaBounds": {
+        "x": 86,
+        "y": 12,
+        "width": 1871,
+        "height": 236
+      },
+      "occupiedPercent": 84.22
+    },
+    {
+      "id": "CE-AVATAR-G02-idle",
+      "family": "avatars",
+      "path": "Assets/Images and Animations/Career Empire World/avatars/girl/CE-AVATAR-G02-idle.png",
+      "width": 1024,
+      "height": 256,
+      "colorType": 6,
+      "alphaBounds": {
+        "x": 91,
+        "y": 13,
+        "width": 842,
+        "height": 235
+      },
+      "occupiedPercent": 75.48
+    },
+    {
+      "id": "CE-AVATAR-G03-point",
+      "family": "avatars",
+      "path": "Assets/Images and Animations/Career Empire World/avatars/girl/CE-AVATAR-G03-point.png",
+      "width": 512,
+      "height": 512,
+      "colorType": 6,
+      "alphaBounds": {
+        "x": 105,
+        "y": 16,
+        "width": 302,
+        "height": 484
+      },
+      "occupiedPercent": 55.76
+    },
+    {
+      "id": "CE-AVATAR-G04-celebrate",
+      "family": "avatars",
+      "path": "Assets/Images and Animations/Career Empire World/avatars/girl/CE-AVATAR-G04-celebrate.png",
+      "width": 512,
+      "height": 512,
+      "colorType": 6,
+      "alphaBounds": {
+        "x": 139,
+        "y": 16,
+        "width": 235,
+        "height": 484
+      },
+      "occupiedPercent": 43.39
+    },
+    {
+      "id": "CE-BLDG-001-home-base",
+      "family": "buildings",
+      "path": "Assets/Images and Animations/Career Empire World/buildings/CE-BLDG-001-home-base.png",
+      "width": 1024,
+      "height": 1024,
+      "colorType": 6,
+      "alphaBounds": {
+        "x": 2,
+        "y": 208,
+        "width": 1020,
+        "height": 607
+      },
+      "occupiedPercent": 59.05
+    },
+    {
+      "id": "CE-BLDG-002-est-prep-lab",
+      "family": "buildings",
+      "path": "Assets/Images and Animations/Career Empire World/buildings/CE-BLDG-002-est-prep-lab.png",
+      "width": 1024,
+      "height": 1024,
+      "colorType": 6,
+      "alphaBounds": {
+        "x": 2,
+        "y": 183,
+        "width": 1020,
+        "height": 657
+      },
+      "occupiedPercent": 63.91
+    },
+    {
+      "id": "CE-BLDG-003-megatrends-centre",
+      "family": "buildings",
+      "path": "Assets/Images and Animations/Career Empire World/buildings/CE-BLDG-003-megatrends-centre.png",
+      "width": 1024,
+      "height": 1024,
+      "colorType": 6,
+      "alphaBounds": {
+        "x": 2,
+        "y": 157,
+        "width": 1020,
+        "height": 713
+      },
+      "occupiedPercent": 69.36
+    },
+    {
+      "id": "CE-BLDG-004-lifelong-learning-hub",
+      "family": "buildings",
+      "path": "Assets/Images and Animations/Career Empire World/buildings/CE-BLDG-004-lifelong-learning-hub.png",
+      "width": 1024,
+      "height": 1024,
+      "colorType": 6,
+      "alphaBounds": {
+        "x": 2,
+        "y": 170,
+        "width": 1020,
+        "height": 683
+      },
+      "occupiedPercent": 66.44
+    },
+    {
+      "id": "CE-BLDG-005-initiative-workshop",
+      "family": "buildings",
+      "path": "Assets/Images and Animations/Career Empire World/buildings/CE-BLDG-005-initiative-workshop.png",
+      "width": 1024,
+      "height": 1024,
+      "colorType": 6,
+      "alphaBounds": {
+        "x": 2,
+        "y": 196,
+        "width": 1020,
+        "height": 632
+      },
+      "occupiedPercent": 61.48
+    },
+    {
+      "id": "CE-BLDG-006-avatar-studio",
+      "family": "buildings",
+      "path": "Assets/Images and Animations/Career Empire World/buildings/CE-BLDG-006-avatar-studio.png",
+      "width": 1024,
+      "height": 1024,
+      "colorType": 6,
+      "alphaBounds": {
+        "x": 31,
+        "y": 213,
+        "width": 966,
+        "height": 614
+      },
+      "occupiedPercent": 56.56
+    },
+    {
+      "id": "CE-BLDG-007-global-shop",
+      "family": "buildings",
+      "path": "Assets/Images and Animations/Career Empire World/buildings/CE-BLDG-007-global-shop.png",
+      "width": 1024,
+      "height": 1024,
+      "colorType": 6,
+      "alphaBounds": {
+        "x": 2,
+        "y": 168,
+        "width": 1020,
+        "height": 689
+      },
+      "occupiedPercent": 67.02
+    },
+    {
+      "id": "CE-BLDG-008-town-hall",
+      "family": "buildings",
+      "path": "Assets/Images and Animations/Career Empire World/buildings/CE-BLDG-008-town-hall.png",
+      "width": 1024,
+      "height": 1024,
+      "colorType": 6,
+      "alphaBounds": {
+        "x": 22,
+        "y": 200,
+        "width": 982,
+        "height": 632
+      },
+      "occupiedPercent": 59.19
+    },
+    {
+      "id": "CE-BLDG-009-global-portal",
+      "family": "buildings",
+      "path": "Assets/Images and Animations/Career Empire World/buildings/CE-BLDG-009-global-portal.png",
+      "width": 1024,
+      "height": 1024,
+      "colorType": 6,
+      "alphaBounds": {
+        "x": 2,
+        "y": 158,
+        "width": 1021,
+        "height": 708
+      },
+      "occupiedPercent": 68.94
+    },
+    {
+      "id": "CE-FX-001-portal-ring",
+      "family": "fx",
+      "path": "Assets/Images and Animations/Career Empire World/fx/CE-FX-001-portal-ring.png",
+      "width": 1024,
+      "height": 1024,
+      "colorType": 6,
+      "alphaBounds": {
+        "x": 42,
+        "y": 25,
+        "width": 938,
+        "height": 983
+      },
+      "occupiedPercent": 87.93
+    },
+    {
+      "id": "CE-FX-002-portal-energy",
+      "family": "fx",
+      "path": "Assets/Images and Animations/Career Empire World/fx/CE-FX-002-portal-energy.png",
+      "width": 1024,
+      "height": 1024,
+      "colorType": 6,
+      "alphaBounds": {
+        "x": 32,
+        "y": 26,
+        "width": 960,
+        "height": 973
+      },
+      "occupiedPercent": 89.08
+    },
+    {
+      "id": "CE-FX-003-hologram-column",
+      "family": "fx",
+      "path": "Assets/Images and Animations/Career Empire World/fx/CE-FX-003-hologram-column.png",
+      "width": 1024,
+      "height": 1024,
+      "colorType": 6,
+      "alphaBounds": {
+        "x": 321,
+        "y": 39,
+        "width": 381,
+        "height": 958
+      },
+      "occupiedPercent": 34.81
+    },
+    {
+      "id": "CE-FX-004-location-ping",
+      "family": "fx",
+      "path": "Assets/Images and Animations/Career Empire World/fx/CE-FX-004-location-ping.png",
+      "width": 512,
+      "height": 512,
+      "colorType": 6,
+      "alphaBounds": {
+        "x": 16,
+        "y": 70,
+        "width": 480,
+        "height": 370
+      },
+      "occupiedPercent": 67.75
+    },
+    {
+      "id": "CE-FX-005-reward-burst",
+      "family": "fx",
+      "path": "Assets/Images and Animations/Career Empire World/fx/CE-FX-005-reward-burst.png",
+      "width": 512,
+      "height": 512,
+      "colorType": 6,
+      "alphaBounds": {
+        "x": 26,
+        "y": 26,
+        "width": 468,
+        "height": 452
+      },
+      "occupiedPercent": 80.69
+    },
+    {
+      "id": "CE-FX-006-build-upgrade-glow",
+      "family": "fx",
+      "path": "Assets/Images and Animations/Career Empire World/fx/CE-FX-006-build-upgrade-glow.png",
+      "width": 512,
+      "height": 512,
+      "colorType": 6,
+      "alphaBounds": {
+        "x": 36,
+        "y": 100,
+        "width": 443,
+        "height": 315
+      },
+      "occupiedPercent": 53.23
+    },
+    {
+      "id": "CE-PATH-001-plaza-stone-base",
+      "family": "paths",
+      "path": "Assets/Images and Animations/Career Empire World/paths/CE-PATH-001-plaza-stone-base.png",
+      "width": 256,
+      "height": 256,
+      "colorType": 2,
+      "alphaBounds": {
+        "x": 0,
+        "y": 0,
+        "width": 256,
+        "height": 256
+      },
+      "occupiedPercent": 100
+    },
+    {
+      "id": "CE-PATH-002-plaza-stone-glow",
+      "family": "paths",
+      "path": "Assets/Images and Animations/Career Empire World/paths/CE-PATH-002-plaza-stone-glow.png",
+      "width": 256,
+      "height": 256,
+      "colorType": 2,
+      "alphaBounds": {
+        "x": 0,
+        "y": 0,
+        "width": 256,
+        "height": 256
+      },
+      "occupiedPercent": 100
+    },
+    {
+      "id": "CE-PATH-003-road-straight",
+      "family": "paths",
+      "path": "Assets/Images and Animations/Career Empire World/paths/CE-PATH-003-road-straight.png",
+      "width": 256,
+      "height": 256,
+      "colorType": 6,
+      "alphaBounds": {
+        "x": 59,
+        "y": 3,
+        "width": 138,
+        "height": 248
+      },
+      "occupiedPercent": 52.22
+    },
+    {
+      "id": "CE-PATH-004-road-corner",
+      "family": "paths",
+      "path": "Assets/Images and Animations/Career Empire World/paths/CE-PATH-004-road-corner.png",
+      "width": 256,
+      "height": 256,
+      "colorType": 6,
+      "alphaBounds": {
+        "x": 0,
+        "y": 9,
+        "width": 255,
+        "height": 238
+      },
+      "occupiedPercent": 92.61
+    },
+    {
+      "id": "CE-PATH-005-road-t-junction",
+      "family": "paths",
+      "path": "Assets/Images and Animations/Career Empire World/paths/CE-PATH-005-road-t-junction.png",
+      "width": 256,
+      "height": 256,
+      "colorType": 6,
+      "alphaBounds": {
+        "x": 4,
+        "y": 46,
+        "width": 248,
+        "height": 164
+      },
+      "occupiedPercent": 62.06
+    },
+    {
+      "id": "CE-PATH-006-road-crossing",
+      "family": "paths",
+      "path": "Assets/Images and Animations/Career Empire World/paths/CE-PATH-006-road-crossing.png",
+      "width": 256,
+      "height": 256,
+      "colorType": 6,
+      "alphaBounds": {
+        "x": 0,
+        "y": 0,
+        "width": 256,
+        "height": 256
+      },
+      "occupiedPercent": 100
+    },
+    {
+      "id": "CE-PROP-001-street-lamp",
+      "family": "props",
+      "path": "Assets/Images and Animations/Career Empire World/props/CE-PROP-001-street-lamp.png",
+      "width": 512,
+      "height": 512,
+      "colorType": 6,
+      "alphaBounds": {
+        "x": 190,
+        "y": 16,
+        "width": 132,
+        "height": 484
+      },
+      "occupiedPercent": 24.37
+    },
+    {
+      "id": "CE-PROP-002-wayfinding-sign",
+      "family": "props",
+      "path": "Assets/Images and Animations/Career Empire World/props/CE-PROP-002-wayfinding-sign.png",
+      "width": 512,
+      "height": 512,
+      "colorType": 6,
+      "alphaBounds": {
+        "x": 110,
+        "y": 16,
+        "width": 291,
+        "height": 484
+      },
+      "occupiedPercent": 53.73
+    },
+    {
+      "id": "CE-PROP-003-hologram-marker",
+      "family": "props",
+      "path": "Assets/Images and Animations/Career Empire World/props/CE-PROP-003-hologram-marker.png",
+      "width": 512,
+      "height": 512,
+      "colorType": 6,
+      "alphaBounds": {
+        "x": 93,
+        "y": 19,
+        "width": 327,
+        "height": 481
+      },
+      "occupiedPercent": 60
+    },
+    {
+      "id": "CE-PROP-004-campus-bench",
+      "family": "props",
+      "path": "Assets/Images and Animations/Career Empire World/props/CE-PROP-004-campus-bench.png",
+      "width": 512,
+      "height": 512,
+      "colorType": 6,
+      "alphaBounds": {
+        "x": 12,
+        "y": 143,
+        "width": 488,
+        "height": 357
+      },
+      "occupiedPercent": 66.46
+    },
+    {
+      "id": "CE-PROP-005-planter",
+      "family": "props",
+      "path": "Assets/Images and Animations/Career Empire World/props/CE-PROP-005-planter.png",
+      "width": 512,
+      "height": 512,
+      "colorType": 6,
+      "alphaBounds": {
+        "x": 12,
+        "y": 125,
+        "width": 488,
+        "height": 375
+      },
+      "occupiedPercent": 69.81
+    },
+    {
+      "id": "CE-PROP-006-tree-small",
+      "family": "props",
+      "path": "Assets/Images and Animations/Career Empire World/props/CE-PROP-006-tree-small.png",
+      "width": 512,
+      "height": 512,
+      "colorType": 6,
+      "alphaBounds": {
+        "x": 94,
+        "y": 16,
+        "width": 323,
+        "height": 484
+      },
+      "occupiedPercent": 59.64
+    },
+    {
+      "id": "CE-PROP-007-tree-large",
+      "family": "props",
+      "path": "Assets/Images and Animations/Career Empire World/props/CE-PROP-007-tree-large.png",
+      "width": 512,
+      "height": 512,
+      "colorType": 6,
+      "alphaBounds": {
+        "x": 20,
+        "y": 17,
+        "width": 473,
+        "height": 483
+      },
+      "occupiedPercent": 87.15
+    },
+    {
+      "id": "CE-PROP-008-campus-bin",
+      "family": "props",
+      "path": "Assets/Images and Animations/Career Empire World/props/CE-PROP-008-campus-bin.png",
+      "width": 512,
+      "height": 512,
+      "colorType": 6,
+      "alphaBounds": {
+        "x": 50,
+        "y": 16,
+        "width": 412,
+        "height": 484
+      },
+      "occupiedPercent": 76.07
+    },
+    {
+      "id": "CE-PROP-009-bike-rack",
+      "family": "props",
+      "path": "Assets/Images and Animations/Career Empire World/props/CE-PROP-009-bike-rack.png",
+      "width": 512,
+      "height": 512,
+      "colorType": 6,
+      "alphaBounds": {
+        "x": 12,
+        "y": 175,
+        "width": 488,
+        "height": 325
+      },
+      "occupiedPercent": 60.5
+    },
+    {
+      "id": "CE-PROP-010-shop-display",
+      "family": "props",
+      "path": "Assets/Images and Animations/Career Empire World/props/CE-PROP-010-shop-display.png",
+      "width": 512,
+      "height": 512,
+      "colorType": 6,
+      "alphaBounds": {
+        "x": 12,
+        "y": 36,
+        "width": 487,
+        "height": 464
+      },
+      "occupiedPercent": 86.2
+    },
+    {
+      "id": "CE-PROP-011-community-banner",
+      "family": "props",
+      "path": "Assets/Images and Animations/Career Empire World/props/CE-PROP-011-community-banner.png",
+      "width": 512,
+      "height": 512,
+      "colorType": 6,
+      "alphaBounds": {
+        "x": 154,
+        "y": 16,
+        "width": 203,
+        "height": 484
+      },
+      "occupiedPercent": 37.48
+    },
+    {
+      "id": "CE-PROP-012-solar-canopy",
+      "family": "props",
+      "path": "Assets/Images and Animations/Career Empire World/props/CE-PROP-012-solar-canopy.png",
+      "width": 512,
+      "height": 512,
+      "colorType": 6,
+      "alphaBounds": {
+        "x": 12,
+        "y": 180,
+        "width": 488,
+        "height": 320
+      },
+      "occupiedPercent": 59.57
+    },
+    {
+      "id": "CE-TERRAIN-001-base-grass",
+      "family": "terrain",
+      "path": "Assets/Images and Animations/Career Empire World/terrain/CE-TERRAIN-001-base-grass.png",
+      "width": 256,
+      "height": 256,
+      "colorType": 2,
+      "alphaBounds": {
+        "x": 0,
+        "y": 0,
+        "width": 256,
+        "height": 256
+      },
+      "occupiedPercent": 100
+    },
+    {
+      "id": "CE-TERRAIN-002-grass-flowers",
+      "family": "terrain",
+      "path": "Assets/Images and Animations/Career Empire World/terrain/CE-TERRAIN-002-grass-flowers.png",
+      "width": 256,
+      "height": 256,
+      "colorType": 2,
+      "alphaBounds": {
+        "x": 0,
+        "y": 0,
+        "width": 256,
+        "height": 256
+      },
+      "occupiedPercent": 100
+    },
+    {
+      "id": "CE-TERRAIN-003-grass-worn",
+      "family": "terrain",
+      "path": "Assets/Images and Animations/Career Empire World/terrain/CE-TERRAIN-003-grass-worn.png",
+      "width": 256,
+      "height": 256,
+      "colorType": 2,
+      "alphaBounds": {
+        "x": 0,
+        "y": 0,
+        "width": 256,
+        "height": 256
+      },
+      "occupiedPercent": 100
+    },
+    {
+      "id": "CE-TERRAIN-004-garden-edge",
+      "family": "terrain",
+      "path": "Assets/Images and Animations/Career Empire World/terrain/CE-TERRAIN-004-garden-edge.png",
+      "width": 256,
+      "height": 256,
+      "colorType": 6,
+      "alphaBounds": {
+        "x": 2,
+        "y": 1,
+        "width": 252,
+        "height": 254
+      },
+      "occupiedPercent": 97.67
+    },
+    {
+      "id": "CE-DIGITAL-001-locked-lab",
+      "family": "transformations",
+      "path": "Assets/Images and Animations/Career Empire World/transformations/digital-access/CE-DIGITAL-001-locked-lab.png",
+      "width": 1024,
+      "height": 1024,
+      "colorType": 6,
+      "alphaBounds": {
+        "x": 1,
+        "y": 199,
+        "width": 1022,
+        "height": 625
+      },
+      "occupiedPercent": 60.92
+    },
+    {
+      "id": "CE-DIGITAL-002-device-hub",
+      "family": "transformations",
+      "path": "Assets/Images and Animations/Career Empire World/transformations/digital-access/CE-DIGITAL-002-device-hub.png",
+      "width": 1024,
+      "height": 1024,
+      "colorType": 6,
+      "alphaBounds": {
+        "x": 1,
+        "y": 166,
+        "width": 1022,
+        "height": 690
+      },
+      "occupiedPercent": 67.25
+    },
+    {
+      "id": "CE-DIGITAL-003-open-tech-hub",
+      "family": "transformations",
+      "path": "Assets/Images and Animations/Career Empire World/transformations/digital-access/CE-DIGITAL-003-open-tech-hub.png",
+      "width": 1024,
+      "height": 1024,
+      "colorType": 6,
+      "alphaBounds": {
+        "x": 0,
+        "y": 170,
+        "width": 1024,
+        "height": 683
+      },
+      "occupiedPercent": 66.7
+    },
+    {
+      "id": "CE-DIGITAL-004-future-skills-campus",
+      "family": "transformations",
+      "path": "Assets/Images and Animations/Career Empire World/transformations/digital-access/CE-DIGITAL-004-future-skills-campus.png",
+      "width": 1024,
+      "height": 1024,
+      "colorType": 6,
+      "alphaBounds": {
+        "x": 0,
+        "y": 183,
+        "width": 1024,
+        "height": 657
+      },
+      "occupiedPercent": 64.16
+    },
+    {
+      "id": "CE-FAIR-001-empty-lot",
+      "family": "transformations",
+      "path": "Assets/Images and Animations/Career Empire World/transformations/fairer-starts/CE-FAIR-001-empty-lot.png",
+      "width": 1024,
+      "height": 1024,
+      "colorType": 6,
+      "alphaBounds": {
+        "x": 0,
+        "y": 248,
+        "width": 1022,
+        "height": 526
+      },
+      "occupiedPercent": 51.27
+    },
+    {
+      "id": "CE-FAIR-002-support-desk",
+      "family": "transformations",
+      "path": "Assets/Images and Animations/Career Empire World/transformations/fairer-starts/CE-FAIR-002-support-desk.png",
+      "width": 1024,
+      "height": 1024,
+      "colorType": 6,
+      "alphaBounds": {
+        "x": 2,
+        "y": 187,
+        "width": 1021,
+        "height": 648
+      },
+      "occupiedPercent": 63.1
+    },
+    {
+      "id": "CE-FAIR-003-mentor-centre",
+      "family": "transformations",
+      "path": "Assets/Images and Animations/Career Empire World/transformations/fairer-starts/CE-FAIR-003-mentor-centre.png",
+      "width": 1024,
+      "height": 1024,
+      "colorType": 6,
+      "alphaBounds": {
+        "x": 0,
+        "y": 170,
+        "width": 1024,
+        "height": 683
+      },
+      "occupiedPercent": 66.7
+    },
+    {
+      "id": "CE-FAIR-004-belonging-precinct",
+      "family": "transformations",
+      "path": "Assets/Images and Animations/Career Empire World/transformations/fairer-starts/CE-FAIR-004-belonging-precinct.png",
+      "width": 1024,
+      "height": 1024,
+      "colorType": 6,
+      "alphaBounds": {
+        "x": 0,
+        "y": 175,
+        "width": 1022,
+        "height": 673
+      },
+      "occupiedPercent": 65.59
+    },
+    {
+      "id": "CE-GREEN-001-coal-plant",
+      "family": "transformations",
+      "path": "Assets/Images and Animations/Career Empire World/transformations/green-futures/CE-GREEN-001-coal-plant.png",
+      "width": 1024,
+      "height": 1024,
+      "colorType": 6,
+      "alphaBounds": {
+        "x": 2,
+        "y": 161,
+        "width": 1020,
+        "height": 699
+      },
+      "occupiedPercent": 68
+    },
+    {
+      "id": "CE-GREEN-002-cleanup-site",
+      "family": "transformations",
+      "path": "Assets/Images and Animations/Career Empire World/transformations/green-futures/CE-GREEN-002-cleanup-site.png",
+      "width": 1024,
+      "height": 1024,
+      "colorType": 6,
+      "alphaBounds": {
+        "x": 1,
+        "y": 204,
+        "width": 1022,
+        "height": 616
+      },
+      "occupiedPercent": 60.04
+    },
+    {
+      "id": "CE-GREEN-003-solar-park",
+      "family": "transformations",
+      "path": "Assets/Images and Animations/Career Empire World/transformations/green-futures/CE-GREEN-003-solar-park.png",
+      "width": 1024,
+      "height": 1024,
+      "colorType": 6,
+      "alphaBounds": {
+        "x": 0,
+        "y": 184,
+        "width": 1024,
+        "height": 657
+      },
+      "occupiedPercent": 64.16
+    },
+    {
+      "id": "CE-GREEN-004-waterfall-gardens",
+      "family": "transformations",
+      "path": "Assets/Images and Animations/Career Empire World/transformations/green-futures/CE-GREEN-004-waterfall-gardens.png",
+      "width": 1024,
+      "height": 1024,
+      "colorType": 6,
+      "alphaBounds": {
+        "x": 2,
+        "y": 185,
+        "width": 1020,
+        "height": 655
+      },
+      "occupiedPercent": 63.71
+    },
+    {
+      "id": "CE-GLOBAL-001-closed-road",
+      "family": "transformations",
+      "path": "Assets/Images and Animations/Career Empire World/transformations/wider-horizons/CE-GLOBAL-001-closed-road.png",
+      "width": 1024,
+      "height": 1024,
+      "colorType": 6,
+      "alphaBounds": {
+        "x": 2,
+        "y": 186,
+        "width": 1020,
+        "height": 651
+      },
+      "occupiedPercent": 63.33
+    },
+    {
+      "id": "CE-GLOBAL-002-departure-board",
+      "family": "transformations",
+      "path": "Assets/Images and Animations/Career Empire World/transformations/wider-horizons/CE-GLOBAL-002-departure-board.png",
+      "width": 1024,
+      "height": 1024,
+      "colorType": 6,
+      "alphaBounds": {
+        "x": 2,
+        "y": 198,
+        "width": 1021,
+        "height": 628
+      },
+      "occupiedPercent": 61.15
+    },
+    {
+      "id": "CE-GLOBAL-003-airport-link",
+      "family": "transformations",
+      "path": "Assets/Images and Animations/Career Empire World/transformations/wider-horizons/CE-GLOBAL-003-airport-link.png",
+      "width": 1024,
+      "height": 1024,
+      "colorType": 6,
+      "alphaBounds": {
+        "x": 1,
+        "y": 188,
+        "width": 1023,
+        "height": 648
+      },
+      "occupiedPercent": 63.22
+    },
+    {
+      "id": "CE-GLOBAL-004-global-exchange-hub",
+      "family": "transformations",
+      "path": "Assets/Images and Animations/Career Empire World/transformations/wider-horizons/CE-GLOBAL-004-global-exchange-hub.png",
+      "width": 1024,
+      "height": 1024,
+      "colorType": 6,
+      "alphaBounds": {
+        "x": 1,
+        "y": 188,
+        "width": 1021,
+        "height": 647
+      },
+      "occupiedPercent": 63
+    },
+    {
+      "id": "CE-WATER-001-base-water",
+      "family": "water",
+      "path": "Assets/Images and Animations/Career Empire World/water/CE-WATER-001-base-water.png",
+      "width": 256,
+      "height": 256,
+      "colorType": 2,
+      "alphaBounds": {
+        "x": 0,
+        "y": 0,
+        "width": 256,
+        "height": 256
+      },
+      "occupiedPercent": 100
+    },
+    {
+      "id": "CE-WATER-002-shore-edge",
+      "family": "water",
+      "path": "Assets/Images and Animations/Career Empire World/water/CE-WATER-002-shore-edge.png",
+      "width": 256,
+      "height": 256,
+      "colorType": 6,
+      "alphaBounds": {
+        "x": 0,
+        "y": 45,
+        "width": 256,
+        "height": 166
+      },
+      "occupiedPercent": 64.84
+    },
+    {
+      "id": "CE-WATER-003-waterfall-small",
+      "family": "water",
+      "path": "Assets/Images and Animations/Career Empire World/water/CE-WATER-003-waterfall-small.png",
+      "width": 512,
+      "height": 512,
+      "colorType": 6,
+      "alphaBounds": {
+        "x": 1,
+        "y": 42,
+        "width": 510,
+        "height": 427
+      },
+      "occupiedPercent": 83.07
+    },
+    {
+      "id": "CE-WATER-004-bridge",
+      "family": "water",
+      "path": "Assets/Images and Animations/Career Empire World/water/CE-WATER-004-bridge.png",
+      "width": 512,
+      "height": 512,
+      "colorType": 6,
+      "alphaBounds": {
+        "x": 1,
+        "y": 82,
+        "width": 510,
+        "height": 348
+      },
+      "occupiedPercent": 67.7
+    }
+  ]
+}

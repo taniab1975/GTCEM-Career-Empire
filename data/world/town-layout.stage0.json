@@ -1,0 +1,511 @@
+{
+  "schema": "career-empire-town-layout.stage0",
+  "sourceBlueprint": {
+    "png": "Assets/Images and Animations/Career Empire World/GamePlan/Career-Empire-Town-Blueprint.png",
+    "svg": "Assets/Images and Animations/Career Empire World/GamePlan/Career-Empire-Town-Blueprint.svg",
+    "blueprintCanvas": {
+      "width": 1600,
+      "height": 1200
+    },
+    "playableTownRectInBlueprint": {
+      "x": 70,
+      "y": 135,
+      "width": 1120,
+      "height": 965
+    },
+    "proposedWorldSize": {
+      "width": 2560,
+      "height": 2304
+    }
+  },
+  "note": "Planning coordinates only. This file is not wired into the rendered Phaser world yet.",
+  "precincts": [
+    {
+      "id": "home-identity",
+      "title": "Home and Identity Quarter",
+      "role": "arrival, identity, goals, personal choices",
+      "region": {
+        "x": 80,
+        "y": 1390,
+        "width": 875,
+        "height": 760
+      }
+    },
+    {
+      "id": "careers-learning",
+      "title": "Careers and Learning Quarter",
+      "role": "capabilities, pathways, applications, EST support",
+      "region": {
+        "x": 100,
+        "y": 370,
+        "width": 915,
+        "height": 860
+      }
+    },
+    {
+      "id": "civic-heart",
+      "title": "Civic Heart",
+      "role": "orientation, votes, class progress, events",
+      "region": {
+        "x": 850,
+        "y": 760,
+        "width": 900,
+        "height": 850
+      }
+    },
+    {
+      "id": "commerce-money",
+      "title": "Commerce and Money Quarter",
+      "role": "shop, budget, saving, spending, investment choices",
+      "region": {
+        "x": 1650,
+        "y": 1320,
+        "width": 900,
+        "height": 850
+      }
+    },
+    {
+      "id": "work-enterprise",
+      "title": "Work and Enterprise Quarter",
+      "role": "workplace, rights, safety, communication, teamwork",
+      "region": {
+        "x": 1660,
+        "y": 400,
+        "width": 900,
+        "height": 860
+      }
+    },
+    {
+      "id": "futures-transformation",
+      "title": "Futures and Transformation Edge",
+      "role": "megatrends, global portal, transformation gateways",
+      "region": {
+        "x": 900,
+        "y": 95,
+        "width": 890,
+        "height": 555
+      }
+    }
+  ],
+  "buildings": [
+    {
+      "id": "home-base",
+      "title": "Home Base",
+      "precinct": "home-identity",
+      "assetId": "CE-BLDG-001-home-base",
+      "role": "arrival and identity",
+      "href": "../dashboards/student.html?from=world",
+      "x": 446,
+      "y": 1677,
+      "width": 366,
+      "height": 227,
+      "entrance": {
+        "x": 446,
+        "y": 1831
+      },
+      "status": "proposed"
+    },
+    {
+      "id": "avatar-studio",
+      "title": "Avatar Studio",
+      "precinct": "home-identity",
+      "assetId": "CE-BLDG-006-avatar-studio",
+      "role": "character identity",
+      "href": "../modules/avatar/index.html?from=world",
+      "x": 783,
+      "y": 1924,
+      "width": 331,
+      "height": 196,
+      "entrance": {
+        "x": 783,
+        "y": 2057
+      },
+      "status": "proposed"
+    },
+    {
+      "id": "skills-centre",
+      "title": "Skills Centre",
+      "precinct": "careers-learning",
+      "assetId": "CE-BLDG-005-initiative-workshop",
+      "role": "capability badges; first lesson Initiative",
+      "href": "../modules/initiative/index.html?from=world",
+      "x": 366,
+      "y": 758,
+      "width": 389,
+      "height": 227,
+      "entrance": {
+        "x": 366,
+        "y": 912
+      },
+      "status": "proposed"
+    },
+    {
+      "id": "career-studio",
+      "title": "Career Studio",
+      "precinct": "careers-learning",
+      "assetId": null,
+      "role": "jobs, pathways, labour market, applications and interviews",
+      "x": 709,
+      "y": 430,
+      "width": 411,
+      "height": 239,
+      "entrance": {
+        "x": 709,
+        "y": 592
+      },
+      "status": "needs asset or placeholder shell"
+    },
+    {
+      "id": "lifelong-learning",
+      "title": "Lifelong Learning Hub",
+      "precinct": "careers-learning",
+      "assetId": "CE-BLDG-004-lifelong-learning-hub",
+      "role": "retraining and pathway growth",
+      "href": "../modules/lifelong-learning/index.html?from=world",
+      "x": 920,
+      "y": 1012,
+      "width": 354,
+      "height": 210,
+      "entrance": {
+        "x": 920,
+        "y": 1155
+      },
+      "status": "proposed"
+    },
+    {
+      "id": "town-square",
+      "title": "Town Square",
+      "precinct": "civic-heart",
+      "role": "events and orientation",
+      "x": 1280,
+      "y": 1170,
+      "width": 539,
+      "height": 439,
+      "entrance": {
+        "x": 1280,
+        "y": 1409
+      },
+      "status": "proposed-landmark"
+    },
+    {
+      "id": "town-hall",
+      "title": "Town Hall",
+      "precinct": "civic-heart",
+      "assetId": "CE-BLDG-008-town-hall",
+      "role": "votes and community fund",
+      "href": "../dashboards/community.html?from=world",
+      "x": 1280,
+      "y": 1540,
+      "width": 389,
+      "height": 239,
+      "entrance": {
+        "x": 1280,
+        "y": 1702
+      },
+      "status": "proposed"
+    },
+    {
+      "id": "market-street",
+      "title": "Market Street",
+      "precinct": "commerce-money",
+      "assetId": "CE-BLDG-007-global-shop",
+      "role": "shop, consumer choices, needs/wants",
+      "href": "../shop/index.html?from=world",
+      "x": 2063,
+      "y": 1594,
+      "width": 400,
+      "height": 227,
+      "entrance": {
+        "x": 2063,
+        "y": 1748
+      },
+      "status": "proposed"
+    },
+    {
+      "id": "bank-budget",
+      "title": "Bank / Budget Point",
+      "precinct": "commerce-money",
+      "assetId": null,
+      "role": "budget, saving, investing, opportunity cost",
+      "x": 2109,
+      "y": 1934,
+      "width": 354,
+      "height": 191,
+      "entrance": {
+        "x": 2109,
+        "y": 2064
+      },
+      "status": "can start as UI/NPC interaction"
+    },
+    {
+      "id": "first-workplace",
+      "title": "First Workplace",
+      "precinct": "work-enterprise",
+      "assetId": null,
+      "role": "first job, income, workplace expectations",
+      "x": 2109,
+      "y": 734,
+      "width": 423,
+      "height": 251,
+      "entrance": {
+        "x": 2109,
+        "y": 904
+      },
+      "status": "needs flexible workplace asset decision"
+    },
+    {
+      "id": "rights-safety",
+      "title": "Rights + Safety",
+      "precinct": "work-enterprise",
+      "assetId": null,
+      "role": "WHS, Fair Work, EO, grievances",
+      "x": 1909,
+      "y": 1053,
+      "width": 389,
+      "height": 220,
+      "entrance": {
+        "x": 1909,
+        "y": 1202
+      },
+      "status": "needs asset or interior destination"
+    },
+    {
+      "id": "megatrends",
+      "title": "Megatrends Centre",
+      "precinct": "futures-transformation",
+      "assetId": "CE-BLDG-003-megatrends-centre",
+      "role": "future work and change events",
+      "href": "../index.html?screen=megatrends&from=world",
+      "x": 1297,
+      "y": 282,
+      "width": 377,
+      "height": 229,
+      "entrance": {
+        "x": 1297,
+        "y": 438
+      },
+      "status": "proposed"
+    },
+    {
+      "id": "global-portal",
+      "title": "Global Portal",
+      "precinct": "futures-transformation",
+      "assetId": "CE-BLDG-009-global-portal",
+      "role": "global benchmarks and wider world",
+      "href": "../dashboards/global.html?from=world",
+      "x": 1703,
+      "y": 329,
+      "width": 320,
+      "height": 205,
+      "entrance": {
+        "x": 1703,
+        "y": 469
+      },
+      "status": "proposed"
+    }
+  ],
+  "transformationGateways": [
+    {
+      "id": "green-futures-gateway",
+      "title": "Green Futures Gateway",
+      "precinct": "futures-transformation",
+      "role": "climate and sustainability transformation",
+      "x": 217,
+      "y": 107,
+      "width": 343,
+      "height": 143,
+      "entrance": {
+        "x": 217,
+        "y": 204
+      },
+      "status": "proposed"
+    },
+    {
+      "id": "digital-access-gateway",
+      "title": "Digital Access Gateway",
+      "precinct": "futures-transformation",
+      "role": "technology education and inclusion transformation",
+      "x": 2280,
+      "y": 107,
+      "width": 400,
+      "height": 143,
+      "entrance": {
+        "x": 2280,
+        "y": 204
+      },
+      "status": "proposed"
+    },
+    {
+      "id": "fairer-starts-gateway",
+      "title": "Fairer Starts Gateway",
+      "precinct": "home-identity",
+      "role": "diversity, belonging and economic equity transformation",
+      "x": 229,
+      "y": 2194,
+      "width": 366,
+      "height": 138,
+      "entrance": {
+        "x": 229,
+        "y": 2288
+      },
+      "status": "proposed"
+    },
+    {
+      "id": "wider-horizons-gateway",
+      "title": "Wider Horizons Gateway",
+      "precinct": "commerce-money",
+      "role": "global opportunity transformation",
+      "x": 2274,
+      "y": 2194,
+      "width": 411,
+      "height": 138,
+      "entrance": {
+        "x": 2274,
+        "y": 2288
+      },
+      "status": "proposed"
+    }
+  ],
+  "water": [
+    {
+      "id": "north-water-edge",
+      "type": "coastline",
+      "points": [
+        {
+          "x": 0,
+          "y": 143
+        },
+        {
+          "x": 823,
+          "y": 107
+        },
+        {
+          "x": 1669,
+          "y": 72
+        },
+        {
+          "x": 2560,
+          "y": 143
+        }
+      ]
+    },
+    {
+      "id": "south-water-edge",
+      "type": "coastline",
+      "points": [
+        {
+          "x": 0,
+          "y": 2137
+        },
+        {
+          "x": 777,
+          "y": 2137
+        },
+        {
+          "x": 1646,
+          "y": 2113
+        },
+        {
+          "x": 2560,
+          "y": 2089
+        }
+      ]
+    }
+  ],
+  "routeNodes": [
+    {
+      "id": "home-entry",
+      "x": 446,
+      "y": 1791
+    },
+    {
+      "id": "avatar-entry",
+      "x": 782,
+      "y": 2022
+    },
+    {
+      "id": "skills-entry",
+      "x": 366,
+      "y": 871
+    },
+    {
+      "id": "career-entry",
+      "x": 709,
+      "y": 549
+    },
+    {
+      "id": "lifelong-entry",
+      "x": 919,
+      "y": 1117
+    },
+    {
+      "id": "town-square-centre",
+      "x": 1280,
+      "y": 1170
+    },
+    {
+      "id": "town-hall-entry",
+      "x": 1280,
+      "y": 1659
+    },
+    {
+      "id": "market-entry",
+      "x": 2062,
+      "y": 1707
+    },
+    {
+      "id": "budget-entry",
+      "x": 2107,
+      "y": 2029
+    },
+    {
+      "id": "workplace-entry",
+      "x": 2107,
+      "y": 860
+    },
+    {
+      "id": "rights-entry",
+      "x": 1909,
+      "y": 1163
+    },
+    {
+      "id": "megatrends-entry",
+      "x": 1296,
+      "y": 396
+    },
+    {
+      "id": "global-entry",
+      "x": 1703,
+      "y": 432
+    }
+  ],
+  "routes": [
+    {
+      "id": "main-life-loop",
+      "type": "main-street",
+      "note": "Blueprint Bezier loop; Stage 1 should approximate as route nodes then refine with sampled path points.",
+      "blueprintPath": "M285 820 C275 635 330 470 480 420 C570 385 720 390 835 440 C975 500 1035 645 985 810 C865 930 670 955 485 910 C385 885 320 855 285 820"
+    },
+    {
+      "id": "north-south-civic-cross",
+      "type": "cross-street",
+      "nodes": [
+        "megatrends-entry",
+        "town-square-centre",
+        "town-hall-entry",
+        "home-entry"
+      ]
+    },
+    {
+      "id": "west-east-civic-cross",
+      "type": "cross-street",
+      "nodes": [
+        "skills-entry",
+        "lifelong-entry",
+        "town-square-centre",
+        "rights-entry",
+        "market-entry"
+      ]
+    }
+  ]
+}
