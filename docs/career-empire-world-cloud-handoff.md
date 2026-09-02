@@ -8,10 +8,12 @@ Read these files first:
 
 - `AGENTS.md`
 - `docs/project-memory.md`
+- `docs/career-empire-world-current-state.md`
 - `docs/career-empire-world-build-plan.md`
 - `docs/career-empire-curriculum-journey-map.md`
 - `docs/career-empire-world-asset-register.md`
 - `docs/career-empire-world-stage0-rebuild-audit.md`
+- `docs/CE-CORRECTED-STAGE1-HANDOFF.md`
 - `Assets/Images and Animations/Career Empire World/GamePlan/Career-Empire-Town-Rebuild-Brief.md`
 - `data/world/asset-inventory.stage0.json`
 - `data/world/asset-manifest.stage0.json`
@@ -21,23 +23,39 @@ The GamePlan PNG/SVG files are planning references only. Do not use either as a 
 
 ## Current Implementation Boundary
 
-The current prototype page is `world/index.html`. Do not replace or depend on it for Stage 1 approval.
+`world/index.html` is now the public version hub. It is not the map itself.
 
-The Stage 1 rebuild slice is isolated here:
+The latest approved review build is isolated here:
+
+- `world/rebuild-corrected.html`
+- `world/rebuild-corrected.css`
+- `world/rebuild-corrected.js`
+- `data/world/town-layout.stage1-corrected.json`
+
+It contains the corrected Stage 1 spatial foundation plus the Town Hall entry v2 prototype.
+
+The earlier Stage 1 comparison build remains here:
 
 - `world/rebuild.html`
 - `world/rebuild.css`
 - `world/rebuild.js`
 
-Local reload URL:
+Public ECC review URLs:
 
-- `http://localhost:8001/world/rebuild.html`
+- `https://emmanuelcc-ict.github.io/GTCEM-Career-Empire/world/index.html?publish=20260902-current`
+- `https://emmanuelcc-ict.github.io/GTCEM-Career-Empire/world/rebuild-corrected.html?publish=20260902-current`
+- `https://emmanuelcc-ict.github.io/GTCEM-Career-Empire/world/rebuild.html?publish=20260902-current`
+
+Local reload URLs:
+
+- `http://localhost:8000/world/rebuild-corrected.html`
+- `http://localhost:8000/world/rebuild.html`
 
 Run from repo root:
 
 ```bash
 npm run check
-python3 -m http.server 8001
+npm run dev
 ```
 
 ## Approved Stage 1 Decisions
@@ -70,6 +88,8 @@ Included:
 - route-based click movement
 - B01 character controller
 - aerial map toggle
+- Town Hall only 2.5D entry prototype
+- placeholder Town Hall module and exit-back-to-town loop
 
 B01 controls:
 
