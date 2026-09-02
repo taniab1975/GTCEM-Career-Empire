@@ -69,16 +69,25 @@
   justify-content: flex-end;
   gap: 8px;
   max-width: 620px;
+  pointer-events: none;
+  user-select: none;
+}
+
+.world-rebuild-controls strong {
+  flex-basis: 100%;
+  color: var(--rebuild-muted);
+  font-size: 10px;
+  letter-spacing: 0.12em;
+  text-align: right;
+  text-transform: uppercase;
 }
 
 .world-rebuild-controls span {
-  padding: 7px 9px;
-  border: 1px solid rgba(103, 216, 255, 0.22);
-  border-radius: 7px;
-  background: rgba(3, 12, 24, 0.46);
+  padding: 2px 0 2px 9px;
+  border-left: 1px solid rgba(103, 216, 255, 0.28);
   color: #cfe3ff;
   font-size: 12px;
-  font-weight: 700;
+  font-weight: 600;
 }
 
 .world-rebuild-layout {
@@ -198,8 +207,10 @@
 }
 
 .world-rebuild-panel button:disabled {
-  cursor: not-allowed;
-  opacity: 0.48;
+  border-color: rgba(168, 187, 217, 0.18);
+  background: rgba(168, 187, 217, 0.06);
+  color: rgba(168, 187, 217, 0.62);
+  cursor: default;
 }
 
 .world-rebuild-notes {
@@ -226,6 +237,10 @@
 
   .world-rebuild-controls {
     justify-content: flex-start;
+  }
+
+  .world-rebuild-controls strong {
+    text-align: left;
   }
 }
 
