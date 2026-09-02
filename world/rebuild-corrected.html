@@ -7,7 +7,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&amp;display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="./rebuild-corrected.css?v=20260830-corrected-v1">
+  <link rel="stylesheet" href="./rebuild-corrected.css?v=20260831-entry-v2">
 </head>
 <body class="corrected-page">
   <main class="corrected-shell">
@@ -22,8 +22,27 @@
     </header>
     <section class="corrected-layout">
       <div class="corrected-stage">
-        <div id="corrected-game" class="corrected-game"><div class="corrected-loading">Loading corrected town…</div></div>
+        <div id="corrected-game" class="corrected-game">
+          <div class="corrected-loading">Loading corrected town…</div>
+          <div id="corrected-cinematic" class="corrected-cinematic" hidden aria-hidden="true">
+            <div class="corrected-cinematic-stage">
+              <img id="corrected-cinematic-hall" class="corrected-cinematic-hall" alt="" aria-hidden="true">
+              <div id="corrected-cinematic-portal" class="corrected-cinematic-portal" hidden>PORTAL PLACEHOLDER</div>
+              <div class="corrected-cinematic-lane" aria-hidden="true"></div>
+              <img id="corrected-cinematic-player" class="corrected-cinematic-player" alt="" aria-hidden="true">
+            </div>
+          </div>
+          <button id="corrected-entry-prompt" class="corrected-entry-prompt" type="button" hidden>Enter Town Hall</button>
+        </div>
         <div class="corrected-strip"><span>Move: WASD/arrows · Run: Shift · Click a destination · Aerial: M</span><button id="corrected-aerial" type="button">Aerial Map</button></div>
+        <div id="corrected-module" class="corrected-module" hidden>
+          <section class="corrected-module-card" aria-labelledby="corrected-module-title">
+            <span id="corrected-module-type">Civic Heart</span>
+            <h2 id="corrected-module-title">Town Hall Placeholder</h2>
+            <p id="corrected-module-detail">This temporary screen proves the building-entry handoff and return loop.</p>
+            <button id="corrected-exit-module" type="button">Exit to Town</button>
+          </section>
+        </div>
       </div>
       <aside class="corrected-panel" aria-live="polite">
         <span id="corrected-type">Current area</span><h2 id="corrected-title">Home + Identity</h2>
@@ -34,6 +53,6 @@
     </section>
   </main>
   <script src="https://cdn.jsdelivr.net/npm/phaser@3.90.0/dist/phaser.min.js"></script>
-  <script src="./rebuild-corrected.js?v=20260830-corrected-v1"></script>
+  <script src="./rebuild-corrected.js?v=20260831-entry-v2"></script>
 </body>
 </html>
