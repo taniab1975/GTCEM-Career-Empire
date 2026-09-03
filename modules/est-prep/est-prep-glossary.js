@@ -24,8 +24,8 @@ const GLOSSARY_INVADER_PLAYER_Y = 462;
 const GLOSSARY_INVADER_COLORS = ["#72f7b8", "#61f0ff", "#ffd86c", "#ff7dc0"];
 const GLOSSARY_INVADER_RESULT_DELAY_MS = 1180;
 const GLOSSARY_INVADER_FEEDBACK_ASSETS = {
-  correct: "../../Assets/Images and Animations/Emmanuel Student Characters/MacKillop/Mackillop Celebrating.png",
-  wrong: "../../Assets/Images and Animations/Emmanuel Student Characters/MacKillop/MacKillop encouraging.png"
+  correct: "../../Assets/Images and Animations/Emmanuel Student Characters/MacKillop/MacKillop Celebrating.png",
+  wrong: "../../Assets/Images and Animations/Emmanuel Student Characters/MacKillop/MacKillop Encouraging.png"
 };
 const GLOSSARY_VISUAL_ASSETS = {
   "memory-match": "../../Assets/Images and Animations/Glossary Check/glossary-recall-forge.svg",
