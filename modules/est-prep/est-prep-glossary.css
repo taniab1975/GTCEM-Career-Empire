@@ -3268,7 +3268,7 @@ body.glossary-mission-active .glossary-chamber-progress {
 }
 
 .glossary-bridge-game {
-  --bridge-tile-size: clamp(102px, 12.5%, 158px);
+  --bridge-tile-size: clamp(102px, 11.5%, 146px);
   position: relative;
   min-height: 0;
   height: clamp(500px, 46vw, 620px);
@@ -3320,6 +3320,11 @@ body.glossary-mission-active .glossary-chamber-progress {
 
 .glossary-bridge-game.is-level-clear .glossary-bridge-bg {
   animation: glossaryBridgePortalPush 1.4s ease-in-out;
+}
+
+.glossary-bridge-game.is-portal-exit .glossary-bridge-bg {
+  animation: glossaryBridgePortalPush 1.35s ease-in-out;
+  filter: saturate(1.22) contrast(1.06) brightness(1.06);
 }
 
 .glossary-bridge-prompt-bar {
@@ -3564,6 +3569,12 @@ body.glossary-mission-active .glossary-chamber-progress {
   pointer-events: none;
 }
 
+.glossary-bridge-game.is-portal-exit .glossary-bridge-tile.is-locked {
+  opacity: 0.7;
+  filter: saturate(1.18);
+  transform: translate(-50%, -50%) scale(0.92);
+}
+
 .glossary-bridge-tile.is-locked::after {
   content: "";
   position: absolute;
@@ -3601,12 +3612,27 @@ body.glossary-mission-active .glossary-chamber-progress {
   left: var(--bridge-player-x);
   top: var(--bridge-player-y);
   z-index: 6;
-  width: clamp(170px, 15vw, 250px);
+  width: clamp(130px, 10.8vw, 188px);
   display: grid;
   transform: translate(-50%, -100%);
   filter: drop-shadow(0 22px 24px rgba(0, 0, 0, 0.52));
   pointer-events: none;
   will-change: left, top, transform, opacity;
+}
+
+.glossary-bridge-player::before {
+  content: "";
+  grid-area: 1 / 1;
+  align-self: end;
+  justify-self: center;
+  width: 74%;
+  height: 15%;
+  margin-bottom: -2%;
+  border-radius: 999px;
+  background: radial-gradient(ellipse, rgba(132, 255, 209, 0.32), rgba(97, 240, 255, 0.12) 54%, transparent 72%);
+  filter: blur(4px);
+  transform: translateY(8px);
+  z-index: -1;
 }
 
 .glossary-bridge-player-frame {
@@ -3665,9 +3691,14 @@ body.glossary-mission-active .glossary-chamber-progress {
 }
 
 .glossary-bridge-player.is-exiting {
-  z-index: 20;
-  --bridge-frame-duration: 1.25s;
-  animation: glossaryBridgePortalExit 1.25s ease-in-out;
+  z-index: 22;
+  --bridge-frame-duration: 1.34s;
+  animation: glossaryBridgePortalExit 1.34s ease-in-out forwards;
+}
+
+.glossary-bridge-player.is-exited {
+  opacity: 0;
+  transform: translate(-50%, -116%) scale(0.3);
 }
 
 .glossary-bridge-player-ghost {
@@ -3675,7 +3706,7 @@ body.glossary-mission-active .glossary-chamber-progress {
   left: var(--bridge-from-x);
   top: var(--bridge-from-y);
   z-index: 14;
-  width: clamp(170px, 15vw, 250px);
+  width: clamp(130px, 10.8vw, 188px);
   transform: translate(-50%, -100%);
   filter: drop-shadow(0 22px 24px rgba(0, 0, 0, 0.34));
   opacity: 0.34;
@@ -3802,6 +3833,19 @@ body.glossary-mission-active .glossary-chamber-progress {
   transform: scale(1);
 }
 
+.glossary-bridge-game.is-portal-exit .glossary-bridge-portal {
+  z-index: 21;
+  transform: scale(1.16);
+}
+
+.glossary-bridge-game.is-portal-exit .glossary-bridge-portal-ring {
+  filter: drop-shadow(0 0 42px rgba(97, 240, 255, 0.86));
+}
+
+.glossary-bridge-game.is-portal-exit .glossary-bridge-portal-core {
+  box-shadow: inset 0 0 54px rgba(255, 255, 255, 0.52), 0 0 78px rgba(132, 255, 209, 0.58);
+}
+
 .glossary-bridge-portal-ring,
 .glossary-bridge-portal-core,
 .glossary-bridge-portal-door,
@@ -3895,6 +3939,41 @@ body.glossary-mission-active .glossary-chamber-progress {
 
 .glossary-bridge-splash.is-active {
   animation: glossaryBridgeSplash 820ms ease-out;
+}
+
+.glossary-bridge-exit-beat {
+  position: absolute;
+  right: 24px;
+  bottom: 24px;
+  z-index: 25;
+  display: grid;
+  gap: 4px;
+  width: min(280px, calc(100% - 48px));
+  padding: 13px 16px;
+  border: 1px solid rgba(255, 216, 108, 0.42);
+  border-radius: 18px;
+  background:
+    radial-gradient(circle at top right, rgba(255, 216, 108, 0.16), transparent 42%),
+    rgba(5, 12, 30, 0.86);
+  color: #ffffff;
+  box-shadow: 0 22px 44px rgba(0, 0, 0, 0.38), 0 0 32px rgba(97, 240, 255, 0.16);
+  backdrop-filter: blur(12px);
+  pointer-events: none;
+  animation: glossaryBridgeExitBeatIn 1.18s ease-out both;
+}
+
+.glossary-bridge-exit-beat span {
+  color: #84ffd1;
+  font-size: 0.68rem;
+  font-weight: 900;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.glossary-bridge-exit-beat strong {
+  color: #ffffff;
+  font-size: clamp(1rem, 1.35vw, 1.22rem);
+  line-height: 1.05;
 }
 
 .glossary-bridge-statusbar {
@@ -3991,6 +4070,7 @@ body.glossary-mission-active .glossary-chamber-progress {
   padding: 28px;
   background: rgba(3, 6, 16, 0.64);
   backdrop-filter: blur(10px);
+  animation: glossaryBridgeClearReveal 420ms ease-out both;
 }
 
 .glossary-bridge-clear article {
@@ -4149,9 +4229,45 @@ body.glossary-mission-active .glossary-chamber-progress {
 }
 
 @keyframes glossaryBridgePortalExit {
-  0% { left: var(--bridge-from-x); top: var(--bridge-from-y); transform: translate(-50%, -100%) scale(1); opacity: 1; }
-  55% { left: var(--bridge-player-x); top: var(--bridge-player-y); transform: translate(-50%, -108%) scale(0.82); opacity: 0.82; }
-  100% { left: var(--bridge-player-x); top: var(--bridge-player-y); transform: translate(-50%, -120%) scale(0.38); opacity: 0.22; }
+  0% {
+    left: var(--bridge-from-x);
+    top: var(--bridge-from-y);
+    transform: translate(-50%, -100%) scale(0.98);
+    opacity: 1;
+    filter: drop-shadow(0 22px 24px rgba(0, 0, 0, 0.52));
+  }
+  42% {
+    left: var(--bridge-player-x);
+    top: var(--bridge-player-y);
+    transform: translate(-50%, -112%) scale(0.9);
+    opacity: 0.9;
+    filter: drop-shadow(0 24px 30px rgba(97, 240, 255, 0.36));
+  }
+  72% {
+    left: var(--bridge-player-x);
+    top: var(--bridge-player-y);
+    transform: translate(-50%, -119%) scale(0.54);
+    opacity: 0.58;
+    filter: blur(0.5px) drop-shadow(0 0 34px rgba(132, 255, 209, 0.56));
+  }
+  100% {
+    left: var(--bridge-player-x);
+    top: var(--bridge-player-y);
+    transform: translate(-50%, -128%) scale(0.16);
+    opacity: 0;
+    filter: blur(2px) drop-shadow(0 0 40px rgba(255, 216, 108, 0.7));
+  }
+}
+
+@keyframes glossaryBridgeExitBeatIn {
+  0% { opacity: 0; transform: translateY(14px) scale(0.94); }
+  18%, 76% { opacity: 1; transform: translateY(0) scale(1); }
+  100% { opacity: 0.88; transform: translateY(0) scale(0.98); }
+}
+
+@keyframes glossaryBridgeClearReveal {
+  0% { opacity: 0; backdrop-filter: blur(2px); }
+  100% { opacity: 1; backdrop-filter: blur(10px); }
 }
 
 @keyframes glossaryBridgeEmotePop {
@@ -4271,11 +4387,17 @@ body.glossary-mission-active .glossary-chamber-progress {
   }
 
   .glossary-bridge-player {
-    width: clamp(145px, 34vw, 210px);
+    width: clamp(112px, 27vw, 168px);
   }
 
   .glossary-bridge-player-ghost {
-    width: clamp(145px, 34vw, 210px);
+    width: clamp(112px, 27vw, 168px);
+  }
+
+  .glossary-bridge-exit-beat {
+    right: 14px;
+    bottom: 14px;
+    width: min(250px, calc(100% - 28px));
   }
 
   .glossary-bridge-shot-label {
@@ -4285,6 +4407,43 @@ body.glossary-mission-active .glossary-chamber-progress {
 
   .glossary-bridge-statusbar {
     grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 560px) {
+  .glossary-bridge-game {
+    --bridge-tile-size: clamp(92px, 25vw, 112px);
+  }
+
+  .glossary-bridge-tile.is-active {
+    padding-inline: 8px;
+  }
+
+  .glossary-bridge-tile.is-active.glossary-bridge-tile--option-1 {
+    transform: translate(-64%, -84%) scale(0.96);
+  }
+
+  .glossary-bridge-tile.is-active.glossary-bridge-tile--option-2 {
+    transform: translate(-50%, -50%) scale(0.96);
+  }
+
+  .glossary-bridge-tile.is-active.glossary-bridge-tile--option-3 {
+    transform: translate(-36%, -16%) scale(0.96);
+  }
+
+  .glossary-bridge-tile.is-active.glossary-bridge-tile--option-1:hover,
+  .glossary-bridge-tile.is-active.glossary-bridge-tile--option-1:focus-visible {
+    transform: translate(-64%, -90%) scale(0.98);
+  }
+
+  .glossary-bridge-tile.is-active.glossary-bridge-tile--option-2:hover,
+  .glossary-bridge-tile.is-active.glossary-bridge-tile--option-2:focus-visible {
+    transform: translate(-50%, -56%) scale(0.98);
+  }
+
+  .glossary-bridge-tile.is-active.glossary-bridge-tile--option-3:hover,
+  .glossary-bridge-tile.is-active.glossary-bridge-tile--option-3:focus-visible {
+    transform: translate(-36%, -22%) scale(0.98);
   }
 }
 
@@ -5035,6 +5194,8 @@ body.glossary-mission-active #stage-section.gameplay-viewport #stage-root {
   .glossary-bridge-emote i,
   .glossary-bridge-burst,
   .glossary-bridge-splash,
+  .glossary-bridge-exit-beat,
+  .glossary-bridge-clear,
   .glossary-bridge-portal-ring,
   .glossary-bridge-portal-core,
   .glossary-bridge-portal-door,
