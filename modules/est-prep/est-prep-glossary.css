@@ -2764,6 +2764,94 @@ body.glossary-mission-active .glossary-chamber-progress {
     0 20px 40px rgba(2, 6, 18, 0.34);
 }
 
+.glossary-invader-feedback {
+  position: absolute;
+  right: 34px;
+  bottom: 98px;
+  z-index: 5;
+  display: grid;
+  grid-template-columns: 96px minmax(0, 1fr);
+  gap: 14px;
+  align-items: center;
+  width: min(390px, calc(100% - 68px));
+  min-height: 132px;
+  padding: 14px 16px 14px 12px;
+  border-radius: 22px;
+  border: 1px solid rgba(255, 216, 108, 0.38);
+  background:
+    radial-gradient(circle at 18% 18%, rgba(255, 216, 108, 0.16), transparent 38%),
+    linear-gradient(135deg, rgba(9, 22, 47, 0.96), rgba(5, 12, 30, 0.98));
+  box-shadow:
+    0 24px 46px rgba(0, 0, 0, 0.4),
+    inset 0 0 0 1px rgba(255, 255, 255, 0.04);
+  opacity: 0;
+  pointer-events: none;
+  transform: translateY(16px) scale(0.94);
+}
+
+.glossary-invader-feedback:empty {
+  display: none;
+}
+
+.glossary-invader-feedback.is-visible {
+  animation: glossaryInvaderFeedbackPop 1.08s cubic-bezier(0.18, 0.9, 0.22, 1) both;
+}
+
+.glossary-invader-feedback.is-correct {
+  border-color: rgba(132, 255, 209, 0.72);
+  background:
+    radial-gradient(circle at 18% 18%, rgba(132, 255, 209, 0.2), transparent 42%),
+    linear-gradient(135deg, rgba(7, 44, 45, 0.96), rgba(5, 12, 30, 0.98));
+}
+
+.glossary-invader-feedback.is-wrong {
+  border-color: rgba(255, 139, 123, 0.72);
+  background:
+    radial-gradient(circle at 18% 18%, rgba(255, 139, 123, 0.2), transparent 42%),
+    linear-gradient(135deg, rgba(55, 22, 37, 0.96), rgba(5, 12, 30, 0.98));
+}
+
+.glossary-invader-feedback img {
+  width: 96px;
+  height: 112px;
+  object-fit: contain;
+  object-position: center bottom;
+  align-self: end;
+  filter: drop-shadow(0 18px 18px rgba(0, 0, 0, 0.36));
+}
+
+.glossary-invader-feedback span {
+  display: block;
+  color: #ffd86c;
+  font-size: 0.72rem;
+  font-weight: 900;
+  letter-spacing: 0;
+  text-transform: uppercase;
+}
+
+.glossary-invader-feedback strong {
+  display: block;
+  margin-top: 3px;
+  color: #ffffff;
+  font-size: 1.35rem;
+  line-height: 1;
+}
+
+.glossary-invader-feedback p {
+  margin: 8px 0 0;
+  color: #f8fbff;
+  font-size: 0.92rem;
+  line-height: 1.35;
+}
+
+.glossary-invader-feedback.is-correct span {
+  color: #84ffd1;
+}
+
+.glossary-invader-feedback.is-wrong span {
+  color: #ffb4aa;
+}
+
 .glossary-invader-definition {
   position: relative;
   z-index: 2;
@@ -2848,6 +2936,20 @@ body.glossary-mission-active .glossary-chamber-progress {
 
   .glossary-invaders-canvas {
     min-height: 390px;
+  }
+
+  .glossary-invader-feedback {
+    position: relative;
+    right: auto;
+    bottom: auto;
+    width: 100%;
+    min-height: 104px;
+    grid-template-columns: 74px minmax(0, 1fr);
+  }
+
+  .glossary-invader-feedback img {
+    width: 74px;
+    height: 92px;
   }
 
   .glossary-invader-controls {
@@ -4838,6 +4940,13 @@ body.glossary-mission-active #stage-section.gameplay-viewport #stage-root {
   100% { opacity: 0.22; transform: scaleY(1.08); transform-origin: bottom; }
 }
 
+@keyframes glossaryInvaderFeedbackPop {
+  0% { opacity: 0; transform: translateY(20px) scale(0.9); }
+  22% { opacity: 1; transform: translateY(-4px) scale(1.02); }
+  58% { opacity: 1; transform: translateY(0) scale(1); }
+  100% { opacity: 1; transform: translateY(0) scale(1); }
+}
+
 @keyframes glossaryGuideFloat {
   0%, 100% { transform: translateY(0); }
   50% { transform: translateY(-5px); }
@@ -4935,6 +5044,7 @@ body.glossary-mission-active #stage-section.gameplay-viewport #stage-root {
   .glossary-invader-ship::before,
   .glossary-invader-ship::after,
   .glossary-invader-laser,
+  .glossary-invader-feedback.is-visible,
   .glossary-scene-prompt > .glossary-scene-art::after,
   .glossary-scene-motion,
   .glossary-story-bg,

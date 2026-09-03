@@ -22,6 +22,11 @@ const GLOSSARY_INVADER_WIDTH = 960;
 const GLOSSARY_INVADER_HEIGHT = 520;
 const GLOSSARY_INVADER_PLAYER_Y = 462;
 const GLOSSARY_INVADER_COLORS = ["#72f7b8", "#61f0ff", "#ffd86c", "#ff7dc0"];
+const GLOSSARY_INVADER_RESULT_DELAY_MS = 1180;
+const GLOSSARY_INVADER_FEEDBACK_ASSETS = {
+  correct: "../../Assets/Images and Animations/Emmanuel Student Characters/MacKillop/Mackillop Celebrating.png",
+  wrong: "../../Assets/Images and Animations/Emmanuel Student Characters/MacKillop/MacKillop encouraging.png"
+};
 const GLOSSARY_VISUAL_ASSETS = {
   "memory-match": "../../Assets/Images and Animations/Glossary Check/glossary-recall-forge.svg",
   "term-catch": "../../Assets/Images and Animations/Glossary Check/glossary-signal-scan.svg",
@@ -257,6 +262,9 @@ function clearGlossaryInvaderShotTimeout() {
   if (state?.answers) {
     delete state.answers.glossaryInvaderTarget;
     delete state.answers.glossaryInvaderFiring;
+  }
+  if (state) {
+    state.glossaryInvaderFeedback = null;
   }
 }
 
@@ -1502,6 +1510,69 @@ function updateGlossaryInvaderHud(runtime = glossaryInvadersRuntime) {
   if (status) status.textContent = runtime.status;
 }
 
+function buildGlossaryInvaderFeedback(correct, chosenTerm, expectedTerm) {
+  const safeChosen = chosenTerm || "That shot";
+  const safeExpected = expectedTerm || "the target term";
+  return {
+    type: correct ? "correct" : "wrong",
+    title: correct ? "Right term" : "Try again",
+    kicker: correct ? "Signal restored" : "Signal unstable",
+    image: correct ? GLOSSARY_INVADER_FEEDBACK_ASSETS.correct : GLOSSARY_INVADER_FEEDBACK_ASSETS.wrong,
+    detail: correct
+      ? `${safeChosen} matches the definition. Wave secured.`
+      : `${safeChosen} is not this definition. Aim for ${safeExpected} on the reset.`
+  };
+}
+
+function renderGlossaryInvaderFeedback() {
+  const feedback = state.glossaryInvaderFeedback;
+  if (!feedback) {
+    return `
+      <div
+        id="glossary-invader-feedback"
+        class="glossary-invader-feedback"
+        aria-live="off"
+        aria-atomic="true"
+        aria-hidden="true"
+      ></div>
+    `;
+  }
+
+  const typeClass = feedback.type === "correct" ? "is-correct" : "is-wrong";
+  return `
+    <div
+      id="glossary-invader-feedback"
+      class="glossary-invader-feedback is-visible ${typeClass}"
+      role="status"
+      aria-live="assertive"
+      aria-atomic="true"
+    >
+      <img src="${escapeHtml(feedback.image)}" alt="">
+      <div>
+        <span>${escapeHtml(feedback.kicker)}</span>
+        <strong>${escapeHtml(feedback.title)}</strong>
+        <p>${escapeHtml(feedback.detail)}</p>
+      </div>
+    </div>
+  `;
+}
+
+function showGlossaryInvaderFeedback(feedback) {
+  state.glossaryInvaderFeedback = feedback;
+  state.glossaryPulse = feedback.detail;
+  state.glossaryPulseType = feedback.type === "correct" ? "good" : "warn";
+  const pulse = document.querySelector(".glossary-invaders-shell .glossary-pulse");
+  if (pulse) {
+    pulse.textContent = feedback.detail;
+    pulse.classList.remove("good", "warn", "neutral");
+    pulse.classList.add(feedback.type === "correct" ? "good" : "warn");
+  }
+  const target = document.getElementById("glossary-invader-feedback");
+  if (target) {
+    target.outerHTML = renderGlossaryInvaderFeedback();
+  }
+}
+
 function setGlossaryInvaderMove(direction) {
   const runtime = glossaryInvadersRuntime;
   if (!runtime || runtime.locked) return;
@@ -1595,6 +1666,8 @@ function triggerGlossaryInvaderEnemyFire(runtime) {
 
 function resolveGlossaryInvaderHit(runtime, alien) {
   if (runtime.locked) return;
+  const correct = isGlossaryChoiceCorrect("plain-match", runtime.item, alien.option.value);
+  const feedback = buildGlossaryInvaderFeedback(correct, alien.option.title, runtime.item.term);
   runtime.locked = true;
   runtime.explosions.push({
     x: getGlossaryInvaderBounds(runtime, alien).x + (alien.w / 2),
@@ -1603,13 +1676,17 @@ function resolveGlossaryInvaderHit(runtime, alien) {
     age: 0
   });
   alien.alive = false;
-  runtime.status = `${alien.option.title} hit. Checking the definition lock...`;
+  runtime.status = correct
+    ? `${alien.option.title} hit. Correct term secured.`
+    : `${alien.option.title} hit. Wrong term; the wave will reset.`;
+  showGlossaryInvaderFeedback(feedback);
   updateGlossaryInvaderHud(runtime);
   glossaryInvaderShotTimeout = setTimeout(() => {
     glossaryInvaderShotTimeout = null;
+    state.glossaryInvaderFeedback = null;
     stopGlossaryInvadersRuntime();
     submitGlossaryChallengeChoiceEncoded(runtime.item.id, encodeURIComponent(alien.option.value));
-  }, 280);
+  }, GLOSSARY_INVADER_RESULT_DELAY_MS);
 }
 
 function resetGlossaryInvaderAfterShipHit(reason, options = {}) {
@@ -3432,6 +3509,7 @@ function renderGlossaryInvadersGame(round, promptItem, optionSet, batch, batchNu
           data-target-id="${escapeHtml(promptItem.id)}"
           aria-label="Definition Invaders arcade game. Move the ship left and right, fire upward, and hold the forcefield to block enemy shots. Target definition: ${escapeHtml(promptItem.definition)}"
         ></canvas>
+        ${renderGlossaryInvaderFeedback()}
         <div class="glossary-invader-controls" aria-label="Definition Invaders controls">
           <button
             type="button"
