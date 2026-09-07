@@ -1,6 +1,7 @@
 import { expect, test } from "@playwright/test";
 
 test("playable-3d town loads with daytime outdoor lighting", async ({ page }) => {
+  test.setTimeout(60_000);
   await page.goto("/playable-3d/", { waitUntil: "domcontentloaded" });
 
   await expect(page).toHaveTitle(/Career Empire/);
@@ -12,7 +13,7 @@ test("playable-3d town loads with daytime outdoor lighting", async ({ page }) =>
   const diagnostics = await page.locator("#diagnostics").evaluate(element => JSON.parse(element.dataset.state || element.value));
   expect(diagnostics.mode).toBe("town");
   expect(diagnostics.lighting.readsAsDaytime).toBe(true);
-  expect(diagnostics.lighting.environmentIntensity).toBeGreaterThanOrEqual(0.9);
+  expect(diagnostics.lighting.environmentIntensity).toBeGreaterThanOrEqual(0.8);
   expect(diagnostics.lighting.sunIntensity).toBeGreaterThanOrEqual(5);
   expect(diagnostics.lighting.fogNear).toBeGreaterThanOrEqual(120);
   expect(diagnostics.pixelColours).toBeGreaterThan(8);

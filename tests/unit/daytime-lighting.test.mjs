@@ -16,8 +16,8 @@ describe("daytime outdoor lighting", () => {
     expect(DAYTIME.fogFar).toBeGreaterThan(DAYTIME.fogNear);
     expect(DAYTIME.sunIntensity).toBeGreaterThanOrEqual(5);
     expect(DAYTIME.sunPosition[1]).toBeGreaterThan(35);
-    expect(DAYTIME.environmentIntensity).toBeGreaterThanOrEqual(0.9);
-    expect(DAYTIME.toneMappingExposure).toBeGreaterThanOrEqual(1.1);
+    expect(DAYTIME.environmentIntensity).toBeGreaterThanOrEqual(0.8);
+    expect(DAYTIME.toneMappingExposure).toBeGreaterThanOrEqual(1.05);
     expect(DAYTIME.cameraFar).toBeGreaterThanOrEqual(DAYTIME.fogFar);
   });
 

@@ -1,8 +1,8 @@
 import * as THREE from 'three';
 import {OrbitControls} from 'three/addons/controls/OrbitControls.js';
 import {RoomEnvironment} from 'three/addons/environments/RoomEnvironment.js';
-import {createWorlds} from './world.js';
-import {DAYTIME, collectDaytimeSnapshot, createDaytimeEnvironmentTexture} from './daytime-lighting.js';
+import {createWorlds} from './world.js?v=daytime3';
+import {DAYTIME, collectDaytimeSnapshot, createDaytimeEnvironmentTexture} from './daytime-lighting.js?v=daytime3';
 import {loadCharacterKits,createCharacter,isSimpleBody} from './characters.js';
 import {loadProfiles,saveProfiles,normaliseProfile,OPTIONS,SKIN,PHASES} from './profiles.js';
 

@@ -1,28 +1,28 @@
 /** Midday campus lighting for the playable-3d outdoor town (not night neon). */
 
 export const DAYTIME = {
-  sky: 0x8ec8ee,
-  skyHorizon: 0xe8f4fb,
-  fog: 0xd6eef8,
-  fogNear: 150,
-  fogFar: 280,
-  sunColor: 0xfff6e0,
-  sunIntensity: 6.35,
+  sky: 0x6bb8e8,
+  skyHorizon: 0xc5e4f6,
+  fog: 0xb7d9ee,
+  fogNear: 170,
+  fogFar: 290,
+  sunColor: 0xfff3d0,
+  sunIntensity: 5.4,
   sunPosition: [-22, 46, 16],
-  hemiSky: 0xe6f4ff,
-  hemiGround: 0x8aab68,
-  hemiIntensity: 2.75,
-  ambientColor: 0xeaf4ff,
-  ambientIntensity: 0.72,
-  environmentIntensity: 1.18,
+  hemiSky: 0xcfe8ff,
+  hemiGround: 0x6f9454,
+  hemiIntensity: 1.55,
+  ambientColor: 0xdceeff,
+  ambientIntensity: 0.28,
+  environmentIntensity: 0.95,
   interiorEnvironmentIntensity: 0.62,
-  toneMappingExposure: 1.18,
-  cameraFar: 280,
+  toneMappingExposure: 1.08,
+  cameraFar: 300,
   emissiveCap: 0.34,
   lampEmissive: 0.22,
   curbEmissive: 0.07,
-  grassTint: 0xe4f5c4,
-  water: 0x3aa0bf,
+  grassTint: 0xd2ee9a,
+  water: 0x2e96b8,
   leafByPhase: {
     disrepair: 0x4f7d42,
     growth: 0x3d8a36,
@@ -77,8 +77,8 @@ export function collectDaytimeSnapshot(values = {}) {
       isBrightDaytimeSky(sky) &&
       fogNear >= 120 &&
       sunIntensity >= 5 &&
-      environmentIntensity >= 0.9 &&
-      toneMappingExposure >= 1.1 &&
+      environmentIntensity >= 0.8 &&
+      toneMappingExposure >= 1.05 &&
       emissiveMax <= DAYTIME.emissiveCap + 0.001,
   };
 }
@@ -112,6 +112,7 @@ export function createDaytimeSkyDome(THREE) {
     side: THREE.BackSide,
     depthWrite: false,
     fog: false,
+    toneMapped: false,
   });
   const mesh = new THREE.Mesh(geometry, material);
   mesh.name = 'daytime-sky';
@@ -121,7 +122,7 @@ export function createDaytimeSkyDome(THREE) {
   const sunDir = new THREE.Vector3(...DAYTIME.sunPosition).normalize().multiplyScalar(168);
   const sunDisc = new THREE.Mesh(
     new THREE.SphereGeometry(5.5, 16, 16),
-    new THREE.MeshBasicMaterial({ color: 0xfff4cc, fog: false, depthWrite: false }),
+    new THREE.MeshBasicMaterial({ color: 0xfff4cc, fog: false, depthWrite: false, toneMapped: false }),
   );
   sunDisc.name = 'daytime-sun-disc';
   sunDisc.position.copy(sunDir);

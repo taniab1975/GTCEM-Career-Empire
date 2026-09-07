@@ -13,7 +13,7 @@ import {
   daytimeLampIntensity,
   daytimeLeafHex,
   restrainDaytimeEmissives,
-} from './daytime-lighting.js';
+} from './daytime-lighting.js?v=daytime3';
 
 /** Tripo daytime plaza plate — native units are tiny (~0.78 x 0.16 x 0.98, Y-up). */
 export const PLAZA_GROUND = {
